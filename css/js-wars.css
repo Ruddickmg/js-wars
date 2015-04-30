@@ -1,0 +1,130 @@
+@charset "UTF-8";
+
+ /*----------------------------------*\
+<>           General Styling          <>
+ \*----------------------------------*/
+
+article, aside, figcaption, 
+figure, footer, header, 
+hgroup, nav, section, li {
+	display: block;
+}
+
+html {
+    -ms-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, p, blockquote, figure, ol, ul {
+    margin: 0;
+    padding: 0;
+}
+
+
+/* Body *\
+ \*----*/
+
+body {
+    margin: 0;
+    font-size: 16px;
+    background: url(../images/GBA.png);
+    background-position: -38px -29px;
+}
+
+/* links *\
+ \*-----*/
+
+a {
+    text-decoration: none;
+    color: inherit;
+    -webkit-transition: .3s;
+            transition: .3s;
+}
+
+/* Headings *\
+ \*--------*/
+
+h1, h2, h3, h4 {
+    font-size: inherit;
+    font-family: inherit;
+}
+
+h2 {
+	color:violet;
+}
+
+h3 {
+	color:yellow;
+}
+
+h4 {
+	color:lime;
+}
+
+/* Paragraphs *\
+ \*----------*/
+
+p {
+	color:lime;
+}
+
+/* Images *\
+ \*------*/
+
+img {
+    max-width: 100%;
+    height: auto;
+    border: 0;
+}
+
+/* Lists *\
+ \*-----*/
+
+ul {
+	list-style-type: none;
+}
+
+h1 {
+    text-align: center;
+    font-size: 50px;
+    font-family: arial;
+}
+
+canvas {
+    position:absolute;
+    box-shadow: 0 0 1px 6px black inset;
+    top: 395px;
+    left: 720px; 
+    right:auto;
+    transform: translate(-50%,-50%);
+}
+
+#background {
+    z-index: 1; 
+    background: #2B2B2B;
+}
+
+#buildings { z-index:2; }
+#weather { z-index:3; }
+#effects { z-index:4; }
+#units { z-index:5; }
+#cursor{ z-index:6; }
+
+#hud {
+    color: white;
+    position:absolute;
+    z-index: 10;
+    display: inline-block;
+    border-radius: 10%;
+    background: #2B2B2B;
+    opacity:.7;
+    box-shadow: 0 0 10px 6px black inset;
+    left:1025px;
+    top:495px;
+}
+
+#hud h2 {
+    font-size: 17px;
+}
