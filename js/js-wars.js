@@ -103,8 +103,9 @@ app = {
 		},
 
 		// dimensions of diplay hud
-		hudWidth:120,
-		hudHeight:200,
+		hudWidth: 120,
+		hudHeight: 200,
+		hudLeft: 1025,
 
 		// which attributes of objects ( unit, buildings etc ) will be displayed in hud
 		hoverInfo: ['ammo','health','type','fuel','def'],
@@ -698,6 +699,7 @@ app = {
 					if ( temp.selectedBuilding ) delete temp.selectedBuilding;
 					if ( temp.unitSelectionIndex ) delete temp.unitSelectionIndex;
 					if ( temp.prevIndex ) delete temp.prevIndex;
+					if ( temp.hide ) delete temp.hide;
 				},
 
 				effect: function (effect) {
@@ -906,9 +908,20 @@ app = {
 					if ( temp.unitSelectionIndex === undefined ) temp.unitSelectionIndex = 1;
 
 					// all the ul children from the selected element for highlighting
-					var hudElement = document.getElementById(id)
+					var hudElement = document.getElementById(id);
 					var elements = hudElement.getElementsByTagName('ul');
 					var len = elements.length;
+
+					if ( temp.unitSelectionIndex > 7 ){
+						temp.hide = temp.unitSelectionIndex - 7;
+						for ( var h = 1; h <= temp.hide; h += 1 ){
+							var hideElement = this.findElementByTag( tag, h, elements );
+							hideElement.style.display = 'none';
+						}
+					}else if( temp.unitSelectionIndex <= len - 7 && temp.hide ){
+						var showElement = this.findElementByTag( tag, temp.unitSelectionIndex, elements );
+						showElement.style.display = '';
+					}
 
 					// if the index is not the same as it was prior, then highlight the new index ( new element )
 					if( temp.prevIndex !== temp.unitSelectionIndex ){
@@ -928,12 +941,13 @@ app = {
 						return temp.selectedElement.getAttribute('id');
 
 					}else if( app.settings.keyMap.down in app.keys ) {
-
-						if ( temp.unitSelectionIndex <= len ) temp.unitSelectionIndex += 1;
+						if ( temp.unitSelectionIndex < len ){
+							temp.unitSelectionIndex += 1;
+						} 
 						undo.keyPress(app.settings.keyMap.down);
 
 					}else if( app.settings.keyMap.up in app.keys ) {
-						if( temp.unitSelectionIndex ) temp.unitSelectionIndex -= 1;
+						if( temp.unitSelectionIndex > 1 ) temp.unitSelectionIndex -= 1;
 						undo.keyPress(app.settings.keyMap.up);
 					}
 					return false;				
@@ -995,9 +1009,11 @@ app = {
 					}
 
 					// apply proper width to element
-					var displayWidth = properties.length > 1 ? app.settings.hudWidth * 2 : app.settings.hudWidth;
-					display.setAttribute( 'width', displayWidth );
-					display.setAttribute('height', app.settings.hudheight );
+					var displayWidth = app.settings.hudWidth * properties.length;
+					var hudLeft = app.settings.hudLeft - 120;
+					display.style.left = properties.length > 1 ? hudLeft.toString() + 'px' : app.settings.hudLeft.toString() + 'px';
+					display.style.width = displayWidth.toString() + 'px';
+					display.style.height = app.settings.hudHeight.toString() + 'px';
 					if ( exists ) {
 						exists.parentNode.replaceChild( display, exists );
 					}else{
