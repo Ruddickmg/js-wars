@@ -67,11 +67,7 @@ app = {
 	// find the index of a key ( used to clear out the key pressed events so that 
 	// one key can be used multiple times without being percieved as held down )
 	findKey: function ( key ) {
-		for(var i = 0; i < app.keys; i += 1 ){
-			if( app.keys[i].keyCode === key ){
-				return i;
-			}
-		}
+
 		return false;
 	},
 
@@ -96,6 +92,14 @@ app = {
 			unit:{
 				infantry:0
 			}
+		},
+
+		// terrain each unit is allowed to walk on
+		movable:{
+			foot: [ 'plain', 'river', 'mountain', 'wood', 'road', 'building' ],
+			wheels: [ 'plain', 'wood', 'road', 'building' ],
+			flight: [ 'plain', 'river', 'mountain', 'wood', 'road', 'water', 'building' ],
+			boat: ['water', 'building']
 		},
 
 		// dimensions of diplay hud
@@ -336,14 +340,18 @@ app = {
 						}
 						return false;
 					};
-					var opX = off.x < orig.x ? -1 : 1;
-					var opY = off.y < orig.y ? -1 : 1;
-					var x = ( orig.x + ( orig.movement * opX ) - ( off.cost * opX ) + opX);
-					var y = ( orig.y + ( orig.movement * opY ) - ( off.cost * opY ) + opY);
-					var objX = { x:x , y:off.y };
-					var objY = { x:off.x, y:y };
-					if ( inRange(objX) ) ret.push(objX);
-					if ( inRange(objY) ) ret.push(objY);
+					if ( app.inArray( off.obsticle, orig.movable )){
+						var opX = off.x < orig.x ? -1 : 1;
+						var opY = off.y < orig.y ? -1 : 1;
+						var x = ( orig.x + ( orig.movement * opX ) - ( off.cost * opX ) + opX);
+						var y = ( orig.y + ( orig.movement * opY ) - ( off.cost * opY ) + opY);
+						var objX = { x:x , y:off.y };
+						var objY = { x:off.x, y:y };
+						if ( inRange(objX) ) ret.push(objX);
+						if ( inRange(objY) ) ret.push(objY);
+					}else{
+						ret.push({ x: off.x, y: off.y });
+					}
 					return ret;
 				},
 				
@@ -675,7 +683,7 @@ app = {
 			undo = {
 
 				keyPress: function (key) {
-					if (app.keys.splice(app.findKey(key),1)) return true
+					if (app.keys.splice(key,1)) return true
 					return false;
 				},
 
@@ -772,7 +780,7 @@ app = {
 						temp[objectClass[type]] = app.map[type][index];
 						temp[objectClass[type]].objectClass = type;
 						temp[objectClass[type]].ind = index;
-						app.keys.splice(app.findKey(app.keys.select),1);
+						undo.keyPress(app.keys.select);
 
 						// if the selected object is a unit, do unit stuff
 						if ( temp.selectedUnit ) {
@@ -828,7 +836,7 @@ app = {
 
 						// create list for each unit with its cost
 						var unitList = this.createList( units[unitTypes[u]], unitTypes[u], app.settings.unitSelectionDisplay );
-						unitList.setAttribute( tag , u + 1 );
+						unitList.setAttribute( tag, u + 1 );
 
 						// add list to the select screen
 						selectUnitScreen.appendChild(unitList);
@@ -895,7 +903,7 @@ app = {
 				select: function ( tag, id, selected ) {
 
 					// if the index is undefined set it to one
-					if ( !temp.unitSelectionIndex ) temp.unitSelectionIndex = 1;
+					if ( temp.unitSelectionIndex === undefined ) temp.unitSelectionIndex = 1;
 
 					// all the ul children from the selected element for highlighting
 					var hudElement = document.getElementById(id)
@@ -914,17 +922,23 @@ app = {
 						}
 						temp.prevIndex = temp.unitSelectionIndex;
 					}
-					if( app.settings.keyMap.select in app.keys &&temp.selectedElement ){
+					console.log(app.keys);
+
+					if( app.settings.keyMap.select in app.keys && temp.selectedElement ){
+
 						return temp.selectedElement.getAttribute('id');
-					}
-					if( app.settings.keyMap.down in app.keys ) {
+
+					}else if( app.settings.keyMap.down in app.keys ) {
+
 						if ( temp.unitSelectionIndex <= len ) temp.unitSelectionIndex += 1;
 						undo.keyPress(app.settings.keyMap.down);
-					}
-					if( app.settings.keyMap.up in app.keys ) {
-						if ( temp.unitSelectionIndex > 1 ) temp.unitSelectionIndex -= 1;
+
+					}else if( app.settings.keyMap.up in app.keys ) {
+
+						temp.unitSelectionIndex -= 1;
 						undo.keyPress(app.settings.keyMap.up);
 					}
+					console.log(temp.unitSelectionIndex);
 					return false;				
 				},
 
@@ -1126,10 +1140,26 @@ app = {
 	},
 };
 
+/* --------------------------------------------------------------------------------------*\
+	
+	app.effect is holds the coordinates for effects, these are dynamic, hence the empty
+	arrays, they will fill and remove data as necessary to animate the game effects
+
+\* --------------------------------------------------------------------------------------*/
+
 app.effect = {
 	highlight:[],
 	path:[]
 };
+
+/* --------------------------------------------------------------------------------------*\
+	
+	app.map contains all the settings for the map, unit locations, terrain, buildings, etc. 
+	it holds coordinates of objects that correspond to animations in the animation repo
+	maps can be built and edited dynamically by inserting or removing objects from/into the 
+	arrays
+
+\* --------------------------------------------------------------------------------------*/
 
 app.map = {
 	background: { 
@@ -1157,49 +1187,124 @@ app.map = {
 	building: [
 		//{ x:0, y:5, type:'base', player:1, color: 'red' , def:4},
 		//{ x:15, y:5, type:'base', player:2, color: 'blue' , def:4},
-		{ x:0,y:4, type:'landPort', player:1,color:'red', def:4},
-		{ x:15,y:4, type:'landPort', player:2, color:'blue', def:4}
+		{ x:0,y:4, type:'base', obsticle:'building', player:1,color:'red', def:4},
+		{ x:15,y:4, type:'base', obsticle:'building', player:2, color:'blue', def:4}
 	],
 	unit:[
-		{ x:2, y:5, type:'infantry', obsticle:'unit', movement:3, player: 1, health:10, ammo:10 ,fuel:100, id: 1 }
+		{ x:2, y:5, type:'infantry', obsticle:'unit', movable: app.settings.movable.foot, movement:3, player: 1, health:10, ammo:10 ,fuel:100, id: 1 }
 	]
 };
 
+/* --------------------------------------------------------------------------------------*\
+	
+	app.units is a repo for the units that may be created on the map, it holds all their
+	stats and is organized by which building type can create them
+
+\* --------------------------------------------------------------------------------------*/
+
 app.units = {
-	landPort: {
+	base: {
 		infantry: {
-			properties: { type:'infantry', movement:3, health:10, ammo:10 ,fuel:90 },
-			name: 'infantry',
+			properties: { type:'infantry', movement:3, vision:2, range:{ lo: 1, hi: 1 }, movable: app.settings.movable.foot, health:10, ammo:10 ,fuel:99 },
+			name: 'Infantry',
 			cost: 1000
 		},
 		mech: {
-			properties: { type:'mech', movement:2, health:10, ammo:10 ,fuel:80 },
-			name: 'mechenized infantry',
+			properties: { type:'mech', movement:2, vision:2, range:{ lo: 1, hi: 1 }, movable: app.settings.movable.foot, health:10, ammo:10 ,fuel:70 },
+			name: 'Mech',
 			cost: 3000
 		},
+		recon: {
+			properties: { type:'recon', movement:8, vision: 5, range:{ lo: 1, hi: 1 }, movable: app.settings.movable.wheels, health:10, ammo:10 ,fuel:80 },
+			name: 'Recon',
+			cost: 4000
+		},
+		apc: {
+			properties: { type:'apc', movement:6, vision: 1, range:{ lo: 1, hi: 1 }, movable: app.settings.movable.wheels, health:10, fuel:70 },
+			name: 'APC',
+			cost: 5000
+		},
+		antiAir: {
+			properties: { type:'anitAir', movement:6, vision: 2, range:{ lo: 1, hi: 1 }, movable: app.settings.movable.wheels, health:10, ammo:10 ,fuel:60 },
+			name: 'Anti-Aircraft',
+			cost: 8000
+		},
+		tank: {
+			properties: { type:'tank', movement:6, vision: 3, range:{ lo: 1, hi: 1 },movable: app.settings.movable.wheels, health:10, ammo:10 ,fuel:60 },
+			name: 'Tank',
+			cost: 7000
+		},
+		midTank: {
+			properties: { type:'midTank', movement:5, vision: 1, range:{ lo: 1, hi: 1 }, movable: app.settings.movable.wheels, health:10, ammo:10 ,fuel:50 },
+			name: 'Mid Tank',
+			cost: 16000
+		},
+		artillery: {
+			properties: { type:'artillery', movement:5, vision: 1, range:{ lo: 2, hi: 3 }, movable: app.settings.movable.wheels, health:10, ammo:10 ,fuel:50 },
+			name: 'Artillery',
+			cost: 6000
+		},
+		rockets: {
+			properties: { type:'rockets', movement:5, vision: 1, range:{ lo: 3, hi: 5 }, movable: app.settings.movable.wheels, health:10, ammo:10 ,fuel:50 },
+			name: 'Rockets',
+			cost: 15000
+		},
+		missles: {
+			properties: { type:'missles', movement:4, vision: 1, range:{ lo: 3, hi: 5 }, movable: app.settings.movable.wheels, health:10, ammo:10 ,fuel:50 },
+			name: 'Missles',
+			cost: 12000
+		},	
+		neoTank: {
+			properties: { type:'neoTank', movement:6, vision:1 , range:{ lo: 1, hi: 1 }, movable: app.settings.movable.wheels, health:10, ammo:10 ,fuel:99 },
+			name: 'Neo Tank',
+			cost: 22000
+		}
 	},
 	airport: {
-
+		tCopter: {
+			properties: { type:'tCopter', movement:6, vision:2, range:{ lo: 1, hi: 1 }, movable: app.settings.movable.flight, health:10, fuel:99, fpt:2 },
+			name: 'T-Copter',
+			cost: 5000
+		},
+		bCopter: {
+			properties: { type:'bCopter', movement:6, vision:3 , range:{ lo: 1, hi: 1 }, movable: app.settings.movable.flight, health:10, ammo:10 ,fuel:99, fpt:1 },
+			name: 'B-Copter',
+			cost: 9000
+		},
+		fighter: {
+			properties: { type:'fighter', movement:9, vision:2 , range:{ lo: 1, hi: 1 }, movable: app.settings.movable.flight, health:10, ammo:10 ,fuel:99, fpt:5 },
+			name: 'Fighter',
+			cost: 20000
+		},
+		bomber: {
+			properties: { type:'bomber', movement:7, vision:2 , range:{ lo: 1, hi: 1 }, movable: app.settings.movable.flight, health:10, ammo:10 ,fuel:99, fpt:5 },
+			name: 'Bomber',
+			cost: 22000
+		}
 	},
 	seaport:{
-
-	}
-}
-
-app.unit = {
-	add: function (unit) {
-		app.unit.push(unit);
-	},
-
-	change: function (unit) {
-		index = app.unit[unit.type].indexOf(unit);
-
-		if (~index) {
-	    	app.map.unit[unit.type] = unit;
+		lander: {
+			properties: { type:'lander', movement:6, vision:1 , range:{ lo: 1, hi: 1 }, movable: app.settings.movable.flight, health:10, fuel:99, fpt:1 },
+			name: 'Lander',
+			cost: 12000
+		},
+		cruiser: {
+			properties: { type:'cruiser', movement:6, vision:3, range:{ lo: 1, hi: 1 }, movable: app.settings.movable.flight, health:10, ammo:10 ,fuel:99, fpt:1 },
+			name: 'Cruiser',
+			cost: 18000
+		},
+		submerine: {
+			properties: { type:'submerine', movement:5, vision:5 , range:{ lo: 1, hi: 1 }, movable: app.settings.movable.flight, health:10, ammo:10 ,fuel:60, fpt:1, divefpt:5 },
+			name: 'Submerine',
+			cost: 20000
+		},
+		bShip: {
+			properties: { type:'bShip', movement:5, vision:2 , range:{ lo: 2, hi: 6 }, movable: app.settings.movable.flight, health:10, ammo:10 ,fuel:99, fpt:1 },
+			name: 'B-Ship',
+			cost: 28000
 		}
 	}
 };
-
 
 /* --------------------------------------------------------------------------------------------------------*\
 
@@ -1323,7 +1428,7 @@ app.animateEffects = function (){
 
 \*---------------------------------------------------------------------------------------------------------*/
 
-app.draw = function () {
+app.run = function () {
 	app.animateBackground();
 	app.animateTerrain();
 	app.animateBuildings();
@@ -1396,7 +1501,7 @@ app.animationRepo = function ( width, height ) {
 			canv.fill();
 			return canv;
 		},
-		landPort: function (canv, m) {
+		base: function (canv, m) {
 			canv.fillStyle = "rgba(0,0,200,0.9)";
 			canv.beginPath();
 			canv.lineTo( m.r(m.w - 5), m.y - 5 );
