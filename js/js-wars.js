@@ -922,7 +922,6 @@ app = {
 						}
 						temp.prevIndex = temp.unitSelectionIndex;
 					}
-					console.log(app.keys);
 
 					if( app.settings.keyMap.select in app.keys && temp.selectedElement ){
 
@@ -934,11 +933,9 @@ app = {
 						undo.keyPress(app.settings.keyMap.down);
 
 					}else if( app.settings.keyMap.up in app.keys ) {
-
-						temp.unitSelectionIndex -= 1;
+						if( temp.unitSelectionIndex ) temp.unitSelectionIndex -= 1;
 						undo.keyPress(app.settings.keyMap.up);
 					}
-					console.log(temp.unitSelectionIndex);
 					return false;				
 				},
 
