@@ -301,7 +301,56 @@ h1 {
     font-size: 28px;
 }
 
-#playerHud {
+#coPowerBar,
+#coStatusHud {
+    border-radius: 0 60px 60px 8px;
+}
+
+#coStatusHud {
+    left:270px;
+    top: 90px;
+    position: absolute;
+    z-index: 11;
+    background: rgba(255, 0, 0, .8);
+    border: solid white 4px;
+    box-shadow: 1px 1px 8px 1px black inset, -1px 0 0 black, -1px 1px 0 black, 0 1px 0 black, -1px -1px 0 black, 0 -1px 0 black, 1px 1px 0 black, 1px 0 0 black, 1px -1px 0 black, 3px 4px 0 black;
     width:310px;
     height:128px;
+}
+
+#coStatusHud #gold {
+    padding-left: 25px;
+    padding-right: 25px;
+    font-size: 30px;
+    line-height: 40px;
+    position: absolute;
+    width: 256px;
+    height: 40px;
+    border: 1px solid black;
+    top:20px;
+    left: -20px;
+    border-radius: 50px;
+    background: yellow;
+}
+
+#gold li {
+    display: inline-block;
+}
+
+#currentGold {
+    float: right;
+}
+
+#optionsHud {
+    width: 256px;
+}
+
+#actionsHud {
+    width: 192px;
+}
+
+#coPowerBar {
+    overflow: hidden;
+    z-index: -1;
+    position: absolute;
 }

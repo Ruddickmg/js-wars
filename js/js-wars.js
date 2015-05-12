@@ -62,6 +62,23 @@ app = {
 	keys:[], // holds array of key pressed events
 	players:[], // array of players ( havent yet implimented player or turn system yet )
 
+	// player creates a player
+	player: function ( co, name, id ) { 
+
+		return {
+			// player id
+			id:id,
+			// player name
+			name: name,
+			// name of chosen co for this game
+			co:co,
+			// holds amount of special built up
+			special:0,
+			unitsLost:0,
+			gold:0
+		}
+	},
+
 	// set custom animation repo
 	setAnimationRepo: function ( repo ) {
 		this.animationRepo = repo;
@@ -432,9 +449,21 @@ app.calculate = function () {
 		return range;
 	};
 
+	var rightSide = function () {
+		var w = app.cursorCanvas.dimensions().width; // screen width
+		var x = app.settings.cursor.scroll.x; // map position relative to scroll
+		var c = app.settings.cursor.x;	// cursor location
+		if( c > ( w / 2 ) + x ) return true;
+		return false;
+	};
+
 	return {
 		path: function ( orig, dest, grid, mode ) {
 			return pathfinder( orig, dest, grid, mode );
+		},
+
+		isRightSide: function () {
+			return rightSide();
 		},
 
 		range: function () {
@@ -640,26 +669,76 @@ app.display = function () {
 
 
 	var options = function () {
-
+		var elements = { section:'optionsMenu', div:'options' };
+		displayInfo( app.settings.options, 'all', elements );
 	};
 
-	var coStatus = function () {
+	var coStatus = function ( player, side ) {
 
+		var exists = document.getElementById('coStatusHud');
+
+		app.temp.side = side;
+
+		// create container section, for the whole hud
+		var hud = document.createElement('section');
+			hud.setAttribute('id', 'coStatusHud');
+
+		// create a ul, to be the gold display
+		var gold = document.createElement('ul');
+			gold.setAttribute('id', 'gold');
+
+		// create a canvas to animate the special level	
+		var power = document.createElement('canvas');
+		var context = power.getContext(app.ctx);
+		power.setAttribute('id', 'coPowerBar');
+		power.setAttribute('width', 310 );
+		power.setAttribute('height', 128 );
+
+		// create the g for  gold
+		var g = document.createElement('li');
+		g.setAttribute('id', 'g');
+		g.innerHTML = 'G.';
+		gold.appendChild(g);
+
+		// add the amount of gold the player currently has
+		var playerGold = document.createElement('li');
+		playerGold.setAttribute( 'id', 'currentGold' );
+		playerGold.innerHTML = player.gold;
+		gold.appendChild(playerGold);
+
+		// put it all together and insert it into the dom
+		hud.appendChild(gold);
+		hud.appendChild(power);
+
+		if(exists){
+			exists.parentNode.replaceChild( hud, exists );
+		}else{
+			document.body.insertBefore( hud, document.getElementById('before'));
+		}			
+
+		// return the context for animation of the power bar
+		return context;
 	};
 
 	var action = function () {
-
+		var elements = { section:'actionHud', div:'actions' };
+		displayInfo( actions, allowed, elements );
 	};
 
 	var unitInfo = function ( building, unit, tag ) {
+
 		var elements = { section:'unitInfoScreen' , div:'unitInfo' }
 		var props = app.units[building][unit].properties;
 		var allowed = app.settings.unitInfoDisplay;
 		var properties = {};
 		var propName = Object.keys(props);
+
 		for ( var n = 0; n < propName.length; n += 1 ){
 			if( allowed.hasValue(propName[n]) ){
-				properties[propName[n]] = { property: propName[n].uc_first(), value: props[propName[n]] };
+				properties[propName[n]] = {
+					property: propName[n].uc_first(),
+					value: props[propName[n]]
+				};
 			}
 		}
 		displayInfo( properties, allowed, elements );
@@ -927,6 +1006,13 @@ app.display = function () {
 
 			// if the cursor has been moved, and a selection is active then get the display info for the new square
 			if ( app.temp.cursorMoved && app.temp.selectActive === false ) app.temp.hovered = displayHUD();
+			return this;
+		},
+
+		coStatus: function () {
+			var side = app.calculate.isRightSide();
+			if( app.temp.side !== side ) app.draw( coStatus( app.player('grant', 'grant', 1 ), side ));
+			return this;
 		},
 
 		path: function ( cursor ) {
@@ -1721,7 +1807,7 @@ app.animateEffects = function (){
 
 app.gameLoop = function () {
 	app.move.cursor(); // controls cursor and screen movement
-	app.display.hud(); // displays menus, huds, etc..
+	app.display.hud().coStatus(); // displays menus, huds, etc..
 	app.select.move(); // controls selection and interaction with map elements
 	app.build.units(); // controls building of units
 	app.select.exit(); // controls the ability to escape display menus 
