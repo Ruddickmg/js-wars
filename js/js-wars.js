@@ -57,13 +57,26 @@ app = {
 		path:[]
 	},
 
+	users:[{ co: 'G money', name:'grant'}, {co:'betick', name:'steve'}],
 	game:{},
 	cache:{},
 	keys:[], // holds array of key pressed events
 	players:[], // array of players ( havent yet implimented player or turn system yet )
 
-	// player creates a player
 	player: function ( co, name, id ) { 
+
+		var getHQ = function () {
+			var buildings = app.map.building;
+			for ( var b = 0; b < buildings.length; b += 1 ){
+				if( buildings[b].type === 'hq' && buildings[b].player === id ) {
+					return buildings[b];
+				}
+			}
+		};
+
+		var getCO = function () {
+			return app.co[co];
+		};
 
 		return {
 			// player id
@@ -72,18 +85,33 @@ app = {
 			name: name,
 			// name of chosen co for this game
 			co:co,
+
+			hq:getHQ(),
 			// holds amount of special built up
 			special:0,
 			unitsLost:0,
 			gold:0
-		}
+		};
 	},
 
 	// set custom animation repo
 	setAnimationRepo: function ( repo ) {
 		this.animationRepo = repo;
 		return this;
-	},
+	}
+};
+
+/* ---------------------------------------------------------------------------------------------------------*\
+	
+	app.start sets up the game with the players and other info necessary for the new game
+
+\* ---------------------------------------------------------------------------------------------------------*/
+
+app.start = function ( players ) {
+	for ( var p = 0; p < players.length; p += 1 ) {
+		app.players.push(app.player( players[p].co, players[p].name, p + 1 ));
+	}
+	app.temp.player = app.players[0];
 };
 
 /* ---------------------------------------------------------------------------------------------------------*\
@@ -221,6 +249,7 @@ app.undo = function () {
 			if ( app.temp.unitSelectionIndex ) delete app.temp.unitSelectionIndex;
 			if ( app.temp.prevIndex ) delete app.temp.prevIndex;
 			if ( app.temp.hide ) delete app.temp.hide;
+			if ( app.temp.optionsActive ) delete app.temp.optionsActive;
 		},
 
 		effect: function (effect) {
@@ -238,7 +267,7 @@ app.undo = function () {
 		},
 
 		buildUnitScreen: function () {
-			var removeArray = [ 'buildUnitScreen', 'unitInfoScreen'];
+			var removeArray = [ 'buildUnitScreen', 'unitInfoScreen', 'optionsMenu'];
 			for ( r = 0; r < removeArray.length; r += 1 ){
 				var remove = document.getElementById(removeArray[r]);
 				if ( remove ) remove.parentNode.removeChild(remove);
@@ -251,9 +280,53 @@ app.undo = function () {
 			this.buildUnitScreen();
 			this.selectElement();
 			this.effect('highlight').effect('path');
+			app.temp.cursorMoved = true; // refreshes the hud system to detect new unit on map
 			return this;
 		}
 	}
+}();
+
+/* ----------------------------------------------------------------------------------------------------------*\
+	
+	app.options handles the in game options selection, end turn, save etc.
+
+\* ----------------------------------------------------------------------------------------------------------*/
+
+app.options = function () {
+
+	var nextPlayer = function () {
+		if ( app.temp.player.id === app.players.length ) return app.players[0];
+		return app.players[app.temp.player.id];
+	};
+
+	var endTurn = function () {
+		var player = nextPlayer();
+		console.log(player);
+		app.move.screenToHQ(player);
+		app.temp.player = player;
+	};
+
+	return {
+		unit: function (){
+			alert('unit!');
+		},
+
+		intel: function (){
+			alert('intel');
+		},
+
+		options: function (){
+			alert('options');
+		},
+
+		save: function (){
+			alert('save');
+		},
+		end: function (){
+			endTurn();
+			return this;
+		}
+	};
 }();
 
 /* ----------------------------------------------------------------------------------------------------------*\
@@ -531,7 +604,6 @@ app.calculate = function () {
 \* ------------------------------------------------------------------------------------------------------*/
 
 app.select = function () {
-
 	var abs = Math.abs;
 
 	// moves a unit
@@ -582,26 +654,29 @@ app.select = function () {
 		if ( app.temp.selectActive === false && type !== 'terrain' && app.settings.keyMap.select in app.keys  ) {
 
 			// set properties for selected object
-			app.temp[objectClass[type]] = app.map[type][index];
-			app.temp[objectClass[type]].objectClass = type;
-			app.temp[objectClass[type]].ind = index;
-			app.undo.keyPress(app.keys.select);
+			if( !app.settings.notSelectable.hasValue(app.map[type][index].type)){
+				app.temp[objectClass[type]] = app.map[type][index];
+				app.temp[objectClass[type]].objectClass = type;
+				app.temp[objectClass[type]].ind = index;
+				app.undo.keyPress(app.keys.select);
 
-			// if the selected object is a unit, do unit stuff
-			if ( app.temp.selectedUnit ) {
-				app.temp.range = app.calculate.range(); // set range of movement
-				app.display.range(); // highlight rang of movemet
+				// if the selected object is a unit, do unit stuff
+				if ( app.temp.selectedUnit ) {
+					app.temp.range = app.calculate.range(); // set range of movement
+					app.display.range(); // highlight rang of movemet
 
-			// otherwise do building stuff
-			}else{
-				app.display.selectionInterface( app.temp.selectedBuilding.type, 'unitSelectionIndex' );
+				// otherwise do building stuff
+				}else{
+					app.display.selectionInterface( app.temp.selectedBuilding.type, 'unitSelectionIndex' );
+				}
+
+				// remove the terrain info display
+				app.undo.displayHUD();
+				app.temp.selectActive = true;
+				return true;
 			}
-
-			// remove the terrain info display
-			app.undo.displayHUD();
-			app.temp.selectActive = true;
-			return true;
 		}
+		return false;
 	};
 
 	// check what is occupying a specific point on the game map based on type
@@ -667,10 +742,14 @@ app.select = function () {
 
 app.display = function () {
 
-
-	var options = function () {
-		var elements = { section:'optionsMenu', div:'options' };
-		displayInfo( app.settings.options, 'all', elements );
+	var optionsHud = function () {
+		var elements = { section:'optionsMenu', div:'optionSelect' };
+		if ( displayInfo( app.settings.options, app.settings.optionsDisplay, elements, 'optionSelectionIndex' )){
+			app.temp.optionsActive = true;
+			app.temp.selectActive = true;
+			return true;
+		} 
+		return false;
 	};
 
 	var coStatus = function ( player, side ) {
@@ -720,9 +799,9 @@ app.display = function () {
 		return context;
 	};
 
-	var action = function () {
+	var action = function ( actions ) {
 		var elements = { section:'actionHud', div:'actions' };
-		displayInfo( actions, allowed, elements );
+		displayInfo( actions, app.settings.actionsDisplay, elements, 'actionSelectionIndex' );
 	};
 
 	var unitInfo = function ( building, unit, tag ) {
@@ -784,6 +863,7 @@ app.display = function () {
 			// insert build screen into dom
 			document.body.insertBefore(display, document.getElementById('before'));
 		}
+		return true;
 	};
 
 	var select = function ( tag, id, selected ) {
@@ -816,10 +896,10 @@ app.display = function () {
 				app.temp.selectedElement.style.backgroundColor = 'tan';
 
 				// display info on the currently hovered over element
-				unitInfo( selected, app.temp.selectedElement.id );
+				if( id === 'selectUnitScreen' ) unitInfo( selected, app.temp.selectedElement.id );
 
 				// check if there was a previous element that was hovered over
-				if ( app.temp.prevIndex ){
+				if ( app.temp.prevIndex ) {
 
 					// if there is then remove its highlighting
 					var prevElement = findElementByTag( tag, app.temp.prevIndex, elements );
@@ -830,7 +910,7 @@ app.display = function () {
 		}
 
 		if( app.settings.keyMap.select in app.keys && app.temp.selectedElement ){
-
+			app.undo.keyPress(app.settings.keyMap.select);
 			return app.temp.selectedElement.getAttribute('id');
 
 		}else if( app.settings.keyMap.down in app.keys ) {
@@ -902,7 +982,7 @@ app.display = function () {
 			var props = properties[i];
 
 			// only use properties specified in the displayed attributes array
-			if( displayedAttributes.hasValue( props )) {
+			if( displayedAttributes === '*' || displayedAttributes.hasValue( props )) {
 				var li = document.createElement('li');
 				li.setAttribute('class', props );
 				if( props === 'canvas' ){
@@ -1005,7 +1085,23 @@ app.display = function () {
 		hud: function () {
 
 			// if the cursor has been moved, and a selection is active then get the display info for the new square
-			if ( app.temp.cursorMoved && app.temp.selectActive === false ) app.temp.hovered = displayHUD();
+			if ( app.temp.cursorMoved && !app.temp.selectActive ) app.temp.hovered = displayHUD();
+			return this;
+		},
+
+		options: function () {
+			// if nothing is selected and the user presses the exit key, show them the options menu
+			if ( app.settings.keyMap.exit in app.keys && !app.temp.selectActive ){
+				optionsHud();
+				app.undo.keyPress(app.settings.keyMap.exit);
+			}
+			if ( app.temp.optionsActive ){
+				var selection = select( 'optionSelectionIndex', 'optionsMenu' );
+				if ( selection ){
+					app.options[selection]();
+					app.undo.all();
+				} 
+			}
 			return this;
 		},
 
@@ -1039,6 +1135,47 @@ app.move = function () {
 
 	var abs = Math.abs;
 
+	// refresh the postions on the screen of all the units/terrain/buildings/etc
+	var refresh = function(){ 
+		window.requestAnimationFrame(app.animateTerrain);
+		window.requestAnimationFrame(app.animateBuildings);
+		window.requestAnimationFrame(app.animateUnit);
+	};
+
+	var moveScreen = function ( axis, x, screenDim ) {
+
+		var delay = app.settings.scrollSpeed;
+		var screenZeroWidth = app.settings.cursor[axis] - screenDim;
+		var midScreen = screenDim / 2;
+		var lower = screenZeroWidth + midScreen;
+		
+		if ( !app.temp.scrollTimer ) app.temp.scrollTimer = new Date();
+
+		app.settings.cursor[axis] = x;
+
+		if ( x > screenDim ) {
+			while ( x >= screenDim - midScreen && screenDim <= app.map.dimensions[axis] ){
+				if ( new Date() - app.temp.scrollTimer > delay ){
+					screenDim += 1;
+					app.settings.cursor.scroll[axis] += 1;
+					refresh();
+					app.temp.scrollTimer = new Date();
+				}
+			}
+		} else if ( x < lower ) {
+			while ( x <= lower && screenZeroWidth >= 0 ){
+				if ( !app.temp.scrollTimer ) app.temp.scrollTimer = new Date();
+				if ( new Date() - app.temp.scrollTimer > delay ){
+					screenZeroWidth -= 1;
+					lower -= 1;
+					app.settings.cursor.scroll[axis] -= 1;
+					refresh();
+					app.temp.scrollTimer = new Date();
+				}
+			}
+		}
+	};
+
 	// checks if movement is within allowed range
 	var canMove = function (  move, range ) {
 
@@ -1053,13 +1190,6 @@ app.move = function () {
 
 	// creates scrolling effect allowing movement and map dimensions beyond screen dimensions
 	var scrol = function ( incriment,  axis, operation ) {
-
-		// refresh the postions on the screen of all the units/terrain/buildings/etc
-		var refresh = function(){ 
-			window.requestAnimationFrame(app.animateTerrain);
-			window.requestAnimationFrame(app.animateBuildings);
-			window.requestAnimationFrame(app.animateUnit);
-		};
 
 		var d = app.map.dimensions[axis]; // map dimensions
 		var screenDimensions = { x:15, y:10 }; // screen dimensions
@@ -1080,27 +1210,28 @@ app.move = function () {
 
 	var cursor = function ( axis, comparison, operation ) {
 		if ( !app.temp.selectedBuilding ){
+			if ( !app.temp.optionsActive ){
+				var cursor = app.settings.cursor[axis]; // cursor location
 
-			var cursor = app.settings.cursor[axis]; // cursor location
+				scrol( cursor + operation, axis, operation ); // handle scrolling
 
-			scrol( cursor + operation, axis, operation ); // handle scrolling
-
-			if( app.temp.selectedUnit ){
-				var result = limit( axis, operation );
-				if ( result ){
-					app.undo.effect('path');
-					app.display.path({ x: result.x, y: result.y });
-					return true;
-				}
-			}else if( operation < 0 ){
-				if ( cursor + operation >= comparison ){
-					app.settings.cursor[axis] += operation;
-					return true;
-				}
-			}else{
-				if ( cursor + operation <= comparison ){
-					app.settings.cursor[axis] += operation;
-					return true;
+				if( app.temp.selectedUnit ){
+					var result = limit( axis, operation );
+					if ( result ){
+						app.undo.effect('path');
+						app.display.path({ x: result.x, y: result.y });
+						return true;
+					}
+				}else if( operation < 0 ){
+					if ( cursor + operation >= comparison ){
+						app.settings.cursor[axis] += operation;
+						return true;
+					}
+				}else{
+					if ( cursor + operation <= comparison ){
+						app.settings.cursor[axis] += operation;
+						return true;
+					}
 				}
 			}
 		}
@@ -1123,6 +1254,18 @@ app.move = function () {
 	};
 
 	return {
+
+		// move screen to current players hq
+		screenToHQ: function ( player ){
+			var sd = app.cursorCanvas.dimensions();
+			var screenWidth = sd.width / 64;
+			var screenHeight = sd.height / 64;
+			var x = player.hq.x;
+			var y = player.hq.y;
+
+			moveScreen('x', x, screenWidth);
+			moveScreen('y', y, screenHeight);
+		},
 
 		// keep track of cursor position
 		cursor: function () {
@@ -1171,6 +1314,9 @@ app.move = function () {
 
 app.settings = {
 
+	// speed at which the screen will move to next hq at the changinf of turns
+	scrollSpeed: 50,
+
 	// types to look through when determining terrains effect on unit movement
 	obsticleTypes: ['unit', 'terrain'],
 
@@ -1201,6 +1347,14 @@ app.settings = {
 		boat: ['water', 'building']
 	},
 
+	options:{ 
+		unit:{ name:'Unit' }, 
+		intel:{ name:'Intel'}, 
+		options:{ name:'Options' }, 
+		save:{ name:'Save' }, 
+		end:{ name:'End'} 
+	},
+
 	// dimensions of diplay hud
 	hudWidth: 120,
 	hudHeight: 200,
@@ -1212,8 +1366,16 @@ app.settings = {
 	// unit info attributes for display
 	unitInfoDisplay: [ 'movement', 'vision', 'fuel','weapon1', 'weapon2', 'property', 'value' ],
 
+	optionsDisplay: [ 'options', 'unit', 'intel', 'save', 'end' ],
+
 	// which attributes of units will be displayed on unit selection/purchase/building hud
 	unitSelectionDisplay: [ 'name', 'cost' ],
+
+	// options attributes for displ
+	optionsDisplay: [ 'options', 'unit', 'intel', 'save', 'end', 'name' ],
+
+	// map elements that cannot be selected
+	notSelectable: ['terrain', 'hq', 'city'],
 	
 	// cursor settings
 	cursor: {
@@ -1280,8 +1442,8 @@ app.map = {
 		{x:9,y:6, type:'tree', name:'Woods', obsticle:'wood', def:3},
 	],
 	building: [
-		//{ x:0, y:5, type:'base', player:1, color: 'red' , def:4},
-		//{ x:15, y:5, type:'base', player:2, color: 'blue' , def:4},
+		{ x:0, y:5, type:'hq', name:'HQ', obsticle:'building', player:1, color: 'red' , def:4},
+		{ x:20, y:5, type:'hq', name:'HQ', obsticle:'building', player:2, color: 'blue' , def:4},
 		{ x:0,y:4, type:'base', name:'Base', obsticle:'building', player:1,color:'red', def:4},
 		{ x:15,y:4, type:'base', name:'Base', obsticle:'building', player:2, color:'blue', def:4}
 	],
@@ -1807,7 +1969,7 @@ app.animateEffects = function (){
 
 app.gameLoop = function () {
 	app.move.cursor(); // controls cursor and screen movement
-	app.display.hud().coStatus(); // displays menus, huds, etc..
+	app.display.hud().coStatus().options(); // displays menus, huds, etc..
 	app.select.move(); // controls selection and interaction with map elements
 	app.build.units(); // controls building of units
 	app.select.exit(); // controls the ability to escape display menus 
@@ -1821,6 +1983,8 @@ app.gameLoop = function () {
 \*---------------------------------------------------------------------------------------------------------*/
 
 app.run = function () {
+	app.start(app.users);
+	console.log(app.players);
 	app.gameLoop();
 	app.animateBackground();
 	app.animateTerrain();
@@ -2080,6 +2244,16 @@ app.animationRepo = function ( width, height ) {
 		},
 		base: function (canv, m) {
 			canv.fillStyle = "rgba(0,0,200,0.9)";
+			canv.beginPath();
+			canv.lineTo( m.r(m.w - 5), m.y - 5 );
+			canv.lineTo( m.r(m.w - 5), m.u(m.h + 5));
+			canv.lineTo(m.x -5,m.u(m.h + 5));
+			canv.lineTo(m.x -5,m.y - 5);
+			canv.fill();
+			return canv;
+		},
+		hq: function (canv, m) {
+			canv.fillStyle = "rgba(80,0,20,0.9)";
 			canv.beginPath();
 			canv.lineTo( m.r(m.w - 5), m.y - 5 );
 			canv.lineTo( m.r(m.w - 5), m.u(m.h + 5));
