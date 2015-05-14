@@ -112,6 +112,9 @@ app.start = function ( players ) {
 		app.players.push(app.player( players[p].co, players[p].name, p + 1 ));
 	}
 	app.temp.player = app.players[0];
+	app.temp.player.gold = app.calculate.income(app.temp.player);
+	if(app.temp.player) return true;
+	return false;
 };
 
 /* ---------------------------------------------------------------------------------------------------------*\
@@ -195,13 +198,17 @@ app.init = function (element, context) {
 app.build = function () { 
 
 	// create new unit if/after one is selected
-	var createUnit = function ( building, unitType, player ) {
+	var createUnit = function ( building, unitType, player, cost ) {
 		var newUnit = { x: building.x, y: building.y, obsticle: 'unit', player: player };
-		var unit = app.units[building.type][unitType].properties;
-		var properties = Object.keys( unit );
+		var unit = app.units[building.type][unitType];
+		var cost = unit.cost;
+		app.temp.player.gold -= cost;
+		var unitProperties = unit.properties;
+		var properties = Object.keys( unitProperties );
 		for ( var p = 0; p < properties.length; p += 1 ) {
-			newUnit[properties[p]] = unit[properties[p]]; // this may cause issues if pointers are maintained to original object properties, probly not, but keep en eye out
+			newUnit[properties[p]] = unitProperties[properties[p]]; // this may cause issues if pointers are maintained to original object properties, probly not, but keep en eye out
 		}
+		newUnit.movement = 0;
 		return newUnit;
 	};
 
@@ -300,8 +307,10 @@ app.options = function () {
 
 	var endTurn = function () {
 		var player = nextPlayer();
-		app.move.screenToHQ(player);
 		app.temp.player = player;
+		app.move.screenToHQ(player);
+		app.move.refresh(player);
+		app.temp.player.gold += app.calculate.income(player);
 	};
 
 	return {
@@ -320,11 +329,62 @@ app.options = function () {
 		save: function (){
 			alert('save');
 		},
+
 		end: function (){
 			endTurn();
 			return this;
 		}
 	};
+}();
+
+/* ----------------------------------------------------------------------------------------------------------*\
+	
+	app.actions handles actions that a unit can take
+
+\* ----------------------------------------------------------------------------------------------------------*/
+
+app.actions = function () {
+
+	var attack = function ( selected ) {
+		var attackable = [];
+		var x = selected.x;
+		var y = selected.y;
+		var neighbors = [{ x: x + 1, y: y }, { x: x, y: y + 1 }, { x: x - 1, y: y }, { x: x, y: y - 1 }];
+		var unit = app.map.unit;
+		for ( var n = 0; n < neighbors.length; n += 1) {
+			for ( var u = 0; u < unit.length; u += 1 ) {
+				if( neighbors[n].x === unit[u].x && neighbors[n].y === unit[u].y && unit.player !== player.id && selected.canAttack.hasValue(unit.type)) {
+					attackable.push(unit);
+				}
+			}
+		}
+		if ( attackable ) return attackable;
+		return false;
+	};
+
+	var capture = function ( selected ) {
+		buildings = app.map.building;
+		for(var b = 0; b < buildings.length; b += 1 ){
+			building = buildings[b]
+			if ( building.player !== selected.player && building.x === selected.x && building.y === selected.y ){
+				return app.map.building[b];
+			}
+		}
+		return false;
+	};
+
+	return {
+		check: function ( selected ) {
+			var options = {};
+			var attackable = attack( selected );
+			var capturable = capture( selected );
+			if ( attackable[0] ) options.attack = attackable;
+			if( capturable ) options.capture = true;
+			if ( capturable || attackable[0] ) options.wait = true;
+			if( options.wait ) return options;
+			return false;
+		}
+	}
 }();
 
 /* ----------------------------------------------------------------------------------------------------------*\
@@ -348,7 +408,7 @@ app.calculate = function () {
 	var offset = function (off, orig) {
 		var ret = [];
 		var inRange = function( obj ){
-			if( abs( obj.x - orig.x) + abs( obj.y - orig.y ) <= orig.movement && obj.x >= 0 && obj.y >= 0 ){
+			if( abs( obj.x - orig.x ) + abs( obj.y - orig.y ) <= orig.movement && obj.x >= 0 && obj.y >= 0 ){
 				return true;
 			}
 			return false;
@@ -528,6 +588,18 @@ app.calculate = function () {
 		return false;
 	};
 
+	var calcIncome = function ( player ) {
+		var income = app.settings.income;
+		var owner, count = 0;
+		var buildings = app.map.building;
+		for ( var b = 0; b < buildings.length; b += 1 ) {
+			if ( buildings[b].player === player ) {
+				count += 1;
+			}
+		}
+		return count * income;
+	};
+
 	return {
 		path: function ( orig, dest, grid, mode ) {
 			return pathfinder( orig, dest, grid, mode );
@@ -535,6 +607,10 @@ app.calculate = function () {
 
 		isRightSide: function () {
 			return rightSide();
+		},
+
+		income: function ( player ) {
+			return calcIncome(player.id);
 		},
 
 		range: function () {
@@ -602,19 +678,26 @@ app.calculate = function () {
 \* ------------------------------------------------------------------------------------------------------*/
 
 app.select = function () {
+
 	var abs = Math.abs;
 
 	// moves a unit
 	var move = function ( type, index ) {
 		if ( app.temp.selectedUnit && app.temp.selectActive && app.settings.keyMap.select in app.keys ){
+			var unit = app.temp.selectedUnit;
 			var xmove = abs( app.temp.selectedUnit.x - app.settings.cursor.x );
 			var ymove = abs( app.temp.selectedUnit.y - app.settings.cursor.y );
-			app.map.unit[app.temp.selectedUnit.ind].movement -= xmove + ymove;
+			app.map.unit[unit.ind].movement -= xmove + ymove;
 			app.map[type][index].x = app.settings.cursor.x;
 			app.map[type][index].y = app.settings.cursor.y;
 			app.undo.keyPress();
-			app.undo.selectElement();
 			app.undo.effect('highlight').effect('path');
+			var options = app.actions.check( unit );
+			if ( options ) {
+				app.display.actions(options);
+			}else{
+				app.undo.selectElement();
+			}
 			return true;
 		}
 		return false;
@@ -1107,7 +1190,7 @@ app.display = function () {
 
 		coStatus: function () {
 			var side = app.calculate.isRightSide();
-			if( app.temp.side !== side ) app.draw( coStatus( app.player('grant', 'grant', 1 ), side ));
+			coStatus( app.temp.player );
 			return this;
 		},
 
@@ -1135,8 +1218,25 @@ app.move = function () {
 
 	var abs = Math.abs;
 
-	// refresh the postions on the screen of all the units/terrain/buildings/etc
-	var refresh = function(){ 
+	var refreshMovement = function ( player ){
+		var unit;
+		var units = app.map.unit;
+
+		// used for accessing the correct building array via what type of transportation the unit uses
+		var ports = { air:'airport', foot:'base', wheels:'base', boat:'seaport' };
+		for ( var u = 0; u < units.length; u += 1 ){
+			unit = units[u];
+			// check for units that belong to the current player
+			if( unit.player === player ){
+				// add the original movement allowance to each unit on the board belonging to the current player
+				app.map.unit[u].movement = app.units[ports[unit.transportaion]][unit.type].properties.movement;
+			}
+		}
+		return true;
+	};
+
+	// screenRefresh the postions on the screen of all the units/terrain/buildings/etc
+	var screenRefresh = function(){ 
 		window.requestAnimationFrame(app.animateTerrain);
 		window.requestAnimationFrame(app.animateBuildings);
 		window.requestAnimationFrame(app.animateUnit);
@@ -1163,7 +1263,7 @@ app.move = function () {
 				setTimeout( function () {   // set delay time
 					screenDim += 1;
 					app.settings.cursor.scroll[axis] += 1;
-					refresh();
+					screenRefresh();
 					// if the distance between the center screen position and the hq has not been traveled
 					// then keep going, or if the screen has reached the limit of the map dimensions then stop
 			 		if ( --i && screenDim <= dim ) loopDelay( i, dim ); 
@@ -1176,7 +1276,7 @@ app.move = function () {
 				setTimeout( function () {   // set delay time
 					screenZeroWidth -= 1;
 					app.settings.cursor.scroll[axis] -= 1;
-					refresh();
+					screenRefresh();
 			 		if ( --i && screenZeroWidth > dim ) loopDelay2( i, dim ); 
 				}, delay) // <--- delay time
 			})( lower - x, 0 );
@@ -1206,12 +1306,12 @@ app.move = function () {
 		// if the resulting movement is greater then the screen size but within the dimensions of the map then scroll
 		if ( incriment >= s + c && incriment <= d ){
 			app.settings.cursor.scroll[axis] += operation;
-			refresh();
+			screenRefresh();
 
 		// if the resulting movement is less then the screen size but within the dimensions of the map then scroll back
 		}else if( incriment < c && incriment >= 0 ){
 			app.settings.cursor.scroll[axis] += operation;
-			refresh();
+			screenRefresh();
 		}
 	};
 
@@ -1262,6 +1362,10 @@ app.move = function () {
 
 	return {
 
+		refresh: function ( player ) {
+			return refreshMovement(player.id);
+		},
+
 		// move screen to current players hq
 		screenToHQ: function ( player ) {
 			var sd = app.cursorCanvas.dimensions();
@@ -1276,37 +1380,28 @@ app.move = function () {
 
 		// keep track of cursor position
 		cursor: function () {
-
-			// cursor speed
-			var delay = !app.settings.cursor.speed ? 50 : app.settings.cursor.speed;
-
-			if ( !app.cursorTimeKeeper ) {
-				app.cursorTimeKeeper = new Date();
-			}
-
-			var now = new Date() - app.cursorTimeKeeper;
-
-			if ( now > delay ){
-				// map dimensions
+			if ( !app.temp.selectedBuilding && !app.temp.optionsActive ){
 				var d =  app.map.dimensions; 
 
 				if (app.settings.keyMap.up in app.keys) { // Player holding up
-
+					app.undo.keyPress(app.settings.keyMap.up);
 				// if the cursor has moved store a temporary varibale that expresses this @ app.temp.cursorMoved
 					app.temp.cursorMoved = cursor('y',0,-1);
 				}
 				if (app.settings.keyMap.down in app.keys) { // Player holding down
+					app.undo.keyPress(app.settings.keyMap.down);
 					app.temp.cursorMoved = cursor('y',d.y, 1);
 				}
 				if (app.settings.keyMap.left in app.keys) { // Player holding left
+					app.undo.keyPress(app.settings.keyMap.left);
 					app.temp.cursorMoved = cursor('x',0,-1);
 				}
 				if ( app.settings.keyMap.right in app.keys) { // Player holding right
+					app.undo.keyPress(app.settings.keyMap.right);
 					app.temp.cursorMoved = cursor('x',d.x, 1);
 				}
 				window.requestAnimationFrame(app.animateCursor);
-				app.cursorTimeKeeper = new Date();
-			}	
+			}
 			return this;
 		}
 	};
@@ -1343,6 +1438,9 @@ app.settings = {
 		}
 	},
 
+	// amount of income per building per turn
+	income: 1000,
+
 	// rules on how attacks will be handled between unit types
 	attackStats: {},
 
@@ -1354,12 +1452,12 @@ app.settings = {
 		boat: ['water', 'building']
 	},
 
-	options:{ 
-		unit:{ name:'Unit' }, 
-		intel:{ name:'Intel'}, 
-		options:{ name:'Options' }, 
-		save:{ name:'Save' }, 
-		end:{ name:'End'} 
+	options:{
+		unit:{ name:'Unit' },
+		intel:{ name:'Intel'},
+		options:{ name:'Options' },
+		save:{ name:'Save' },
+		end:{ name:'End'}
 	},
 
 	// dimensions of diplay hud
@@ -1455,9 +1553,7 @@ app.map = {
 		{ x:0,y:4, type:'base', name:'Base', obsticle:'building', player:1,color:'red', def:4},
 		{ x:15,y:4, type:'base', name:'Base', obsticle:'building', player:2, color:'blue', def:4}
 	],
-	unit:[
-		{ x:2, y:5, type:'infantry', name:'Infantry', obsticle:'unit', movable: app.settings.movable.foot, movement:3, player: 1, health:10, ammo:10, fuel:99, weapon1:{}, weapon2:{}, id: 1 }
-	]
+	unit:[]
 };
 
 /* --------------------------------------------------------------------------------------*\
@@ -1480,6 +1576,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.foot, 
+				transportaion:'foot',
 				health:10, 
 				ammo:10 ,
 				fuel:99,
@@ -1503,11 +1600,12 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.foot,
+				transportaion:'foot',
 				health:10,
 				ammo:10 ,
 				fuel:70,
 				weapon1:{},
-				weapon2:{}, 
+				weapon2:{},
 			},
 			name: 'Mech',
 			cost: 3000
@@ -1523,6 +1621,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.wheels,
+				transportaion:'wheels',
 				health:10,
 				ammo:10 ,
 				fuel:80,
@@ -1543,6 +1642,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.wheels,
+				transportaion:'wheels',
 				health:10,
 				fuel:70,
 				weapon1:{},
@@ -1562,6 +1662,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.wheels,
+				transportaion:'wheels',
 				health:10,
 				ammo:10 ,
 				fuel:60,
@@ -1582,6 +1683,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.wheels,
+				transportaion:'wheels',
 				health:10,
 				ammo:10 ,
 				fuel:60,
@@ -1602,6 +1704,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.wheels,
+				transportaion:'wheels',
 				health:10,
 				ammo:10 ,
 				fuel:50,
@@ -1622,6 +1725,7 @@ app.units = {
 					hi: 3 
 				},
 				movable: app.settings.movable.wheels,
+				transportaion:'wheels',
 				health:10,
 				ammo:10 ,
 				fuel:50,
@@ -1642,6 +1746,7 @@ app.units = {
 					hi: 5 
 				},
 				movable: app.settings.movable.wheels,
+				transportaion:'wheels',
 				health:10,
 				ammo:10 ,
 				fuel:50,
@@ -1662,6 +1767,7 @@ app.units = {
 					hi: 5 
 				},
 				movable: app.settings.movable.wheels,
+				transportaion:'wheels',
 				health:10,
 				ammo:10 ,
 				fuel:50,
@@ -1682,6 +1788,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.wheels,
+				transportaion:'wheels',
 				health:10,
 				ammo:10 ,
 				fuel:99,
@@ -1704,6 +1811,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.flight,
+				transportaion:'flight',
 				health:10,
 				fuel:99,
 				weapon1:{},
@@ -1724,6 +1832,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.flight,
+				transportaion:'flight',
 				health:10,
 				ammo:10 ,
 				fuel:99,
@@ -1745,6 +1854,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.flight,
+				transportaion:'flight',
 				health:10,
 				ammo:10 ,
 				fuel:99,
@@ -1766,6 +1876,7 @@ app.units = {
 					hi: 1 
 				},
 				movable: app.settings.movable.flight,
+				transportaion:'flight',
 				health:10,
 				ammo:10 ,
 				fuel:99,
@@ -1788,7 +1899,8 @@ app.units = {
 					lo: 1,
 					hi: 1 
 				},
-				movable: app.settings.movable.flight,
+				movable: app.settings.movable.boat,
+				transportaion:'boat',
 				health:10,
 				fuel:99,
 				weapon1:{},
@@ -1808,7 +1920,8 @@ app.units = {
 					lo: 1,
 					hi: 1 
 				},
-				movable: app.settings.movable.flight,
+				movable: app.settings.movable.boat,
+				transportaion:'boat',
 				health:10, ammo:10 ,
 				fuel:99,
 				weapon1:{},
@@ -1827,7 +1940,8 @@ app.units = {
 					lo: 1,
 					hi: 1 
 				},
-				movable: app.settings.movable.flight,
+				movable: app.settings.movable.boat,
+				transportaion:'boat',
 				health:10,
 				ammo:10,
 				fuel:60,
@@ -1849,7 +1963,8 @@ app.units = {
 					lo: 2,
 					hi: 6 
 				},
-				movable: app.settings.movable.flight,
+				movable: app.settings.movable.boat,
+				transportaion:'boat',
 				health:10,
 				ammo:10,
 				fuel:99,
