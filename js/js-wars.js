@@ -301,7 +301,6 @@ app.options = function () {
 
 	var endTurn = function () {
 		var player = nextPlayer();
-		console.log(player);
 		app.move.screenToHQ(player);
 		app.temp.player = player;
 	};
@@ -1145,34 +1144,41 @@ app.move = function () {
 	var moveScreen = function ( axis, x, screenDim ) {
 
 		var delay = app.settings.scrollSpeed;
-		var screenZeroWidth = app.settings.cursor[axis] - screenDim;
+		var screenZeroWidth = app.settings.cursor.scroll[axis];
 		var midScreen = screenDim / 2;
 		var lower = screenZeroWidth + midScreen;
+		var scroll = app.settings.cursor.scroll[axis] + screenDim;
+		var dimensions = app.map.dimensions[axis];
 		
 		if ( !app.temp.scrollTimer ) app.temp.scrollTimer = new Date();
 
 		app.settings.cursor[axis] = x;
 
-		if ( x > screenDim ) {
-			while ( x >= screenDim - midScreen && screenDim <= app.map.dimensions[axis] ){
-				if ( new Date() - app.temp.scrollTimer > delay ){
+		// if the hq is located to the right or below the center of the screen then move there
+		if ( x > scroll - midScreen ) {
+			// loop with a recursive function so that the time can be delayed
+			// creating the effect of moving the screen rather then immediately jumping to the hq
+			( function loopDelay (i, dim) {          
+				setTimeout( function () {   // set delay time
 					screenDim += 1;
 					app.settings.cursor.scroll[axis] += 1;
 					refresh();
-					app.temp.scrollTimer = new Date();
-				}
-			}
+					// if the distance between the center screen position and the hq has not been traveled
+					// then keep going, or if the screen has reached the limit of the map dimensions then stop
+			 		if ( --i && screenDim <= dim ) loopDelay( i, dim ); 
+				}, delay) // <--- delay time
+			})( x - ( scroll - midScreen ), dimensions );
+
+		// if its to the left or above the screen then move the opposite direction
 		} else if ( x < lower ) {
-			while ( x <= lower && screenZeroWidth >= 0 ){
-				if ( !app.temp.scrollTimer ) app.temp.scrollTimer = new Date();
-				if ( new Date() - app.temp.scrollTimer > delay ){
+			( function loopDelay2 (i, dim) {          
+				setTimeout( function () {   // set delay time
 					screenZeroWidth -= 1;
-					lower -= 1;
 					app.settings.cursor.scroll[axis] -= 1;
 					refresh();
-					app.temp.scrollTimer = new Date();
-				}
-			}
+			 		if ( --i && screenZeroWidth > dim ) loopDelay2( i, dim ); 
+				}, delay) // <--- delay time
+			})( lower - x, 0 );
 		}
 	};
 
@@ -1256,7 +1262,7 @@ app.move = function () {
 	return {
 
 		// move screen to current players hq
-		screenToHQ: function ( player ){
+		screenToHQ: function ( player ) {
 			var sd = app.cursorCanvas.dimensions();
 			var screenWidth = sd.width / 64;
 			var screenHeight = sd.height / 64;
@@ -1366,6 +1372,7 @@ app.settings = {
 	// unit info attributes for display
 	unitInfoDisplay: [ 'movement', 'vision', 'fuel','weapon1', 'weapon2', 'property', 'value' ],
 
+	// options displayed
 	optionsDisplay: [ 'options', 'unit', 'intel', 'save', 'end' ],
 
 	// which attributes of units will be displayed on unit selection/purchase/building hud
@@ -1956,7 +1963,7 @@ app.animateCursor = function () {
 	app.cursorCanvas.setAnimations(app.drawCursor).render(); 
 };
 
-app.animateEffects = function (){
+app.animateEffects = function () {
 	app.effectsCanvas.setAnimations(app.drawEffects).render();
 };
 
@@ -1984,7 +1991,6 @@ app.gameLoop = function () {
 
 app.run = function () {
 	app.start(app.users);
-	console.log(app.players);
 	app.gameLoop();
 	app.animateBackground();
 	app.animateTerrain();
@@ -2015,7 +2021,7 @@ app.draw = function ( canvas, dimensions, base ) {
 		var width = dimensions.width;
 		var height = dimensions.height;	
 		var w = width / 15;
-		var h = height / 10;		
+		var h = height / 10;
 	}
 
 	var animationObjects = app.animationRepo( width, height );
@@ -2127,7 +2133,7 @@ app.draw = function ( canvas, dimensions, base ) {
 				// var s modifys the coordinates of the drawn objects to allow scrolling behavior
 				// subtract the amount that the cursor has moved beyond the screen width from the 
 				// coordinates x and y axis, making them appear to move in the opposite directon
-				s.x = ( coordinates[c].x * w ) - ( scroll.x * w );                                                                                                                                                                                                                                                                       
+				s.x = ( coordinates[c].x * w ) - ( scroll.x * w );
 				s.y = ( coordinates[c].y * h ) - ( scroll.y * h );
 
 				// only display coordinates that are withing the visable screen
@@ -2145,7 +2151,9 @@ app.draw = function ( canvas, dimensions, base ) {
 						// draw the cached image to the canvas at the coordinates minus 
 						// its offset to make sure its centered in the correct position
 						canvas.drawImage( app.cache[name], s.x - smallX, s.y - smallY );
+
 					}else{
+
 						// if it is not cached then draw the image normally at its specified coordinates
 						animationObjects[name](canvas, setPosition( s.x, s.y ));
 					}
