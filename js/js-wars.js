@@ -206,13 +206,12 @@ app.build = function () {
 	};
 
 	return {
-		units: function (player) {
-			var player = 1; // temporary
+		units: function () {
 			var building = app.temp.selectedBuilding;
 			if ( building ) {
 				var unit = app.display.select( 'unitSelectionIndex', 'selectUnitScreen', building.type );
 				if ( unit ) {
-					app.map.unit.push( createUnit( building, unit, player )); // player still needs to be figured out, change this when it is
+					app.map.unit.push( createUnit( building, unit, app.temp.player.id )); // player still needs to be figured out, change this when it is
 					app.undo.all(); // removes the selection screen and variables created during its existance
 					app.temp.cursorMoved = true; // refreshes the hud system to detect new unit on map;
 					window.requestAnimationFrame(app.animateUnit);
@@ -652,9 +651,11 @@ app.select = function () {
 		// then do the following when the select key is pressed
 		if ( app.temp.selectActive === false && type !== 'terrain' && app.settings.keyMap.select in app.keys  ) {
 
+			attempt = app.map[type][index];
+
 			// set properties for selected object
-			if( !app.settings.notSelectable.hasValue(app.map[type][index].type)){
-				app.temp[objectClass[type]] = app.map[type][index];
+			if( !app.settings.notSelectable.hasValue(attempt.type) && attempt.player === app.temp.player.id ){
+				app.temp[objectClass[type]] = attempt;
 				app.temp[objectClass[type]].objectClass = type;
 				app.temp[objectClass[type]].ind = index;
 				app.undo.keyPress(app.keys.select);
