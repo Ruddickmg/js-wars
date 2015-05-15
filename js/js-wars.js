@@ -218,7 +218,7 @@ app.init = function (element, context) {
 app.build = function () { 
 
 	// create new unit if/after one is selected
-	var createUnit = function ( building, unitType ) {
+	var createUnit = function ( building, unitType, player ) {
 
 		var currentPlayer = app.temp.player;
 
@@ -1263,12 +1263,14 @@ app.display = function () {
 
 				// increment to next index
 				app.temp.unitSelectionIndex += 1;
+				console.log(app.keys);
 			}
 			undo(key.down);
 
 		// same as above, but up
 		}else if( key.up in app.keys ) {
 			if( index > 1 ) app.temp.unitSelectionIndex -= 1;
+			console.log(app.keys);
 			undo(key.up);
 		}
 		return false;				
