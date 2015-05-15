@@ -186,7 +186,7 @@ h1 {
     position: absolute;
 }
 
-#actionsHud,
+#actionHud,
 #optionsMenu,
 #unitInfoScreen,
 #buildUnitScreen {
@@ -232,7 +232,7 @@ h1 {
     border-bottom:solid red 12px;
 }
 
-#actionsHud ul,
+#actionHud ul,
 #optionSelect ul,
 #selectUnitScreen ul {
     height:64px;
@@ -362,7 +362,7 @@ h1 {
     top: 100px;
 }
 
-#actionsHud {
+#actionHud {
     width: 192px;
 }
 

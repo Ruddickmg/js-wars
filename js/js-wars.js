@@ -63,21 +63,32 @@ app = {
 	keys:[], // holds array of key pressed events
 	players:[], // array of players ( havent yet implimented player or turn system yet )
 
+	// create a new player object
 	player: function ( co, name, id ) { 
 
+		// assign head quarters to player
 		var getHQ = function () {
+
+			// list off all buildings on map
 			var buildings = app.map.building;
+
 			for ( var b = 0; b < buildings.length; b += 1 ){
+
+				// if the building shares an id with the player and is an hq then it is theirs
 				if( buildings[b].type === 'hq' && buildings[b].player === id ) {
+
+					// return the building
 					return buildings[b];
 				}
 			}
 		};
 
+		// get look st the co list and add the proper co
 		var getCO = function () {
 			return app.co[co];
 		};
 
+		// return the player object
 		return {
 			// player id
 			id:id,
@@ -94,7 +105,7 @@ app = {
 		};
 	},
 
-	// set custom animation repo
+	// set custom animation repo if desired
 	setAnimationRepo: function ( repo ) {
 		this.animationRepo = repo;
 		return this;
@@ -107,13 +118,22 @@ app = {
 
 \* ---------------------------------------------------------------------------------------------------------*/
 
+// initiate game by getting all the players, creating objects for them and assigning player one for first turn
 app.start = function ( players ) {
 	for ( var p = 0; p < players.length; p += 1 ) {
+
+		// add each player to the players array
 		app.players.push(app.player( players[p].co, players[p].name, p + 1 ));
 	}
+
+	// assign the first player as the current player 
 	app.temp.player = app.players[0];
-	app.temp.player.gold = app.calculate.income(app.temp.player);
-	if(app.temp.player) return true;
+
+	// set inital gold amount
+	app.temp.player.gold = app.calculate.income( app.temp.player );
+
+	// if the current player has been assigned return true
+	if( app.temp.player ) return true;
 	return false;
 };
 
@@ -150,7 +170,7 @@ app.init = function (element, context) {
 		
 		return {
 
-			// set the context for tvarhe animation, defaults to 2d
+			// set the context for the animation, defaults to 2d
 			setContext: function (context) {
 				this.context = context;
 				return this;
@@ -164,13 +184,13 @@ app.init = function (element, context) {
 
 			// draw to canvas
 			render: function ( loop, gridSquareSize ){ // pass a function to loop if you want it to loop, otherwise it will render only once, or on demand
-				if( !this.animations ){
+				if( !this.animations ){ // throw error if there are no animations
 					throw new Error('No animations were specified');
 					return false;
 				}
 				screenClear();
 				var drawings = app.draw( animate, { width: screenWidth, height: screenHeight }, gridSquareSize);
-				this.animations( drawings);
+				this.animations( drawings );
 				if ( loop ) window.requestAnimationFrame(loop);
 			},
 
@@ -198,30 +218,62 @@ app.init = function (element, context) {
 app.build = function () { 
 
 	// create new unit if/after one is selected
-	var createUnit = function ( building, unitType, player, cost ) {
+	var createUnit = function ( building, unitType ) {
+
+		var currentPlayer = app.temp.player;
+
+		// creaate a new unit object with input
 		var newUnit = { x: building.x, y: building.y, obsticle: 'unit', player: player };
+
+		// get the requested unit types information from its reposetory
 		var unit = app.units[building.type][unitType];
+
+		// get the cost of the selected unit type
 		var cost = unit.cost;
-		app.temp.player.gold -= cost;
-		var unitProperties = unit.properties;
-		var properties = Object.keys( unitProperties );
-		for ( var p = 0; p < properties.length; p += 1 ) {
-			newUnit[properties[p]] = unitProperties[properties[p]]; // this may cause issues if pointers are maintained to original object properties, probly not, but keep en eye out
+
+		// subtract the cost of the unit from the current players gold if they have enough
+		if ( currentPlayer.gold - cost > 0  ){
+			currentPlayer.gold -= cost;
 		}
+
+		// get the properties of the requested unit type
+		var unitProperties = unit.properties;
+
+		// get the names of the properties
+		var properties = Object.keys( unitProperties );
+
+		for ( var p = 0; p < properties.length; p += 1 ) {
+
+			// go through and add each property to the new unit object
+			newUnit[properties[p]] = unitProperties[properties[p]]; // this may cause issues if pointers to original object properties persist, probly not, but keep en eye out
+		}
+
+		// set movement to zero for newly created units
 		newUnit.movement = 0;
+
+		// return the new unit
 		return newUnit;
 	};
 
 	return {
+
+		// select and create units
 		units: function () {
+			// get the building types
 			var building = app.temp.selectedBuilding;
 			if ( building ) {
+
+				// display the unit select menu
 				var unit = app.display.select( 'unitSelectionIndex', 'selectUnitScreen', building.type );
+
+				// if a unit has been selected then create it
 				if ( unit ) {
-					app.map.unit.push( createUnit( building, unit, app.temp.player.id )); // player still needs to be figured out, change this when it is
+
+					// create and add the new unit to the map
+					app.map.unit.push( createUnit( building, unit, app.temp.player.id ));
 					app.undo.all(); // removes the selection screen and variables created during its existance
 					app.temp.cursorMoved = true; // refreshes the hud system to detect new unit on map;
-					window.requestAnimationFrame(app.animateUnit);
+					window.requestAnimationFrame(app.animateUnit); // animate the changes
 				}
 			}
 			return this;
@@ -237,12 +289,25 @@ app.build = function () {
 
 app.undo = function () {
 
+	// show undoes a hide of an element
+	var show = function (hiddenElement) {
+
+		// get hidden element
+		var hidden = document.getElementById(hiddenElement);
+
+		// show element
+		if (hidden) hidden.style.display = '';
+	};
+
 	return {
+
+		// remove a pressed key from the keys array
 		keyPress: function (key) {
 			if (app.keys.splice(key,1)) return true
 			return false;
 		},
 
+		// undo the selection of map elements
 		selectElement: function () {
 			if( app.temp.range ) app.temp.range.splice(0,app.temp.range.length);
 			app.temp.selectActive = false;
@@ -255,7 +320,10 @@ app.undo = function () {
 			if ( app.temp.unitSelectionIndex ) delete app.temp.unitSelectionIndex;
 			if ( app.temp.prevIndex ) delete app.temp.prevIndex;
 			if ( app.temp.hide ) delete app.temp.hide;
-			if ( app.temp.optionsActive ) delete app.temp.optionsActive;
+			if ( app.temp.optionsActive ){
+				show('coStatusHud');
+				delete app.temp.optionsActive;
+			} 
 		},
 
 		effect: function (effect) {
@@ -300,16 +368,29 @@ app.undo = function () {
 
 app.options = function () {
 
+	// move to next player on turn change
 	var nextPlayer = function () {
+
+		// if the player is the last in the array return the first player
 		if ( app.temp.player.id === app.players.length ) return app.players[0];
+
+		// return the next player
 		return app.players[app.temp.player.id];
 	};
 
 	var endTurn = function () {
+		// get the next player
 		var player = nextPlayer();
+		// assign the next player as the current player
 		app.temp.player = player;
+
+		// move the screen to the next players headquarters
 		app.move.screenToHQ(player);
+
+		// refresh the movement points of the players units
 		app.move.refresh(player);
+
+		// add this turns income
 		app.temp.player.gold += app.calculate.income(player);
 	};
 
@@ -330,6 +411,7 @@ app.options = function () {
 			alert('save');
 		},
 
+		// end turn
 		end: function (){
 			endTurn();
 			return this;
@@ -345,46 +427,156 @@ app.options = function () {
 
 app.actions = function () {
 
-	var attack = function ( selected ) {
+	var index = 0;
+
+	// detect any attackable units within selected units attack range
+	var attackable = function ( selected ) {
+
 		var attackable = [];
+
+		// get selected units position
 		var x = selected.x;
 		var y = selected.y;
-		var neighbors = [{ x: x + 1, y: y }, { x: x, y: y + 1 }, { x: x - 1, y: y }, { x: x, y: y - 1 }];
-		var unit = app.map.unit;
+
+		// find its neighbors 
+		var neighbors = [{ x: x + 1, y: y }, { x: x, y: y + 1 }, { x: x - 1, y: y }, { x: x, y: y - 1 }]; // to be replaced with a range algorithm
+		
+		// get list of units
+		var units = app.map.unit;
+		var neighbor, unit;
+
+		// get unit types that the selected unit can attack
+		var canAttack = selected.canAttack
+
+		// get the id of the current player
+		var player = app.temp.player.id;
+
 		for ( var n = 0; n < neighbors.length; n += 1) {
-			for ( var u = 0; u < unit.length; u += 1 ) {
-				if( neighbors[n].x === unit[u].x && neighbors[n].y === unit[u].y && unit.player !== player.id && selected.canAttack.hasValue(unit.type)) {
+			// each neighbor
+			neighbor = neighbors[n];
+
+			for ( var u = 0; u < units.length; u += 1 ) {
+				// each unit
+				unit = units[u];
+
+				// if the selected unit can attack its neighbor and the neighbor is not the current players unit
+				if( canAttack.hasValue( unit.transportaion ) && neighbor.x === unit.x && neighbor.y === unit.y && unit.player !== player ){ 
+
+					// add the neighbor to an array of neighbors the selected unit can attack
 					attackable.push(unit);
 				}
 			}
 		}
-		if ( attackable ) return attackable;
+		// if their are any units in the attackable array, then return it, otherwise return false
+		if ( attackable[0] ) return attackable;
 		return false;
 	};
 
-	var capture = function ( selected ) {
-		buildings = app.map.building;
-		for(var b = 0; b < buildings.length; b += 1 ){
-			building = buildings[b]
-			if ( building.player !== selected.player && building.x === selected.x && building.y === selected.y ){
-				return app.map.building[b];
+	// check if the building the selected unit has landed on can be captured or not
+	var capturable = function ( selected ) {
+
+		// if the selected unit can capture buildings then continue
+		if( selected.capture ){
+
+			// get a list of buildings on the map
+			buildings = app.map.building;
+
+			for(var b = 0; b < buildings.length; b += 1 ){
+
+				building = buildings[b] // each building
+
+				// if the building does not already belong to the selected unit, and the unit is on the building then return it
+				if ( building.player !== selected.player && building.x === selected.x && building.y === selected.y ){
+					return app.map.building[b];
+				}
 			}
 		}
+		// return false if the building cannot be captured by the selected unit
 		return false;
 	};
 
 	return {
+
+		// check to see if any actions can be perfomed
 		check: function ( selected ) {
 			var options = {};
-			var attackable = attack( selected );
-			var capturable = capture( selected );
-			if ( attackable[0] ) options.attack = attackable;
-			if( capturable ) options.capture = true;
-			if ( capturable || attackable[0] ) options.wait = true;
-			if( options.wait ) return options;
+
+			// find any attackable opponents 
+			var canAttack = attackable( selected );
+
+			// find any capturable buildings
+			var canCapture = capturable( selected );
+
+			// add buildings or opponenets to an object containing possible actions
+			if ( canAttack[0] ) options.attack = canAttack;
+			if ( canCapture ) options.capture = canCapture;
+			if ( canCapture || canAttack[0] ) options.wait = true;
+
+			// if there are any actions that can be taken then return them
+			if ( options.wait ) return options;
 			return false;
+		},
+
+		// capture a building
+		capture: function ( building, unit ) {
+
+			// if the building has not been catpured all the way
+			if( building.capture - unit.capture > 0 ) {
+
+				// subtract the amount of capture dealt by the unit from the buildings capture level
+				app.map.building[building.ind].capture -= unit.capture;
+				return true;
+
+			// if the building is done being captured and is not a headquarters
+			}else if ( building.type !== 'hq ') {
+
+				// assign the building to the capturing player
+				app.map.building[building.ind].player = unit.player;
+				return true;
+			}
+
+			// otherwise the game is over because the other players headquarters was captured
+			// in the future there will be more in depth handling of the destruction of another opponant
+			alert('game over');
+		},
+
+		// display a target for selecting which opposing unit to attack
+		choseAttack: function ( attackable ) {
+
+			// create target for rendering at specified coordinates
+			app.settings.target = { x:attackable[index].x, y: attackable[index].y };
+
+			var key = app.settings.keyMap;
+			var len = attackable.length;
+			var undo = app.undo.keyPress;
+
+			// move to the next attackable unit
+			if ( key.up in app.keys ||  key.right in app.keys ) { // Player holding up
+				undo(key.up);
+				undo(key.right);
+				index += 1;	
+			}
+
+			// move to the previous attackable unit
+			if ( key.down in app.keys || key.left in app.keys ) { // Player holding down
+				undo(key.down);
+				undo(key.left);
+				index -= 1;
+			}
+
+			// cycle through target selectino
+			if( index < 0 ) index = len - 1;
+			if( index === len ) index = 0;
+
+			// if the target has been selected return it
+			if( key.select in app.keys ){
+				undo(key.select);
+				delete app.settings.target; // remove target cursor from screen
+				return attackable[index];
+			}
+			window.requestAnimationFrame( app.animateCursor ); // animate changes
 		}
-	}
+	};
 }();
 
 /* ----------------------------------------------------------------------------------------------------------*\
@@ -396,6 +588,10 @@ app.actions = function () {
 app.calculate = function () {
 
 	var abs = Math.abs;
+
+	var attackRange = function () {
+
+	};
 
 	// create a range of movement based on the unit allowed square movement
 	var movementCost = function ( origin, x, y ) {
@@ -413,6 +609,8 @@ app.calculate = function () {
 			}
 			return false;
 		};
+
+		// if the selected unit can move on the terrain ( obsticle ) then calculate the offset
 		if ( orig.movable.hasValue( off.obsticle )){
 			var opX = off.x < orig.x ? -1 : 1;
 			var opY = off.y < orig.y ? -1 : 1;
@@ -423,6 +621,7 @@ app.calculate = function () {
 			if ( inRange(objX) ) ret.push(objX);
 			if ( inRange(objY) ) ret.push(objY);
 		}else{
+			// otherwise add the specific location of the obsticle to the offset array 
 			ret.push({ x: off.x, y: off.y }); // check this if issues with unit offset, could be faulty method of dealing with this problem
 		}
 		return ret;
@@ -580,49 +779,62 @@ app.calculate = function () {
 		return range;
 	};
 
+	// check which side of the screen the cursor is on
 	var rightSide = function () {
-		var w = app.cursorCanvas.dimensions().width; // screen width
+		var w = app.cursorCanvas.dimensions().width / 64; // screen width
 		var x = app.settings.cursor.scroll.x; // map position relative to scroll
-		var c = app.settings.cursor.x;	// cursor location
-		if( c > ( w / 2 ) + x ) return true;
+		if( app.settings.cursor.x > ( w / 2 ) + x ) return true;
 		return false;
 	};
 
+	// calculate income
 	var calcIncome = function ( player ) {
+
+		// get the amount of income per building for current game
 		var income = app.settings.income;
 		var owner, count = 0;
-		var buildings = app.map.building;
+		var buildings = app.map.building; // buildings list
+
 		for ( var b = 0; b < buildings.length; b += 1 ) {
+
+			// count the number of buildings that belong to the current player
 			if ( buildings[b].player === player ) {
 				count += 1;
 			}
 		}
+		// return the income ( amount of buildings multiplied by income per building set for game )
 		return count * income;
 	};
 
 	return {
+
+		// finds path
 		path: function ( orig, dest, grid, mode ) {
 			return pathfinder( orig, dest, grid, mode );
 		},
 
-		isRightSide: function () {
-			return rightSide();
+		// returns cursor location ( left or right side of screen )
+		side: function () {
+			if ( rightSide() ) return 'right';
+			return 'left';
 		},
 
+		// calculate income
 		income: function ( player ) {
 			return calcIncome(player.id);
 		},
 
+		// find range of allowed movement over variable terrain
 		range: function () {
 
 			if( app.temp.selectedUnit ){
 
-				var id = 0; // id for gvarp identificaion;
+				var id = 0; // id for grid point identificaion;
 				var range = [];
 				var offs = [];
 				var selected = app.temp.selectedUnit;
 
-				// amount of allotted movement for uvarnit
+				// amount of allotted movement for unit
 				var len = selected.movement;
 
 				// loop through x and y axis range of movement
@@ -683,18 +895,40 @@ app.select = function () {
 
 	// moves a unit
 	var move = function ( type, index ) {
+
+		// if there is a selected unit and select is active and the select key has been pressed
 		if ( app.temp.selectedUnit && app.temp.selectActive && app.settings.keyMap.select in app.keys ){
+
+			app.undo.keyPress(app.settings.keyMap.select);
+
+			// selected unit 
 			var unit = app.temp.selectedUnit;
+
+			// calculate how many squares were moved
 			var xmove = abs( app.temp.selectedUnit.x - app.settings.cursor.x );
 			var ymove = abs( app.temp.selectedUnit.y - app.settings.cursor.y );
+
+			// remove the amount of squares moved from the units allowed movement for the turn
 			app.map.unit[unit.ind].movement -= xmove + ymove;
+
+			// change selected units position to the cursor location
 			app.map[type][index].x = app.settings.cursor.x;
 			app.map[type][index].y = app.settings.cursor.y;
-			app.undo.keyPress();
+
+			// remove the range and path hilights
 			app.undo.effect('highlight').effect('path');
-			var options = app.actions.check( unit );
-			if ( options ) {
-				app.display.actions(options);
+
+			//animate the changes
+			window.requestAnimationFrame(animateUnit);
+
+			// check to see if actions can be taken
+			var actions = app.actions.check( unit );
+
+			// if there are actions that can be taken then display the necessary options
+			if ( actions ) {
+				app.display.actions(actions);
+
+			// if there are no actions then deselect the unit
 			}else{
 				app.undo.selectElement();
 			}
@@ -825,61 +1059,71 @@ app.select = function () {
 
 app.display = function () {
 
+	var side;
+
 	var optionsHud = function () {
 		var elements = { section:'optionsMenu', div:'optionSelect' };
 		if ( displayInfo( app.settings.options, app.settings.optionsDisplay, elements, 'optionSelectionIndex' )){
-			app.temp.optionsActive = true;
-			app.temp.selectActive = true;
 			return true;
-		} 
+		}
 		return false;
 	};
 
-	var coStatus = function ( player, side ) {
+	var coStatus = function ( player ) {
+		
+		if ( app.temp.cursorMoved ) side = app.calculate.side();
 
-		var exists = document.getElementById('coStatusHud');
+		// unset cursor move
+		app.temp.cursorMoved = false;
 
-		app.temp.side = side;
+		if ( !app.temp.side || side !== app.temp.side ){
 
-		// create container section, for the whole hud
-		var hud = document.createElement('section');
-			hud.setAttribute('id', 'coStatusHud');
+			app.temp.side = side;
 
-		// create a ul, to be the gold display
-		var gold = document.createElement('ul');
-			gold.setAttribute('id', 'gold');
+			var coHud = document.getElementById('coStatusHud');
 
-		// create a canvas to animate the special level	
-		var power = document.createElement('canvas');
-		var context = power.getContext(app.ctx);
-		power.setAttribute('id', 'coPowerBar');
-		power.setAttribute('width', 310 );
-		power.setAttribute('height', 128 );
+			// create container section, for the whole hud
+			var hud = document.createElement('section');
+				hud.setAttribute('id', 'coStatusHud');
+			if ( side === 'left') hud.style.left = '864px';
 
-		// create the g for  gold
-		var g = document.createElement('li');
-		g.setAttribute('id', 'g');
-		g.innerHTML = 'G.';
-		gold.appendChild(g);
+			// create a ul, to be the gold display
+			var gold = document.createElement('ul');
+				gold.setAttribute('id', 'gold');
 
-		// add the amount of gold the player currently has
-		var playerGold = document.createElement('li');
-		playerGold.setAttribute( 'id', 'currentGold' );
-		playerGold.innerHTML = player.gold;
-		gold.appendChild(playerGold);
+			// create a canvas to animate the special level	
+			var power = document.createElement('canvas');
+			var context = power.getContext(app.ctx);
+			power.setAttribute('id', 'coPowerBar');
+			power.setAttribute('width', 310 );
+			power.setAttribute('height', 128 );
 
-		// put it all together and insert it into the dom
-		hud.appendChild(gold);
-		hud.appendChild(power);
+			// create the g for  gold
+			var g = document.createElement('li');
+			g.setAttribute('id', 'g');
+			g.innerHTML = 'G.';
+			gold.appendChild(g);
 
-		if(exists){
-			exists.parentNode.replaceChild( hud, exists );
-		}else{
-			document.body.insertBefore( hud, document.getElementById('before'));
-		}			
+			// add the amount of gold the player currently has
+			var playerGold = document.createElement('li');
+			playerGold.setAttribute( 'id', 'currentGold' );
+			playerGold.innerHTML = player.gold;
+			gold.appendChild(playerGold);
 
-		// return the context for animation of the power bar
-		return context;
+			// put it all together and insert it into the dom
+			hud.appendChild(gold);
+			hud.appendChild(power);
+			
+			if(coHud){
+				coHud.parentNode.replaceChild( hud, coHud );
+			}else{
+				document.body.insertBefore( hud, document.getElementById('before'));
+			}			
+
+			// return the context for animation of the power bar
+			return context;
+		}
+		return false;
 	};
 
 	var action = function ( actions ) {
@@ -910,7 +1154,7 @@ app.display = function () {
 		// get the selectable unit types for the selected building
 		var units = app.units[building];
 		var elements = { section: 'buildUnitScreen', div:'selectUnitScreen' }
-		displayInfo( units, app.settings.unitSelectionDisplay, elements, 'unitSelectionIndex' );
+		displayInfo( units, app.settings.unitSelectionDisplay, elements, 'unitSelectionIndex', 7 );
 	};
 
 	var displayInfo = function ( properties, allowedProperties, elements, tag ){
@@ -949,30 +1193,43 @@ app.display = function () {
 		return true;
 	};
 
-	var select = function ( tag, id, selected ) {
+	var select = function ( tag, id, selected, max ) {
 
 		// if the index is undefined set it to one
 		if ( app.temp.unitSelectionIndex === undefined ) app.temp.unitSelectionIndex = 1;
+
+		var key = app.settings.keyMap;
+		var undo = app.undo.keyPress;
+		var index = app.temp.unitSelectionIndex;
+		var prevIndex = app.temp.prevIndex;
 
 		// all the ul children from the selected element for highlighting
 		var hudElement = document.getElementById(id);
 		var elements = hudElement.getElementsByTagName('ul');
 		var len = elements.length;
 
-		if ( app.temp.unitSelectionIndex > 7 ){
-			app.temp.hide = app.temp.unitSelectionIndex - 7;
+		// if there is no max set then set max to the length of he array
+		if( !max ) var max = len;
+
+		// hide elements to create scrolling effect
+		if ( index > max ){
+			app.temp.hide = index - max;
 			for ( var h = 1; h <= app.temp.hide; h += 1 ){
+
+				// find each element that needs to be hidden and hide it
 				var hideElement = findElementByTag( tag, h, elements );
 				hideElement.style.display = 'none';
 			}
-		}else if( app.temp.unitSelectionIndex <= len - 7 && app.temp.hide ){
-			var showElement = findElementByTag( tag, app.temp.unitSelectionIndex, elements );
+		}else if( index <= len - max && app.temp.hide ){
+
+			// show hidden elements as they are hovered over
+			var showElement = findElementByTag( tag, index, elements );
 			showElement.style.display = '';
 		}
 
 		// if the index is not the same as it was prior, then highlight the new index ( new element )
-		if( app.temp.prevIndex !== app.temp.unitSelectionIndex ){
-			app.temp.selectedElement = findElementByTag( tag, app.temp.unitSelectionIndex, elements );
+		if( prevIndex !== index ){
+			app.temp.selectedElement = findElementByTag( tag, index, elements );
 			if ( app.temp.selectedElement ) {
 
 				// apply highlighting 
@@ -982,64 +1239,93 @@ app.display = function () {
 				if( id === 'selectUnitScreen' ) unitInfo( selected, app.temp.selectedElement.id );
 
 				// check if there was a previous element that was hovered over
-				if ( app.temp.prevIndex ) {
+				if ( prevIndex ) {
 
 					// if there is then remove its highlighting
-					var prevElement = findElementByTag( tag, app.temp.prevIndex, elements );
+					var prevElement = findElementByTag( tag, prevIndex, elements );
 					prevElement.style.backgroundColor = '';
 				}
 			}
-			app.temp.prevIndex = app.temp.unitSelectionIndex;
+			// store the last index for future comparison
+			app.temp.prevIndex = index;
 		}
 
-		if( app.settings.keyMap.select in app.keys && app.temp.selectedElement ){
-			app.undo.keyPress(app.settings.keyMap.select);
+		// if the select key has been pressed and an element is available for selection then return its id
+		if( key.select in app.keys && app.temp.selectedElement ){
+			undo(key.select);
 			return app.temp.selectedElement.getAttribute('id');
 
-		}else if( app.settings.keyMap.down in app.keys ) {
-			if ( app.temp.unitSelectionIndex < len ){
-				app.temp.unitSelectionIndex += 1;
-			} 
-			app.undo.keyPress(app.settings.keyMap.down);
+		// if the down key has been pressed then move to the next index ( element ) down
+		}else if( key.down in app.keys ) {
 
-		}else if( app.settings.keyMap.up in app.keys ) {
-			if( app.temp.unitSelectionIndex > 1 ) app.temp.unitSelectionIndex -= 1;
-			app.undo.keyPress(app.settings.keyMap.up);
+			// only move if the index is less then the length ( do not move to non existant index )
+			if ( index < len ){
+
+				// increment to next index
+				app.temp.unitSelectionIndex += 1;
+			}
+			undo(key.down);
+
+		// same as above, but up
+		}else if( key.up in app.keys ) {
+			if( index > 1 ) app.temp.unitSelectionIndex -= 1;
+			undo(key.up);
 		}
 		return false;				
 	};
 
+	// find each element by their tag name, get the element that matches the currently selected index and return it
 	var findElementByTag = function ( tag, index, element ) {
+		// length of array of elements
 		var len = element.length;
 		for ( var e = 0; e < len ; e += 1 ){
 			// element returns a string, so must cast the index to string for comparison
+			// if the element tag value ( index ) is equal to the currently selected index then return it
 			if( element[e].getAttribute(tag) === index.toString()){
 				return element[e];
 			}
 		}
 	};
 
+	// get information on terrain and return an object with required information for display
 	var terrainInfo = function ( info ) {
+
 		// if there is a selectable element then return its info
 		if( info !== undefined && info.stat !== false ){
+
+			// get information from the map to return on the currently hovered over map square
 			var object = app.map[info.objectClass][info.ind];
+
+			// create a ul with the information
 			var list = createList( object, info.objectClass, app.settings.hoverInfo, 'hud' );
+
+			// return the list of information
 			return { ul: list.ul , ind:info.ind, canvas: list.canvas, type: object.type };
 
 		// if there is nothing found it means that it is plains, return the default of the plain object
 		}else if ( info.objectClass === 'terrain' ){
+
+			// make a list with info on plains
 			var list = createList( app.map.plain, info.objectClass, app.settings.hoverInfo, 'hud' );
+
+			// return the list
 			return { ul: list.ul, ind:false, canvas: list.canvas, type:'plain' };
 		}
 		return false;
 	};
 
+	// create a canvas to display the hovered map element in the hud
 	var hudCanvas = function ( canvasId, type, objectClass ) {
-		var canvas = document.createElement('canvas');
-		var context = canvas.getContext(app.ctx);
-		canvas.setAttribute('width', 128);
+
+		var canvas = document.createElement('canvas'); // create canvas
+		var context = canvas.getContext(app.ctx); // get context
+
+		// set width, height and id attributes
+		canvas.setAttribute('width', 128);	
 		canvas.setAttribute('height', 128);
 		canvas.setAttribute('id', type + canvasId + 'Canvas' );
+
+		// return canvas info for further use
 		return { canvas:canvas, context:context, type: type, objectClass: objectClass };
 	};
 
@@ -1066,27 +1352,34 @@ app.display = function () {
 
 			// only use properties specified in the displayed attributes array
 			if( displayedAttributes === '*' || displayedAttributes.hasValue( props )) {
+
+				// create list element and give it a class defining its value
 				var li = document.createElement('li');
 				li.setAttribute('class', props );
+
+				// if the list element is a canvas then append it to the list element
 				if( props === 'canvas' ){
 					li.appendChild(object[props]);
+
+				// if the list is an object, then create another list with that object and append it to the li element
 				}else if ( typeof(object[props]) === 'object' ){
 					var list = createList( object[props], props, displayedAttributes );
 					li.appendChild(list.ul); 
+
+				// if the list element is text, add it to the innerHTML of the li element
 				}else{
 					li.innerHTML = object[props];
 				}
+				// append the li to the ul
 				ul.appendChild(li);
 			}
 		}
+		// return the ul and canvas info
 		return { ul:ul, canvas:canvas };
 	};
 
 	// display informavartion on currently selected square, and return selectable objects that are being hovered over
 	var displayHUD = function () {
-
-		// unset cursor move
-		app.temp.cursorMoved = false;
 
 		// create hud element or remove the existing element
 		var exists = document.getElementById( 'hud' );
@@ -1131,15 +1424,20 @@ app.display = function () {
 			}
 		}
 
-		// apply proper width to element
+		// apply proper width to element 
 		var displayWidth = app.settings.hudWidth * properties.length;
 		var hudLeft = app.settings.hudLeft - 120;
+
+		// if there is more then one element to display then double the width of the hud to accomidate the difference
 		display.style.left = properties.length > 1 ? hudLeft.toString() + 'px' : app.settings.hudLeft.toString() + 'px';
 		display.style.width = displayWidth.toString() + 'px';
 		display.style.height = app.settings.hudHeight.toString() + 'px';
 
+		// if the element already exists then replace it
 		if ( exists ) {
 			exists.parentNode.replaceChild( display, exists );
+
+		// otherwise insert it into the dom
 		}else{
 			document.body.insertBefore( display, document.getElementById("before"));
 		}
@@ -1154,7 +1452,26 @@ app.display = function () {
 		return object;
 	};
 
+	// hide an element
+	var hide = function (hideElement) {
+		// get  element
+		var hidden = document.getElementById(hideElement);
+
+		// hide element
+		hidden.style.display = 'none';
+	};
+
 	return {
+
+		// 
+		actions: function (options) {
+			var actions = Object.keys(options);
+			var actionsObj = {};
+			for( var a = 0; a < actions.length; a += 1 ){
+				actionsObj[actions[a]] = actions[a];
+			}
+			return action(actionsObj);
+		},
 
 		selectionInterface: function ( building, tag ) {
 			return selectionInterface( building, tag );
@@ -1175,34 +1492,51 @@ app.display = function () {
 		options: function () {
 			// if nothing is selected and the user presses the exit key, show them the options menu
 			if ( app.settings.keyMap.exit in app.keys && !app.temp.selectActive ){
-				optionsHud();
 				app.undo.keyPress(app.settings.keyMap.exit);
+				app.temp.optionsActive = true; // set options hud to active
+				app.temp.selectActive = true;	// set select as active
+				optionsHud(); // display options hud
+				hide('coStatusHud'); // hide co status hud
 			}
+			// if the options hud has been activated 
 			if ( app.temp.optionsActive ){
+
+				// make the options huds list items selectable
 				var selection = select( 'optionSelectionIndex', 'optionsMenu' );
+
+				// if one has been selected activate the corresponding method from the options class
 				if ( selection ){
 					app.options[selection]();
-					app.undo.all();
-				} 
+					app.undo.all(); // remove display
+				}
 			}
 			return this;
 		},
 
 		coStatus: function () {
-			var side = app.calculate.isRightSide();
 			coStatus( app.temp.player );
 			return this;
 		},
 
 		path: function ( cursor ) {
+			// get the range
 			var grid = app.temp.range.slice(0);
+
+			// calculate the path to the cursor
 			var p = app.calculate.path( app.temp.selectedUnit, cursor, grid);
+
+			// if there is a path then set it to the path highlight effect for rendering
 			if ( p ) app.effect.path = app.effect.path.concat(p);
+
+			// animate changes
 			window.requestAnimationFrame(app.animateEffects);
 		},
 
 		range: function () {
+			// set the range highlight to the calculated range
 			app.effect.highlight = app.effect.highlight.concat(app.temp.range);
+
+			// animate changes
 			window.requestAnimationFrame(app.animateEffects);
 		}
 	};
@@ -1381,23 +1715,25 @@ app.move = function () {
 		// keep track of cursor position
 		cursor: function () {
 			if ( !app.temp.selectedBuilding && !app.temp.optionsActive ){
-				var d =  app.map.dimensions; 
+				var d =  app.map.dimensions;
+				var key = app.settings.keyMap;
+				var undo = app.undo.keyPress;
 
-				if (app.settings.keyMap.up in app.keys) { // Player holding up
-					app.undo.keyPress(app.settings.keyMap.up);
+				if (key.up in app.keys) { // Player holding up
+					undo(key.up);
 				// if the cursor has moved store a temporary varibale that expresses this @ app.temp.cursorMoved
 					app.temp.cursorMoved = cursor('y',0,-1);
 				}
-				if (app.settings.keyMap.down in app.keys) { // Player holding down
-					app.undo.keyPress(app.settings.keyMap.down);
+				if (key.down in app.keys) { // Player holding down
+					undo(key.down);
 					app.temp.cursorMoved = cursor('y',d.y, 1);
 				}
-				if (app.settings.keyMap.left in app.keys) { // Player holding left
-					app.undo.keyPress(app.settings.keyMap.left);
+				if (key.left in app.keys) { // Player holding left
+					undo(key.left);
 					app.temp.cursorMoved = cursor('x',0,-1);
 				}
-				if ( app.settings.keyMap.right in app.keys) { // Player holding right
-					app.undo.keyPress(app.settings.keyMap.right);
+				if ( key.right in app.keys) { // Player holding right
+					undo(key.right);
 					app.temp.cursorMoved = cursor('x',d.x, 1);
 				}
 				window.requestAnimationFrame(app.animateCursor);
@@ -1467,6 +1803,9 @@ app.settings = {
 
 	// which attributes of objects ( unit, buildings etc ) will be displayed in hud
 	hoverInfo: ['ammo','health','name','fuel','def', 'canvas' ],
+
+	// which actions can be displayed
+	actionsDisplay: [ 'attack', 'capture', 'wait' ],
 
 	// unit info attributes for display
 	unitInfoDisplay: [ 'movement', 'vision', 'fuel','weapon1', 'weapon2', 'property', 'value' ],
@@ -1548,10 +1887,10 @@ app.map = {
 		{x:9,y:6, type:'tree', name:'Woods', obsticle:'wood', def:3},
 	],
 	building: [
-		{ x:0, y:5, type:'hq', name:'HQ', obsticle:'building', player:1, color: 'red' , def:4},
-		{ x:20, y:5, type:'hq', name:'HQ', obsticle:'building', player:2, color: 'blue' , def:4},
-		{ x:0,y:4, type:'base', name:'Base', obsticle:'building', player:1,color:'red', def:4},
-		{ x:15,y:4, type:'base', name:'Base', obsticle:'building', player:2, color:'blue', def:4}
+		{ x:0, y:5, type:'hq', name:'HQ', capture:20, obsticle:'building', player:1, color: 'red' , def:4},
+		{ x:20, y:5, type:'hq', name:'HQ', capture:20, obsticle:'building', player:2, color: 'blue' , def:4},
+		{ x:0,y:4, type:'base', name:'Base', capture:20, obsticle:'building', player:1,color:'red', def:4},
+		{ x:15,y:4, type:'base', name:'Base', capture:20, obsticle:'building', player:2, color:'blue', def:4}
 	],
 	unit:[]
 };
@@ -1566,7 +1905,7 @@ app.map = {
 app.units = {
 	base: {
 		infantry: {
-			properties: { 
+			properties: {
 				type:'infantry', 
 				name:'Infantry', 
 				movement:3, 
@@ -1575,10 +1914,12 @@ app.units = {
 					lo: 1, 
 					hi: 1 
 				},
-				movable: app.settings.movable.foot, 
+				movable: app.settings.movable.foot,
 				transportaion:'foot',
-				health:10, 
-				ammo:10 ,
+				capture:this.health,
+				canAttack:['wheels','foot'],
+				health:10,
+				ammo:10,
 				fuel:99,
 				weapon1:{}, 
 				weapon2:{}, 
@@ -1601,6 +1942,7 @@ app.units = {
 				},
 				movable: app.settings.movable.foot,
 				transportaion:'foot',
+				capture:this.health,
 				health:10,
 				ammo:10 ,
 				fuel:70,
@@ -2039,7 +2381,8 @@ app.drawUnits = function ( draw ) {
 };
 
 app.drawCursor = function ( draw ) {
-	draw.coordinate( 'map', 'cursor', [app.settings.cursor]);
+	if( !app.settings.hideCursor ) draw.coordinate( 'map', 'cursor', [app.settings.cursor]);
+	if( app.settings.target ) draw.coordinate( 'map', 'target', [app.settings.target]);
 };
 
 app.drawBackground = function ( draw ) {
@@ -2092,7 +2435,9 @@ app.animateEffects = function () {
 
 app.gameLoop = function () {
 	app.move.cursor(); // controls cursor and screen movement
-	app.display.hud().coStatus().options(); // displays menus, huds, etc..
+	app.display.hud()
+		.coStatus()
+		.options(); // displays menus, huds, etc..
 	app.select.move(); // controls selection and interaction with map elements
 	app.build.units(); // controls building of units
 	app.select.exit(); // controls the ability to escape display menus 
@@ -2348,6 +2693,16 @@ app.animationRepo = function ( width, height ) {
 		},
 		highlight: function (canv, m) {
 			canv.fillStyle = "rgba(255,255,255,0.3)";
+			canv.beginPath();
+			canv.lineTo( m.r(m.w), m.y);
+			canv.lineTo( m.r(m.w), m.u(m.h));
+			canv.lineTo(m.x,m.u(m.h));
+			canv.lineTo(m.x,m.y);
+			canv.fill();
+			return canv;
+		},
+		target: function (canv, m) {
+			canv.fillStyle = "rgba(0,255,0,0.3)";
 			canv.beginPath();
 			canv.lineTo( m.r(m.w), m.y);
 			canv.lineTo( m.r(m.w), m.u(m.h));
