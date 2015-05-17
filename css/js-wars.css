@@ -232,7 +232,7 @@ h1 {
     border-bottom:solid red 12px;
 }
 
-#actionHud ul,
+#actions ul,
 #optionSelect ul,
 #selectUnitScreen ul {
     height:64px;
@@ -356,6 +356,7 @@ h1 {
     float: right;
 }
 
+#actionHud,
 #optionsMenu {
     width: 256px;
     left: 900px;
