@@ -42,16 +42,17 @@ app = {
     },
 
     users: [{
-        co: 'G money',
+        co: 'sami',
         name: 'grant'
     }, {
-        co: 'betick',
+        co: 'andy',
         name: 'steve'
     }],
     game: {},
     cache: {},
     keys: [], // holds array of key pressed events
-    players: [], // array of players ( havent yet implimented player or turn system yet )
+    players: [], // array of players
+    defeated: [], // array of defeated players
 
     // create a new player object
     player: function (co, name, id) {
@@ -74,8 +75,8 @@ app = {
         };
 
         // get look st the co list and add the proper co
-        var getCO = function () {
-            return app.co[co];
+        var getCO = function (player) {
+            return app.co[co](player);
         };
 
         // return the player object
@@ -84,14 +85,12 @@ app = {
             id: id,
             // player name
             name: name,
-            // name of chosen co for this game
-            co: co,
-
             hq: getHQ(),
             // holds amount of special built up
             special: 0,
             unitsLost: 0,
-            gold: 0
+            gold: 0,
+            co: getCO(this) // chosen co
         };
     },
 
@@ -234,7 +233,7 @@ app.build = function () {
         };
 
         // get the requested unit types information from its reposetory
-        var unit = app.units[building.type][unitType];
+        var unit = app.buildings[building.type][unitType];
 
         // get the cost of the selected unit type
         var cost = unit.cost;
@@ -318,18 +317,29 @@ app.undo = function () {
         selectElement: function () {
             if (app.temp.range) app.temp.range.splice(0, app.temp.range.length);
             app.temp.selectActive = false;
+            if (app.temp.selectedBuilding) delete app.temp.selectedBuilding;
+        },
+
+        hudHilight:function(){
+            app.temp.selectionIndex = 1;
+            if(app.temp.prevIndex) delete app.temp.prevIndex;
+            if (app.temp.optionsActive) {
+                show('coStatusHud');
+                delete app.temp.optionsActive;
+            }
+        },
+
+        selectUnit:function(){
             if (app.temp.selectedUnit) {
                 delete app.temp.selectedUnit;
                 window.requestAnimationFrame(app.animateUnit);
             }
-            if (app.temp.selectedBuilding) delete app.temp.selectedBuilding;
-            app.temp.selectionIndex = 1;
-            if(app.temp.prevIndex) delete app.temp.prevIndex;
-            if (app.temp.optionsActive || app.temp.actionsActive) {
-                show('coStatusHud');
-                delete app.temp.actionsActive;
-                delete app.temp.optionsActive;
-            }
+        },
+
+        actionsSelect: function (){
+            delete app.temp.actionsActive;
+            delete app.settings.target;
+            window.requestAnimationFrame(app.animateCursor);
         },
 
         effect: function (effect) {
@@ -340,8 +350,8 @@ app.undo = function () {
             return this;
         },
 
-        displayHUD: function () {
-            var remove = document.getElementById('hud');
+        display: function (element) {
+            var remove = document.getElementById(element);
             if (remove) remove.parentNode.removeChild(remove);
             return this;
         },
@@ -356,9 +366,13 @@ app.undo = function () {
         },
 
         all: function () {
+            this.hudHilight();
+            this.selectUnit();
+            this.actionsSelect();
             this.keyPress(app.settings.keyMap.select);
             this.buildUnitScreen();
             this.selectElement();
+            this.display('damageDisplay');
             this.effect('highlight').effect('path');
             app.temp.cursorMoved = true; // refreshes the hud system to detect new unit on map
             return this;
@@ -386,6 +400,10 @@ app.options = function () {
     var endTurn = function () {
         // get the next player
         var player = nextPlayer();
+
+        // end power if it is active
+        player.co.endPower();
+
         // assign the next player as the current player
         app.temp.player = player;
 
@@ -430,8 +448,11 @@ app.options = function () {
 \* ----------------------------------------------------------------------------------------------------------*/
 
 app.actions = function () {
-
+    
+    var attackableArray, prevIndex, len, prevLen, undo, key, damage;
+    var options = {};
     var index = 0;
+    var round = Math.round;
 
     // detect any attackable units within selected units attack range
     var attackable = function (selected) {
@@ -474,9 +495,13 @@ app.actions = function () {
             for (var u = 0; u < units.length; u += 1) {
                 // each unit
                 unit = units[u];
+                unit.ind = u; // set for easy retrieval and editing;
 
                 // if the selected unit can attack its neighbor and the neighbor is not the current players unit
                 if (canAttack.hasValue(unit.transportaion) && neighbor.x === unit.x && neighbor.y === unit.y && unit.player !== player) {
+
+                    // calcualte damage percentage for each attackable unit
+                    unit.damage = app.calculate.damage(unit);
 
                     // add the neighbor to an array of neighbors the selected unit can attack
                     attackable.push(unit);
@@ -511,11 +536,82 @@ app.actions = function () {
         return false;
     };
 
+    var destroy = function (ind) {
+        delete app.map.unit[ind];
+    };
+
+    var attack = function (attacked, damage) {
+        if(attacked.health - damage > 0){
+            app.map.unit[attacked.ind].health = attacked.health - damage;
+            var selected = app.temp.selectedUnit;
+            var retaliation = round(app.calculate.damage(selected, app.map.unit[attacked.ind])/10);
+            if( selected.health - retaliation > 0 ){
+                app.map.unit[selected.ind].health = selected.health - retaliation;
+            }else{
+                destroy(selected.ind);
+            }
+        }else{
+            destroy(attacked.ind);
+        }
+        app.undo.all();
+        window.requestAnimationFrame(app.animateUnit);
+    };
+
+    // display a target for selecting which opposing unit to attack
+    var choseAttack = function (attackable) {
+
+        if(!attackableArray) attackableArray = attackable;
+        if(!key) key = app.settings.keyMap;
+        if(!undo) undo = app.undo.keyPress;
+        if(!len || len !== attackableArray.length){
+            len = attackableArray.length;
+            prevLen = len;
+        }
+
+        // move to the next attackableArray unit
+        if (key.up in app.keys || key.right in app.keys) { // Player holding up
+            undo(key.up);
+            undo(key.right);
+            index += 1;
+        }
+
+        // move to the previous attackableArray unit
+        if (key.down in app.keys || key.left in app.keys) { // Player holding down
+            undo(key.down);
+            undo(key.left);
+            index -= 1;
+        }
+
+        if( index !== prevIndex ){
+            // cycle through target selectino
+            if (index < 0 && index) index = len - 1;
+            if (index === len) index = 0
+            damage = attackableArray[index].damage;
+            app.display.damage(damage);
+            prevIndex = index;
+
+            // create target for rendering at specified coordinates
+            app.settings.target = {
+                x: attackableArray[index].x,
+                y: attackableArray[index].y
+            };
+        }
+
+        // if the target has been selected return it
+        if (key.select in app.keys) {
+            undo(key.select);
+            app.undo.display('damageDisplay');
+            delete app.settings.target; // remove target cursor from screen
+            window.requestAnimationFrame(app.animateCursor); // animate changes
+            return {unit:attackableArray[index], damage:round(damage/10)};
+        }
+        window.requestAnimationFrame(app.animateCursor); // animate changes
+    };
+
     return {
 
         // check to see if any actions can be perfomed
         check: function (selected) {
-            var options = {};
 
             // find any attackable opponents 
             var canAttack = attackable(selected);
@@ -529,71 +625,60 @@ app.actions = function () {
             if (canCapture || canAttack[0]) options.wait = true;
 
             // if there are any actions that can be taken then return them
-            if (options.wait) return options;
+            if (options.wait){
+                return options;
+            }
             return false;
         },
 
         // capture a building
-        capture: function (building, unit) {
+        capture: function () {
+            if(options){
+                var building = options.canCapture;
+                var unit = app.temp.selectedUnit;
+                var capture = app.temp.player.co.capture ? app.temp.player.co.capture(unit.capture) : unit.capture;
 
-            // if the building has not been catpured all the way
-            if (building.capture - unit.capture > 0) {
+                // if the building has not been catpured all the way
+                if (building.capture - capture > 0) {
 
-                // subtract the amount of capture dealt by the unit from the buildings capture level
-                app.map.building[building.ind].capture -= unit.capture;
-                return true;
+                    // subtract the amount of capture dealt by the unit from the buildings capture level
+                    app.map.building[building.ind].capture -= capture;
+                    return true;
 
-                // if the building is done being captured and is not a headquarters
-            } else if (building.type !== 'hq ') {
+                    // if the building is done being captured and is not a headquarters
+                } else if (building.type !== 'hq') {
 
-                // assign the building to the capturing player
-                app.map.building[building.ind].player = unit.player;
-                return true;
+                    // assign the building to the capturing player
+                    app.map.building[building.ind].player = unit.player;
+                    app.map.building[building.ind].capture = app.settings.capture;
+                    return true;
+                }
+                // otherwise assign all the buildings belonging to the owner of the captured hq to the capturing player
+                var buildings = app.map.building;
+                var defeated = app.map.building[building.ind].player;
+                for(var b = 0; b < buildings; b += 1){
+                    if( buildings[b].player === buildings[building.ind].player ){
+                        app.map.building[building.ind].player = unit.player;
+                    }
+                }
+                app.defeated.concat(app.players.splice(defeated - 1, 1));
             }
-
-            // otherwise the game is over because the other players headquarters was captured
-            // in the future there will be more in depth handling of the destruction of another opponant
-            alert('game over');
         },
 
-        // display a target for selecting which opposing unit to attack
-        choseAttack: function (attackable) {
+        wait: function () {
+            app.undo.all();
+            app.undo.display('actionHud');
+        },
 
-            // create target for rendering at specified coordinates
-            app.settings.target = {
-                x: attackable[index].x,
-                y: attackable[index].y
-            };
-
-            var key = app.settings.keyMap;
-            var len = attackable.length;
-            var undo = app.undo.keyPress;
-
-            // move to the next attackable unit
-            if (key.up in app.keys || key.right in app.keys) { // Player holding up
-                undo(key.up);
-                undo(key.right);
-                index += 1;
+        attack: function () {
+            if( options ){
+                var attacked = choseAttack(options.attack);
+                if ( attacked ) {
+                    delete options;
+                    return attack(attacked.unit, attacked.damage);
+                }
+                if (app.temp.actionsActive) window.requestAnimationFrame(app.actions.attack);
             }
-
-            // move to the previous attackable unit
-            if (key.down in app.keys || key.left in app.keys) { // Player holding down
-                undo(key.down);
-                undo(key.left);
-                index -= 1;
-            }
-
-            // cycle through target selectino
-            if (index < 0) index = len - 1;
-            if (index === len) index = 0;
-
-            // if the target has been selected return it
-            if (key.select in app.keys) {
-                undo(key.select);
-                delete app.settings.target; // remove target cursor from screen
-                return attackable[index];
-            }
-            window.requestAnimationFrame(app.animateCursor); // animate changes
         }
     };
 }();
@@ -606,6 +691,33 @@ app.actions = function () {
 app.calculate = function () {
 
     var abs = Math.abs;
+    var floor = Math.floor;
+    var random = Math.random;
+    var round = Math.round;
+
+    var findTerrain = function (unit){
+        terrain = app.map.terrain;
+        for ( t = 0; t < terrain.length; t += 1){
+            if(terrain[t].x === unit.x && terrain[t].y === unit.y){
+                return terrain[t];
+            }
+        }
+        return false;
+    };
+
+    var rand = function(){return floor((random() * 9) + 1)};
+
+    var calcDamage = function (attacked, attacker) {
+        var r = rand();
+        var baseDamage = attacker.baseDamage[attacked.type];
+        var coAttack = app.temp.player.co.attack(attacker);
+        var coDefense = app.players[attacked.player - 1].co.defense(attacked);
+        var terrainDefense = findTerrain(attacked).def;
+        terrainDefense = !terrainDefense ? 1 : terrainDefense;
+        var defenderHP = attacked.health;
+        var attackerHP = attacker.health;
+        return round((abs(baseDamage * coAttack/100 + r) * (attackerHP/10) * abs((200-(coDefense + terrainDefense * defenderHP))/100)));
+    };
 
     var attackRange = function () {
 
@@ -837,6 +949,11 @@ app.calculate = function () {
 
     return {
 
+        damage: function (attacked, attacker) {
+            attacker = !attacker ? app.temp.selectedUnit : attacker;
+            return calcDamage( attacked, attacker );
+        },
+
         // finds path
         path: function (orig, dest, grid, mode) {
             return pathfinder(orig, dest, grid, mode);
@@ -886,6 +1003,12 @@ app.calculate = function () {
                             if (obsticle !== undefined) {
 
                                 // get the number of offset movement from the obsticle based on unit type and obsticle type
+                                if(!app.settings.obsticleStats[obsticle.obsticle]){
+                                    console.log(app.temp.selectedUnit.type);
+                                    console.log(app.settings.obsticleStats[obsticle.obsticle]);
+                                    console.log(obsticle);
+                                }
+
                                 var obsticleOffset = app.settings.obsticleStats[obsticle.obsticle][app.temp.selectedUnit.type];
 
                                 if (obsticleOffset !== undefined) {
@@ -970,6 +1093,7 @@ app.select = function () {
             // if there are actions that can be taken then display the necessary options
             if (actions) {
                 app.display.actions(actions);
+                app.undo.keyPress(app.settings.keyMap.select);
 
                 // if there are no actions then deselect the unit
             } else {
@@ -996,7 +1120,7 @@ app.select = function () {
         }
 
         // if an object was selected then return true, otherwise return false
-        if (app.temp.selectedUnit) { 
+        if (app.temp.selectedUnit) { console
             return true;
         }
         return false;
@@ -1033,7 +1157,7 @@ app.select = function () {
                 }
 
                 // remove the terrain info display
-                app.undo.displayHUD();
+                app.undo.display('hud');
                 app.temp.selectActive = true;
                 return true;
             }
@@ -1048,6 +1172,10 @@ app.select = function () {
 
         var arr = app.map[type];
         for (var p = 0; p < arr.length; p += 1) {
+            if(!arr[p]){
+                console.log('type: '+type);
+                console.log('x: '+x, 'y: '+y);
+            }
             if (arr[p].x === x && arr[p].y === y) {
                 return {
                     ind: p,
@@ -1125,6 +1253,32 @@ app.display = function () {
         return false;
     };
 
+    // display damage percentage
+    var damageDisplay = function (percentage){
+
+        var exists = document.getElementById('damageDisplay');
+        var damageDisp = document.createElement('div');
+        var damageDiv = document.createElement('div');
+
+        damageDisp.setAttribute('id', 'damageDisplay'); 
+        damageDiv.setAttribute('id', 'damage');
+
+        var heading = document.createElement('h1');
+        var percent = document.createElement('h2');
+
+        heading.innerHTML = 'DAMAGE';
+        percent.innerHTML = percentage + '%';
+
+        damageDisp.appendChild(heading);
+        damageDiv.appendChild(percent);
+        damageDisp.appendChild(damageDiv);
+        if(exists){
+            exists.parentNode.replaceChild(damageDisp, exists);
+        }else{
+            document.body.insertBefore(damageDisp, document.getElementById('before'));
+        }
+    };
+
     var coStatus = function (player) {
 
         if (sideX !== app.temp.side || unitSelectionActive) {
@@ -1194,7 +1348,7 @@ app.display = function () {
             section: 'unitInfoScreen',
             div: 'unitInfo'
         };
-        var props = app.units[building][unit].properties;
+        var props = app.buildings[building][unit].properties;
         var allowed = app.settings.unitInfoDisplay;
         var properties = {};
         var propName = Object.keys(props);
@@ -1213,7 +1367,7 @@ app.display = function () {
     var selectionInterface = function (building) {
         // get the selectable unit types for the selected building
         unitSelectionActive = true;
-        var units = app.units[building];
+        var units = app.buildings[building];
         var elements = {
             section: 'buildUnitScreen',
             div: 'selectUnitScreen'
@@ -1264,6 +1418,9 @@ app.display = function () {
 
 	        // all the ul children from the selected element for highlighting
 	        var hudElement = document.getElementById(id);
+            if(hudElement === null ){
+                console.log(tag);
+            }
 	        var elements = hudElement.getElementsByTagName('ul');
 	        var prev = app.temp.prevIndex;
 	        selectionIndex = app.temp.selectionIndex;
@@ -1583,17 +1740,25 @@ app.display = function () {
         listen: function () {
        		var selection;
         	// if the options hud has been activated 
-            if (app.temp.actionsActive) {
+            if (app.temp.actionsActive && app.temp.selectActive) {
                 // make the options huds list items selectable
                 selection = select('actionSelectionIndex', 'actions');
             }else if(app.temp.optionsActive){
                 selection = select('optionSelectionIndex', 'optionsMenu');
             }
+
             // if one has been selected activate the corresponding method from the options class
             if (selection) {
-                if(app.temp.actionsActive) app.actions[selection]();
-                if(app.temp.optionsActive) app.options[selection]();
-                app.undo.all(); // remove display
+                if(app.temp.actionsActive){
+                    app.actions[selection]();
+                    app.undo.hudHilight();
+                    app.undo.display('actionHud');
+                    app.temp.selectActive = false;
+                    app.temp.cursorMoved = true;
+                } if(app.temp.optionsActive && !app.temp.actionsActive ){
+                    app.options[selection]();
+                    app.undo.all(); // remove display
+                }
             }
             return this;
         },
@@ -1603,12 +1768,12 @@ app.display = function () {
 
             // if the cursor has been moved, and a selection is active then get the display info for the new square
             if (app.temp.cursorMoved && !app.temp.selectActive) app.temp.hovered = displayHUD();
-            return this;
+            return this; 
         },
 
         options: function () {
             // if nothing is selected and the user presses the exit key, show them the options menu
-            if (app.settings.keyMap.exit in app.keys && !app.temp.selectActive) {
+            if (app.settings.keyMap.exit in app.keys && !app.temp.selectActive && !app.temp.actionsActive ) {
                 app.undo.keyPress(app.settings.keyMap.exit);
                 app.temp.optionsActive = true; // set options hud to active
                 app.temp.selectActive = true; // set select as active
@@ -1621,6 +1786,10 @@ app.display = function () {
         coStatus: function () {
             if (!app.temp.optionsActive && !app.temp.actionsActive) coStatus(app.temp.player);
             return this;
+        },
+
+        damage: function (damage) {
+            return damageDisplay(damage);
         },
 
         path: function (cursor) {
@@ -1672,7 +1841,7 @@ app.move = function () {
             // check for units that belong to the current player
             if (unit.player === player) {
                 // add the original movement allowance to each unit on the board belonging to the current player
-                app.map.unit[u].movement = app.units[ports[unit.transportaion]][unit.type].properties.movement;
+                app.map.unit[u].movement = app.buildings[ports[unit.transportaion]][unit.type].properties.movement;
             }
         }
         return true;
@@ -1829,7 +1998,7 @@ app.move = function () {
 
         // keep track of cursor position
         cursor: function () {
-            if (!app.temp.selectedBuilding && !app.temp.optionsActive) {
+            if (!app.temp.selectedBuilding && !app.temp.optionsActive && !app.temp.actionsActive) {
                 var d = app.map.dimensions;
                 var key = app.settings.keyMap;
 
@@ -1879,9 +2048,11 @@ app.settings = {
             infantry: 1
         },
         unit: {
-            infantry: 0
+            infantry: 1
         }
     },
+
+    capture: 20,
 
     // amount of income per building per turn
     income: 1000,
@@ -2128,448 +2299,930 @@ app.map = {
         def: 4
     }],
     unit: [{
-    			x:3,
-    			y:5,
-                type: 'infantry',
-                name: 'Infantry',
-                movement: 3,
-                vision: 2,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.foot,
-                transportaion: 'foot',
-                capture: this.health,
-                canAttack: ['wheels', 'foot'],
-                health: 10,
-                ammo: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {}
-            }]
+		x:3,
+		y:5,
+        type: 'infantry',
+        name: 'Infantry',
+        player:2,
+        movement: 3,
+        vision: 2,
+        range: {
+            lo: 1,
+            hi: 1
+        },
+        obsticle:'unit',
+        movable: app.settings.movable.foot,
+        transportaion: 'foot',
+        canAttack: ['wheels', 'foot'],
+        health: 10,
+        capture: this.health,
+        ammo: 10,
+        fuel: 99,
+        weapon1: {},
+        weapon2: {}
+    }]
 };
 
 /* --------------------------------------------------------------------------------------*\
+    
+    app.co holds all the co's, their skills and implimentation
+
+\* --------------------------------------------------------------------------------------*/
+
+app.co = function () {
+
+    var percent = function (amount) {
+        return amount / 100;
+    };
+
+    var addToEach = function(player, funk, property, amount, parameter1, parameter2, parameter3) {
+        if(!parameter) parameter = 100;
+        var units = app.map.unit;
+        for ( var u = 0; u < units.length; u += 1 ){
+            if( units[u].player === player.id ){
+                app.map.unit[u][property] = funk( unit[u], property, amount, parameter1, parameter2, parameter3 );
+            }
+        }
+    };
+
+    var editProperty = function(unit, property, amount, parameter){
+        if( unit[property] + amount > parameter ){
+            return parameter;
+        }else{
+            return unit[property] + amount;
+        }
+    };
+
+    var filter = function (unit, property, amount, max, parameter1, parameter2){
+        if(unit[parameter1] === parameter2){
+            if(unit[property] + amount > max){
+                return max;
+            }else{
+                return unit[property] + amount;
+            }
+        }
+    };
+
+    var editRange = function (unit, property, amount){
+        if(unit.damageType === 'ranged'){
+            unit.range.hi += amount;
+            return unit.range;
+        }
+    };
+
+    var editArray = function (unit, property, amount, parameter1, parameter2){
+        var baseDamage = {};
+        var damage = Object.keys(unit[property]);
+        for(var d = 0; d < damage.length; d += 1 ){
+
+            // if there is no perameter then simply find the percentage added to all units
+            if(!parameter1){
+                var dam = unit[property][damage[d]];
+
+                // add the damage plus the percent of increase
+                baseDamage[damage[d]] *= amount;
+
+            // if there is a parameter then only add to the damage type specified in the perameter
+            }else if ( unit[parameter1] === parameter2 ){
+
+                var dam = unit[property][damage[d]];
+                baseDamage[damage[d]] *= amount
+            }
+        }
+        return baseDamage;
+    };
+
+    return {
+
+        andy: function (player) {
+
+            var special = 100;
+            var powerActive = false;
+            var superPowerActive = false;
+            var damage = 100;
+
+            return {
+                name:'Andy',
+                power:function(){
+                    addToEach(player, editProperty(), 'health', 2, 10);
+                },
+                superPower:function(){
+                    superPowerActive = true;
+                    addToEach(player, editProperty(),'health', 5, 10);
+                    addToEach(player, editProperty(),'movement', 1);
+                    special = 130;
+                },
+                attack:function(){
+                    return damage * percent(special);
+                },
+                defense:function(){
+                    return 100;
+                },
+                endPower:function(){
+                    if(superPowerActive){
+                        addToEach(player, editProperty(),'movement', -1);
+                        special = 100;
+                        superPowerActive = false;
+                    }
+                }
+            }
+        },
+        max: function (player) {
+
+            var damage = 100;
+            var special = 120;
+            var powerActive = false;
+            var superPowerActive = false;  
+
+            return {
+                name:'Max',     
+                power:function(){
+                    powerActive = true;
+                    special = 140;
+                },
+                superPower:function(){
+                    powerActive = true;
+                    special = 170;
+                },
+                attack:function(unit){
+                    if( unit.damageType === 'direct' ){
+                        return damage * percent(special);
+                    }else{
+                        return damage;
+                    }
+                },
+                defense:function(){
+                    return 100;
+                },
+                endPower:function(){
+                    if(powerActive){
+                        special = 120;
+                        powerActive = false;
+                    }
+                },
+                build:function(unit){
+                    unit.range.hi -= 1;
+                    return unit;
+                }
+            }
+        },
+        sami: function (player) {
+
+            var damage = 100;
+            var special = 120;
+            var powerActive = false;
+            var superPowerActive = false;  
+            var capSpecial = 150;
+            var penalty = 90;
+
+            return {
+                name:'Sami',
+                power: function (){
+                    powerActive = true;
+                    addToEach(player, filter(), 'movement', 1, 20, 'transportaion', 'foot');
+                    special = 170;
+                },
+                superPower: function(){
+                   superPowerActive = true;
+                    addToEach(player, filter(), 'movement', 2, 20, 'transportaion', 'foot');
+                    special = 200;
+                    capSpecial = 2000;
+                },
+                attack: function(unit){
+                    if(unit.transportaion === 'foot'){
+                        return damage * percent(special);
+                    }else if(unit.damageType === direct){
+                        return damage * percent(penalty);
+                    }
+                    return damage;
+                },
+                defense:function(){
+                    return 100;
+                },
+                endPower:function(){
+                    if(powerActive){
+                        addToEach(player, filter(), 'movement', -1, 20, 'transportaion', 'foot');
+                    }else if(superPowerActive){
+                        addToEach(player, filter(), 'movement', -2, 20, 'transportaion', 'foot');
+                    }
+                    special = 120;
+                },
+                capture: function (capture){
+                    return capture * percent(capSpecial);
+                }
+            };
+        }
+    };
+}();
+
+/* --------------------------------------------------------------------------------------*\
 	
-	app.units is a repo for the units that may be created on the map, it holds all their
-	stats and is organized by which building type can create them
+	app.units is a repo for the units that may be created on the map and their stats
+
 \* --------------------------------------------------------------------------------------*/
 
 app.units = {
-    base: {
-        infantry: {
-            properties: {
-                type: 'infantry',
-                name: 'Infantry',
-                movement: 3,
-                vision: 2,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.foot,
-                transportaion: 'foot',
-                capture: this.health,
-                canAttack: ['wheels', 'foot'],
-                health: 10,
-                ammo: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {}
-            },
+    infantry: {
+        properties: {
+            type: 'infantry',
             name: 'Infantry',
-            cost: 1000
-        },
-        mech: {
-            properties: {
-                type: 'mech',
-                name: 'Mech',
-                movement: 2,
-                vision: 2,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.foot,
-                transportaion: 'foot',
-                capture: this.health,
-                health: 10,
-                ammo: 10,
-                fuel: 70,
-                weapon1: {},
-                weapon2: {}
+            movement: 3,
+            vision: 2,
+            range: {
+                lo: 1,
+                hi: 1
             },
+            damageType:'direct',
+            baseDamage:{
+                infantry: 55,
+                mech:45,
+                recon:12,
+                tank:5,
+                midTank:1,
+                neoTank:1,
+                apc:14,
+                artillery:15,
+                rockets:25,
+                antiAir:5,
+                missles:25,
+                bCopter:7,
+                tCopter:30,
+                pipe:1
+            },
+            movable: app.settings.movable.foot,
+            transportaion: 'foot',
+            capture: this.health,
+            canAttack: ['wheels', 'foot'],
+            health: 10,
+            ammo: 10,
+            fuel: 99,
+            weapon1: {},
+            weapon2: {}
+        },
+        name: 'Infantry',
+        cost: 1000
+    },
+    mech: {
+        properties: {
+            type: 'mech',
             name: 'Mech',
-            cost: 3000
-        },
-        recon: {
-            properties: {
-                type: 'recon',
-                name: 'Recon',
-                movement: 8,
-                vision: 5,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.wheels,
-                transportaion: 'wheels',
-                health: 10,
-                ammo: 10,
-                fuel: 80,
-                weapon1: {},
-                weapon2: {}
+            movement: 2,
+            vision: 2,
+            range: {
+                lo: 1,
+                hi: 1
             },
+            damageType:'direct',
+            baseDamage:{
+                infantry: 65,
+                mech:55,
+                recon:85,
+                tank:55,
+                midTank:15,
+                neoTank:15,
+                apc:75,
+                artillery:70,
+                rockets:85,
+                antiAir:65,
+                missles:85,
+                bCopter:9,
+                tCopter:35,
+                pipe:15
+            },
+            movable: app.settings.movable.foot,
+            transportaion: 'foot',
+            capture: this.health,
+            health: 10,
+            ammo: 10,
+            fuel: 70,
+            weapon1: {},
+            weapon2: {}
+        },
+        name: 'Mech',
+        cost: 3000
+    },
+    recon: {
+        properties: {
+            type: 'recon',
             name: 'Recon',
-            cost: 4000
-        },
-        apc: {
-            properties: {
-                type: 'apc',
-                name: 'APC',
-                movement: 6,
-                vision: 1,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.wheels,
-                transportaion: 'wheels',
-                health: 10,
-                fuel: 70,
-                weapon1: {},
-                weapon2: {}
+            movement: 8,
+            vision: 5,
+            range: {
+                lo: 1,
+                hi: 1
             },
+            damageType:'direct',
+            baseDamage:{
+                infantry: 70,
+                mech:65,
+                recon:32,
+                tank:6,
+                midTank:1,
+                neoTank:1,
+                apc:45,
+                artillery:45,
+                rockets:55,
+                antiAir:4,
+                missles:28,
+                bCopter:10,
+                tCopter:35,
+                pipe:1
+            },
+            movable: app.settings.movable.wheels,
+            transportaion: 'wheels',
+            health: 10,
+            ammo: 10,
+            fuel: 80,
+            weapon1: {},
+            weapon2: {}
+        },
+        name: 'Recon',
+        cost: 4000
+    },
+    apc: {
+        properties: {
+            type: 'apc',
             name: 'APC',
-            cost: 5000
+            movement: 6,
+            vision: 1,
+            range: {
+                lo: 1,
+                hi: 1
+            }, // steal supplies!
+            movable: app.settings.movable.wheels,
+            transportaion: 'wheels',
+            health: 10,
+            fuel: 70,
+            weapon1: {},
+            weapon2: {}
         },
-        antiAir: {
-            properties: {
-                type: 'antiAir',
-                name: 'Anti-Air',
-                movement: 6,
-                vision: 2,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.wheels,
-                transportaion: 'wheels',
-                health: 10,
-                ammo: 10,
-                fuel: 60,
-                weapon1: {},
-                weapon2: {}
+        name: 'APC',
+        cost: 5000
+    },
+    antiAir: {
+        properties: {
+            type: 'antiAir',
+            name: 'Anti-Air',
+            movement: 6,
+            vision: 2,
+            range: {
+                lo: 1,
+                hi: 1
             },
-            name: 'Anti-Aircraft',
-            cost: 8000
+            damageType:'direct',
+            baseDamage:{
+                infantry: 105,
+                mech:105,
+                recon:60,
+                tank:25,
+                midTank:10,
+                neoTank:5,
+                apc:50,
+                artillery:50,
+                rockets:55,
+                antiAir:45,
+                missles:55,
+                bCopter:120,
+                tCopter:120,
+                fighter:65,
+                bomber:75,
+                pipe:55
+            },
+            movable: app.settings.movable.wheels,
+            transportaion: 'wheels',
+            health: 10,
+            ammo: 10,
+            fuel: 60,
+            weapon1: {},
+            weapon2: {}
         },
-        tank: {
-            properties: {
-                type: 'tank',
-                name: 'Tank',
-                movement: 6,
-                vision: 3,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.wheels,
-                transportaion: 'wheels',
-                health: 10,
-                ammo: 10,
-                fuel: 60,
-                weapon1: {},
-                weapon2: {}
-            },
+        name: 'Anti-Aircraft',
+        cost: 8000
+    },
+    tank: {
+        properties: {
+            type: 'tank',
             name: 'Tank',
-            cost: 7000
-        },
-        midTank: {
-            properties: {
-                type: 'midTank',
-                name: 'Mid Tank',
-                movement: 5,
-                vision: 1,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.wheels,
-                transportaion: 'wheels',
-                health: 10,
-                ammo: 10,
-                fuel: 50,
-                weapon1: {},
-                weapon2: {}
+            movement: 6,
+            vision: 3,
+            range: {
+                lo: 1,
+                hi: 1
             },
+            damageType:'direct',
+            baseDamage:{
+                infantry: 75,
+                mech:70,
+                recon:85,
+                tank:55,
+                midTank:15,
+                neoTank:15,
+                apc:75,
+                artillery:70,
+                rockets:85,
+                antiAir:65,
+                missles:85,
+                bCopter:10,
+                tCopter:40,
+                bShip:1,
+                lander:10,
+                cruiser:5,
+                sub:1,
+                pipe:15
+            },
+            movable: app.settings.movable.wheels,
+            transportaion: 'wheels',
+            health: 10,
+            ammo: 10,
+            fuel: 60,
+            weapon1: {},
+            weapon2: {}
+        },
+        name: 'Tank',
+        cost: 7000
+    },
+    midTank: {
+        properties: {
+            type: 'midTank',
             name: 'Mid Tank',
-            cost: 16000
-        },
-        artillery: {
-            properties: {
-                type: 'artillery',
-                name: 'Artillary',
-                movement: 5,
-                vision: 1,
-                range: {
-                    lo: 2,
-                    hi: 3
-                },
-                movable: app.settings.movable.wheels,
-                transportaion: 'wheels',
-                health: 10,
-                ammo: 10,
-                fuel: 50,
-                weapon1: {},
-                weapon2: {}
+            movement: 5,
+            vision: 1,
+            range: {
+                lo: 1,
+                hi: 1
             },
-            name: 'Artillery',
-            cost: 6000
-        },
-        rockets: {
-            properties: {
-                type: 'rockets',
-                name: 'Rockets',
-                movement: 5,
-                vision: 1,
-                range: {
-                    lo: 3,
-                    hi: 5
-                },
-                movable: app.settings.movable.wheels,
-                transportaion: 'wheels',
-                health: 10,
-                ammo: 10,
-                fuel: 50,
-                weapon1: {},
-                weapon2: {}
+            damageType:'direct',
+            baseDamage:{
+                infantry: 105,
+                mech:95,
+                recon:105,
+                tank:85,
+                midTank:55,
+                neoTank:45,
+                apc:105,
+                artillery:105,
+                rockets:105,
+                antiAir:105,
+                missles:105,
+                bCopter:12,
+                tCopter:45,
+                bShip:10,
+                lander:35,
+                cruiser:45,
+                sub:10,
+                pipe:55
             },
+            movable: app.settings.movable.wheels,
+            transportaion: 'wheels',
+            health: 10,
+            ammo: 10,
+            fuel: 50,
+            weapon1: {},
+            weapon2: {}
+        },
+        name: 'Mid Tank',
+        cost: 16000
+    },
+    artillery: {
+        properties: {
+            type: 'artillery',
+            name: 'Artillary',
+            movement: 5,
+            vision: 1,
+            damageType:'ranged',
+            range: {
+                lo: 2,
+                hi: 3
+            },
+            damageType:'direct',
+            baseDamage:{
+                infantry: 90,
+                mech:85,
+                recon:80,
+                tank:70,
+                midTank:45,
+                neoTank:40,
+                apc:70,
+                artillery:75,
+                rockets:80,
+                antiAir:75,
+                missles:80,
+                bShip:40,
+                lander:55,
+                cruiser:65,
+                sub:60,
+                pipe:45
+            },
+            movable: app.settings.movable.wheels,
+            transportaion: 'wheels',
+            health: 10,
+            ammo: 10,
+            fuel: 50,
+            weapon1: {},
+            weapon2: {}
+        },
+        name: 'Artillery',
+        cost: 6000
+    },
+    rockets: {
+        properties: {
+            type: 'rockets',
             name: 'Rockets',
-            cost: 15000
-        },
-        missles: {
-            properties: {
-                type: 'missles',
-                name: 'Missles',
-                movement: 4,
-                vision: 1,
-                range: {
-                    lo: 3,
-                    hi: 5
-                },
-                movable: app.settings.movable.wheels,
-                transportaion: 'wheels',
-                health: 10,
-                ammo: 10,
-                fuel: 50,
-                weapon1: {},
-                weapon2: {}
+            movement: 5,
+            vision: 1,
+            range: {
+                lo: 3,
+                hi: 5
             },
+            damageType:'ranged',
+            baseDamage:{
+                infantry: 95,
+                mech:90,
+                recon:90,
+                tank:80,
+                midTank:55,
+                neoTank:50,
+                apc:80,
+                artillery:80,
+                rockets:85,
+                antiAir:85,
+                missles:90,
+                bShip:55,
+                lander:60,
+                cruiser:85,
+                sub:85,
+                pipe:55
+            },
+            movable: app.settings.movable.wheels,
+            transportaion: 'wheels',
+            health: 10,
+            ammo: 10,
+            fuel: 50,
+            weapon1: {},
+            weapon2: {}
+        },
+        name: 'Rockets',
+        cost: 15000
+    },
+    missles: {
+        properties: {
+            type: 'missles',
             name: 'Missles',
-            cost: 12000
-        },
-        neoTank: {
-            properties: {
-                type: 'neoTank',
-                name: 'Neo Tank',
-                movement: 6,
-                vision: 1,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.wheels,
-                transportaion: 'wheels',
-                health: 10,
-                ammo: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {}
+            movement: 4,
+            vision: 1,
+            range: {
+                lo: 3,
+                hi: 5
             },
+            damageType:'ranged',
+            baseDamage:{
+                fighter:100,
+                bomber:100,
+                bCopter:120,
+                tCopter:120
+            },
+            movable: app.settings.movable.wheels,
+            transportaion: 'wheels',
+            health: 10,
+            ammo: 10,
+            fuel: 50,
+            weapon1: {},
+            weapon2: {}
+        },
+        name: 'Missles',
+        cost: 12000
+    },
+    neoTank: {
+        properties: {
+            type: 'neoTank',
             name: 'Neo Tank',
-            cost: 22000
-        }
+            movement: 6,
+            vision: 1,
+            range: {
+                lo: 1,
+                hi: 1
+            },
+            damageType:'direct',
+            baseDamage:{
+                infantry: 125,
+                mech:115,
+                recon:125,
+                tank:105,
+                midTank:75,
+                neoTank:55,
+                apc:125,
+                artillery:115,
+                rockets:125,
+                antiAir:115,
+                missles:125,
+                bCopter:22,
+                tCopter:55,
+                bShip:15,
+                lander:40,
+                cruiser:50,
+                sub:15,
+                pipe:75
+            },
+            movable: app.settings.movable.wheels,
+            transportaion: 'wheels',
+            health: 10,
+            ammo: 10,
+            fuel: 99,
+            weapon1: {},
+            weapon2: {}
+        },
+        name: 'Neo Tank',
+        cost: 22000
+    },
+    tCopter: {
+        properties: {
+            type: 'tCopter',
+            name: 'T-Copter',
+            movement: 6,
+            vision: 2,
+            range: {
+                lo: 1,
+                hi: 1
+            },
+            movable: app.settings.movable.flight,
+            transportaion: 'flight',
+            health: 10,
+            fuel: 99,
+            weapon1: {},
+            weapon2: {},
+            fpt: 2
+        },
+        name: 'T-Copter',
+        cost: 5000
+    },
+    bCopter: {
+        properties: {
+            type: 'bCopter',
+            name: 'B-Copter',
+            movement: 6,
+            vision: 3,
+            range: {
+                lo: 1,
+                hi: 1
+            },
+            damageType:'direct',
+            baseDamage:{
+                infantry: 75,
+                mech:75,
+                recon:55,
+                tank:55,
+                midTank:25,
+                neoTank:20,
+                apc:60,
+                artillery:65,
+                rockets:65,
+                antiAir:25,
+                missles:65,
+                bCopter:65,
+                tCopter:95,
+                bShip:25,
+                lander:25,
+                cruiser:55,
+                sub:25,
+                pipe:25
+            },
+            movable: app.settings.movable.flight,
+            transportaion: 'flight',
+            health: 10,
+            ammo: 10,
+            fuel: 99,
+            weapon1: {},
+            weapon2: {},
+            fpt: 1
+        },
+        name: 'B-Copter',
+        cost: 9000
+    },
+    fighter: {
+        properties: {
+            type: 'fighter',
+            name: 'Fighter',
+            movement: 9,
+            vision: 2,
+            range: {
+                lo: 1,
+                hi: 1
+            },
+            damageType:'direct',
+            baseDamage:{
+                bCopter:100,
+                tCopter:100,
+                bomber:100,
+                fighter:55
+            },
+            movable: app.settings.movable.flight,
+            transportaion: 'flight',
+            health: 10,
+            ammo: 10,
+            fuel: 99,
+            weapon1: {},
+            weapon2: {},
+            fpt: 5
+        },
+        name: 'Fighter',
+        cost: 20000
+    },
+    bomber: {
+        properties: {
+            type: 'bomber',
+            name: 'Bomber',
+            movement: 7,
+            vision: 2,
+            range: {
+                lo: 1,
+                hi: 1
+            },
+            damageType:'direct',
+            baseDamage:{
+                infantry: 110,
+                mech:110,
+                recon:105,
+                tank:105,
+                midTank:95,
+                neoTank:90,
+                apc:105,
+                artillery:105,
+                rockets:105,
+                antiAir:95,
+                missles:105,
+                bShip:75,
+                lander:95,
+                cruiser:85,
+                sub:95,
+                pipe:95
+            },
+            movable: app.settings.movable.flight,
+            transportaion: 'flight',
+            health: 10,
+            ammo: 10,
+            fuel: 99,
+            weapon1: {},
+            weapon2: {},
+            fpt: 5
+        },
+        name: 'Bomber',
+        cost: 22000
+    },
+    lander: {
+        properties: {
+            type: 'lander',
+            name: 'Lander',
+            movement: 6,
+            vision: 1,
+            range: {
+                lo: 1,
+                hi: 1
+            },
+            movable: app.settings.movable.boat,
+            transportaion: 'boat',
+            health: 10,
+            fuel: 99,
+            weapon1: {},
+            weapon2: {},
+            fpt: 1
+        },
+        name: 'Lander',
+        cost: 12000
+    },
+    cruiser: {
+        properties: {
+            type: 'cruiser',
+            name: 'Cruiser',
+            movement: 6,
+            vision: 3,
+            range: {
+                lo: 1,
+                hi: 1
+            },
+            damageType:'direct',
+            baseDamage:{
+                bCopter:115,
+                tCopter:115,
+                fighter:55,
+                bomber:65,
+                sub:90
+            },
+            movable: app.settings.movable.boat,
+            transportaion: 'boat',
+            health: 10,
+            ammo: 10,
+            fuel: 99,
+            weapon1: {},
+            weapon2: {},
+            fpt: 1
+        },
+        name: 'Cruiser',
+        cost: 18000
+    },
+    submerine: {
+        properties: {
+            type: 'submerine',
+            name: 'Submerine',
+            movement: 5,
+            vision: 5,
+            range: {
+                lo: 1,
+                hi: 1
+            },
+            damageType:'direct',
+            baseDamage:{
+                bShip:55,
+                lander:95,
+                cruiser:25,
+                sub:55
+            },
+            movable: app.settings.movable.boat,
+            transportaion: 'boat',
+            health: 10,
+            ammo: 10,
+            fuel: 60,
+            weapon1: {},
+            weapon2: {},
+            fpt: 1,
+            divefpt: 5
+        },
+        name: 'Submerine',
+        cost: 20000
+    },
+    bShip: {
+        properties: {
+            type: 'bShip',
+            name: 'B-Ship',
+            movement: 5,
+            vision: 2,
+            range: {
+                lo: 2,
+                hi: 6
+            },
+            damageType:'ranged',
+            baseDamage:{
+                infantry:95,
+                mech:90,
+                recon:90,
+                tank:80,
+                midTank:55,
+                neoTank:50,
+                apc:80,
+                artillery:80,
+                rockets:85,
+                antiAir:85,
+                missles:90,
+                bShip:50,
+                lander:95,
+                cruiser:95,
+                sub:95,
+                pipe:55
+            },
+            movable: app.settings.movable.boat,
+            transportaion: 'boat',
+            health: 10,
+            ammo: 10,
+            fuel: 99,
+            weapon1: {},
+            weapon2: {},
+            fpt: 1
+        },
+        name: 'B-Ship',
+        cost: 28000
+    }
+};
+
+/* --------------------------------------------------------------------------------------*\
+    
+    app.buildings is a list of each building and the inits they are capable of producing
+
+\* --------------------------------------------------------------------------------------*/
+
+app.buildings = {
+    base:{
+        infantry:app.units.infantry,
+        mech:app.units.mech,
+        recon:app.units.recon,
+        apc:app.units.apc,
+        antiAir:app.units.antiAir,
+        tank:app.units.tank,
+        midTank:app.units.midTank,
+        artillery:app.units.artillery,
+        missles:app.units.missles,
+        rockets:app.units.infantry,
+        neoTank:app.units.neoTank
     },
     airport: {
-        tCopter: {
-            properties: {
-                type: 'tCopter',
-                name: 'T-Copter',
-                movement: 6,
-                vision: 2,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.flight,
-                transportaion: 'flight',
-                health: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {},
-                fpt: 2
-            },
-            name: 'T-Copter',
-            cost: 5000
-        },
-        bCopter: {
-            properties: {
-                type: 'bCopter',
-                name: 'B-Copter',
-                movement: 6,
-                vision: 3,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.flight,
-                transportaion: 'flight',
-                health: 10,
-                ammo: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {},
-                fpt: 1
-            },
-            name: 'B-Copter',
-            cost: 9000
-        },
-        fighter: {
-            properties: {
-                type: 'fighter',
-                name: 'Fighter',
-                movement: 9,
-                vision: 2,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.flight,
-                transportaion: 'flight',
-                health: 10,
-                ammo: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {},
-                fpt: 5
-            },
-            name: 'Fighter',
-            cost: 20000
-        },
-        bomber: {
-            properties: {
-                type: 'bomber',
-                name: 'Bomber',
-                movement: 7,
-                vision: 2,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.flight,
-                transportaion: 'flight',
-                health: 10,
-                ammo: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {},
-                fpt: 5
-            },
-            name: 'Bomber',
-            cost: 22000
-        }
+        tCopter:app.units.tCopter,
+        bCopter:app.units.bCopter,
+        fighter:app.units.fighter,
+        bomber:app.units.bomber
     },
     seaport: {
-        lander: {
-            properties: {
-                type: 'lander',
-                name: 'Lander',
-                movement: 6,
-                vision: 1,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.boat,
-                transportaion: 'boat',
-                health: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {},
-                fpt: 1
-            },
-            name: 'Lander',
-            cost: 12000
-        },
-        cruiser: {
-            properties: {
-                type: 'cruiser',
-                name: 'Cruiser',
-                movement: 6,
-                vision: 3,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.boat,
-                transportaion: 'boat',
-                health: 10,
-                ammo: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {},
-                fpt: 1
-            },
-            name: 'Cruiser',
-            cost: 18000
-        },
-        submerine: {
-            properties: {
-                type: 'submerine',
-                name: 'Submerine',
-                movement: 5,
-                vision: 5,
-                range: {
-                    lo: 1,
-                    hi: 1
-                },
-                movable: app.settings.movable.boat,
-                transportaion: 'boat',
-                health: 10,
-                ammo: 10,
-                fuel: 60,
-                weapon1: {},
-                weapon2: {},
-                fpt: 1,
-                divefpt: 5
-            },
-            name: 'Submerine',
-            cost: 20000
-        },
-        bShip: {
-            properties: {
-                type: 'bShip',
-                name: 'B-Ship',
-                movement: 5,
-                vision: 2,
-                range: {
-                    lo: 2,
-                    hi: 6
-                },
-                movable: app.settings.movable.boat,
-                transportaion: 'boat',
-                health: 10,
-                ammo: 10,
-                fuel: 99,
-                weapon1: {},
-                weapon2: {},
-                fpt: 1
-            },
-            name: 'B-Ship',
-            cost: 28000
-        }
+        lander:app.units.lander,
+        cruiser:app.units.cruiser,
+        submerine:app.units.submerine,
+        bShip:app.units.bShip
     }
 };
 
