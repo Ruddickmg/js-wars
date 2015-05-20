@@ -519,7 +519,6 @@ app.actions = function () {
             }
             // if their are any units in the attackable array, then return it, otherwise return false
             if (attackable[0]){
-                console.log(attackable);
                 return attackable;
             }
         }
@@ -530,7 +529,7 @@ app.actions = function () {
     var capturable = function (selected) {
 
         // if the selected unit can capture buildings then continue
-        if (selected.capture) {
+        if (selected.capture && !selected.captured) {
 
             // get a list of buildings on the map
             buildings = app.map.building;
@@ -541,7 +540,8 @@ app.actions = function () {
 
                 // if the building does not already belong to the selected unit, and the unit is on the building then return it
                 if (building.player !== selected.player && building.x === selected.x && building.y === selected.y) {
-                    return app.map.building[b];
+                    building.ind = b;
+                    return building;
                 }
             }
         }
@@ -660,35 +660,44 @@ app.actions = function () {
 
         // capture a building
         capture: function () {
-            if(options){
-                var building = options.canCapture;
+            if(options.capture){
+                var building = options.capture;
                 var unit = app.temp.selectedUnit;
-                var capture = app.temp.player.co.capture ? app.temp.player.co.capture(unit.capture) : unit.capture;
-
-                // if the building has not been catpured all the way
+                var capture = app.temp.player.co.capture ? app.temp.player.co.capture(unit.health) : unit.health;
+                
+                // if the building has not between catpured all the way
                 if (building.capture - capture > 0) {
 
                     // subtract the amount of capture dealt by the unit from the buildings capture level
                     app.map.building[building.ind].capture -= capture;
+                    app.map.unit[unit.ind].captured = true;
+                    app.undo.all();
                     return true;
 
                     // if the building is done being captured and is not a headquarters
                 } else if (building.type !== 'hq') {
-
                     // assign the building to the capturing player
                     app.map.building[building.ind].player = unit.player;
                     app.map.building[building.ind].capture = app.settings.capture;
+                    app.map.unit[unit.ind].captured = true;
+                    app.undo.all();
                     return true;
                 }
                 // otherwise assign all the buildings belonging to the owner of the captured hq to the capturing player
                 var buildings = app.map.building;
                 var defeated = app.map.building[building.ind].player;
-                for(var b = 0; b < buildings; b += 1){
-                    if( buildings[b].player === buildings[building.ind].player ){
-                        app.map.building[building.ind].player = unit.player;
+                for(var b = 0; b < buildings.length; b += 1){
+                    if( buildings[b].player === defeated ){
+                        app.map.building[b].player = unit.player;
                     }
                 }
                 app.defeated.concat(app.players.splice(defeated - 1, 1));
+                app.map.unit[unit.ind].captured = true;
+                app.undo.all();
+                alert('player '+defeated+' defeated');
+                if(app.players.length === 1){
+                    alert('player '+app.players[0].id+' wins!');
+                }
             }
         },
 
@@ -1861,10 +1870,13 @@ app.move = function () {
             // check for units that belong to the current player
             if (unit.player === player) {
                 // add the original movement allowance to each unit on the board belonging to the current player
-                app.map.unit[u].movement = app.buildings[ports[unit.transportaion]][unit.type].properties.movement;
+                app.map.unit[u].movement = app.units[unit.type].properties.movement;
 
                 // reset attack abilities
                 app.map.unit[u].attacked = false;   
+
+                // reset capture abilities
+                app.map.unit[u].captured = false;
             }
         }
         return true;
@@ -2285,7 +2297,7 @@ app.map = {
         y: 5,
         type: 'hq',
         name: 'HQ',
-        capture: 20,
+        capture: app.settings.capture,
         obsticle: 'building',
         player: 1,
         color: 'red',
@@ -2295,7 +2307,7 @@ app.map = {
         y: 5,
         type: 'hq',
         name: 'HQ',
-        capture: 20,
+        capture: app.settings.capture,
         obsticle: 'building',
         player: 2,
         color: 'blue',
@@ -2305,7 +2317,7 @@ app.map = {
         y: 4,
         type: 'base',
         name: 'Base',
-        capture: 20,
+        capture: app.settings.capture,
         obsticle: 'building',
         player: 1,
         color: 'red',
@@ -2315,35 +2327,13 @@ app.map = {
         y: 4,
         type: 'base',
         name: 'Base',
-        capture: 20,
+        capture: app.settings.capture,
         obsticle: 'building',
         player: 2,
         color: 'blue',
         def: 4
     }],
-    unit: [{
-		x:3,
-		y:5,
-        type: 'infantry',
-        name: 'Infantry',
-        player:2,
-        movement: 3,
-        vision: 2,
-        range: {
-            lo: 1,
-            hi: 1
-        },
-        obsticle:'unit',
-        movable: app.settings.movable.foot,
-        transportaion: 'foot',
-        canAttack: ['wheels', 'foot'],
-        health: 10,
-        capture: this.health,
-        ammo: 10,
-        fuel: 99,
-        weapon1: {},
-        weapon2: {}
-    }]
+    unit: []
 };
 
 /* --------------------------------------------------------------------------------------*\
@@ -2574,7 +2564,7 @@ app.units = {
             },
             movable: app.settings.movable.foot,
             transportaion: 'foot',
-            capture: this.health,
+            capture: true,
             canAttack: ['wheels', 'foot'],
             health: 10,
             ammo: 10,
@@ -2614,7 +2604,7 @@ app.units = {
             },
             movable: app.settings.movable.foot,
             transportaion: 'foot',
-            capture: this.health,
+            capture: true,
             health: 10,
             ammo: 10,
             fuel: 70,
