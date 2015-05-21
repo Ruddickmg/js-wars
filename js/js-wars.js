@@ -638,7 +638,10 @@ app.actions = function () {
     return {
 
         // check to see if any actions can be perfomed
-        check: function (selected) {
+        check: function (combine) {
+
+            // use selected unit
+            var selected = app.temp.selectedUnit;
 
             // find any attackable opponents 
             var canAttack = attackable(selected);
@@ -649,7 +652,8 @@ app.actions = function () {
             // add buildings or opponenets to an object containing possible actions
             if (canAttack) options.attack = canAttack;
             if (canCapture) options.capture = canCapture;
-            if (canCapture || canAttack) options.wait = true;
+            if (combine) options.combine = combine;
+            if (canCapture || canAttack || combine) options.wait = true;
 
             // if there are any actions that can be taken then return them
             if (options.wait){
@@ -664,7 +668,7 @@ app.actions = function () {
                 var building = options.capture;
                 var unit = app.temp.selectedUnit;
                 var capture = app.temp.player.co.capture ? app.temp.player.co.capture(unit.health) : unit.health;
-                
+
                 // if the building has not between catpured all the way
                 if (building.capture - capture > 0) {
 
@@ -699,6 +703,27 @@ app.actions = function () {
                     alert('player '+app.players[0].id+' wins!');
                 }
             }
+        },
+
+        combine: function () {
+            if (options.combine){    
+                var combine = options.combine;
+                var selected = app.temp.selectedUnit;
+                var props = app.settings.combinableProperties;
+                for ( u = 0; u < props.length; u += 1){
+                    prop = props[u];
+                    max = app.units[selected.type].properties[prop];
+                    if( combine[prop] + selected[prop] < max ){
+                        app.map.unit[combine.ind][prop] += selected[prop];
+                    }else{
+                        app.map.unit[combine.ind][prop] = max;
+                    }
+                }
+                app.map.unit.splice(selected.ind, 1);
+                app.undo.all();
+                window.requestAnimationFrame(app.animateUnit);
+            }
+            return false;
         },
 
         unset:function (){
@@ -1101,37 +1126,56 @@ app.select = function () {
         // if there is a selected unit and select is active and the select key has been pressed
         if (app.temp.selectedUnit && app.temp.selectActive && app.settings.keyMap.select in app.keys) {
 
+            var cursor = app.settings.cursor;
+
             app.undo.keyPress(app.settings.keyMap.select);
 
-            // selected unit 
+            // selected unit
             var unit = app.temp.selectedUnit;
 
-            // calculate how many squares were moved
-            var xmove = abs(app.temp.selectedUnit.x - app.settings.cursor.x);
-            var ymove = abs(app.temp.selectedUnit.y - app.settings.cursor.y);
+            // check if square moving to has a unit on it
+            var landing = gridPoint('unit').ind;
 
-            // remove the amount of squares moved from the units allowed movement for the turn
-            app.map.unit[unit.ind].movement -= xmove + ymove;
+            // get the unit to combine with
+            if ( landing !== undefined ) var combine = app.map.unit[landing];
 
-            // change selected units position to the cursor location
-            app.map[type][index].x = app.settings.cursor.x;
-            app.map[type][index].y = app.settings.cursor.y;
+            // if the unit being landed on belongs to the current player, and is the same type of unit, and is not the same unit
+            if( combine && combine.player === unit.player && combine.type === unit.type && combine.ind !== unit.ind ){
 
+                // get actions for the unit
+                var actions = app.actions.check(combine);
+
+                // if there are actions returned then display them
+                if(actions.wait) app.display.actions(actions);
+
+            }else{
+                
+                // calculate how many squares were moved
+                var xmove = abs(app.temp.selectedUnit.x - cursor.x);
+                var ymove = abs(app.temp.selectedUnit.y - cursor.y);
+
+                // remove the amount of squares moved from the units allowed movement for the turn
+                app.map.unit[unit.ind].movement -= xmove + ymove;
+
+                // change selected units position to the cursor location
+                app.map[type][index].x = app.settings.cursor.x;
+                app.map[type][index].y = app.settings.cursor.y;
+
+                //animate the changes
+                window.requestAnimationFrame(app.animateUnit);
+
+                // check to see if actions can be taken
+                var actions = app.actions.check();
+            }
+            
             // remove the range and path hilights
             app.undo.effect('highlight').effect('path');
 
-            //animate the changes
-            window.requestAnimationFrame(app.animateUnit);
-
-            // check to see if actions can be taken
-            var actions = app.actions.check(unit);
-
             // if there are actions that can be taken then display the necessary options
-            if (actions) {
+            if ( actions.wait ) {
                 app.display.actions(actions);
-                app.undo.keyPress(app.settings.keyMap.select);
 
-                // if there are no actions then deselect the unit
+            // if there are no actions then deselect the unit
             } else {
                 app.undo.all();
             }
@@ -2094,6 +2138,8 @@ app.settings = {
 
     // rules on how attacks will be handled between unit types
     attackStats: {},
+
+    combinableProperties:['fuel','health','ammo'],
 
     // terrain each unit is allowed to walk on
     movable: {
