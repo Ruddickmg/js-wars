@@ -491,35 +491,38 @@ app.actions = function () {
         var neighbor, unit;
 
         // get unit types that the selected unit can attack
-        var canAttack = selected.canAttack;
+        if(selected.canAttack){
 
-        // get the id of the current player
-        var player = app.temp.player.id;
+            var canAttack = selected.canAttack;
 
-        if (!selected.attacked){
-            for (var n = 0; n < neighbors.length; n += 1) {
-                // each neighbor
-                neighbor = neighbors[n];
+            // get the id of the current player
+            var player = app.temp.player.id;
 
-                for (var u = 0; u < units.length; u += 1) {
-                    // each unit
-                    unit = units[u];
-                    unit.ind = u; // set for easy retrieval and editing;
+            if (!selected.attacked){
+                for (var n = 0; n < neighbors.length; n += 1) {
+                    // each neighbor
+                    neighbor = neighbors[n];
 
-                    // if the selected unit can attack its neighbor and the neighbor is not the current players unit
-                    if (canAttack.hasValue(unit.transportaion) && neighbor.x === unit.x && neighbor.y === unit.y && unit.player !== player) {
+                    for (var u = 0; u < units.length; u += 1) {
+                        // each unit
+                        unit = units[u];
+                        unit.ind = u; // set for easy retrieval and editing;
 
-                        // calcualte damage percentage for each attackable unit
-                        unit.damage = app.calculate.damage(unit);
+                        // if the selected unit can attack its neighbor and the neighbor is not the current players unit
+                        if (canAttack.hasValue(unit.transportaion) && neighbor.x === unit.x && neighbor.y === unit.y && unit.player !== player) {
 
-                        // add the neighbor to an array of neighbors the selected unit can attack
-                        attackable.push(unit);
+                            // calcualte damage percentage for each attackable unit
+                            unit.damage = app.calculate.damage(unit);
+
+                            // add the neighbor to an array of neighbors the selected unit can attack
+                            attackable.push(unit);
+                        }
                     }
                 }
-            }
-            // if their are any units in the attackable array, then return it, otherwise return false
-            if (attackable[0]){
-                return attackable;
+                // if their are any units in the attackable array, then return it, otherwise return false
+                if (attackable[0]){
+                    return attackable;
+                }
             }
         }
         return false;
@@ -652,7 +655,10 @@ app.actions = function () {
             // add buildings or opponenets to an object containing possible actions
             if (canAttack) options.attack = canAttack;
             if (canCapture) options.capture = canCapture;
-            if (combine) options.combine = combine;
+            if(combine){
+                if (combine.combine) options.combine = combine;
+                if (combine.load) options.load = combine;
+            }
             if (canCapture || canAttack || combine) options.wait = true;
 
             // if there are any actions that can be taken then return them
@@ -703,6 +709,17 @@ app.actions = function () {
                     alert('player '+app.players[0].id+' wins!');
                 }
             }
+        },
+
+        load: function () {
+            if(options.load){
+                var load = options.load;
+                var selected = app.temp.selectedUnit;
+                app.map.unit[load.ind].loaded = load.loaded.concat(app.map.unit.splice(selected.ind,1));
+                app.undo.all();
+                window.requestAnimationFrame(app.animateUnit);
+            }
+            return false;
         },
 
         combine: function () {
@@ -1139,15 +1156,24 @@ app.select = function () {
             // get the unit to combine with
             if ( landing !== undefined ) var combine = app.map.unit[landing];
 
-            // if the unit being landed on belongs to the current player, and is the same type of unit, and is not the same unit
-            if( combine && combine.player === unit.player && combine.type === unit.type && combine.ind !== unit.ind ){
+            // if the unit being landed on belongs to the current player, is the same type of unit but is not the same unit
+            if( combine && combine.player === unit.player && combine.ind !== unit.ind ){
 
-                // get actions for the unit
-                var actions = app.actions.check(combine);
+                // if is the same unit then combine units
+                if ( combine.type === unit.type ){  
+                    combine.combine = true;
 
-                // if there are actions returned then display them
-                if(actions.wait) app.display.actions(actions);
+                // if the unit is a transport and the unit being moved into can be loaded into that transport, then show the option to load into the transport
+                }else if(combine.transport && unit.load.hasValue(unit.type) && unit.loaded.length < unit.transport.length){
+                    combine.load = true;
+                }
+                if( combine.load || combine.combine ){
+                    // get actions for the unit
+                    var actions = app.actions.check(combine);
 
+                    // if there are actions returned then display them
+                    if(actions.wait) app.display.actions(actions);
+                }
             }else{
                 
                 // calculate how many squares were moved
@@ -2118,16 +2144,20 @@ app.settings = {
     // list of the effects each obsticle has on each unit type
     obsticleStats: {
         mountain: {
-            infantry: 2
+            infantry: 2,
+            apc:2
         },
         wood: {
-            infantry: 1
+            infantry: 1,
+            apc:2
         },
         plain: {
-            infantry: 1
+            infantry: 1,
+            apc:1
         },
         unit: {
-            infantry: 1
+            infantry: 1,
+            apc:1
         }
     },
 
@@ -2708,6 +2738,9 @@ app.units = {
                 lo: 1,
                 hi: 1
             }, // steal supplies!
+            load:1,
+            load:['infantry', 'mech'],
+            loaded:[],
             movable: app.settings.movable.wheels,
             transportaion: 'wheels',
             health: 10,
@@ -3003,6 +3036,9 @@ app.units = {
                 lo: 1,
                 hi: 1
             },
+            load:['infantry', 'mech'],
+            loaded:[],
+            transport:1,
             movable: app.settings.movable.flight,
             transportaion: 'flight',
             health: 10,
@@ -3137,6 +3173,21 @@ app.units = {
                 lo: 1,
                 hi: 1
             },
+            transport:2,
+            load:[
+                'infantry', 
+                'mech', 
+                'tank', 
+                'midTank',
+                'apc', 
+                'missles', 
+                'rockets',
+                'neoTank',
+                'antiAir',
+                'artillery',
+                'recon'
+            ],
+            loaded:[],
             movable: app.settings.movable.boat,
             transportaion: 'boat',
             health: 10,
@@ -3166,6 +3217,9 @@ app.units = {
                 bomber:65,
                 sub:90
             },
+            transport:2,
+            load:['tCopter', 'bCopter'],
+            loaded:[],
             movable: app.settings.movable.boat,
             transportaion: 'boat',
             health: 10,
@@ -3778,6 +3832,13 @@ app.animationRepo = function (width, height) {
         },
         infantry: function (canv, m) {
             canv.fillStyle = "blue";
+            canv.beginPath();
+            canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
+            canv.fill();
+            return canv;
+        },
+        apc: function (canv, m) {
+            canv.fillStyle = "orange";
             canv.beginPath();
             canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
             canv.fill();
