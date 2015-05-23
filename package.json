@@ -8,6 +8,9 @@
     "application",
     "openshift"
   ],
+  "scripts": {
+  "start": "node server.js"
+  },
   "author": {
     "name": "Marcus Ruddick",
     "email": "ruddickmg@gmail.com",
@@ -38,5 +41,5 @@
   },  
   "bundleDependencies": [],
   "private": true,
-  "main": "index.js"
+  "main": "server.js"
 }
