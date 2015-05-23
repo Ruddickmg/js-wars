@@ -1,7 +1,7 @@
 {
-  "name": "OpenShift-Sample-App",
+  "name": "js-wars",
   "version": "1.0.0",
-  "description": "OpenShift Sample Application",
+  "description": "online advance wars written in javascript, html and css",
   "keywords": [
     "OpenShift",
     "Node.js",
@@ -9,14 +9,14 @@
     "openshift"
   ],
   "author": {
-    "name": "OpenShift",
-    "email": "ramr@example.org",
-    "url": "http://www.openshift.com/"
+    "name": "Marcus Ruddick",
+    "email": "ruddickmg@gmail.com",
+    "url": "http://jswars-jswars.rhcloud.com/"
   },
   "homepage": "http://www.openshift.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/openshift/origin-server"
+    "url": "https://github.com/Ruddickmg/js-wars"
   },
 
   "engines": {
@@ -25,11 +25,18 @@
   },
 
   "dependencies": {
-    "express": "~3.4.4"
+    "primus": "*",
+    "async": "~1.0.0",
+    "express": "4.12.x",
+    "winston": "git://github.com/flatiron/winston#master",
+    "plates": "https://github.com/flatiron/plates/tarball/master"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "vows": "^0.7.0",
+    "assume": "<1.0.0 || >=2.3.1 <2.4.5 || >=2.5.2 <3.0.0",
+    "pre-commit": "*"
+  },  
   "bundleDependencies": [],
-
   "private": true,
-  "main": "server.js"
+  "main": "index.js"
 }
