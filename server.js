@@ -16,7 +16,7 @@ if (typeof con.ip === "undefined") {
 };
 
 app.get('/', function(req, res){
-  res.send(__dirname + '/index.html');
+  res.sendFile(__dirname + '/index.html');
 });
 
 io.on('connection', function(socket){
