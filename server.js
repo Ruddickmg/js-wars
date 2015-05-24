@@ -2,6 +2,7 @@
 
 var app = require('express')();
 var http = require('http').Server(app);
+var io = require('socket.io')(http);
 var con = {}; // holds connection variables
 
 con.ip = process.env.OPENSHIFT_NODEJS_IP;
@@ -15,7 +16,11 @@ if (typeof con.ip === "undefined") {
 };
 
 app.get('/', function(req, res){
-  res.send('<h1>Hello world</h1>');
+  res.send(__dirname + '/index.html');
+});
+
+io.on('connection', function(socket){
+  console.log('a user connected');
 });
 
 http.listen(con.port, con.ip, function(){
