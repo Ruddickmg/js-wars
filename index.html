@@ -7,6 +7,11 @@
 	    <link rel="stylesheet" type="text/css" href="public/css/js-wars.css">
 </head>
 
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io();
+</script>
+
 <body onLoad="app.run();">
 	<h1>JS WARS!</h1>
 	<canvas width="960" height="640" class="gameScreen", id="background"></canvas>
