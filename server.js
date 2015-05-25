@@ -6,7 +6,7 @@ var io = require('socket.io')(http);
 var con = {}; // holds connection variables
 
 con.ip = process.env.OPENSHIFT_NODEJS_IP;
-con.port      = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+con.port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
 
 if (typeof con.ip === "undefined") {
     //  Log errors on OpenShift but continue w/ 127.0.0.1 - this
@@ -14,6 +14,8 @@ if (typeof con.ip === "undefined") {
     console.warn('No OPENSHIFT_NODEJS_IP var, using 127.0.0.1');
     con.ip = "127.0.0.1";
 };
+
+express.use(express.static('public'));
 
 express.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
