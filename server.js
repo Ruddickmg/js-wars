@@ -15,11 +15,11 @@ if (typeof con.ip === "undefined") {
     con.ip = "127.0.0.1";
 };
 
-express.use(express.static('public'));
-
 express.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
+
+//express.use(express.static('public'));
 
 io.on('connection', function(socket){
   console.log('a user connected');
