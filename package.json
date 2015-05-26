@@ -33,7 +33,8 @@
     "express": "4.12.x",
     "winston": "git://github.com/flatiron/winston#master",
     "plates": "https://github.com/flatiron/plates/tarball/master",
-    "socket.io": "1.3.5"
+    "socket.io": "1.3.5",
+    "browser-logger":"1.0.0"
   },
   "bundleDependencies": [],
   "private": true,

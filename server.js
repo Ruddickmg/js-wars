@@ -1,5 +1,5 @@
 #!/bin/env node
-var express = require('express')
+var express = require('express');
 var application = express();
 var http = require('http').Server(application);
 var io = require('socket.io')(http);
@@ -16,6 +16,7 @@ if (typeof con.ip === "undefined") {
 };
 
 application.use(express.static(__dirname + '/public'));
+app.use(require('browser-logger')());
 
 application.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
