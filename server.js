@@ -16,7 +16,7 @@ if (typeof con.ip === "undefined") {
 };
 
 application.use(express.static(__dirname + '/public'));
-app.use(require('browser-logger')());
+application.use(require('browser-logger')());
 
 application.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
