@@ -28,8 +28,7 @@ server.listen(con.port, con.ip, function(){
 });
 
 io.on('connection', function(socket){
-    socket.on('cursorMove', function(keyPressed){
-        io.emit('cursorMove', keyPressed);
+    socket.on('cursorMove', function(content){
+        io.emit('cursorMove', content);
     });
 });
-

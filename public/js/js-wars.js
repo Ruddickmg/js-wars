@@ -13,6 +13,7 @@ socket.on('connect',function() {
 
 // Add a connect listener
 socket.on('cursorMove', function(data) {
+    alert('data recieved');
   console.log('moved' + data);
 });
 
@@ -2144,7 +2145,7 @@ app.move = function () {
                    if (cursor('x', d.x, 1)) app.temp.cursorMoved = key.right;
                 }
                 if(app.temp.cursorMoved){
-                    console.log('emitting: '+app.temp.cursorMoved);
+                    console.log('where?');
                     socket.emit('cursorMove', app.temp.cursorMoved);
                 };
                 window.requestAnimationFrame(app.animateCursor);
