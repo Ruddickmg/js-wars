@@ -1366,15 +1366,9 @@ app.display = function () {
     var optionsActive, unitSelectionActive = false;
 
     var setup = function () {
-
-
-        }(document, 'script', 'facebook-jssdk'));
-       
-// (war room, campaign) eventually integrate ai opponents?
-        
+        // (war room, campaign) eventually integrate ai opponents?
         var setupScreen = document.createElement('article');
         var menus = ['Logout','Setup','Join','Design','Game Store'];
-
     };
 
     var login = function () {
