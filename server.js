@@ -29,6 +29,6 @@ server.listen(con.port, con.ip, function(){
 
 io.on('connection', function(socket){
     socket.on('cursorMove', function(content){
-        io.emit('cursorMove', content);
+        socket.broadcast.emit('cursorMove', content);
     });
 });
