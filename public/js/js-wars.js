@@ -1381,6 +1381,7 @@ app.display = function () {
         var fbButton = document.createElement('fb:login-button');
         fbButton.setAttribute('scope', 'public_profile, email');
         fbButton.setAttribute('onLogin', 'checkLoginState();');
+        fbButton.setAttribute('id', 'fbButton');
 
         // create a holder for the login status
         var fbStatus = document.createElement('div');
@@ -1388,6 +1389,8 @@ app.display = function () {
 
         loginScreen.appendChild(fbButton);
         loginScreen.appendChild(fbStatus);
+
+        document.body.insertBefore(loginScreen, document.getElementById('before'));
 
         // allow login through fb ---- fb sdk
         // This is called with the results from from FB.getLoginStatus().
