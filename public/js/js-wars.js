@@ -4,7 +4,7 @@
     
 \* ---------------------------------------------------------------------------------------------------------*/
 
-var socket = io();
+var socket = io('http://jswars-jswars.rhcloud.com/:8000');
 
 // Add a connect listener
 socket.on('connect',function() {
