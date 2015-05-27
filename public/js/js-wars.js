@@ -1380,7 +1380,7 @@ app.display = function () {
         // create button for fb login
         var fbButton = document.createElement('fb:login-button');
         fbButton.setAttribute('scope', 'public_profile, email');
-        fbButton.setAttribute('onLogin', 'checkLoginState();');
+        fbButton.setAttribute('onLogin', 'app.display.checkLoginState();');
         fbButton.setAttribute('id', 'fbButton');
 
         // create a holder for the login status
@@ -1415,9 +1415,8 @@ app.display = function () {
             js = d.createElement(s); js.id = id;
             js.src = "//connect.facebook.net/en_US/sdk.js";
             fjs.parentNode.insertBefore(js, fjs);
-            
+
         }(document, 'script', 'facebook-jssdk'));
-        
 
         // allow login through fb ---- fb sdk
         // This is called with the results from from FB.getLoginStatus().
@@ -1441,12 +1440,6 @@ app.display = function () {
               document.getElementById('status').innerHTML = 'Please log ' +
                 'into Facebook.';
             }
-        };
-
-        var checkLoginState = function () {
-            FB.getLoginStatus(function(response) {
-                statusChangeCallback(response);
-            });
         };
 
         // Here we run a very simple test of the Graph API after login is
@@ -1934,6 +1927,12 @@ app.display = function () {
     };
 
     return {
+
+        checkLoginState: function () {
+            FB.getLoginStatus(function(response) {
+                statusChangeCallback(response);
+            });
+        },
 
         login: function(){
             return login();
