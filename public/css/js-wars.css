@@ -79,12 +79,19 @@ h1 {
     font-family: arial;
 }
 
-.gameScreen {
+.gameScreen, #login {
     position:absolute;
     top: 395px;
     left: 720px; 
     right:auto;
     transform: translate(-50%,-50%);
+}
+
+#login {
+    width: 900px;
+    height:640px;
+    z-index: 15;
+    background: rgba(43,43,43,.8);;
 }
 
 #background {

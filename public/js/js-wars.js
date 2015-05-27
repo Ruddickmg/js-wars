@@ -1365,6 +1365,100 @@ app.display = function () {
     var sideX, sideY, selectionIndex, selectedElement, hide, len, prevX;
     var optionsActive, unitSelectionActive = false;
 
+    var setup = function () {
+
+
+        }(document, 'script', 'facebook-jssdk'));
+       
+// (war room, campaign) eventually integrate ai opponents?
+        
+        var setupScreen = document.createElement('article');
+        var menus = ['Logout','Setup','Join','Design','Game Store'];
+
+    };
+
+    var login = function () {
+
+        // create login screen
+        var loginScreen = document.createElement('article');
+        loginScreen.setAttribute('id', 'login');
+
+        // create button for fb login
+        var fbButton = document.createElement('fb:login-button');
+        fbButton.setAttribute('scope', 'public_profile, email');
+        fbButton.setAttribute('onLogin', 'checkLoginState();');
+
+        // create a holder for the login status
+        var fbStatus = document.createElement('div');
+        fbStatus.setAttribute('id', 'status');
+
+        loginScreen.appendChild(fbButton);
+        loginScreen.appendChild(fbStatus);
+
+        // allow login through fb ---- fb sdk
+        // This is called with the results from from FB.getLoginStatus().
+        var statusChangeCallback = function (response) {
+                console.log('statusChangeCallback');
+                console.log(response);
+                // The response object is returned with a status field that lets the
+                // app know the current login status of the person.
+                // Full docs on the response object can be found in the documentation
+                // for FB.getLoginStatus().
+                if (response.status === 'connected') {
+                  // Logged into your app and Facebook.
+                  testAPI();
+                } else if (response.status === 'not_authorized') {
+                  // The person is logged into Facebook, but not your app.
+                  document.getElementById('status').innerHTML = 'Please log ' +
+                    'into this app.';
+                } else {
+                  // The person is not logged into Facebook, so we're not sure if
+                  // they are logged into this app or not.
+                  document.getElementById('status').innerHTML = 'Please log ' +
+                    'into Facebook.';
+                }
+            };
+
+            var checkLoginState = function () {
+                FB.getLoginStatus(function(response) {
+                    statusChangeCallback(response);
+                });
+            };
+
+            window.fbAsyncInit = function() {
+            FB.init({
+                appId      : '{your-app-id}',
+                cookie     : true,  // enable cookies to allow the server to access 
+                xfbml      : false,  // parse social plugins on this page
+                version    : 'v2.2' // use version 2.2
+            });
+
+            FB.getLoginStatus(function(response) {
+                statusChangeCallback(response);
+            });
+        };
+
+        // Load the SDK asynchronously
+        (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = "//connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+
+        // Here we run a very simple test of the Graph API after login is
+        // successful.  See statusChangeCallback() for when this call is made.
+        var testAPI = function () {
+            console.log('Welcome!  Fetching your information.... ');
+            FB.api('/me', function(response) {
+              console.log('Successful login for: ' + response.name);
+              document.getElementById('status').innerHTML =
+                'Thanks for logging in, ' + response.name + '!';
+            });
+        }
+    };
+
     var optionsHud = function () {
         var elements = {
             section: 'optionsMenu',
@@ -1838,6 +1932,10 @@ app.display = function () {
     };
 
     return {
+
+        login: function(){
+            return login();
+        },
 
         // 
         actions: function (options) {
@@ -3487,6 +3585,7 @@ app.gameLoop = function () {
 \*---------------------------------------------------------------------------------------------------------*/
 
 app.run = function () {
+    app.display.login();
     app.start(app.users);
     app.gameLoop();
     app.animateBackground();
