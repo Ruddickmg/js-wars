@@ -13,8 +13,7 @@ socket.on('connect',function() {
 
 // Add a connect listener
 socket.on('cursorMove', function(data) {
-    alert('data recieved');
-  console.log('moved' + data);
+  console.log('moved ' + data);
 });
 
 // Add a disconnect listener
