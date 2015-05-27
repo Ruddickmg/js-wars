@@ -2131,6 +2131,7 @@ app.move = function () {
             if (!app.temp.selectedBuilding && !app.temp.optionsActive && !app.temp.actionsActive) {
                 var d = app.map.dimensions;
                 var key = app.settings.keyMap;
+                var pressed;
 
                 if (key.up in app.keys) { // Player holding up
                     // if the cursor has moved store a temporary varibale that expresses this @ app.temp.cursorMoved
