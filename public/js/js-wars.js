@@ -11,7 +11,7 @@ socket.on('connect',function() {
   console.log('Client has connected to the server!');
 });
 
-// Add a connect listener
+// listen to other players cursor movement 
 socket.on('cursorMove', function(data) {
   console.log('moved ' + data);
 });
@@ -2059,32 +2059,34 @@ app.move = function () {
     };
 
     var cursor = function (axis, comparison, operation) {
-        if (!app.temp.selectedBuilding) {
-            if (!app.temp.optionsActive && !app.temp.actionsActive) {
-                var cursor = app.settings.cursor[axis]; // cursor location
 
-                scrol(cursor + operation, axis, operation); // handle scrolling
+        var temp = app.temp;
 
-                if (app.temp.selectedUnit) {
-                    var result = limit(axis, operation);
-                    if (result) {
-                        app.undo.effect('path');
-                        app.display.path({
-                            x: result.x,
-                            y: result.y
-                        });
-                        return true;
-                    }
-                } else if (operation < 0) {
-                    if (cursor + operation >= comparison) {
-                        app.settings.cursor[axis] += operation;
-                        return true;
-                    }
-                } else {
-                    if (cursor + operation <= comparison) {
-                        app.settings.cursor[axis] += operation;
-                        return true;
-                    }
+        if (!temp.selectedBuilding && !temp.optionsActive && !temp.actionsActive) {
+
+            var cursor = app.settings.cursor[axis]; // cursor location
+
+            scrol(cursor + operation, axis, operation); // handle scrolling
+
+            if (app.temp.selectedUnit) {
+                var result = limit(axis, operation);
+                if (result) {
+                    app.undo.effect('path');
+                    app.display.path({
+                        x: result.x,
+                        y: result.y
+                    });
+                    return true;
+                }
+            } else if (operation < 0) {
+                if (cursor + operation >= comparison) {
+                    app.settings.cursor[axis] += operation;
+                    return true;
+                }
+            } else {
+                if (cursor + operation <= comparison) {
+                    app.settings.cursor[axis] += operation;
+                    return true;
                 }
             }
         }
@@ -2132,20 +2134,20 @@ app.move = function () {
 
                 if (key.up in app.keys) { // Player holding up
                     // if the cursor has moved store a temporary varibale that expresses this @ app.temp.cursorMoved
-                    if (cursor('y', 0, -1)) app.temp.cursorMoved = key.up;
+                    if (cursor('y', 0, -1)) pressed = key.up;
                 }
                 if (key.down in app.keys) { // Player holding down
-                    if (cursor('y', d.y, 1)) app.temp.cursorMoved = key.down;
+                    if (cursor('y', d.y, 1)) pressed = key.down;
                 }
                 if (key.left in app.keys) { // Player holding left
-                    if(cursor('x', 0, -1)) app.temp.cursorMoved = key.left;
+                    if(cursor('x', 0, -1)) pressed = key.left;
                 }
                 if (key.right in app.keys) { // Player holding right
-                   if (cursor('x', d.x, 1)) app.temp.cursorMoved = key.right;
+                   if (cursor('x', d.x, 1)) pressed = key.right;
                 }
-                if(app.temp.cursorMoved){
-                    console.log('where?');
-                    socket.emit('cursorMove', app.temp.cursorMoved);
+                if(pressed){
+                    app.temp.cursorMoved = true;
+                    socket.emit('cursorMove', pressed);
                 };
                 window.requestAnimationFrame(app.animateCursor);
             }
