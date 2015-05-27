@@ -28,6 +28,8 @@ server.listen(con.port, con.ip, function(){
 });
 
 io.on('connection', function(socket){
-  console.log('a user connected');
+    socket.on('cursorMove', function(keyPressed){
+        io.emit('cursorMove', keyPressed);
+    });
 });
 
