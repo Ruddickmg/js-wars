@@ -4,26 +4,22 @@
     
 \* ---------------------------------------------------------------------------------------------------------*/
 
-    var socket = io();
+var socket = io();
 
-    // Add a connect listener
-    socket.on('connect',function() {
-        alert('connected');
-      console.log('Client has connected to the server!');
-    });
-    // Add a connect listener
-    socket.on('message',function(data) {
-      console.log('Received a message from the server!',data);
-    });
-    // Add a disconnect listener
-    socket.on('disconnect',function() {
-      console.log('The client has disconnected!');
-    });
+// Add a connect listener
+socket.on('connect',function() {
+  console.log('Client has connected to the server!');
+});
 
-    // Sends a message to the server via sockets
-    function sendMessageToServer(message) {
-      socket.send(message);
-    };
+// Add a connect listener
+socket.on('cursorMove', function(data) {
+  console.log('moved' + data);
+});
+
+// Add a disconnect listener
+socket.on('disconnect',function() {
+  console.log('The client has disconnected!');
+});
 
 /* ---------------------------------------------------------------------------------------------------------*\
     
@@ -2136,17 +2132,20 @@ app.move = function () {
 
                 if (key.up in app.keys) { // Player holding up
                     // if the cursor has moved store a temporary varibale that expresses this @ app.temp.cursorMoved
-                    app.temp.cursorMoved = cursor('y', 0, -1);
+                    if (cursor('y', 0, -1)) app.temp.cursorMoved = key.up;
                 }
                 if (key.down in app.keys) { // Player holding down
-                    app.temp.cursorMoved = cursor('y', d.y, 1);
+                    if (cursor('y', d.y, 1)) app.temp.cursorMoved = key.down;
                 }
                 if (key.left in app.keys) { // Player holding left
-                    app.temp.cursorMoved = cursor('x', 0, -1);
+                    if(cursor('x', 0, -1)) app.temp.cursorMoved = key.left;
                 }
                 if (key.right in app.keys) { // Player holding right
-                    app.temp.cursorMoved = cursor('x', d.x, 1);
+                   if (cursor('x', d.x, 1)) app.temp.cursorMoved = key.right;
                 }
+                if(app.temp.cursorMoved){
+                    socket.emit('cursorMove', app.temp.cursorMoved);
+                };
                 window.requestAnimationFrame(app.animateCursor);
             }
             return this;
