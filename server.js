@@ -16,11 +16,12 @@ if (typeof con.ip === "undefined") {
 };
 
 application.use(express.static(__dirname + '/public'));
-application.use(require('browser-logger')());
 
 application.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
+
+application.use(require('browser-logger')());
 
 http.listen(con.port, con.ip, function(){
   console.log('listening on '+con.port+':'+con.ip);
@@ -29,3 +30,4 @@ http.listen(con.port, con.ip, function(){
 io.on('connection', function(socket){
   console.log('a user connected');
 });
+
