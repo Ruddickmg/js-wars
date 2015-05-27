@@ -8,7 +8,6 @@ var socket = io.connect("http://jswars-jswars.rhcloud.com:8000");
 
 // Add a connect listener
 socket.on('connect',function() {
-    alert('connected!');
   console.log('Client has connected to the server!');
 });
 
@@ -2145,6 +2144,7 @@ app.move = function () {
                    if (cursor('x', d.x, 1)) app.temp.cursorMoved = key.right;
                 }
                 if(app.temp.cursorMoved){
+                    console.log('emitting: '+app.temp.cursorMoved);
                     socket.emit('cursorMove', app.temp.cursorMoved);
                 };
                 window.requestAnimationFrame(app.animateCursor);

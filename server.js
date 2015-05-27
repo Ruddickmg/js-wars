@@ -5,8 +5,6 @@ var server = require('http').Server(application);
 var io = require('socket.io')(server);
 var con = {}; // holds connection variables
 
-//io.set("transports", ["websocket"]);
-
 con.ip = process.env.OPENSHIFT_NODEJS_IP;
 con.port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
 
