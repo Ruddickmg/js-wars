@@ -1896,17 +1896,13 @@ app.display = function () {
 
     // find each element by their tag name, get the element that matches the currently selected index and return it
     var findElementByTag = function (tag, element, index) {
-        var elements = []
         for (var e = 0; e < len; e += 1) {
             // element returns a string, so must cast the index to string for comparison
             // if the element tag value ( index ) is equal to the currently selected index then return it
-            if (index && element[e].getAttribute(tag) === index.toString()) {
+            if (element[e].getAttribute(tag) === index.toString()) {
                 return element[e];
-            }else{
-                elements.push(element[e]);
             }
         }
-        return elements;
     };
 
     // get information on terrain and return an object with required information for display
@@ -2724,12 +2720,11 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index, prev, elements, length){ 
 
-            console.log('2707 scroll setup menu here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
             console.log(selectedElement);
 
             var num = app.settings.modeMenuSpacing;
 
-            var options = app.display.findElementByTag('modeselectionindex', [selectedElement]);
+            var options = selectedElement.getElementsByClassName('modeOption');
 
             var oneAbove = index - 1 > 0 ? index - 1 : length;
             var twoAbove = oneAbove -1 > 0 ? index - 1 : length;
@@ -2742,12 +2737,18 @@ app.effect = function () {
             var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
 
             twoUp.style.left = (num - num - num).toString() +'px';
+            twoUp.style.top = '10%';
             oneUp.style.left = (num - num).toString() +'px';
+            oneUp.style.top = '30%';
             selectedElement.style.left = (num).toString() +'px';
             selectedElement.style.height = (app.settings.selectedModeHeight * 2).toString() + 'px';
+            selectedElement.style.top = '50%';
+            //selectedElement.style.width = app.settings.modeOptionWidth;
             oneDown.style.left = (num - num).toString() +'px';
+            oneDown.style.top = '70%';
             twoDown.style.left = (num - num - num).toString() +'px';
-
+            twoDown.style.top = '90%';
+            console.log(options);
             if (options) var selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
