@@ -2709,6 +2709,8 @@ app.effect = function () {
             var num = app.settings.modeMenuSpacing;
 
             var options = selectedElement.getElementsByClassName('modeOption');
+            var elems = selectedElement.parentNode.getElementsByClassName('modeItem');
+            var length = elems.length;
 
             var oneAbove = index - 1 > 0 ? index - 1 : length;
             var twoAbove = oneAbove -1 > 0 ? oneAbove - 1 : length;
@@ -2716,12 +2718,12 @@ app.effect = function () {
             var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
 
             console.log('tag: '+tag+', twoAbove: '+twoAbove+ ', index: '+index);
-            console.log(elements);
+            console.log(elems);
 
-            var twoUp = app.display.findElementByTag(tag, elements, oneAbove);
-            var oneUp = app.display.findElementByTag(tag, elements, twoAbove);
-            var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
-            var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
+            var twoUp = app.display.findElementByTag(tag, elems, oneAbove);
+            var oneUp = app.display.findElementByTag(tag, elems, twoAbove);
+            var oneDown = app.display.findElementByTag(tag, elems, oneBelow);
+            var twoDown = app.display.findElementByTag(tag, elems, twoBelow);
 
             twoUp.style.left = (num - num - num).toString() +'px';
             twoUp.style.top = '10%';
@@ -2736,6 +2738,7 @@ app.effect = function () {
             twoDown.style.left = (num - num - num).toString() +'px';
             twoDown.style.top = '90%';
             console.log(options);
+            
             if (options) var selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
