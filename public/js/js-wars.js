@@ -1836,7 +1836,9 @@ app.display = function () {
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             // callback that defines how to display the selected element ( functions located in app.effect )
-            if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements);
+            if (selectedElement) var selectedOption = display(selectedElement, tag, selectionIndex, prev, elements);
+
+            if(selectedOption) return selectedOption;
 
             // store the last index for future comparison
             app.temp.prevIndex = selectionIndex;
@@ -3944,6 +3946,8 @@ app.gameSetup = function (){
 
     // if a game has been started 
     if (game) {
+
+        console.log(game);
 
         // start game adds players, player info, settings, game type, mode, maps etc to be used in game
         app.start(game);
