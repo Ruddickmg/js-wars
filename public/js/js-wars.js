@@ -2717,6 +2717,8 @@ app.effect = function () {
             var options = findElementsByClass(selectedElement, 'modeOption');
             var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
             var length = elements.length;
+            console.log(previouslySelected);
+            console.log('length: '+length);
             if( previouslySelected && index < previouslySelected.index ) ind -= 1;
             if( previouslySelected && index > previouslySelected.index ) ind += 1;
             ind = ind > length ? 1 : ind;
