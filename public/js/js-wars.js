@@ -1809,7 +1809,15 @@ app.display = function () {
 
             // all the ul children from the selected element for highlighting
             var hudElement = document.getElementById(id);
+
+            console.log('hudElement');
+            console.log(hudElement);
+
             var elements = hudElement.getElementsByTagName(elementType);
+
+            console.log('elements');
+            console.log(elements);
+
             var prev = app.temp.prevIndex;
             selectionIndex = app.temp.selectionIndex;
             len = elements.length;
@@ -1893,7 +1901,7 @@ app.display = function () {
             // element returns a string, so must cast the index to string for comparison
             // if the element tag value ( index ) is equal to the currently selected index then return it
             if (index && element[e].getAttribute(tag) === index.toString()) {
-                return elements[e];
+                return element[e];
             }else{
                 elements.push(element[e]);
             }
