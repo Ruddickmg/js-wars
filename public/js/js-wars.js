@@ -2719,14 +2719,24 @@ app.effect = function () {
             var length = elements.length;
             console.log(previouslySelected);
             console.log('length: '+length);
-            if( previouslySelected && index < previouslySelected.index ) ind -= 1;
-            if( previouslySelected && index > previouslySelected.index ) ind += 1;
+
+
+            if( previouslySelected && index < previouslySelected.index ) {
+                ind -= 1
+                console.log('prev index: '+previouslySelected.index+', index: '+index)
+                console.log('yes?');
+            };
+            if( previouslySelected && index > previouslySelected.index ){
+                ind += 1;
+                console.log('prev index: '+previouslySelected.index+', index: '+index)
+                console.log('yes?');
+            };
             ind = ind > length ? 1 : ind;
             ind = ind < 1 ? length : ind;
             var oneAbove = ind - 1 > 0 ? ind - 1 : length;
-            var twoAbove = oneAbove -1 > 0 ? oneAbove - 1 : length;
+            var twoAbove = oneAbove -1 > 0 ? oneAbove - 1 : length - 1;
             var oneBelow = ind + 1 > length ? 1 : ind + 1;
-            var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
+            var twoBelow = oneBelow + 1 > length ? 2 : oneBelow + 1;
 
             console.log('tag: '+tag+', twoAbove: '+twoAbove+ ', index: '+ind);
             console.log(elements);
