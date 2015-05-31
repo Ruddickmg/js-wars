@@ -350,7 +350,7 @@ app.build = function () {
             if (building) {
 
                 // display the unit select menu
-                var unit = app.display.select('unitSelectionIndex', 'selectUnitScreen', app.effect.highlightListItem, 7);
+                var unit = app.display.select('unitSelectionIndex', 'selectUnitScreen', app.effect.highlightListItem, 'ul', 7);
 
                 // if a unit has been selected then create it
                 if (unit) {
@@ -1798,7 +1798,7 @@ app.display = function () {
 
     var times = 0;
 
-    var select = function (tag, id, display, max) {
+    var select = function (tag, id, display, elementType = 'ul', max ) {
 
         if(app.temp.modeOptionsActive) console.log(app.temp.modeOptionsActive);
 
@@ -1809,7 +1809,7 @@ app.display = function () {
 
             // all the ul children from the selected element for highlighting
             var hudElement = document.getElementById(id);
-            var elements = hudElement.getElementsByTagName('ul');
+            var elements = hudElement.getElementsByTagName(elementType);
             var prev = app.temp.prevIndex;
             selectionIndex = app.temp.selectionIndex;
             len = elements.length;
@@ -2135,8 +2135,8 @@ app.display = function () {
             return selectionInterface(building, tag);
         },
 
-        select: function (tag, id, display, selected, max) {
-            return select(tag, id, display, selected, max);
+        select: function (tag, id, display, selected, elementType, max) {
+            return select(tag, id, display, selected, elementType, max);
         },
 
         listen: function () {
@@ -3940,7 +3940,7 @@ app.animateEffects = function () {
 app.gameSetup = function (){
 
     // select game mode
-    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeScreen', app.effect.scrollSetupMenu, 5);
+    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5);
 
     // remove key presses on each iteration
     if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
