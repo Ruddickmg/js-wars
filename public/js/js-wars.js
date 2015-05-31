@@ -2715,9 +2715,9 @@ app.effect = function () {
             var oneBelow = index + 1 > length ? 1 : index + 1;
             var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
 
-            console.log('tag: '+tag+' twoAbove: '+twoAbove);
+            console.log('tag: '+tag+', twoAbove: '+twoAbove+ ', index: '+index);
             console.log(elements);
-            
+
             var twoUp = app.display.findElementByTag(tag, elements, oneAbove);
             var oneUp = app.display.findElementByTag(tag, elements, twoAbove);
             var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
