@@ -1446,13 +1446,11 @@ app.display = function () {
     // format is where the login is coming from, allowing different actions for different login sources
     var loginToSetup = function (user, format){
 
-        console.log(user);
+        if(user && user.id) {
 
-        if(user && user.userId) {
+            app.user = user;
 
-            console.log('here');
-
-            socket.emit('addUser', app.user);
+            socket.emit('addUser', user);
 
             // remove login screen
             var loginScreen = document.getElementById('login');

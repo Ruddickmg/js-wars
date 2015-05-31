@@ -104,10 +104,10 @@ io.on('connection', function(socket){
 */
     // add user to players
     socket.on('addUser', function(user){
-        socket.fbid = user.userID;
+        socket.fbid = user.id;
         if (user.screenName) socket.screenName = user.screenName;
-        socket.firstName = user.firstName;
-        socket.lastName = user.lastName;
+        socket.firstName = user.first_name;
+        socket.lastName = user.last_name;
         socket.join('lobby');
         rooms[0].players.push(socket);
         socket.room = rooms[0];
