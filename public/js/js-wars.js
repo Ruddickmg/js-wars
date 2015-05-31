@@ -1453,6 +1453,9 @@ app.display = function () {
 
             app.user = user;
 
+            console.log('set user');
+            console.log(app.user);
+
             socket.emit('addUser', user);
 
             // remove login screen
@@ -1467,8 +1470,6 @@ app.display = function () {
     };
 
     var selectMode = function () { 
-
-        console.log('here');
 
         // height of each mode element
         var height = app.settings.selectedModeHeight;
@@ -1490,6 +1491,7 @@ app.display = function () {
 
             // create li item for each mode
             var item = document.createElement('li');
+            item.setAttribute('modeItemIndex', m + 1);
             item.setAttribute('class','modeItem');
             item.style.height = height;
 
@@ -1503,7 +1505,6 @@ app.display = function () {
                 var options = document.createElement('ul');
                 var length = mi.options.length;
                 options.setAttribute('id', mi.id);
-                options.setAttribute('modeItemIndex', m + 1);
                 options.setAttribute('class', 'modeOptions');
 
                 // default to not showing options (hide them when not selected)
@@ -3914,6 +3915,9 @@ app.animateEffects = function () {
 \*---------------------------------------------------------------------------------------------------------*/
 
 app.gameSetup = function (){
+
+    console.log('here');
+    console.log(app.user);
 
     // select game mode
     if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 5);
