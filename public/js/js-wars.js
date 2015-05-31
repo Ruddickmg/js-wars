@@ -6,18 +6,33 @@
 
 var socket = io.connect("http://jswars-jswars.rhcloud.com:8000");
 
-// Add a connect listener
-socket.on('connect',function() {
-  console.log('Client has connected to the server!');
-});
-
 // listen to other players cursor movement 
 socket.on('cursorMove', function(data) {
-  console.log('moved ' + data);
+    app.keys.push(data);
 });
 
+socket.on('moveUnit', function(move){
+    app.map[move.type][move.index].x = move.x;
+    app.map[move.type][move.index].y = move.y;
+    window.requestAnimationFrame(app.animateUnit);
+});
+
+socket.on('attack', function(attack){
+    app.actions.attack(attack);
+});
+
+socket.on('joinUnits', function(combine){
+    app.actions.combine(combine);
+});
+
+socket.on('capture', function(capture){
+    app.actions.capture(capture);
+});
+
+socket.on('endTurn', app.options.end());
+
 // Add a disconnect listener
-socket.on('disconnect',function() {
+socket.on('disconnect', function() {
   console.log('The client has disconnected!');
 });
 
@@ -56,6 +71,22 @@ Array.prototype.offsetArray = function (offsetArray) {
 
 app = {
 
+    turn: function (){
+        // make note of whose turn it is
+        if( app.game.currentPlayer.fbid === app.user.fbid ){
+            app.usersTurn = true;
+        }else{
+            app.usersTurn = false;
+        }
+    },
+
+    game: {
+        started: false,
+        currentPlayer:null
+        players: [], // array of players
+        defeated: [], // array of defeated players
+    },
+
     // holds temporary shared variables, usually info on game state changes that need to be accessed globally
     temp: {
     	selectionIndex: 1,
@@ -71,11 +102,8 @@ app = {
         co: 'andy',
         name: 'steve'
     }],
-    game: {},
     cache: {},
     keys: [], // holds array of key pressed events
-    players: [], // array of players
-    defeated: [], // array of defeated players
 
     // create a new player object
     player: function (co, name, id) {
@@ -131,7 +159,9 @@ app = {
 \* ---------------------------------------------------------------------------------------------------------*/
 
 window.addEventListener("keydown", function (e) {
-    app.keys[e.keyCode] = true;
+    if( !app.game.started || app.usersTurn || e.keyCode === app.settings.keys.exit || app.temp.optionsActive ){
+        app.keys[e.keyCode] = true;
+    }
 }, false);
 
 window.addEventListener("keyup", function (e) {
@@ -149,17 +179,37 @@ app.start = function (players) {
     for (var p = 0; p < players.length; p += 1) {
 
         // add each player to the players array
-        app.players.push(app.player(players[p].co, players[p].name, p + 1));
+        app.game.players.push(
+            app.player(
+                players[p].fbid,
+                players[p].co, 
+                players[p].screenName, 
+                p + 1
+            )
+        );
     }
 
-    // assign the first player as the current player 
-    app.temp.player = app.players[0];
+    // assign the first player as the current player
+    app.game.currentPlayer = app.game.players[0];
+
+    // check whose turn it is
+    app.turn();
 
     // set inital gold amount
-    app.temp.player.gold = app.calculate.income(app.temp.player);
+    app.game.currentPlayer.gold = app.calculate.income(app.game.currentPlayer);
+
+    // begin game animations
+    app.animateBackground();
+    app.animateTerrain();
+    app.animateBuildings();
+    app.animateUnit();
+    app.animateCursor();
 
     // if the current player has been assigned return true
-    if (app.temp.player) return true;
+    if (app.game.currentPlayer){
+        app.game.started = true;
+        return true;
+    } 
     return false;
 };
 
@@ -245,7 +295,7 @@ app.build = function () {
     // create new unit if/after one is selected
     var createUnit = function (building, unitType, player) {
 
-        var currentPlayer = app.temp.player;
+        var player = app.game.currentPlayer;
 
         // creaate a new unit object with input
         var newUnit = {
@@ -294,13 +344,13 @@ app.build = function () {
             if (building) {
 
                 // display the unit select menu
-                var unit = app.display.select('unitSelectionIndex', 'selectUnitScreen', building.type, 7);
+                var unit = app.display.select('unitSelectionIndex', 'selectUnitScreen', app.effect.highlightListItem, 7);
 
                 // if a unit has been selected then create it
                 if (unit) {
 
                     // create and add the new unit to the map
-                    app.map.unit.push(createUnit(building, unit, app.temp.player.id));
+                    app.map.unit.push(createUnit(building, unit, app.game.currentPlayer.id));
                     app.undo.all(); // removes the selection screen and variables created during its existance
                     app.temp.cursorMoved = true; // refreshes the hud system to detect new unit on map;
                     window.requestAnimationFrame(app.animateUnit); // animate the changes
@@ -422,10 +472,10 @@ app.options = function () {
     var nextPlayer = function () {
 
         // if the player is the last in the array return the first player
-        if (app.temp.player.id === app.players.length) return app.players[0];
+        if (app.game.currentPlayer.id === app.game.players.length) return app.game.players[0];
 
         // return the next player
-        return app.players[app.temp.player.id];
+        return app.game.players[app.game.currentPlayer.id];
     };
 
     var endTurn = function () {
@@ -436,7 +486,10 @@ app.options = function () {
         player.co.endPower();
 
         // assign the next player as the current player
-        app.temp.player = player;
+        app.game.currentPlayer = player;
+
+        // make note of whose turn it is
+        app.turn();
 
         // move the screen to the next players headquarters
         app.move.screenToHQ(player);
@@ -445,7 +498,7 @@ app.options = function () {
         app.move.refresh(player);
 
         // add this turns income
-        app.temp.player.gold += app.calculate.income(player);
+        app.game.currentPlayer.gold += app.calculate.income(player);
     };
 
     return {
@@ -468,6 +521,7 @@ app.options = function () {
         // end turn
         end: function () {
             endTurn();
+            if(app.usersTurn) socket.emit('endTurn', 'end');
             return this;
         }
     };
@@ -519,7 +573,7 @@ app.actions = function () {
             var canAttack = selected.canAttack;
 
             // get the id of the current player
-            var player = app.temp.player.id;
+            var player = app.game.currentPlayer.id;
 
             if (!selected.attacked){
                 for (var n = 0; n < neighbors.length; n += 1) {
@@ -587,25 +641,35 @@ app.actions = function () {
         index = 0;
     };
 
-    var attack = function (attacked, damage) {
+    var attack = function (attacked, damage, attacker, retaliate) {
         if(attacked.health - damage > 0){
             app.map.unit[attacked.ind].health = attacked.health - damage;
-            var selected = app.temp.selectedUnit;
+            var selected = attacker ? attacker : app.temp.selectedUnit;
             app.map.unit[selected.ind].attacked = true; // show that unit has attacked this turn
-            var retaliation = round(app.calculate.damage(selected, app.map.unit[attacked.ind])/10);
+            var retaliation = retaliate ? retaliate : round(app.calculate.damage(selected, app.map.unit[attacked.ind])/10);
+            if(app.usersTurn) {
+                socket.emit('attack', { 
+                    attacker:selected,
+                    unit:attacked,
+                    damage:damage,
+                    retaliation:retaliation
+                });
+            }
             if( selected.health - retaliation > 0 ){
                 app.map.unit[selected.ind].health = selected.health - retaliation;
             }else{
-                app.players[selected.player - 1].unitsLost += 1;
+                app.game.players[selected.player - 1].unitsLost += 1;
                 destroy(selected.ind);
             }
         }else{
-            app.players[attacked.player - 1].unitsLost += 1;
+            app.game.players[attacked.player - 1].unitsLost += 1;
             destroy(attacked.ind);
         }
-        unsetPersistingVars();
-        delete app.settings.target;
-        app.undo.all();
+        if(app.usersTurn){
+            unsetPersistingVars();
+            delete app.settings.target;
+            app.undo.all();
+        }
         window.requestAnimationFrame(app.animateUnit);
     };
 
@@ -692,11 +756,12 @@ app.actions = function () {
         },
 
         // capture a building
-        capture: function () {
+        capture: function (capturing) {
             if(options.capture){
-                var building = options.capture;
-                var unit = app.temp.selectedUnit;
-                var capture = app.temp.player.co.capture ? app.temp.player.co.capture(unit.health) : unit.health;
+                var building = capturing ? capturing.building : options.capture;
+                var unit = capturing ? capturing.unit : app.temp.selectedUnit;
+                if (app.usersTurn) socket.emit('capture', {building:building, unit:unit});
+                var capture = app.game.currentPlayer.co.capture ? app.game.currentPlayer.co.capture(unit.health) : unit.health;
 
                 // if the building has not between catpured all the way
                 if (building.capture - capture > 0) {
@@ -707,7 +772,7 @@ app.actions = function () {
                     app.undo.all();
                     return true;
 
-                    // if the building is done being captured and is not a headquarters
+                // if the building is done being captured and is not a headquarters
                 } else if (building.type !== 'hq') {
                     // assign the building to the capturing player
                     app.map.building[building.ind].player = unit.player;
@@ -716,20 +781,22 @@ app.actions = function () {
                     app.undo.all();
                     return true;
                 }
+
                 // otherwise assign all the buildings belonging to the owner of the captured hq to the capturing player
                 var buildings = app.map.building;
-                var defeated = app.map.building[building.ind].player;
+                var defeated = buildings[building.ind].player;
                 for(var b = 0; b < buildings.length; b += 1){
                     if( buildings[b].player === defeated ){
                         app.map.building[b].player = unit.player;
                     }
                 }
-                app.defeated.concat(app.players.splice(defeated - 1, 1));
+
+                app.game.defeated.concat(app.game.players.splice(defeated - 1, 1));
                 app.map.unit[unit.ind].captured = true;
                 app.undo.all();
                 alert('player '+defeated+' defeated');
-                if(app.players.length === 1){
-                    alert('player '+app.players[0].id+' wins!');
+                if(app.game.players.length === 1){
+                    alert('player '+app.game.players[0].id+' wins!');
                 }
             }
         },
@@ -745,12 +812,17 @@ app.actions = function () {
             return false;
         },
 
-        combine: function () {
+        combine: function (combine) {
             if (options.combine){    
-                var combine = options.combine;
-                var selected = app.temp.selectedUnit;
+                var combine = combine ? combine.combine : options.combine;
+                var selected = combine ? combine.unit : app.temp.selectedUnit;
                 var props = app.settings.combinableProperties;
-                for ( u = 0; u < props.length; u += 1){
+
+                // emit units to be combined to other players games for syncronization
+                if (app.usersTurn) socket.emit('joinUnits', {combine:combine, unit:selected});
+
+                // combine properties of the selected unit with the target unit
+                for (u = 0; u < props.length; u += 1){
                     prop = props[u];
                     max = app.units[selected.type].properties[prop];
                     if( combine[prop] + selected[prop] < max ){
@@ -759,6 +831,8 @@ app.actions = function () {
                         app.map.unit[combine.ind][prop] = max;
                     }
                 }
+
+                // remove selected unit  
                 app.map.unit.splice(selected.ind, 1);
                 app.undo.all();
                 window.requestAnimationFrame(app.animateUnit);
@@ -776,13 +850,13 @@ app.actions = function () {
             app.undo.display('actionHud');
         },
 
-        attack: function () {
-            if( options.attack ){
+        attack: function (battle) {
+            if( options.attack || battle ){
                 if(!app.settings.hideCursor && app.temp.actionsActive) app.settings.hideCursor = true;
-                var attacked = choseAttack(options.attack);
+                var attacked = battle ? battle : choseAttack(options.attack);
                 if ( attacked ) {
                     delete options;
-                    return attack(attacked.unit, attacked.damage);
+                    return attack(attacked.unit, attacked.damage, attacked.attacker, attacked.retaliation);
                 }
                 if (app.temp.actionsActive) window.requestAnimationFrame(app.actions.attack);
             }
@@ -817,8 +891,8 @@ app.calculate = function () {
     var calcDamage = function (attacked, attacker) {
         var r = rand();
         var baseDamage = attacker.baseDamage[attacked.type];
-        var coAttack = app.temp.player.co.attack(attacker);
-        var coDefense = app.players[attacked.player - 1].co.defense(attacked);
+        var coAttack = app.game.currentPlayer.co.attack(attacker);
+        var coDefense = app.game.players[attacked.player - 1].co.defense(attacked);
         var terrainDefense = findTerrain(attacked).def;
         terrainDefense = !terrainDefense ? 1 : terrainDefense;
         var defenderHP = attacked.health;
@@ -1039,7 +1113,7 @@ app.calculate = function () {
     var calcIncome = function (player) {
 
         // get the amount of income per building for current game
-        var income = app.settings.income;
+        var income = app.game.settings.income;
         var owner, count = 0;
         var buildings = app.map.building; // buildings list
 
@@ -1207,8 +1281,9 @@ app.select = function () {
                 app.map.unit[unit.ind].movement -= xmove + ymove;
 
                 // change selected units position to the cursor location
-                app.map[type][index].x = app.settings.cursor.x;
-                app.map[type][index].y = app.settings.cursor.y;
+                app.map[type][index].x = cursor.x;
+                app.map[type][index].y = cursor.y;
+                socket.emit('moveUnit', {index:index, type:type, x:cursor.x, y:cursor.y});
 
                 //animate the changes
                 window.requestAnimationFrame(app.animateUnit);
@@ -1270,7 +1345,7 @@ app.select = function () {
             attempt = app.map[type][index];
 
             // set properties for selected object
-            if (!app.settings.notSelectable.hasValue(attempt.type) && attempt.player === app.temp.player.id) {
+            if (!app.settings.notSelectable.hasValue(attempt.type) && attempt.player === app.game.currentPlayer.id) {
                 app.temp[objectClass[type]] = attempt;
                 app.temp[objectClass[type]].objectClass = type;
                 app.temp[objectClass[type]].ind = index;
@@ -1365,10 +1440,75 @@ app.display = function () {
     var sideX, sideY, selectionIndex, selectedElement, hide, len, prevX;
     var optionsActive, unitSelectionActive = false;
 
-    var setup = function () {
+    var selectMode = function () {
+
+        // height of each mode element
+        var height = app.settings.selectedModeHeight;
+
         // (war room, campaign) eventually integrate ai opponents?
-        var setupScreen = document.createElement('article');
-        var menus = ['Logout','Setup','Join','Design','Game Store'];
+        var selectModeScreen = document.createElement('article');
+        selectModeScreen.setAttribute('id','selectModeScreen');
+        var menu = app.settings.selectModeMenu; 
+
+        // create list of selectable modes
+        var selectMenu = document.createElement('ul');
+        selectMenu.setAttribute('id', 'selectModeMenu');
+
+        // create and insert information for each mode
+        for( var m = 0; m < menu.length; m += 1){
+            var mi = menu[m];
+
+            // create li item for each mode
+            var item = document.createElement('li');
+            item.setAttribute('class','modeItem');
+            item.style.height = height;
+
+            // set displayed text for mode selection
+            item.innerHTML = mi.display;
+
+            // if there are further options for the mode
+            if(mi.options){
+
+                // create list of options
+                var options = document.createElement('ul');
+                var length = mi.options.length;
+                options.setAttribute('id', 'modeOptions');
+
+                // default to not showing options (hide them when not selected)
+                options.style.display = 'none';
+
+                for(var o = 0; o < length; o += 1){
+
+                    // create li item for each option
+                    var option = document.createElement('li');
+                    option.setAttribute('class','modeOption');
+                    option.setAttribute('modeSelectionIndex', o + 1);
+                    option.setAttribute('id', mi.options[o]);
+
+                    // create id and display name for each option
+                    option.innerHTML = mi.options[o];
+
+                    // add each option to options list
+                    options.appendChild(option);
+                }
+                // add options to the item
+                item.appendChild(options);
+            }
+        }
+    };
+
+    var setup = function (name) {
+        var room = {};
+        var hq = [];
+        var buildings = app.map.building;
+        for ( var b = 0; b < buildings.length; b += 1){
+            if(buildings[b].type === 'hq') hq.push(buildings[b]);
+        }
+        room.name = name
+        room.map = app.map;
+        room.max = hq.length;
+        room.mapId = mapId;
+        socket.emit('newRoom', room);
     };
 
     var login = function () {
@@ -1421,35 +1561,23 @@ app.display = function () {
         // allow login through fb ---- fb sdk
         // This is called with the results from from FB.getLoginStatus().
         var statusChangeCallback = function (response) {
-            console.log('statusChangeCallback');
-            console.log(response);
-            // The response object is returned with a status field that lets the
-            // app know the current login status of the person.
-            // Full docs on the response object can be found in the documentation
-            // for FB.getLoginStatus().
+            // if connected then return response
             if (response.status === 'connected') {
-              // Logged into your app and Facebook.
-              testAPI();
+                return testAPI();
             } else if (response.status === 'not_authorized') {
-              // The person is logged into Facebook, but not your app.
-              document.getElementById('status').innerHTML = 'Please log ' +
-                'into this app.';
+                document.getElementById('status').innerHTML = 'Log in to play JS-WARS!';
             } else {
-              // The person is not logged into Facebook, so we're not sure if
-              // they are logged into this app or not.
-              document.getElementById('status').innerHTML = 'Please log ' +
-                'into Facebook.';
+                document.getElementById('status').innerHTML = 'Please log in to facebook if you want to use fb login credentials';
             }
         };
 
         // Here we run a very simple test of the Graph API after login is
         // successful.  See statusChangeCallback() for when this call is made.
         var testAPI = function () {
-            console.log('Welcome!  Fetching your information.... ');
             FB.api('/me', function(response) {
-              console.log('Successful login for: ' + response.name);
-              document.getElementById('status').innerHTML =
-                'Thanks for logging in, ' + response.name + '!';
+                var status = document.getElementById('status')
+                status.parentNode.removeChild(status);
+                return response;
             });
         }
     };
@@ -1625,102 +1753,93 @@ app.display = function () {
         return true;
     };
 
-    var select = function (tag, id, selected, max) {
+    var select = function (tag, id, display, max) {
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if ( app.temp.prevIndex !== app.temp.selectionIndex ) {
 
-	        // all the ul children from the selected element for highlighting
-	        var hudElement = document.getElementById(id);
-	        var elements = hudElement.getElementsByTagName('ul');
-	        var prev = app.temp.prevIndex;
-	        selectionIndex = app.temp.selectionIndex;
-	       	len = elements.length;
-	        key = app.settings.keyMap;
-	        undo = app.undo.keyPress;
+            // all the ul children from the selected element for highlighting
+            var hudElement = document.getElementById(id);
+            var elements = hudElement.getElementsByTagName('ul');
+            var prev = app.temp.prevIndex;
+            selectionIndex = app.temp.selectionIndex;
+            len = elements.length;
+            key = app.settings.keyMap;
+            undo = app.undo.keyPress;
 
-	        // if there is no max set then set max to the length of he array
-	        if (!max) max = len;
+            // if there is no max set then set max to the length of he array
+            if (!max) max = len;
 
-	        // hide elements to create scrolling effect
-	        if (selectionIndex > max) {
-	            hide = selectionIndex - max;
-	            for (var h = 1; h <= hide; h += 1) {
+            // hide elements to create scrolling effect
+            if (selectionIndex > max) {
+                hide = selectionIndex - max;
+                for (var h = 1; h <= hide; h += 1) {
 
-	                // find each element that needs to be hidden and hide it
-	                var hideElement = findElementByTag(tag, h, elements);
-	                hideElement.style.display = 'none';
-	            }
-	        } else if (selectionIndex <= len - max && hide) {
+                    // find each element that needs to be hidden and hide it
+                    var hideElement = findElementByTag(tag, h, elements);
+                    hideElement.style.display = 'none';
+                }
+            } else if (selectionIndex <= len - max && hide) {
 
-	            // show hidden elements as they are hovered over
-	            var showElement = findElementByTag(tag, selectionIndex, elements);
-	            showElement.style.display = '';
-	        }
+                // show hidden elements as they are hovered over
+                var showElement = findElementByTag(tag, selectionIndex, elements);
+                showElement.style.display = '';
+            }
 
             selectedElement = findElementByTag(tag, selectionIndex, elements);
 
-            if (selectedElement) {
-
-                // apply highlighting 
-                selectedElement.style.backgroundColor = 'tan';
-
-                // display info on the currently hovered over element
-                if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id);
-
-                // check if there was a previous element that was hovered over
-                if (prev) {
-
-                    // if there is then remove its highlighting
-                    var prevElement = findElementByTag( tag, prev, elements);
-                    prevElement.style.backgroundColor = '';
-                }
-            }
+            // function passed in that defines how to display the selected element ( functions located in app.effect )
+            if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements, len);
+            
             // store the last index for future comparison
-           app.temp.prevIndex = selectionIndex;
+            app.temp.prevIndex = selectionIndex;
         }
 
         // if the select key has been pressed and an element is available for selection then return its id
-        if (key.select in app.keys && selectedElement) {
-            undo(key.select);
-            app.temp.selectionIndex = 1;
-            delete app.temp.prevIndex;
-            delete selectedElement;
-        	delete selectionIndex;
-        	delete prev;
-        	delete hide;
-            return selectedElement.getAttribute('id');
+        if(!app.temp.modeOptionsActive){
+            if (key.select in app.keys && selectedElement) {
+                undo(key.select);
+                app.temp.selectionIndex = 1;
+                delete app.temp.prevIndex;
+                delete selectedElement;
+                delete selectionIndex;
+                delete prev;
+                delete hide;
+                return selectedElement.getAttribute('id');
 
-            // if the down key has been pressed then move to the next index ( element ) down
-        } else if (key.down in app.keys) {
+                // if the down key has been pressed then move to the next index ( element ) down
+            } else if (key.down in app.keys) {
 
-            // only movement if the index is less then the length ( do not move to non existant index )
-            if (selectionIndex < len) {
+                // only movement if the index is less then the length ( do not move to non existant index )
+                if (selectionIndex < len) {
 
-                // increment to next index
-                app.temp.selectionIndex += 1;
+                    // increment to next index
+                    app.temp.selectionIndex += 1;
+                }
+                undo(key.down);
+
+                // same as above, but up
+            } else if (key.up in app.keys) {
+
+                if (selectionIndex > 1) app.temp.selectionIndex -= 1;
+                undo(key.up);
             }
-            undo(key.down);
-
-            // same as above, but up
-        } else if (key.up in app.keys) {
-
-            if (selectionIndex > 1) app.temp.selectionIndex -= 1;
-            undo(key.up);
         }
-
         return false;
     };
 
     // find each element by their tag name, get the element that matches the currently selected index and return it
     var findElementByTag = function (tag, index, element) {
+        var elements = []
         for (var e = 0; e < len; e += 1) {
             // element returns a string, so must cast the index to string for comparison
             // if the element tag value ( index ) is equal to the currently selected index then return it
             if (element[e].getAttribute(tag) === index.toString()) {
-                return element[e];
+                elements.push(element[e]);
             }
         }
+        if(elements.length > 1) return elements;
+        return elements[0];
     };
 
     // get information on terrain and return an object with required information for display
@@ -1928,14 +2047,31 @@ app.display = function () {
 
     return {
 
+        findElementByTag: function (tag, index, element) {
+            return findElementByTag(tag, index, element);
+        },
+
         checkLoginState: function () {
             FB.getLoginStatus(function(response) {
                 statusChangeCallback(response);
             });
         },
 
-        login: function(){
-            return login();
+        login: function() {
+           app.user = login();
+           if(app.user.userId) {
+                socket.emit('addUser', app.user);
+
+                // remove login screen
+                var loginScreen = document.getElementById('login');
+                    loginScreen.parentNode.removeChild(loginScreen);
+
+                // display the game selection menu
+                app.display.selectMode();
+
+                // move to game setup
+                app.gameSetup();
+            }
         },
 
         // 
@@ -1954,18 +2090,21 @@ app.display = function () {
             return selectionInterface(building, tag);
         },
 
-        select: function (tag, id, selected, max) {
-            return select(tag, id, selected, max);
+        select: function (tag, id, display, selected, max) {
+            return select(tag, id, display, selected, max);
         },
 
         listen: function () {
+
        		var selection;
+
         	// if the options hud has been activated 
             if (app.temp.actionsActive && app.temp.selectActive) {
+
                 // make the options huds list items selectable
-                selection = select('actionSelectionIndex', 'actions');
+                selection = select('actionSelectionIndex', 'actions', app.effect.highlightListItem);
             }else if(app.temp.optionsActive){
-                selection = select('optionSelectionIndex', 'optionsMenu');
+                selection = select('optionSelectionIndex', 'optionsMenu', app.effect.highlightListItem);
             }
 
             // if one has been selected activate the corresponding method from the options class
@@ -2005,7 +2144,7 @@ app.display = function () {
         },
 
         coStatus: function () {
-            if (!app.temp.optionsActive && !app.temp.actionsActive) coStatus(app.temp.player);
+            if (!app.temp.optionsActive && !app.temp.actionsActive) coStatus(app.game.currentPlayer);
             return this;
         },
 
@@ -2257,6 +2396,35 @@ app.move = function () {
 }();
 
 /* --------------------------------------------------------------------------------------*\
+    
+    app.game.settings consolidates all the user customizable options for the game into
+    an object for easy and dynamic manipulation
+\* --------------------------------------------------------------------------------------*/
+
+app.game.settings = {
+    // amount of income per building per turn, 1000 - 9500 incrimenting by 500, default is 1000
+    income: 1000,
+
+    // toggle fog
+    fog:false,
+
+    // toggle weather setting
+    weather:'random',
+
+    // end of game on number of turns completed 1 - 99, 0 is off
+    turns:0,
+
+    // end game on cartain number of buildings captured 1 - 52,  0 is off
+    capture:0,
+
+    //  toggle co powers active.. default on
+    power: true,
+
+    // toggle attack animations.. default off
+    visuals: false
+};
+
+/* --------------------------------------------------------------------------------------*\
 	
 	app.settings consolidates all the customizable options and rules for the game into
 	an object for easy and dynamic manipulation
@@ -2290,13 +2458,36 @@ app.settings = {
         }
     },
 
+    selectedModeHeight: 150,
+
+    selectModeMenu:[{
+            display:'Logout',
+            type:'exit',
+            color:'grey',
+            options:'Logout'
+        },{
+            display:'Game Setup',
+            type:'setup',
+            color:'blue',
+            options:['new', 'continue']
+        },{
+            display:'Join',
+            type:'join',
+            color:'yellow',
+            options:['new', 'continue']
+        },{
+            display:'Design',
+            type:'design',
+            color:'green',
+            options:['map', 'CO']
+
+        },{
+            display:'Game Store',
+            type:'store',
+            color:'red',
+    }],
+
     capture: 20,
-
-    // amount of income per building per turn
-    income: 1000,
-
-    // rules on how attacks will be handled between unit types
-    attackStats: {},
 
     combinableProperties:['fuel','health','ammo'],
 
@@ -2330,6 +2521,9 @@ app.settings = {
     hudWidth: 120,
     hudHeight: 200,
     hudLeft: 1050,
+
+    // spacing / positioning of mode menu selection elements
+    modeMenuSpacing:20,
 
     // which attributes of objects ( unit, buildings etc ) will be displayed in hud
     hoverInfo: ['ammo', 'health', 'name', 'fuel', 'def', 'canvas'],
@@ -2371,16 +2565,128 @@ app.settings = {
     }
 };
 
+
 /* --------------------------------------------------------------------------------------*\
 	
 	app.effect is holds the coordinates for effects, these are dynamic, hence the empty
-	arrays, they will fill and remove data as necessary to animate the game effects
+	arrays, they will fill and remove data as necessary to animate the game effects, it 
+    also holds logic for display effects
+
 \* --------------------------------------------------------------------------------------*/
 
-app.effect = {
-    highlight: [],
-    path: []
-};
+app.effect = function () {
+
+    var previous, pre, key, undo, selectIndex;
+
+    var highlight = function (element) {
+        element.style.backgroundColor = 'tan';
+        if(previous) previous.style.backgroundColor = '';
+        previous = element;
+    };
+
+    var select = function(options) {
+        if(!selectIndex) selectIndex = 0;
+        if (key.select in app.keys && selectedElement) {
+            undo(key.select);
+            delete app.temp.modeOptionsActive;
+            delete selectIndex;
+            delete previous;
+            options[selectIndex].parentNode.style.display = 'none';
+            return options[selectIndex].getAttribute('id');
+
+        }else if(key.up in app.keys){
+            selectIndex -= 1;
+            app.undo.keyPress(key.up);
+
+        }else if(key.down in app.keys){
+            selectIndex += 1;
+            app.undo.keyPress(key.down);
+        }
+
+        if(selecIndex === options.length ){
+            selectIndex = 0;
+        }else if(selectIndex > 0){
+            selectIndex = options.length - 1;
+        }
+
+        if(selectIndex !== pre || !pre){
+            highlight(options[selectIndex]);
+            pre = selectIndex;
+        }
+        return false;
+    };
+
+    var menuItemOptions = function ( selectedElement, options ) {
+        if (!key) key = app.game.settings.keyMap;
+        if (!undo) undo = app.undo.keyPress;
+
+        // show options
+        options[0].parentNode.style.display = '';
+
+        if(key.left in app.keys){
+            app.temp.modeOptionsActive = false;
+            highlight(selectedElement);
+            undo(key.left);
+            return true;
+        }else if(key.right in app.keys){
+            app.temp.modeOptionsActive = true;
+            select(options);
+            undo(key.right);
+            return true;
+        }
+        return false;
+    };
+
+    return {
+
+        highlightListItem: function (selectedElement, tag, index, prev, elements) {
+
+            // apply highlighting 
+            selectedElement.style.backgroundColor = 'tan';
+
+            // display info on the currently hovered over element
+            if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id);
+
+            // check if there was a previous element that was hovered over
+            if (prev) {
+
+                // if there is then remove its highlighting
+                var prevElement = app.display.findElementByTag( tag, prev, elements);
+                prevElement.style.backgroundColor = '';
+            }
+        },
+
+        scrollSetupMenu:function (selectedElement, tag, index, prev, elements, length){ 
+
+            var num = app.settings.modeMenuSpacing;
+
+            var options = app.display.findElementByTag('class', 'modeOption', [selectedElement]);
+
+            var oneAbove = index - 1 > 0 ? index - 1 : length;
+            var twoAbove = oneAbove -1 > 0 ? index - 1 : length;
+            var oneBelow = index + 1 > length ? 1 : index + 1;
+            var twoBelow = oneBelow + 1 > length ? 1 : index + 1;
+
+            var twoUp = app.display.findElementByTag(tag, oneAbove, elements);
+            var oneUp = app.display.findElementByTag(tag, twoAbove, elements);
+            var oneDown = app.display.findElementByTag(tag, oneBelow, elements);
+            var twoDown = app.display.findElementByTag(tag, twoBelow, elements);
+
+            twoUp.style.left = (num - num - num).toString() +'px';
+            oneUp.style.left = (num - num).toString() +'px';
+            selectedElement.style.left = (num).toString() +'px';
+            selectedElement.style.height = (app.settings.selectedModeHeight * 2).toString() + 'px';
+            oneDown.style.left = (num - num).toString() +'px';
+            twoDown.style.left = (num - num - num).toString() +'px';
+
+            if (options) var selection = app.display.menuItemOptions(selectedElement, options);
+            if (selection) return selection;
+            return false;
+        },
+        highlight: [],
+        path: []
+    }
+}();
 
 /* --------------------------------------------------------------------------------------*\
 	
@@ -2870,6 +3176,7 @@ app.units = {
             load:1,
             load:['infantry', 'mech'],
             loaded:[],
+            canAttack:[],
             movable: app.settings.movable.wheels,
             transportaion: 'wheels',
             health: 10,
@@ -3171,6 +3478,7 @@ app.units = {
             movable: app.settings.movable.flight,
             transportaion: 'flight',
             health: 10,
+            canAttack:[],
             fuel: 99,
             weapon1: {},
             weapon2: {},
@@ -3520,7 +3828,7 @@ app.drawUnits = function (draw) {
 };
 
 app.drawCursor = function (draw) {
-    if (!app.settings.hideCursor) draw.coordinate('map', 'cursor', [app.settings.cursor]);
+    if (!app.settings.hideCursor && app.usersTurn) draw.coordinate('map', 'cursor', [app.settings.cursor]);
     if (app.settings.target) draw.coordinate('map', 'target', [app.settings.target]);
 };
 
@@ -3564,6 +3872,35 @@ app.animateEffects = function () {
 };
 
 /* --------------------------------------------------------------------------------------------------------*\
+  
+    app.gameSetup controls the setting up and selection of games / game modes 
+
+\*---------------------------------------------------------------------------------------------------------*/
+
+app.gameSetup = function (){
+
+    // select game mode
+    var game = app.display.select('modeSelectionIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 5);
+
+    // remove key presses on each iteration
+    if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
+
+    // if a game has been started 
+    if (game) {
+
+        // start game adds players, player info, settings, game type, mode, maps etc to be used in game
+        app.start(game);
+
+        // start game loop
+        app.gameLoop();
+
+    // if the game hasnt been started then keep looping the setup menu
+    }else{
+        window.requestAnimationFrame(app.gameSetup);
+    }
+};
+
+/* --------------------------------------------------------------------------------------------------------*\
 	app.gameLoop consolidates all the game logic and runs it in a loop, coordinating animation calls and 
 	running the game
 \*---------------------------------------------------------------------------------------------------------*/
@@ -3576,24 +3913,9 @@ app.gameLoop = function () {
         .listen();  // listen for active huds and activate selection ability for their lists
     app.select.move(); // controls selection and interaction with map elements
     app.build.units(); // controls building of units
-    app.select.exit(); // controls the ability to escape display menus 
+    app.select.exit(); // controls the ability to escape display menus
     window.requestAnimationFrame(app.gameLoop);
     if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
-};
-
-/* --------------------------------------------------------------------------------------------------------*\
-	app.run starts the main game loop and calls all the animate functions
-\*---------------------------------------------------------------------------------------------------------*/
-
-app.run = function () {
-    app.display.login();
-    app.start(app.users);
-    app.gameLoop();
-    app.animateBackground();
-    app.animateTerrain();
-    app.animateBuildings();
-    app.animateUnit();
-    app.animateCursor();
 };
 
 /* --------------------------------------------------------------------------------------------------------*\
