@@ -82,7 +82,7 @@ app = {
 
     game: {
         started: false,
-        currentPlayer:null
+        currentPlayer:null,
         players: [], // array of players
         defeated: [], // array of defeated players
     },
