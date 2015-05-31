@@ -2613,7 +2613,7 @@ app.settings = {
 
 app.effect = function () {
 
-    var previous, pre, key, undo, selectIndex;
+    var previous, previouslySelected, pre, key, undo, selectIndex;
 
     var highlight = function (element) {
 
@@ -2682,6 +2682,16 @@ app.effect = function () {
         return false;
     };
 
+    var findElementsByClass = function (element, class){
+        var elements = [];
+        for (var i = 0; i < element.childNodes.length; i += 1) {
+            if (element.childNodes[i].className === class) {
+                elements.push(element.childNodes[i]);
+            }
+        }
+        return elements;
+    };
+
     return {
 
         highlightListItem: function (selectedElement, tag, index, prev, elements) {
@@ -2707,9 +2717,9 @@ app.effect = function () {
 
             var num = app.settings.modeMenuSpacing;
 
-            var options = selectedElement.parentNode.getElementsByClassName('modeOption');
-            var elems = selectedElement.parentNode.getElementsByClassName('modeItem');
-            var length = elems.length;
+            var options = findElementsByClass(selectedElement, 'modeOption');
+            var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
+            var length = elements.length;
 
             var oneAbove = index - 1 > 0 ? index - 1 : length;
             var twoAbove = oneAbove -1 > 0 ? oneAbove - 1 : length;
@@ -2717,12 +2727,14 @@ app.effect = function () {
             var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
 
             console.log('tag: '+tag+', twoAbove: '+twoAbove+ ', index: '+index);
-            console.log(elems);
+            console.log(elements);
 
-            var twoUp = app.display.findElementByTag(tag, elems, oneAbove);
-            var oneUp = app.display.findElementByTag(tag, elems, twoAbove);
-            var oneDown = app.display.findElementByTag(tag, elems, oneBelow);
-            var twoDown = app.display.findElementByTag(tag, elems, twoBelow);
+            var twoUp = app.display.findElementByTag(tag, elements, oneAbove);
+            var oneUp = app.display.findElementByTag(tag, elements, twoAbove);
+            var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
+            var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
+
+            if(previousSelected) previouslySelected.style.height = '';
 
             twoUp.style.left = (num - num - num).toString() +'px';
             twoUp.style.top = '10%';
@@ -2738,6 +2750,7 @@ app.effect = function () {
             twoDown.style.top = '90%';
             console.log(options);
 
+            previousSelected = selectedElement;
             if (options) var selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
@@ -3937,12 +3950,11 @@ app.animateEffects = function () {
 \*---------------------------------------------------------------------------------------------------------*/
 
 app.gameSetup = function (){
+    // remove key presses on each iteration
+    if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
 
     // select game mode
     if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5);
-
-    // remove key presses on each iteration
-    if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
 
     // if a game has been started 
     if (game) {
