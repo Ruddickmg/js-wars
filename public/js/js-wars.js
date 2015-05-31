@@ -3940,7 +3940,7 @@ app.animateEffects = function () {
 app.gameSetup = function (){
 
     // select game mode
-    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 5);
+    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeScreen', app.effect.scrollSetupMenu, 5);
 
     // remove key presses on each iteration
     if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
