@@ -1578,19 +1578,6 @@ app.display = function () {
 
         }(document, 'script', 'facebook-jssdk'));
 
-        // allow login through fb ---- fb sdk
-        // This is called with the results from from FB.getLoginStatus().
-        var statusChangeCallback = function (response) {
-            // if connected then return response
-            if (response.status === 'connected') {
-                return testAPI();
-            } else if (response.status === 'not_authorized') {
-                document.getElementById('status').innerHTML = 'Log in to play JS-WARS!';
-            } else {
-                document.getElementById('status').innerHTML = 'Please log in to facebook if you want to use fb login credentials';
-            }
-        };
-
         // Here we run a very simple test of the Graph API after login is
         // successful.  See statusChangeCallback() for when this call is made.
         var testAPI = function () {
@@ -1600,6 +1587,19 @@ app.display = function () {
                 status.parentNode.removeChild(status);
                 return response;
             });
+        }
+    };
+
+    // allow login through fb ---- fb sdk
+    // This is called with the results from from FB.getLoginStatus().
+    var statusChangeCallback = function (response) {
+        // if connected then return response
+        if (response.status === 'connected') {
+            return testAPI();
+        } else if (response.status === 'not_authorized') {
+            document.getElementById('status').innerHTML = 'Log in to play JS-WARS!';
+        } else {
+            document.getElementById('status').innerHTML = 'Please log in to facebook if you want to use fb login credentials';
         }
     };
 
