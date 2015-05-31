@@ -1874,6 +1874,7 @@ app.display = function () {
                 undo(key.up);
             }
         }
+        console.log('what is going on?');
         return false;
     };
 
@@ -2613,7 +2614,7 @@ app.settings = {
 
 app.effect = function () {
 
-    var previous, previouslySelected = {}, pre, key, undo, selectIndex;
+    var previous, previouslySelected = {}, pre, key, undo, selectIndex, selection = false;
 
     var highlight = function (element) {
 
@@ -2672,12 +2673,11 @@ app.effect = function () {
             app.temp.modeOptionsActive = false;
             highlight(selectedElement);
             undo(key.left);
-            return true;
+            return false;
         }else if(key.right in app.keys){
             app.temp.modeOptionsActive = true;
-            select(options);
             undo(key.right);
-            return true;
+            return select(options);
         }
         return false;
     };
@@ -2745,8 +2745,10 @@ app.effect = function () {
             selectedElement.style.left = (num).toString() +'px';
             selectedElement.style.height = (app.settings.selectedModeHeight * 2).toString() + 'px';
             selectedElement.style.top = '50%';
+
             var option = findElementsByClass(selectedElement, 'modeOptions');
             if(option[0]) previouslySelected.options = option[0];
+
             //selectedElement.style.width = app.settings.modeOptionWidth;
             oneDown.style.left = (num - num).toString() +'px';
             oneDown.style.top = '70%';
@@ -2756,7 +2758,8 @@ app.effect = function () {
 
             previouslySelected.index = index;
             previouslySelected.element = selectedElement;
-            if (options[0]) var selection = menuItemOptions(selectedElement, options);
+
+            if (options[0]) selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
         },
