@@ -1836,10 +1836,7 @@ app.display = function () {
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             // callback that defines how to display the selected element ( functions located in app.effect )
-            if (selectedElement){
-                console.log(display);
-                display(selectedElement, tag, selectionIndex, prev, elements, len);
-            }
+            if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements);
 
             // store the last index for future comparison
             app.temp.prevIndex = selectionIndex;
@@ -2702,13 +2699,13 @@ app.effect = function () {
             }
         },
 
-        scrollSetupMenu:function (selectedElement, tag, index, prev, elements, length){ 
+        scrollSetupMenu:function (selectedElement, tag, index){ 
 
             console.log(selectedElement);
 
             var num = app.settings.modeMenuSpacing;
 
-            var options = selectedElement.getElementsByClassName('modeOption');
+            var options = selectedElement.parentNode.getElementsByClassName('modeOption');
             var elems = selectedElement.parentNode.getElementsByClassName('modeItem');
             var length = elems.length;
 
@@ -2738,7 +2735,7 @@ app.effect = function () {
             twoDown.style.left = (num - num - num).toString() +'px';
             twoDown.style.top = '90%';
             console.log(options);
-            
+
             if (options) var selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
