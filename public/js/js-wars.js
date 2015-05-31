@@ -2727,9 +2727,9 @@ app.effect = function () {
             var options = selectedElement.getElementsByClassName('modeOption');
 
             var oneAbove = index - 1 > 0 ? index - 1 : length;
-            var twoAbove = oneAbove -1 > 0 ? index - 1 : length;
+            var twoAbove = oneAbove -1 > 0 ? oneAbove - 1 : length;
             var oneBelow = index + 1 > length ? 1 : index + 1;
-            var twoBelow = oneBelow + 1 > length ? 1 : index + 1;
+            var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
 
             var twoUp = app.display.findElementByTag(tag, elements, oneAbove);
             var oneUp = app.display.findElementByTag(tag, elements, twoAbove);
