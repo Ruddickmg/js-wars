@@ -64,11 +64,11 @@ io.on('connection', function(socket){
         socket.broadcast.to(socket.room.name).emit('endTurn', end);
     });
 
-    // create new  game rooms
+/*    // create new  game rooms
     socket.on('newRoom', function(room){
         var name = socket.screenName ? socket.screenName : socket.firstName;
+        socket.broadcast.to(socket.room.name).emit('userLeft', socket.screenName );
         socket.leave(socket.room.name);
-        socket.broadcast.to(socket.room.name).emit('userLeft', socket.screenName )
         socket.join(room.name);
         rooms.push({
             id:rooms.length,
@@ -113,5 +113,5 @@ io.on('connection', function(socket){
         socket.room = rooms[0];
         var name = socket.screenName ? socket.screenName : socket.firstName;
         socket.broadcast.to('lobby').emit('userAdded', name + ' has joined the game');
-    });
+    });*/
 });
