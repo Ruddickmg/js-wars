@@ -1798,7 +1798,7 @@ app.display = function () {
 
     var times = 0;
 
-    var select = function (tag, id, display, elementType = 'ul', max ) {
+    var select = function (tag, id, display, elementType = 'ul', max) {
 
         if(app.temp.modeOptionsActive) console.log(app.temp.modeOptionsActive);
 
@@ -1831,11 +1831,11 @@ app.display = function () {
             } else if (selectionIndex <= len - max && hide) {
 
                 // show hidden elements as they are hovered over
-                var showElement = findElementByTag(tag, selectionIndex, elements);
+                var showElement = findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
 
-            selectedElement = findElementByTag(tag, selectionIndex, elements);
+            selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             if( times === 0 ) {
                 console.log('passing selected');
@@ -1887,17 +1887,18 @@ app.display = function () {
     };
 
     // find each element by their tag name, get the element that matches the currently selected index and return it
-    var findElementByTag = function (tag, index, element) {
+    var findElementByTag = function (tag, element, index) {
         var elements = []
         for (var e = 0; e < len; e += 1) {
             // element returns a string, so must cast the index to string for comparison
             // if the element tag value ( index ) is equal to the currently selected index then return it
-            if (element[e].getAttribute(tag) === index.toString()) {
+            if (index && element[e].getAttribute(tag) === index.toString()) {
+                return elements[e];
+            }else{
                 elements.push(element[e]);
             }
         }
-        if(elements.length > 1) return elements;
-        return elements[0];
+        return elements;
     };
 
     // get information on terrain and return an object with required information for display
@@ -2708,7 +2709,7 @@ app.effect = function () {
             if (prev) {
 
                 // if there is then remove its highlighting
-                var prevElement = app.display.findElementByTag( tag, prev, elements);
+                var prevElement = app.display.findElementByTag( tag, elements, prev);
                 prevElement.style.backgroundColor = '';
             }
         },
@@ -2720,17 +2721,17 @@ app.effect = function () {
 
             var num = app.settings.modeMenuSpacing;
 
-            var options = app.display.findElementByTag('class', 'modeOption', [selectedElement]);
+            var options = app.display.findElementByTag('modeselectionindex', [selectedElement]);
 
             var oneAbove = index - 1 > 0 ? index - 1 : length;
             var twoAbove = oneAbove -1 > 0 ? index - 1 : length;
             var oneBelow = index + 1 > length ? 1 : index + 1;
             var twoBelow = oneBelow + 1 > length ? 1 : index + 1;
 
-            var twoUp = app.display.findElementByTag(tag, oneAbove, elements);
-            var oneUp = app.display.findElementByTag(tag, twoAbove, elements);
-            var oneDown = app.display.findElementByTag(tag, oneBelow, elements);
-            var twoDown = app.display.findElementByTag(tag, twoBelow, elements);
+            var twoUp = app.display.findElementByTag(tag, elements, oneAbove);
+            var oneUp = app.display.findElementByTag(tag, elements, twoAbove);
+            var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
+            var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
 
             twoUp.style.left = (num - num - num).toString() +'px';
             oneUp.style.left = (num - num).toString() +'px';
