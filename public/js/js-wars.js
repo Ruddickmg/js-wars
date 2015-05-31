@@ -458,7 +458,7 @@ app.undo = function () {
             this.selectElement();
             this.actionsSelect();
             this.hudHilight();
-            this.keyPress(app.settings.keyMap.select);
+            this.keyPress(app.game.settings.keyMap.select);
             this.buildUnitScreen();
             this.effect('highlight').effect('path');
             app.temp.cursorMoved = true; // refreshes the hud system to detect new unit on map
@@ -685,7 +685,7 @@ app.actions = function () {
         if(!app.temp.attackableArray) app.temp.attackableArray = attackable;
         var attackableArray = app.temp.attackableArray; 
 
-        if(!key) key = app.settings.keyMap;
+        if(!key) key = app.game.settings.keyMap;
         if(!undo) undo = app.undo.keyPress;
         if(!len || len !== attackableArray.length){
             len = attackableArray.length;
@@ -1244,11 +1244,11 @@ app.select = function () {
     var move = function (type, index) {
 
         // if there is a selected unit and select is active and the select key has been pressed
-        if (app.temp.selectedUnit && app.temp.selectActive && app.settings.keyMap.select in app.keys) {
+        if (app.temp.selectedUnit && app.temp.selectActive && app.game.settings.keyMap.select in app.keys) {
 
             var cursor = app.settings.cursor;
 
-            app.undo.keyPress(app.settings.keyMap.select);
+            app.undo.keyPress(app.game.settings.keyMap.select);
 
             // selected unit
             var unit = app.temp.selectedUnit;
@@ -1346,8 +1346,8 @@ app.select = function () {
 
         // if their is not a selection active and the cursor is not hovering over empty terrain, 
         // then do the following when the select key is pressed
-        if (app.temp.selectActive === false && type !== 'terrain' && app.settings.keyMap.select in app.keys) {
-            app.undo.keyPress(app.settings.keyMap.select);
+        if (app.temp.selectActive === false && type !== 'terrain' && app.game.settings.keyMap.select in app.keys) {
+            app.undo.keyPress(app.game.settings.keyMap.select);
             attempt = app.map[type][index];
 
             // set properties for selected object
@@ -1398,9 +1398,9 @@ app.select = function () {
 
     return {
 
-        // on press of the exit key ( defined in app.settings.keyMap ) undo any active select or interface
+        // on press of the exit key ( defined in app.game.settings.keyMap ) undo any active select or interface
         exit: function (exit) {
-            if (app.settings.keyMap.exit in app.keys) {
+            if (app.game.settings.keyMap.exit in app.keys) {
                 app.undo.all();
             }
             return this;
@@ -1462,8 +1462,7 @@ app.display = function () {
             // display the game selection menu
             selectMode();
 
-            // move to game setup
-            app.gameSetup();
+            return true;
         }
     };
 
@@ -1602,14 +1601,16 @@ app.display = function () {
             fjs.parentNode.insertBefore(js, fjs);
 
         }(document, 'script', 'facebook-jssdk'));
+
+        // move to game setup
+        app.gameSetup();
     };
 
     // Here we run a very simple test of the Graph API after login is
     // successful.  See statusChangeCallback() for when this call is made.
     var testAPI = function () {
         FB.api('/me', function(response) {
-            loginToSetup(response, 'facebook');
-            return response;
+            return loginToSetup(response, 'facebook');
         });
     };
 
@@ -1808,7 +1809,7 @@ app.display = function () {
             var prev = app.temp.prevIndex;
             selectionIndex = app.temp.selectionIndex;
             len = elements.length;
-            key = app.settings.keyMap;
+            key = app.game.settings.keyMap;
             undo = app.undo.keyPress;
 
             // if there is no max set then set max to the length of he array
@@ -2164,8 +2165,8 @@ app.display = function () {
 
         options: function () {
             // if nothing is selected and the user presses the exit key, show them the options menu
-            if (app.settings.keyMap.exit in app.keys && !app.temp.selectActive && !app.temp.actionsActive ) {
-                app.undo.keyPress(app.settings.keyMap.exit);
+            if (app.game.settings.keyMap.exit in app.keys && !app.temp.selectActive && !app.temp.actionsActive ) {
+                app.undo.keyPress(app.game.settings.keyMap.exit);
                 app.temp.optionsActive = true; // set options hud to active
                 app.temp.selectActive = true; // set select as active
                 optionsHud(); // display options hud
@@ -2399,7 +2400,7 @@ app.move = function () {
         cursor: function () {
             if (!app.temp.selectedBuilding && !app.temp.optionsActive && !app.temp.actionsActive) {
                 var d = app.map.dimensions;
-                var key = app.settings.keyMap;
+                var key = app.game.settings.keyMap;
                 var pressed;
 
                 if (key.up in app.keys) { // Player holding up
@@ -2452,7 +2453,17 @@ app.game.settings = {
     power: true,
 
     // toggle attack animations.. default off
-    visuals: false
+    visuals: false,
+
+    // keyboard settings
+    keyMap: {
+        exit: 27,
+        select: 13,
+        up: 38,
+        down: 40,
+        left: 37,
+        right: 39
+    }
 };
 
 /* --------------------------------------------------------------------------------------*\
@@ -2588,16 +2599,6 @@ app.settings = {
             y: 0
         }
     },
-
-    // keyboard settings
-    keyMap: {
-        exit: 27,
-        select: 13,
-        up: 38,
-        down: 40,
-        left: 37,
-        right: 39
-    }
 };
 
 
@@ -2722,7 +2723,7 @@ app.effect = function () {
         path: []
     }
 }();
-display.select
+
 /* --------------------------------------------------------------------------------------*\
 	
 	app.map contains all the settings for the map, unit locations, terrain, buildings, etc. 
@@ -3915,7 +3916,7 @@ app.animateEffects = function () {
 app.gameSetup = function (){
 
     // select game mode
-    var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 5);
+    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 5);
 
     // remove key presses on each iteration
     if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
