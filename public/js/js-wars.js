@@ -1453,9 +1453,6 @@ app.display = function () {
 
             app.user = user;
 
-            console.log('set user');
-            console.log(app.user);
-
             socket.emit('addUser', user);
 
             // remove login screen
@@ -1803,15 +1800,12 @@ app.display = function () {
 
     var select = function (tag, id, display, max) {
 
-        if( times === 0 ) {
-            times += 1;
-            console.log('tag: '+tag + ' id: '+id + ' max: '+max + ' display: ' + display);
-        }
-
         if(app.temp.modeOptionsActive) console.log(app.temp.modeOptionsActive);
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if ( app.temp.prevIndex !== app.temp.selectionIndex ) {
+
+            condole.log('in');
 
             // all the ul children from the selected element for highlighting
             var hudElement = document.getElementById(id);
@@ -1843,8 +1837,17 @@ app.display = function () {
 
             selectedElement = findElementByTag(tag, selectionIndex, elements);
 
+            if( times === 0 ) {
+                console.log('passing selected');
+                if(selectedElement) console.log(selectedElement);
+                times += 1;
+            }
+
             // callback that defines how to display the selected element ( functions located in app.effect )
-            if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements, len);
+            if (selectedElement){
+                console.log(display);
+                display(selectedElement, tag, selectionIndex, prev, elements, len);
+            }
             
             // store the last index for future comparison
             app.temp.prevIndex = selectionIndex;
@@ -2627,7 +2630,7 @@ app.effect = function () {
     var highlight = function (element) {
 
         console.log('highlight');
-        
+
         element.style.backgroundColor = 'tan';
         if(previous) previous.style.backgroundColor = '';
         previous = element;
