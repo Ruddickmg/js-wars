@@ -1799,7 +1799,16 @@ app.display = function () {
         return true;
     };
 
+    var times = 0;
+
     var select = function (tag, id, display, max) {
+
+        if( times === 0 ) {
+            times += 1;
+            console.log('tag: '+tag + ' id: '+id + ' max: '+max + ' display: ' + display);
+        }
+
+        if(app.temp.modeOptionsActive) console.log(app.temp.modeOptionsActive);
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if ( app.temp.prevIndex !== app.temp.selectionIndex ) {
@@ -1834,7 +1843,7 @@ app.display = function () {
 
             selectedElement = findElementByTag(tag, selectionIndex, elements);
 
-            // function passed in that defines how to display the selected element ( functions located in app.effect )
+            // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements, len);
             
             // store the last index for future comparison
@@ -2616,12 +2625,18 @@ app.effect = function () {
     var previous, pre, key, undo, selectIndex;
 
     var highlight = function (element) {
+
+        console.log('highlight');
+        
         element.style.backgroundColor = 'tan';
         if(previous) previous.style.backgroundColor = '';
         previous = element;
     };
 
     var select = function(options) {
+
+        console.log('select');
+
         if(!selectIndex) selectIndex = 0;
         if (key.select in app.keys && selectedElement) {
             undo(key.select);
@@ -2656,6 +2671,8 @@ app.effect = function () {
     var menuItemOptions = function ( selectedElement, options ) {
         if (!key) key = app.game.settings.keyMap;
         if (!undo) undo = app.undo.keyPress;
+
+        console.log('menuItemOptions');
 
         // show options
         options[0].parentNode.style.display = '';
@@ -2694,6 +2711,9 @@ app.effect = function () {
         },
 
         scrollSetupMenu:function (selectedElement, tag, index, prev, elements, length){ 
+
+            console.log('2707 scroll setup menu here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+            console.log(selectedElement);
 
             var num = app.settings.modeMenuSpacing;
 
@@ -3915,9 +3935,6 @@ app.animateEffects = function () {
 \*---------------------------------------------------------------------------------------------------------*/
 
 app.gameSetup = function (){
-
-    console.log('here');
-    console.log(app.user);
 
     // select game mode
     if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 5);
