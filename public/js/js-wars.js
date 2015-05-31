@@ -2713,8 +2713,6 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index){ 
 
-            console.log(selectedElement);
-
             var num = app.settings.modeMenuSpacing;
 
             var options = findElementsByClass(selectedElement, 'modeOption');
@@ -2734,8 +2732,11 @@ app.effect = function () {
             var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
             var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
 
-            if(previouslySelected.element) previouslySelected.element.style.height = '';
-            if(previouslySelected.options) previouslySelected.options.style.display = 'none';
+            // if the item being hovered over has changed, remove the effects of being hovered over
+            if(previouslySelected.index && previouslySelected.index !== index){
+                previouslySelected.element.style.height = '';
+                if(previouslySelected.options) previouslySelected.options.style.display = 'none';
+            }
 
             twoUp.style.left = (num - num - num).toString() +'px';
             twoUp.style.top = '10%';
@@ -2753,6 +2754,7 @@ app.effect = function () {
             twoDown.style.top = '90%';
             console.log(options);
 
+            previouslySelected.index = index;
             previouslySelected.element = selectedElement;
             if (options[0]) var selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
