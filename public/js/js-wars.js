@@ -1584,8 +1584,8 @@ app.display = function () {
     var testAPI = function () {
         FB.api('/me', function(response) {
             loginToSetup(response);
-            var status = document.getElementById('status')
-            status.parentNode.removeChild(status);
+            var loginScreen = document.getElementById('login');
+            loginScreen.parentNode.removeChild(loginScreen);
             return response;
         });
     };
