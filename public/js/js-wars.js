@@ -1796,7 +1796,7 @@ app.display = function () {
         return true;
     };
 
-    var select = function (tag, id, display, elementType, max) {
+    var select = function (tag, id, display, elementType, max, infiniteScroll) {
 
         if(app.temp.modeOptionsActive) console.log(app.temp.modeOptionsActive);
 
@@ -1860,7 +1860,7 @@ app.display = function () {
             } else if (key.down in app.keys) {
 
                 // only movement if the index is less then the length ( do not move to non existant index )
-                if (selectionIndex < len) {
+                if (selectionIndex < len || infiniteScroll) {
 
                     // increment to next index
                     app.temp.selectionIndex += 1;
@@ -1870,7 +1870,7 @@ app.display = function () {
                 // same as above, but up
             } else if (key.up in app.keys) {
 
-                if (selectionIndex > 1) app.temp.selectionIndex -= 1;
+                if (selectionIndex > 1 || infiniteScroll) app.temp.selectionIndex -= 1;
                 undo(key.up);
             }
         }
@@ -2613,7 +2613,7 @@ app.settings = {
 
 app.effect = function () {
 
-    var previous, previouslySelected = {}, pre, key, undo, selectIndex, selection = false;
+    var previous, previouslySelected = {}, pre, ind, key, undo, selectIndex, selection = false;
 
     var highlight = function (element) {
 
@@ -2717,13 +2717,16 @@ app.effect = function () {
             var options = findElementsByClass(selectedElement, 'modeOption');
             var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
             var length = elements.length;
-
-            var oneAbove = index - 1 > 0 ? index - 1 : length;
+            if( previouslySelected && index < previouslySelected.index ) ind -= 1;
+            if( previouslySelected && index > previouslySelected.index ) ind += 1;
+            ind = ind > length ? 1 : ind;
+            ind = ind < 1 ? length : ind;
+            var oneAbove = ind - 1 > 0 ? ind - 1 : length;
             var twoAbove = oneAbove -1 > 0 ? oneAbove - 1 : length;
-            var oneBelow = index + 1 > length ? 1 : index + 1;
+            var oneBelow = ind + 1 > length ? 1 : ind + 1;
             var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
 
-            console.log('tag: '+tag+', twoAbove: '+twoAbove+ ', index: '+index);
+            console.log('tag: '+tag+', twoAbove: '+twoAbove+ ', index: '+ind);
             console.log(elements);
 
             var twoUp = app.display.findElementByTag(tag, elements, oneAbove);
@@ -3959,7 +3962,7 @@ app.animateEffects = function () {
 app.gameSetup = function (){
 
     // select game mode
-    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5);
+    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5, '*');
 
     // remove key presses on each iteration
     if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
