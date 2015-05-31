@@ -1474,10 +1474,12 @@ app.display = function () {
         // height of each mode element
         var height = app.settings.selectedModeHeight;
 
+        // menu layout
+        var menu = app.settings.selectModeMenu; 
+
         // (war room, campaign) eventually integrate ai opponents?
         var selectModeScreen = document.createElement('article');
         selectModeScreen.setAttribute('id','selectModeScreen');
-        var menu = app.settings.selectModeMenu; 
 
         // create list of selectable modes
         var selectMenu = document.createElement('ul');
@@ -1501,7 +1503,9 @@ app.display = function () {
                 // create list of options
                 var options = document.createElement('ul');
                 var length = mi.options.length;
-                options.setAttribute('id', 'modeOptions');
+                options.setAttribute('id', mi.id);
+                options.setAttribute('modeItemIndex', m + 1);
+                options.setAttribute('class', 'modeOptions');
 
                 // default to not showing options (hide them when not selected)
                 options.style.display = 'none';
@@ -1510,9 +1514,9 @@ app.display = function () {
 
                     // create li item for each option
                     var option = document.createElement('li');
-                    option.setAttribute('class','modeOption');
+                    option.setAttribute('class', 'modeOption');
                     option.setAttribute('modeSelectionIndex', o + 1);
-                    option.setAttribute('id', mi.options[o]);
+                    option.setAttribute('id', mi.options[o] + mi.id);
 
                     // create id and display name for each option
                     option.innerHTML = mi.options[o];
@@ -2488,27 +2492,31 @@ app.settings = {
     selectedModeHeight: 150,
 
     selectModeMenu:[{
+            id:'logout',
             display:'Logout',
             type:'exit',
             color:'grey',
-            options:'Logout'
         },{
+            id:'game',
             display:'Game Setup',
             type:'setup',
             color:'blue',
             options:['new', 'continue']
         },{
+            id:'join',
             display:'Join',
             type:'join',
             color:'yellow',
             options:['new', 'continue']
         },{
+            id:'design',
             display:'Design',
             type:'design',
             color:'green',
             options:['map', 'CO']
 
         },{
+            id:'store',
             display:'Game Store',
             type:'store',
             color:'red',
@@ -2706,7 +2714,7 @@ app.effect = function () {
             oneDown.style.left = (num - num).toString() +'px';
             twoDown.style.left = (num - num - num).toString() +'px';
 
-            if (options) var selection = app.display.menuItemOptions(selectedElement, options);
+            if (options) var selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
         },
@@ -2714,7 +2722,7 @@ app.effect = function () {
         path: []
     }
 }();
-
+display.select
 /* --------------------------------------------------------------------------------------*\
 	
 	app.map contains all the settings for the map, unit locations, terrain, buildings, etc. 
@@ -3907,7 +3915,7 @@ app.animateEffects = function () {
 app.gameSetup = function (){
 
     // select game mode
-    var game = app.display.select('modeSelectionIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 5);
+    var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 5);
 
     // remove key presses on each iteration
     if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
