@@ -83,6 +83,9 @@ app = {
         }
     },
 
+    // target element to insert before
+    domInsertLocation: document.getElementById('before'),
+
     game: {
         started: false,
         currentPlayer:null,
@@ -1464,7 +1467,9 @@ app.display = function () {
         }
     };
 
-    var selectMode = function () {
+    var selectMode = function () { 
+
+        console.log('here');
 
         // height of each mode element
         var height = app.settings.selectedModeHeight;
@@ -1519,6 +1524,12 @@ app.display = function () {
                 item.appendChild(options);
             }
         }
+        var exists = document.getElementById('selectModeScreen');
+        if(exists) {
+            exists.parentNode.replaceChild(selectModeScreen, exists);
+        }else{
+            document.body.insertBefore(selectModeScreen, app.domInsertLocation);
+        }
     };
 
     var setup = function (name) {
@@ -1554,7 +1565,7 @@ app.display = function () {
         loginScreen.appendChild(fbButton);
         loginScreen.appendChild(fbStatus);
 
-        document.body.insertBefore(loginScreen, document.getElementById('before'));
+        document.body.insertBefore(loginScreen, app.domInsertLocation);
 
         window.fbAsyncInit = function() {
             FB.init({
@@ -1640,7 +1651,7 @@ app.display = function () {
         if(exists){
             exists.parentNode.replaceChild(damageDisp, exists);
         }else{
-            document.body.insertBefore(damageDisp, document.getElementById('before'));
+            document.body.insertBefore(damageDisp, app.domInsertLocation);
         }
     };
 
@@ -1688,7 +1699,7 @@ app.display = function () {
             if (coHud) {
                 coHud.parentNode.replaceChild(hud, coHud);
             } else {
-                document.body.insertBefore(hud, document.getElementById('before'));
+                document.body.insertBefore(hud, app.domInsertLocation);
             }
 
             // return the context for animation of the power bar
@@ -1771,7 +1782,7 @@ app.display = function () {
             display.appendChild(innerScreen);
 
             // insert build screen into dom
-            document.body.insertBefore(display, document.getElementById('before'));
+            document.body.insertBefore(display, app.domInsertLocation);
         }
         return true;
     };
