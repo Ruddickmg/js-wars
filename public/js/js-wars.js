@@ -1444,7 +1444,7 @@ app.display = function () {
     var optionsActive, unitSelectionActive = false;
 
     var loginToSetup = function (user){
-        if(user && userId) {
+        if(user && user.userId) {
 
             socket.emit('addUser', app.user);
 
@@ -1577,17 +1577,17 @@ app.display = function () {
             fjs.parentNode.insertBefore(js, fjs);
 
         }(document, 'script', 'facebook-jssdk'));
+    };
 
-        // Here we run a very simple test of the Graph API after login is
-        // successful.  See statusChangeCallback() for when this call is made.
-        var testAPI = function () {
-            FB.api('/me', function(response) {
-                loginToSetup(response);
-                var status = document.getElementById('status')
-                status.parentNode.removeChild(status);
-                return response;
-            });
-        }
+    // Here we run a very simple test of the Graph API after login is
+    // successful.  See statusChangeCallback() for when this call is made.
+    var testAPI = function () {
+        FB.api('/me', function(response) {
+            loginToSetup(response);
+            var status = document.getElementById('status')
+            status.parentNode.removeChild(status);
+            return response;
+        });
     };
 
     // allow login through fb ---- fb sdk
