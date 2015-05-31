@@ -29,7 +29,10 @@ socket.on('capture', function(capture){
     app.actions.capture(capture);
 });
 
-socket.on('endTurn', app.options.end());
+// end turn
+socket.on('endTurn', function(end){
+    app.options.end()
+});
 
 // Add a disconnect listener
 socket.on('disconnect', function() {
