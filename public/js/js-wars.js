@@ -1523,7 +1523,13 @@ app.display = function () {
                 // add options to the item
                 item.appendChild(options);
             }
+            // add items to select menu
+            selectMenu.appendChild(item);
         }
+        // add select menu to select mode screen
+        selectModeScreen.appendChild(selectMenu);
+
+        // insert select mode screen into dom
         var exists = document.getElementById('selectModeScreen');
         if(exists) {
             exists.parentNode.replaceChild(selectModeScreen, exists);
