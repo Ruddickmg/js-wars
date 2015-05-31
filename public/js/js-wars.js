@@ -2734,7 +2734,8 @@ app.effect = function () {
             var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
             var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
 
-            if(previouslySelected) previouslySelected.style.height = '';
+            if(previouslySelected.element) previouslySelected.element.style.height = '';
+            if(previouslySelected.options) previouslySelected.options.style.display = 'none';
 
             twoUp.style.left = (num - num - num).toString() +'px';
             twoUp.style.top = '10%';
@@ -2751,7 +2752,7 @@ app.effect = function () {
             console.log(options);
 
             previouslySelected = selectedElement;
-            if (options) var selection = menuItemOptions(selectedElement, options);
+            if (options[0]) var selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
         },
