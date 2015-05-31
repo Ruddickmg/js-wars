@@ -1874,7 +1874,6 @@ app.display = function () {
                 undo(key.up);
             }
         }
-        console.log('what is going on?');
         return false;
     };
 
@@ -3958,11 +3957,12 @@ app.animateEffects = function () {
 \*---------------------------------------------------------------------------------------------------------*/
 
 app.gameSetup = function (){
-    // remove key presses on each iteration
-    if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
 
     // select game mode
     if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5);
+
+    // remove key presses on each iteration
+    if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
 
     // if a game has been started 
     if (game) {
