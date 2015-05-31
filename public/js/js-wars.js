@@ -2721,18 +2721,24 @@ app.effect = function () {
             console.log('length: '+length);
 
 
-            if( previouslySelected && index < previouslySelected.index ) {
+            if( previouslySelected.index && index < previouslySelected.index ) {
                 ind -= 1
                 console.log('prev index: '+previouslySelected.index+', index: '+index)
                 console.log('yes?');
             };
-            if( previouslySelected && index > previouslySelected.index ){
+            if( previouslySelected.index && index > previouslySelected.index ){
                 ind += 1;
                 console.log('prev index: '+previouslySelected.index+', index: '+index)
                 console.log('yes?');
             };
-            ind = ind > length ? 1 : ind;
-            ind = ind < 1 ? length : ind;
+
+            console.log(ind);
+
+            if( ind > length ) ind = 1;
+            if( ind < 1 ) ind = length;
+
+            console.log(ind);
+
             var oneAbove = ind - 1 > 0 ? ind - 1 : length;
             var twoAbove = oneAbove -1 > 0 ? oneAbove - 1 : length - 1;
             var oneBelow = ind + 1 > length ? 1 : ind + 1;
