@@ -2613,7 +2613,7 @@ app.settings = {
 
 app.effect = function () {
 
-    var previous, previouslySelected = {}, pre, ind, key, undo, selectIndex, selection = false;
+    var previous, previouslySelected = {}, pre, ind = 1, key, undo, selectIndex, selection = false;
 
     var highlight = function (element) {
 
