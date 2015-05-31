@@ -1457,7 +1457,7 @@ app.display = function () {
                 loginScreen.parentNode.removeChild(loginScreen);
 
             // display the game selection menu
-            app.display.selectMode();
+            selectMode();
 
             // move to game setup
             app.gameSetup();
