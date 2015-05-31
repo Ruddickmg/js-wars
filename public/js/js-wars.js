@@ -1796,8 +1796,6 @@ app.display = function () {
         return true;
     };
 
-    var times = 0;
-
     var select = function (tag, id, display, elementType, max) {
 
         if(app.temp.modeOptionsActive) console.log(app.temp.modeOptionsActive);
@@ -1805,18 +1803,10 @@ app.display = function () {
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if ( app.temp.prevIndex !== app.temp.selectionIndex ) {
 
-            console.log('in');
-
             // all the ul children from the selected element for highlighting
             var hudElement = document.getElementById(id);
 
-            console.log('hudElement');
-            console.log(hudElement);
-
             var elements = hudElement.getElementsByTagName(elementType);
-
-            console.log('elements');
-            console.log(elements);
 
             var prev = app.temp.prevIndex;
             selectionIndex = app.temp.selectionIndex;
@@ -1844,12 +1834,6 @@ app.display = function () {
             }
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
-
-            if( times === 0 ) {
-                console.log('passing selected');
-                if(selectedElement) console.log(selectedElement);
-                times += 1;
-            }
 
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement){
@@ -2731,6 +2715,9 @@ app.effect = function () {
             var oneBelow = index + 1 > length ? 1 : index + 1;
             var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
 
+            console.log('tag: '+tag+' twoAbove: '+twoAbove);
+            console.log(elements);
+            
             var twoUp = app.display.findElementByTag(tag, elements, oneAbove);
             var oneUp = app.display.findElementByTag(tag, elements, twoAbove);
             var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
