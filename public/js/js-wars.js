@@ -1443,8 +1443,14 @@ app.display = function () {
     var sideX, sideY, selectionIndex, selectedElement, hide, len, prevX;
     var optionsActive, unitSelectionActive = false;
 
-    var loginToSetup = function (user){
+    // format is where the login is coming from, allowing different actions for different login sources
+    var loginToSetup = function (user, format){
+
+        console.log(user);
+
         if(user && user.userId) {
+
+            console.log('here');
 
             socket.emit('addUser', app.user);
 
@@ -1583,9 +1589,7 @@ app.display = function () {
     // successful.  See statusChangeCallback() for when this call is made.
     var testAPI = function () {
         FB.api('/me', function(response) {
-            loginToSetup(response);
-            var loginScreen = document.getElementById('login');
-            loginScreen.parentNode.removeChild(loginScreen);
+            loginToSetup(response, 'facebook');
             return response;
         });
     };

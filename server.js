@@ -104,7 +104,6 @@ io.on('connection', function(socket){
 */
     // add user to players
     socket.on('addUser', function(user){
-        consoe.log(user);
         socket.fbid = user.userID;
         if (user.screenName) socket.screenName = user.screenName;
         socket.firstName = user.firstName;
