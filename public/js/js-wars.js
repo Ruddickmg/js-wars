@@ -2682,10 +2682,10 @@ app.effect = function () {
         return false;
     };
 
-    var findElementsByClass = function (element, class){
+    var findElementsByClass = function (element, className){
         var elements = [];
         for (var i = 0; i < element.childNodes.length; i += 1) {
-            if (element.childNodes[i].className === class) {
+            if (element.childNodes[i].className === className) {
                 elements.push(element.childNodes[i]);
             }
         }
