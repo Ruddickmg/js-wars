@@ -2734,7 +2734,7 @@ app.effect = function () {
             var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
             var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
 
-            if(previousSelected) previouslySelected.style.height = '';
+            if(previouslySelected) previouslySelected.style.height = '';
 
             twoUp.style.left = (num - num - num).toString() +'px';
             twoUp.style.top = '10%';
@@ -2750,7 +2750,7 @@ app.effect = function () {
             twoDown.style.top = '90%';
             console.log(options);
 
-            previousSelected = selectedElement;
+            previouslySelected = selectedElement;
             if (options) var selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
