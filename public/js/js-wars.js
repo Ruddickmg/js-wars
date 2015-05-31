@@ -1805,7 +1805,7 @@ app.display = function () {
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if ( app.temp.prevIndex !== app.temp.selectionIndex ) {
 
-            condole.log('in');
+            console.log('in');
 
             // all the ul children from the selected element for highlighting
             var hudElement = document.getElementById(id);
@@ -1848,7 +1848,7 @@ app.display = function () {
                 console.log(display);
                 display(selectedElement, tag, selectionIndex, prev, elements, len);
             }
-            
+
             // store the last index for future comparison
             app.temp.prevIndex = selectionIndex;
         }
