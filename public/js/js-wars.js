@@ -1798,7 +1798,7 @@ app.display = function () {
 
     var times = 0;
 
-    var select = function (tag, id, display, elementType = 'ul', max) {
+    var select = function (tag, id, display, elementType, max) {
 
         if(app.temp.modeOptionsActive) console.log(app.temp.modeOptionsActive);
 
@@ -2148,9 +2148,9 @@ app.display = function () {
             if (app.temp.actionsActive && app.temp.selectActive) {
 
                 // make the options huds list items selectable
-                selection = select('actionSelectionIndex', 'actions', app.effect.highlightListItem);
+                selection = select('actionSelectionIndex', 'actions', app.effect.highlightListItem, 'ul');
             }else if(app.temp.optionsActive){
-                selection = select('optionSelectionIndex', 'optionsMenu', app.effect.highlightListItem);
+                selection = select('optionSelectionIndex', 'optionsMenu', app.effect.highlightListItem, 'ul');
             }
 
             // if one has been selected activate the corresponding method from the options class
