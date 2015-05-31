@@ -101,7 +101,7 @@ io.on('connection', function(socket){
             socket.broadcast.to(room.name).emit('userAdded', name + ' has joined the game');
         }
     });
-
+*/
     // add user to players
     socket.on('addUser', function(user){
         socket.fbid = user.userID;
@@ -113,5 +113,5 @@ io.on('connection', function(socket){
         socket.room = rooms[0];
         var name = socket.screenName ? socket.screenName : socket.firstName;
         socket.broadcast.to('lobby').emit('userAdded', name + ' has joined the game');
-    });*/
+    });
 });

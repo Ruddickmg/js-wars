@@ -1443,6 +1443,23 @@ app.display = function () {
     var sideX, sideY, selectionIndex, selectedElement, hide, len, prevX;
     var optionsActive, unitSelectionActive = false;
 
+    var loginToSetup = function (user){
+        if(user && userId) {
+
+            socket.emit('addUser', app.user);
+
+            // remove login screen
+            var loginScreen = document.getElementById('login');
+                loginScreen.parentNode.removeChild(loginScreen);
+
+            // display the game selection menu
+            app.display.selectMode();
+
+            // move to game setup
+            app.gameSetup();
+        }
+    };
+
     var selectMode = function () {
 
         // height of each mode element
@@ -1578,6 +1595,7 @@ app.display = function () {
         // successful.  See statusChangeCallback() for when this call is made.
         var testAPI = function () {
             FB.api('/me', function(response) {
+                loginToSetup(response);
                 var status = document.getElementById('status')
                 status.parentNode.removeChild(status);
                 return response;
@@ -2061,20 +2079,7 @@ app.display = function () {
         },
 
         login: function() {
-           app.user = login();
-           if(app.user.userId) {
-                socket.emit('addUser', app.user);
-
-                // remove login screen
-                var loginScreen = document.getElementById('login');
-                    loginScreen.parentNode.removeChild(loginScreen);
-
-                // display the game selection menu
-                app.display.selectMode();
-
-                // move to game setup
-                app.gameSetup();
-            }
+           login();
         },
 
         // 
