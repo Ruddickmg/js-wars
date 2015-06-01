@@ -1452,7 +1452,7 @@ app.dom = function (){
             console.log(children);
             for(var i = 0; i < len; i += 1) {
                 var child = children[i];
-                 f(child.nodeType === 1 && child.tagName === type) elements.push(child);
+                if(child.nodeType === 1 && child.tagName === type) elements.push(child);
             }
             return elements;
         }
