@@ -1897,7 +1897,7 @@ app.display = function () {
                 if (selectionIndex > 1 && !infiniteScroll){
                     app.temp.selectionIndex -= 1;
                 }else if(infiniteScroll){
-                    app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
+                    app.temp.selectionIndex = selectionIndex - 1 < 2 ? len : selectionIndex - 1;
                 } 
                 undo(key.up);
             }
