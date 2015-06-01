@@ -2753,7 +2753,7 @@ app.effect = function () {
             if( previouslySelected.index && index > previouslySelected.index ) ind = ind + 1 > length ? 1 : ind + 1;
 
             var oneAbove = ind - 1 < 1 ? length : ind - 1;
-            var twoAbove = oneAbove - 1 < 1 ?  : length : oneAbove - 1;
+            var twoAbove = oneAbove - 1 < 1 ? length : oneAbove - 1;
             var oneBelow = ind + 1 > length ? 1 : ind + 1;
             var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
 
