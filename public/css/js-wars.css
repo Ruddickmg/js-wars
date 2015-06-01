@@ -141,16 +141,15 @@ h1 {
     border-bottom: 5px solid black;
 };
 
-
-
 li[pos=twoAbove] {
     top:30px;
+    left:-70px;
     height:75px;
 }
 
 li[pos=oneAbove] {
+    left:-20px;
     top:110px;
-    left:-50px;
     height:75px;
 }
 
@@ -162,13 +161,14 @@ li[pos=selected] {
 }
 
 li[pos=oneBelow] {
+    left:-20px;
     top:400px;
     height:75px;
 }
 
 li[pos=twoBelow] {
     top:500px;
-    left:-50px;
+    left:-70px;
     height:75px;
 }
 
