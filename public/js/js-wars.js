@@ -1448,11 +1448,11 @@ app.dom = function (){
             var elements = [];
             var children = element.childNodes;
             var len = children.length;
+            console.log('type: '+type);
+            console.log(children);
             for(var i = 0; i < len; i += 1) {
                 var child = children[i];
-                 if(child.nodeType === 1 && child.tagName === type) {
-                    elements.push(child);
-                }
+                 f(child.nodeType === 1 && child.tagName === type) elements.push(child);
             }
             return elements;
         }
