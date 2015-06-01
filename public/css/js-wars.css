@@ -79,7 +79,7 @@ h1 {
     font-family: arial;
 }
 
-.gameScreen, #selectModeMenu, #login, #selectModeScreen {
+.gameScreen, #login, #selectModeScreen {
     position:absolute;
     top: 395px;
     left: 720px;
