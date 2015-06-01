@@ -2772,31 +2772,35 @@ app.effect = function () {
             var option = findElementsByClass(selectedElement, 'modeOptions');
             if(option[0]) previouslySelected.options = option[0];
 
-            twoUp.style.left = (num - num - num).toString() +'px';
+            /*twoUp.style.left = (num - num - num).toString() +'px';
             twoUp.style.top = '10%';
-            twoUp.style.height = height;
+            twoUp.style.height = height;*/
+            twoUp.setAttribute('pos', 'twoAbove');
 
-            oneUp.style.left = (num - num).toString() +'px';
+          /*  oneUp.style.left = (num - num).toString() +'px';
             oneUp.style.top = '30%';
-            oneUp.style.height = height;
+            oneUp.style.height = height;*/
+            oneUp.setAttribute('pos', 'oneAbove');
 
-            selectedElement.style.left = (num).toString() +'px';
-            selectedElement.style.height = (height * 2).toString() + 'px';
+            /*selectedElement.style.left = (num).toString() +'px';
+            selectedElement.style.height = (height * 2).toString() + 'px';*/
+            selectedElement.setAttribute('pos', 'selected');
             var color = selectedElement.style.color;
-
             console.log(color);
-            
+
             selectedElement.style.borderColor = selectedElement.style.color;
-            selectedElement.style.top = '50%';
+           // selectedElement.style.top = '50%';
 
             //selectedElement.style.width = app.settings.modeOptionWidth;
-            oneDown.style.left = (num - num).toString() +'px';
+            /*oneDown.style.left = (num - num).toString() +'px';
             oneDown.style.top = '70%';
-            oneDown.style.height = height;
+            oneDown.style.height = height;*/
+            oneDown.setAttribute('pos', 'oneDown');
 
-            twoDown.style.left = (num - num - num).toString() +'px';
+            /*twoDown.style.left = (num - num - num).toString() +'px';
             twoDown.style.top = '90%';
-            twoDown.style.height = height;
+            twoDown.style.height = height;*/
+            twoDown.setAttribute('pos', 'twoDown');
 
             console.log(options);
 
