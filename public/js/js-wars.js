@@ -1836,7 +1836,6 @@ app.display = function () {
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             console.log('selection index: '+selectionIndex);
-            console.log('app tempo selecto indexo: '+app.temp.selectionIndex );
 
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) var selectedOption = display(selectedElement, tag, selectionIndex, prev, elements);
@@ -1867,10 +1866,6 @@ app.display = function () {
 
                     // increment to next index
                     app.temp.selectionIndex += 1;
-
-                    console.log('actual index: '+selectionIndex);
-                    console.log('actual index temp: '+ app.temp.selectionIndex);
-
                 }
                 undo(key.down);
 
@@ -1878,8 +1873,6 @@ app.display = function () {
             } else if (key.up in app.keys) {
 
                 if (selectionIndex > 1 || infiniteScroll) app.temp.selectionIndex -= 1;
-                console.log('actual index: '+selectionIndex);
-                console.log('actual index temp: '+ app.temp.selectionIndex);
                 undo(key.up);
             }
         }
@@ -2682,10 +2675,12 @@ app.effect = function () {
             highlight(selectedElement);
             undo(key.left);
             return false;
+
         }else if(key.right in app.keys){
             app.temp.modeOptionsActive = true;
             undo(key.right);
             return select(options);
+
         }
         return false;
     };
@@ -2721,29 +2716,23 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index){ 
 
+            console.log('initial index: '+index);
+
             var num = app.settings.modeMenuSpacing;
 
             var options = findElementsByClass(selectedElement, 'modeOption');
             var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
             var length = elements.length;
             console.log(previouslySelected);
-            console.log('length: '+length);
 
             if( previouslySelected.index && index < previouslySelected.index ) {
-                ind -= 1
-                console.log('prev index: '+previouslySelected.index+', index: '+index)
-                console.log('yes?');
+                ind = ind - 1 < 1 ? length : ind - 1;
+                console.log('prev index: '+previouslySelected.index+', index: '+index);
             };
             if( previouslySelected.index && index > previouslySelected.index ){
-                ind += 1;
-                console.log('prev index: '+previouslySelected.index+', index: '+index)
-                console.log('yes?');
+                ind = ind + 1 > length ? 1 : ind + 1;
+                console.log('prev index: '+previouslySelected.index+', index: '+index); 
             };
-
-            console.log(ind);
-
-            if( ind > length ) ind = 1;
-            if( ind < 1 ) ind = length;
 
             console.log(ind);
 
