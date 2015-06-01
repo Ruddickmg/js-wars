@@ -138,29 +138,29 @@ h1 {
     border-bottom: 5px solid black;
 };
 
-#selectModeMenu[pos='oneAbove'] {
+li[pos=oneAbove] {
     top:30%;
     left:-20px;
     height:100px;
 }
 
-#selectModeMenu[pos='twoAbove'] {
+li[pos=twoAbove] {
     top:10%;
     height:100px;
 }
 
-#selectModeMenu[pos='selected'] {
+li[pos=selected] {
     top:50%;
     height:200px; 
     left:20px;
 }
 
-#selectModeMenu[pos='oneBelow'] {
+li[pos=oneBelow] {
     top:70%;
     height:100px;
 }
 
-#selectModeMenu[pos='twoBelow'] {
+li[pos=twoBelow] {
     top:90%;
     left:-20px;
     height:100px;
