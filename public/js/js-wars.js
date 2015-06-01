@@ -1447,12 +1447,11 @@ app.dom = function (){
         getImmediateChildrenByTagName: function(element, type){
             var elements = [];
             var children = element.childNodes;
+            var name = type.toUpperCase();
             var len = children.length;
-            console.log('type: '+type);
-            console.log(children);
             for(var i = 0; i < len; i += 1) {
                 var child = children[i];
-                if(child.nodeType === 1 && child.tagName === type.toUpperCase()) elements.push(child);
+                if(child.nodeType === 1 && child.tagName === name) elements.push(child);
             }
             return elements;
         }
@@ -1857,8 +1856,6 @@ app.display = function () {
             }
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
-            console.log(elements);
-            console.log('selection index: '+selectionIndex);
 
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) var selectedOption = display(selectedElement, tag, selectionIndex, prev, elements);
@@ -1900,7 +1897,7 @@ app.display = function () {
                 if (selectionIndex > 1 && !infiniteScroll){
                     app.temp.selectionIndex -= 1;
                 }else if(infiniteScroll){
-                    app.temp.selectionIndex = selectionIndex - 1 < 0 ? len : selectionIndex - 1;
+                    app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
                 } 
                 undo(key.up);
             }
