@@ -1897,7 +1897,7 @@ app.display = function () {
                 if (selectionIndex > 1 && !infiniteScroll){
                     app.temp.selectionIndex -= 1;
                 }else if(infiniteScroll){
-                    app.temp.selectionIndex = selectionIndex - 1 < 2 ? len : selectionIndex - 1;
+                    app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
                 } 
                 undo(key.up);
             }
@@ -2768,7 +2768,6 @@ app.effect = function () {
             var twoBelow = oneBelow + 1 > length ? 2 : oneBelow + 1;
 
             console.log('tag: '+tag+', twoAbove: '+twoAbove+ ', index: '+ind);
-            console.log(elements);
 
             var twoUp = app.display.findElementByTag(tag, elements, oneAbove);
             var oneUp = app.display.findElementByTag(tag, elements, twoAbove);
