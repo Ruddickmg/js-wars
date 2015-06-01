@@ -131,7 +131,7 @@ h1 {
 }
 
 .modeItem {
-    margin:10px;
+    position: absolute;
     display: block;
     background:white;
     width: 400px;
@@ -144,26 +144,30 @@ h1 {
 
 
 li[pos=twoAbove] {
+    top:30px;
     height:75px;
 }
 
 li[pos=oneAbove] {
-    top:25%;
+    top:110px;
     left:-50px;
     height:75px;
 }
 
 li[pos=selected] {
+    top:220px;
     height:150px; 
     left:50px;
     margin:15px;
 }
 
 li[pos=oneBelow] {
+    top:400px;
     height:75px;
 }
 
 li[pos=twoBelow] {
+    top:500px;
     left:-50px;
     height:75px;
 }
