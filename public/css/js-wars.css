@@ -134,37 +134,40 @@ h1 {
     position: absolute;
     display: block;
     background:white;
+    width: 400px;
     border-left: 12px solid black;
     border-right: 12px solid black;
     border-top: 5px solid black;
     border-bottom: 5px solid black;
 };
 
-li[pos=oneAbove] {
-    top:30%;
-    left:-20px;
-    height:75px;
-}
+
 
 li[pos=twoAbove] {
     top:10%;
     height:75px;
 }
 
+li[pos=oneAbove] {
+    top:25%;
+    left:-50px;
+    height:75px;
+}
+
 li[pos=selected] {
-    top:50%;
+    top:40%;
     height:150px; 
-    left:20px;
+    left:50px;
 }
 
 li[pos=oneBelow] {
-    top:70%;
+    top:55%;
     height:75px;
 }
 
 li[pos=twoBelow] {
-    top:90%;
-    left:-20px;
+    top:70%;
+    left:-50px;
     height:75px;
 }
 
