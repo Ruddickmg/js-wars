@@ -1438,7 +1438,30 @@ app.select = function () {
 
 /* ------------------------------------------------------------------------------------------------------*\
 	
-	app.hud handles all the display screens and the users interaction with them
+	app.dom is a list of functions used to assist manipulating the dom
+\* ------------------------------------------------------------------------------------------------------*/
+
+app.dom = function (){
+
+    return {
+        getImmediateChildrenByTagName: function(element, type){
+            var elements = [];
+            var children = element.childNodes;
+            var len = children.length;
+            for(var i = 0; i < len; i += 1) {
+                var child = children[i];
+                 if(child.nodeType === 1 && child.tagName === type) {
+                    elements.push(child);
+                }
+            }
+            return elements;
+        }
+    };
+}();
+
+/* ------------------------------------------------------------------------------------------------------*\
+    
+    app.display handles all the display screens and the users interaction with them
 \* ------------------------------------------------------------------------------------------------------*/
 
 app.display = function () {
@@ -1806,7 +1829,7 @@ app.display = function () {
             // all the ul children from the selected element for highlighting
             var hudElement = document.getElementById(id);
 
-            var elements = hudElement.getElementsByTagName(elementType);
+            var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
 
             var prev = app.temp.prevIndex;
             selectionIndex = app.temp.selectionIndex;
@@ -1834,7 +1857,7 @@ app.display = function () {
             }
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
-
+            console.log(elements);
             console.log('selection index: '+selectionIndex);
 
             // callback that defines how to display the selected element ( functions located in app.effect )
@@ -1862,17 +1885,23 @@ app.display = function () {
             } else if (key.down in app.keys) {
 
                 // only movement if the index is less then the length ( do not move to non existant index )
-                if (selectionIndex < len || infiniteScroll) {
+                if (selectionIndex < len && !infiniteScroll) {
 
                     // increment to next index
                     app.temp.selectionIndex += 1;
+                }else if(infiniteScroll){
+                    app.temp.selectionIndex = selectionIndex + 1 > len ? 1 : selectionIndex + 1;
                 }
                 undo(key.down);
 
                 // same as above, but up
             } else if (key.up in app.keys) {
 
-                if (selectionIndex > 1 || infiniteScroll) app.temp.selectionIndex -= 1;
+                if (selectionIndex > 1 && !infiniteScroll){
+                    app.temp.selectionIndex -= 1;
+                }else if(infiniteScroll){
+                    app.temp.selectionIndex = selectionIndex - 1 < 0 ? len : selectionIndex - 1;
+                } 
                 undo(key.up);
             }
         }
