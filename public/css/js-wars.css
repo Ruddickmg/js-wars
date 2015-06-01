@@ -138,10 +138,11 @@ h1 {
     font-size: 44px;
     padding:3px;
     width: 400px;
-    border-left: 12px solid black;
-    border-right: 12px solid black;
-    border-top: 5px solid black;
-    border-bottom: 5px solid black;
+    border-left: 12px solid;
+    border-right: 12px solid;
+    border-top: 5px solid;
+    border-bottom: 5px solid;
+    border-color: black;
 }
 
 li[pos=twoAbove] {
