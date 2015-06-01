@@ -2765,6 +2765,7 @@ app.effect = function () {
             // if the item being hovered over has changed, remove the effects of being hovered over
             if(previouslySelected.index && previouslySelected.index !== index){
                 previouslySelected.element.style.height = '';
+                previouslySelected.element.style.borderColor = 'black';
                 if(previouslySelected.options) previouslySelected.options.style.display = 'none';
             }
 
@@ -2781,6 +2782,11 @@ app.effect = function () {
 
             selectedElement.style.left = (num).toString() +'px';
             selectedElement.style.height = (height * 2).toString() + 'px';
+            var color = selectedElement.style.color;
+
+            console.log(color);
+            
+            selectedElement.style.borderColor = selectedElement.style.color;
             selectedElement.style.top = '50%';
 
             //selectedElement.style.width = app.settings.modeOptionWidth;
