@@ -1512,6 +1512,7 @@ app.display = function () {
             var item = document.createElement('li');
             item.setAttribute('modeItemIndex', m + 1);
             item.setAttribute('class','modeItem');
+            item.setAttribute('id', mi.id);
             item.style.height = height;
 
             // set displayed text for mode selection
@@ -1523,7 +1524,6 @@ app.display = function () {
                 // create list of options
                 var options = document.createElement('ul');
                 var length = mi.options.length;
-                options.setAttribute('id', mi.id);
                 options.setAttribute('class', 'modeOptions');
 
                 // default to not showing options (hide them when not selected)
@@ -2742,32 +2742,19 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index){ 
 
-            console.log('initial index: '+index);
-
             var num = app.settings.modeMenuSpacing;
 
             var options = findElementsByClass(selectedElement, 'modeOption');
             var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-            var length = elements.length;
-            console.log(previouslySelected);
+            var length = elements.length; 
 
-            if( previouslySelected.index && index < previouslySelected.index ) {
-                ind = ind - 1 < 1 ? length : ind - 1;
-                console.log('prev index: '+previouslySelected.index+', index: '+index);
-            };
-            if( previouslySelected.index && index > previouslySelected.index ){
-                ind = ind + 1 > length ? 1 : ind + 1;
-                console.log('prev index: '+previouslySelected.index+', index: '+index); 
-            };
-
-            console.log(ind);
+            if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
+            if( previouslySelected.index && index > previouslySelected.index ) ind = ind + 1 > length ? 1 : ind + 1;
 
             var oneAbove = ind - 1 > 0 ? ind - 1 : length;
             var twoAbove = oneAbove -1 > 0 ? oneAbove - 1 : length - 1;
             var oneBelow = ind + 1 > length ? 1 : ind + 1;
             var twoBelow = oneBelow + 1 > length ? 2 : oneBelow + 1;
-
-            console.log('tag: '+tag+', twoAbove: '+twoAbove+ ', index: '+ind);
 
             var twoUp = app.display.findElementByTag(tag, elements, oneAbove);
             var oneUp = app.display.findElementByTag(tag, elements, twoAbove);

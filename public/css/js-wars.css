@@ -79,19 +79,69 @@ h1 {
     font-family: arial;
 }
 
-.gameScreen, #login {
+.gameScreen, #selectModeMenu, #login, #selectModeScreen {
     position:absolute;
     top: 395px;
-    left: 720px; 
+    left: 720px;
     right:auto;
     transform: translate(-50%,-50%);
 }
 
-#login {
-    width: 1000px;
+#game {
+    border-color: blue;
+     color:blue;
+
+}
+
+#join {
+    border-color: red;
+    color:red;
+}
+
+#design:{
+    border-color:green;
+    color:green;
+}
+
+#store {
+    border-color: yellow;
+    color:yellow;
+}
+
+#logout {
+    border-color: grey;
+    color:grey;
+}
+
+
+
+#login,  #selectModeMenu, #selectModeScreen {
+    width: 960px;
     height:640px;
+}
+
+#login {
     z-index: 15;
     background: rgba(43,43,43,.8);;
+}
+
+#selectModeScreen {
+    background:white;
+}
+
+#selectModeMenu{
+    overflow: hidden;
+}
+
+.modeItem {
+    border-left: 10px solid;
+    border-right: 10px solid;
+    border-top: 5px solid;
+    border-bottom: 5px solid;
+};
+
+.modeOption {
+    border:inherit;
 }
 
 #fbButton {
