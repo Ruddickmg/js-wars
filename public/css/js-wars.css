@@ -126,14 +126,18 @@ h1 {
 }
 
 #selectModeScreen {
+    z-index:14;
     background:white;
+    overflow: hidden;
 }
 
 #selectModeMenu{
+    background:white;
     overflow: hidden;
 }
 
 .modeItem {
+    background:white;
     border-left: 10px solid;
     border-right: 10px solid;
     border-top: 5px solid;
