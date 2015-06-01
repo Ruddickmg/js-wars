@@ -88,28 +88,22 @@ h1 {
 }
 
 #game {
-    border-color: blue;
-     color:blue;
-
+    color:blue;
 }
 
 #join {
-    border-color: red;
     color:red;
 }
 
-#design:{
-    border-color:green;
+#design {
     color:green;
 }
 
 #store {
-    border-color: yellow;
     color:yellow;
 }
 
 #logout {
-    border-color: grey;
     color:grey;
 }
 
@@ -138,10 +132,7 @@ h1 {
 
 .modeItem {
     background:white;
-    border-left: 10px solid;
-    border-right: 10px solid;
-    border-top: 5px solid;
-    border-bottom: 5px solid;
+    border: 10px 3px 10px 3px solid black;
 };
 
 .modeOption {

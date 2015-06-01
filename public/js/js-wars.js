@@ -2529,7 +2529,7 @@ app.settings = {
         }
     },
 
-    selectedModeHeight: 150,
+    selectedModeHeight: 75,
 
     selectModeMenu:[{
             id:'logout',
@@ -2743,6 +2743,7 @@ app.effect = function () {
         scrollSetupMenu:function (selectedElement, tag, index){ 
 
             var num = app.settings.modeMenuSpacing;
+            var height = app.settings.selectedModeHeight;
 
             var options = findElementsByClass(selectedElement, 'modeOption');
             var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
@@ -2767,22 +2768,30 @@ app.effect = function () {
                 if(previouslySelected.options) previouslySelected.options.style.display = 'none';
             }
 
-            twoUp.style.left = (num - num - num).toString() +'px';
-            twoUp.style.top = '10%';
-            oneUp.style.left = (num - num).toString() +'px';
-            oneUp.style.top = '30%';
-            selectedElement.style.left = (num).toString() +'px';
-            selectedElement.style.height = (app.settings.selectedModeHeight * 2).toString() + 'px';
-            selectedElement.style.top = '50%';
-
             var option = findElementsByClass(selectedElement, 'modeOptions');
             if(option[0]) previouslySelected.options = option[0];
+
+            twoUp.style.left = (num - num - num).toString() +'px';
+            twoUp.style.top = '10%';
+            twoUp.style.height = height;
+
+            oneUp.style.left = (num - num).toString() +'px';
+            oneUp.style.top = '30%';
+            oneUp.style.height = height;
+
+            selectedElement.style.left = (num).toString() +'px';
+            selectedElement.style.height = (height * 2).toString() + 'px';
+            selectedElement.style.top = '50%';
 
             //selectedElement.style.width = app.settings.modeOptionWidth;
             oneDown.style.left = (num - num).toString() +'px';
             oneDown.style.top = '70%';
+            oneDown.style.height = height;
+
             twoDown.style.left = (num - num - num).toString() +'px';
             twoDown.style.top = '90%';
+            twoDown.style.height = height;
+
             console.log(options);
 
             previouslySelected.index = index;
