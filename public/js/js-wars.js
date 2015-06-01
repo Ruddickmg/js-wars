@@ -1835,6 +1835,9 @@ app.display = function () {
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
+            console.log('selection index: '+selectionIndex);
+            console.log('app tempo selecto indexo: '+app.temp.selectionIndex );
+
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) var selectedOption = display(selectedElement, tag, selectionIndex, prev, elements);
 
@@ -1864,6 +1867,10 @@ app.display = function () {
 
                     // increment to next index
                     app.temp.selectionIndex += 1;
+
+                    console.log('actual index: '+selectionIndex);
+                    console.log('actual index temp: '+ app.temp.selectionIndex);
+
                 }
                 undo(key.down);
 
@@ -1871,6 +1878,8 @@ app.display = function () {
             } else if (key.up in app.keys) {
 
                 if (selectionIndex > 1 || infiniteScroll) app.temp.selectionIndex -= 1;
+                console.log('actual index: '+selectionIndex);
+                console.log('actual index temp: '+ app.temp.selectionIndex);
                 undo(key.up);
             }
         }
@@ -2719,7 +2728,6 @@ app.effect = function () {
             var length = elements.length;
             console.log(previouslySelected);
             console.log('length: '+length);
-
 
             if( previouslySelected.index && index < previouslySelected.index ) {
                 ind -= 1
@@ -3980,7 +3988,7 @@ app.animateEffects = function () {
 app.gameSetup = function (){
 
     // select game mode
-    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5, '*');
+    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5, 'infinite');
 
     // remove key presses on each iteration
     if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
