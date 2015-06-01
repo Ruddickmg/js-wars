@@ -131,6 +131,8 @@ h1 {
 }
 
 .modeItem {
+    position: absolute;
+    display: block;
     background:white;
     border-left: 12px solid black;
     border-right: 12px solid black;
@@ -141,29 +143,29 @@ h1 {
 li[pos=oneAbove] {
     top:30%;
     left:-20px;
-    height:100px;
+    height:75px;
 }
 
 li[pos=twoAbove] {
     top:10%;
-    height:100px;
+    height:75px;
 }
 
 li[pos=selected] {
     top:50%;
-    height:200px; 
+    height:150px; 
     left:20px;
 }
 
 li[pos=oneBelow] {
     top:70%;
-    height:100px;
+    height:75px;
 }
 
 li[pos=twoBelow] {
     top:90%;
     left:-20px;
-    height:100px;
+    height:75px;
 }
 
 .modeOption {

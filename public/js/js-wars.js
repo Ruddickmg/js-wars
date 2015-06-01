@@ -2778,8 +2778,8 @@ app.effect = function () {
             var color = selectedElement.style.color;
             console.log('color: '+color);
             selectedElement.style.borderColor = selectedElement.style.color;
-            oneDown.setAttribute('pos', 'oneDown');
-            twoDown.setAttribute('pos', 'twoDown');
+            oneDown.setAttribute('pos', 'oneBelow');
+            twoDown.setAttribute('pos', 'twoBelow');
 
             console.log(options);
 
