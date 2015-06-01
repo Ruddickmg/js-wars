@@ -139,23 +139,23 @@ h1 {
     border-right: 12px solid black;
     border-top: 5px solid black;
     border-bottom: 5px solid black;
-};
+}
 
 li[pos=twoAbove] {
     top:30px;
-    left:-70px;
-    height:75px;
+    left:-80px;
+    height:50px;
 }
 
 li[pos=oneAbove] {
     left:-20px;
     top:110px;
-    height:75px;
+    height:50px;
 }
 
 li[pos=selected] {
     top:220px;
-    height:150px; 
+    height:100px; 
     left:50px;
     margin:15px;
 }
@@ -163,13 +163,13 @@ li[pos=selected] {
 li[pos=oneBelow] {
     left:-20px;
     top:400px;
-    height:75px;
+    height:50px;
 }
 
 li[pos=twoBelow] {
     top:500px;
     left:-70px;
-    height:75px;
+    height:50px;
 }
 
 .modeOption {
