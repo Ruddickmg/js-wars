@@ -132,7 +132,10 @@ h1 {
 
 .modeItem {
     background:white;
-    border: 10px 3px 10px 3px solid black;
+    border-left: 12px solid black;
+    border-right: 12px solid black;
+    border-top: 5px solid black;
+    border-bottom: 5px solid black;
 };
 
 .modeOption {
