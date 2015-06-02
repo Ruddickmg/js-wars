@@ -1837,7 +1837,7 @@ app.display = function () {
             // check if a sub menu has been activated
             var optionSelectActive = app.temp.modeOptionsActive;
 
-            var app.temp.parentElement = document.getElementById(id);
+            app.temp.parentElement = app.temp.parentIndex;
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
@@ -1845,7 +1845,7 @@ app.display = function () {
                 selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
             }else{
-                var hudElement = app.temp.parentElement;
+                var hudElement = document.getElementById(id);
                 selectionIndex = app.temp.selectionIndex;
             }
 
@@ -2693,6 +2693,7 @@ app.effect = function () {
         if(horizon){
             if(horizon === 'left'){
                 console.log('left');
+                app.temp.selectIndex = 1;
                 delete app.temp.child;
             }else if(horizon === 'right'){
                 console.log('right');
