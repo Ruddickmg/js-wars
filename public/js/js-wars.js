@@ -2518,7 +2518,7 @@ app.game.settings = {
 app.settings = {
 
     // speed at which color swell.. fading in and out, will cycle (lower is faster)
-     colorSwellIncriment:5,
+    colorSwellIncriment:5,
     colorSwellSpeed:2,
 
     // speed at which the screen will move to next hq at the changinf of turns
@@ -2804,7 +2804,7 @@ app.effect = function () {
             position.oneBelow = ind + 1 > length ? 1 : ind + 1; 
             position.twoBelow = position.oneBelow + 1 > length ? 1 : position.oneBelow + 1; 
 
-            for(var a = 0; a < keys.length; a += 1){
+            for(var a = 0; a < positionKey.length; a += 1){
                 var pos = positionKey[a];
                 var indo = positions[pos];
                 var element = app.display.findElementByTag(tag, elements, indo);
