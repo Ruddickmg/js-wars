@@ -2778,6 +2778,7 @@ app.effect = function () {
                 previouslySelected.element.style.height = '';
                 previouslySelected.element.style.borderColor = 'black';
                 if(previouslySelected.options) previouslySelected.options.style.display = 'none';
+                this.stopFading();
             }
 
             var option = findElementsByClass(selectedElement, 'modeOptions');
@@ -2789,9 +2790,8 @@ app.effect = function () {
             twoDown.setAttribute('pos', 'twoBelow');
 
             selectedElement.setAttribute('pos', 'selected');
-            var color = selectedElement.style.color;
-            console.log('color: '+color);
-            selectedElement.style.borderColor = selectedElement.style.color;
+            var hue = 0;
+            this.fade(selectedElement, hue);
 
             console.log(options);
 
@@ -2801,6 +2801,53 @@ app.effect = function () {
             if (options[0]) selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
+        },
+
+        colorSwell: function () { 
+            if(app.temp.swell){
+
+                // note that color swell is active
+                if(!app.temp.colorSwellActive) app.temp.colorSwellActive = true;
+
+                var now = Date.now();
+                var time = app.temp.timeMarker;
+
+                if(!time || now - time > 30){
+
+                    app.temp.timeMarker = Date.now();
+
+                    var element = app.temp.swell;
+                    var prev = app.temp.previousSaturation;
+                    var saturation = app.temp.saturation;
+                    var color = app.temp.swellingColor;
+
+                    if(!saturation) saturation = 0;
+
+                    element.style.borderColor = hsv(color, saturation, 100);
+
+                    if( saturation + 1 < 100 && prev < saturation){ 
+                        app.temp.saturation += 1;
+                        app.temp.previousSaturation = saturation;
+                    }else if(saturation - 1 >= 0 && prev > saturation){ 
+                        app.temp.saturation -= 1 
+                        app.temp.previousSaturation = saturation;
+                    };
+                }
+            // if there is no app.temp.swell, but colorswell is active then delete every
+            }else if(app.temp.colorSwellActive){
+                delete app.temp.saturation;
+                delete app.temp.previousSaturation;
+                delete app.temp.timeMarker;
+                delete app.temp.colorSwellActive;
+                delete app.temp.swellingColor;
+            }
+        },
+        fade:function(element, hue){
+            app.temp.swell = element;
+            app.temp.swellingColor = hue;
+        },
+        stopFade:function(){
+            delete app.temp.swell;
         },
         highlight: [],
         path: []
@@ -4004,6 +4051,9 @@ app.gameSetup = function (){
     // remove key presses on each iteration
     if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
 
+    // listen for fading colors in and out on selection
+    app.effect.colorSwell();
+
     // if a game has been started 
     if (game) {
 
@@ -4032,6 +4082,7 @@ app.gameLoop = function () {
         .coStatus() // display co status hud
         .options() // listen for options activation
         .listen();  // listen for active huds and activate selection ability for their lists
+    app.effect.colorSwell(); // listen for fading colors in and out on selection
     app.select.move(); // controls selection and interaction with map elements
     app.build.units(); // controls building of units
     app.select.exit(); // controls the ability to escape display menus
