@@ -1863,8 +1863,9 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
+            console.log(selectionIndex);
             selectedElement = findElementByTag(tag, elements, selectionIndex);
-
+            consoel.log(selectedElement);
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) var selectedOption = display(selectedElement, tag, selectionIndex, prev, elements);
 
@@ -2784,12 +2785,13 @@ app.effect = function () {
 
             twoUp.setAttribute('pos', 'twoAbove');
             oneUp.setAttribute('pos', 'oneAbove');
+            oneDown.setAttribute('pos', 'oneBelow');
+            twoDown.setAttribute('pos', 'twoBelow');
+
             selectedElement.setAttribute('pos', 'selected');
             var color = selectedElement.style.color;
             console.log('color: '+color);
             selectedElement.style.borderColor = selectedElement.style.color;
-            oneDown.setAttribute('pos', 'oneBelow');
-            twoDown.setAttribute('pos', 'twoBelow');
 
             console.log(options);
 
