@@ -2838,11 +2838,11 @@ app.effect = function () {
 
                     element.style.borderColor = hsv;
 
-                    if( saturation + 1 < 100 && prev < saturation || !prev ){
+                    if( saturation + 1 <= 100 && prev < saturation || !prev ){
                         console.log('+ 1');
                         app.temp.saturation += 1;
                         app.temp.previousSaturation = saturation;
-                    }else if(saturation - 1 >= 0 && prev > saturation){ 
+                    }else if(saturation - 1 >= 0 && prev > saturation || saturation + 1 > 100){ 
                         console.log('-1');
                         app.temp.saturation -= 1 
                         app.temp.previousSaturation = saturation;
