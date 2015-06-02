@@ -2518,7 +2518,7 @@ app.game.settings = {
 app.settings = {
 
     // speed at which color swell.. fading in and out, will cycle (lower is faster)
-    colorSwellIncriment:2.5,
+    colorSwellIncriment:2,
     colorSwellSpeed:2,
 
     // speed at which the screen will move to next hq at the changinf of turns
@@ -2797,10 +2797,10 @@ app.effect = function () {
                 previouslySelected.options = menu;
                 console.log('menu width: '+menu.clientWidth);
                 console.log('selected width: '+selectedElement.clientWidth);
-                selectedElement.style.width = selectedElement.clientWidth + menu.clientWidth;
-                menu.style.height = menuHeight;
-                menu.style.fontSize = menuHeight / 3;
-                menu.style.lineHeight = menuHeight / 2;
+                selectedElement.style.width = selectedElement.clientWidth + menu.clientWidth + 'px';
+                menu.style.height = menuHeight + 'px';
+                menu.style.fontSize = (menuHeight / 3).toString() + 'px';
+                menu.style.lineHeight = (menuHeight / 2).toString() + 'px';
                 options = findElementsByClass(menu, 'modeOption');
             }
 

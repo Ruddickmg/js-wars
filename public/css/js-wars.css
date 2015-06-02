@@ -194,6 +194,7 @@ li[pos=twoBelow] {
 .modeOptions {
     float:right;
     width:80px;
+    display: inline;
 }
 
 #fbButton {
