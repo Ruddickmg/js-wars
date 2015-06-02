@@ -99,6 +99,7 @@ app = {
         selectActive: false,
         cursorMoved: true,
         saturation:0,
+        lightness:0,
         path: []
     },
 
@@ -2824,33 +2825,26 @@ app.effect = function () {
 
                 if(!time || now - time > 100){
 
-                    console.log(time);
-
                     app.temp.timeMarker = Date.now();
 
                     var element = app.temp.swell;
                     console.log(element);
-                    var prev = app.temp.previousSaturation;
-                    var saturation = app.temp.saturation;
+                    var prev = app.temp.previousLightness;
+                    var lightness = app.temo.lightness;
                     var color = app.temp.swellingColor;
-                    var hsv = 'hsl('+color+','+saturation+'%,'+100+'%)';
+                    element.style.borderColor = 'hsl('+color+','+100+'%,'+lightness+'%)';
 
-                    console.log(hsv);
-
-                    element.style.borderColor = hsv;
-                    app.temp.swell.style.borderColor = hsv;
-
-                    if( saturation + 1 <= 100 && prev < saturation || saturation - 1 < 0){
-                        app.temp.saturation += 1;
-                        app.temp.previousSaturation = saturation;
-                    }else if(saturation - 1 >= 0 && prev > saturation || saturation + 1 > 100){ 
-                        app.temp.saturation -= 1 
-                        app.temp.previousSaturation = saturation;
+                    if( lightness + 1 <= 50 && prev < lightness || lightness - 1 < 0){
+                        app.temp.lightness += 1;
+                        app.temp.previousLightness = lightness;
+                    }else if(lightness - 1 >= 0 && prev > lightness || lightness + 1 > 50){ 
+                        app.temp.lightness -= 1 
+                        app.temp.previousLightness = lightness;
                     };
                 }
             // if there is no app.temp.swell, but colorswell is active then delete every
             }else if(app.temp.colorSwellActive){
-                delete app.temp.saturation;
+                delete app.temp.lightness;
                 delete app.temp.previousSaturation;
                 delete app.temp.timeMarker;
                 delete app.temp.colorSwellActive;
