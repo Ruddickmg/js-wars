@@ -187,8 +187,6 @@ li[pos=twoBelow] {
 }
 
 .modeOption {
-    top:-5px;
-    right:-12px;
     border-left: 12px solid;
     border-right: 12px solid;
     border-top: 5px solid;
@@ -200,6 +198,8 @@ li[pos=twoBelow] {
 }
 
 .modeOptions {
+    top:-5px;
+    right:-12px;
     border-left:inherit;
     background: white;
     float:right;
