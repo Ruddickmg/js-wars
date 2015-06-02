@@ -2518,7 +2518,7 @@ app.game.settings = {
 app.settings = {
 
     // speed at which color swell.. fading in and out, will cycle (lower is faster)
-    colorSwellSpeed:1,
+    colorSwellSpeed:.5,
 
     // speed at which the screen will move to next hq at the changinf of turns
     scrollSpeed: 50,
@@ -2795,6 +2795,7 @@ app.effect = function () {
             var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
             var length = elements.length;
             var colorHue = 0;
+
             var positions = {
                 oneAbove:ind - 1 < 1 ? length : ind - 1, 
                 twoAbove:this.oneAbove - 1 < 1 ? length : this.oneAbove - 1, 
@@ -2804,12 +2805,14 @@ app.effect = function () {
 
             var keys = Object.keys(positions);
 
-            for(var a = 0; a < positions.length; a += 1){
-                var pos = positions[a];
-                var element = ind + 1 > length ? 1 : ind + 1;
-                element = app.display.findElementByTag(tag, elements, twoAbove);
+            for(var a = 0; a < keys.length; a += 1){
+                var pos = keys[a];
+                var indo = positions[pos];
+                var element = app.display.findElementByTag(tag, elements, indo);
                 element.setAttribute('pos', pos);
             }
+
+            selectedElement.setAttribute('pos', 'selected');
 
             fade(selectedElement, colorHue);
 
