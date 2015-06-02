@@ -1834,10 +1834,8 @@ app.display = function () {
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if ( app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon) {
 
-            // check if a sub menu has been activated
-            var optionSelectActive = app.temp.modeOptionsActive;
-
-            app.temp.parentElement = app.temp.parentIndex;
+            // keep track of the index pre sub menu
+            if(!modeOptionsActive) app.temp.parentIndex = app.temp.selectionIndex;
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
@@ -1850,7 +1848,12 @@ app.display = function () {
             }
 
             // get the children
+
+            console.log(hudElement);
+            console.log(elementType);
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
+            console.log(elements);
+
             var prev = app.temp.prevIndex;
             len = elements.length;
             key = app.game.settings.keyMap;
@@ -1888,16 +1891,14 @@ app.display = function () {
 
         // if the select key has been pressed and an element is available for selection then return its id
         if (key.select in app.keys && selectedElement) {
-            if(!optionSelectActive){
-                app.temp.selectionIndex = 1;
-                delete app.temp.prevIndex;
-                delete selectedElement;
-                delete selectionIndex;
-                delete prev;
-                delete hide;
-                undo(key.select);
-                return selectedElement.getAttribute('id');
-            }
+            app.temp.selectionIndex = 1;
+            delete app.temp.prevIndex;
+            delete selectedElement;
+            delete selectionIndex;
+            delete prev;
+            delete hide;
+            undo(key.select);
+            return selectedElement.getAttribute('id');
             // if the down key has been pressed then move to the next index ( element ) down
         } else if (key.down in app.keys) {
 
@@ -2692,10 +2693,12 @@ app.effect = function () {
         if(horizon){
             if(horizon === 'left'){
                 console.log('left');
-                app.temp.selectIndex = 1;
+                app.temp.modeOptionsActive = false;
+                app.temp.selectIndex = app.temp.parentIndex;
                 delete app.temp.child;
             }else if(horizon === 'right'){
                 console.log('right');
+                app.temp.modeOptionsActive = true;
                 app.temp.child = {
                     element:options,
                     tag:'modeOptionIndex',
