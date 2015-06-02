@@ -2779,7 +2779,6 @@ app.effect = function () {
             // if the item being hovered over has changed, remove the effects of being hovered over
             if(previouslySelected.index && previouslySelected.index !== index){
                 previouslySelected.element.style.height = '';
-                previouslySelected.element.style.width = '';
                 previouslySelected.element.style.borderColor = 'black';
                 if(previouslySelected.options) previouslySelected.options.style.display = 'none';
                 stopFading();
@@ -2791,16 +2790,9 @@ app.effect = function () {
             if(optionMenu[0]){           
 
                 var menu = optionMenu[0];
-                var menuHeight = selectedElement.offsetHeight
-                var menuItemHeight = menuHeight / 2;
 
-                console.log('menu height: ' + menuHeight);
-
-                // edit the menu styling to fit the menu item li size
+                // display the menu options
                 menu.style.display = '';
-
-                // combine the widths to accomodate options
-                selectedElement.style.width = selectedElement.clientWidth + menu.clientWidth + 'px';
 
                 // get array of options and add the option menu to the previously selected list
                 options = findElementsByClass(menu, 'modeOption');

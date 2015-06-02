@@ -192,9 +192,9 @@ li[pos=twoBelow] {
     border-top: 5px solid;
     border-bottom: 5px solid;
     border-color: black;
-    height:45px;
-    font-size: 30px;
-    line-height:50px;
+    height:30px;
+    font-size: 25px;
+    line-height:30px;
 }
 
 .modeOptions {
