@@ -1834,13 +1834,13 @@ app.display = function () {
         if(app.temp.modeOptionsActive) console.log(app.temp.modeOptionsActive);
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
-        if ( app.temp.prevIndex !== app.temp.selectionIndex ) {
+        if ( app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon) {
+            delete app.temp.horizon;
 
             // all the ul children from the selected element for highlighting
             var hudElement = document.getElementById(id);
 
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
-
             var prev = app.temp.prevIndex;
             selectionIndex = app.temp.selectionIndex;
             len = elements.length;
@@ -1866,9 +1866,8 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
-            console.log(selectionIndex);
             selectedElement = findElementByTag(tag, elements, selectionIndex);
-            console.log(selectedElement);
+
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) var selectedOption = display(selectedElement, tag, selectionIndex, prev, elements);
 
@@ -1914,6 +1913,8 @@ app.display = function () {
                     console.log(app.temp.selectionIndex);
                 } 
                 undo(key.up);
+            } else if (key.left in app.keys || key.right in app.keys){
+                app.temp.horizon = true;
             }
         }
         return false;
