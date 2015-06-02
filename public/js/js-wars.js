@@ -2829,14 +2829,16 @@ app.effect = function () {
                     app.temp.timeMarker = Date.now();
 
                     var element = app.temp.swell;
+                    console.log(element);
                     var prev = app.temp.previousSaturation;
                     var saturation = app.temp.saturation;
                     var color = app.temp.swellingColor;
                     var hsv = 'hsv('+color+', '+saturation+', 100);';
 
                     console.log(hsv);
-
+                    
                     element.style.borderColor = hsv;
+                    app.temp.swell.style.borderColor = hsv;
 
                     if( saturation + 1 <= 100 && prev < saturation || !prev ){
                         console.log('+ 1');
