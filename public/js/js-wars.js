@@ -2732,7 +2732,63 @@ app.effect = function () {
         return elements;
     };
 
+    var fade = function (element, hue){
+        app.temp.swell = element;
+        app.temp.swellingColor = hue;
+    };
+
+    var stopFading = function (){
+        delete app.temp.swell;
+    }
+
     return {
+
+        colorSwell: function () { 
+            if(app.temp.swell){
+                // note that color swell is active
+                if(!app.temp.colorSwellActive) app.temp.colorSwellActive = true;
+
+                var now = Date.now();
+                var time = app.temp.timeMarker;
+
+                if(!time || now - time > 30){
+
+                    app.temp.timeMarker = Date.now();
+
+                    var element = app.temp.swell;
+                    var prev = app.temp.previousSaturation;
+                    var saturation = app.temp.saturation;
+                    var color = app.temp.swellingColor;
+
+                    if(!saturation) saturation = 0;
+
+                    element.style.borderColor = hsv(color, saturation, 100);
+
+                    if( saturation + 1 < 100 && prev < saturation){ 
+                        app.temp.saturation += 1;
+                        app.temp.previousSaturation = saturation;
+                    }else if(saturation - 1 >= 0 && prev > saturation){ 
+                        app.temp.saturation -= 1 
+                        app.temp.previousSaturation = saturation;
+                    };
+                }
+            // if there is no app.temp.swell, but colorswell is active then delete every
+            }else if(app.temp.colorSwellActive){
+                delete app.temp.saturation;
+                delete app.temp.previousSaturation;
+                delete app.temp.timeMarker;
+                delete app.temp.colorSwellActive;
+                delete app.temp.swellingColor;
+            }
+        },
+        
+        fade:function(element, hue){
+            fade(element, hue);
+        },
+
+        stopFading:function(){
+            stopFading();
+        },
 
         highlightListItem: function (selectedElement, tag, index, prev, elements) {
 
@@ -2801,53 +2857,6 @@ app.effect = function () {
             if (options[0]) selection = menuItemOptions(selectedElement, options);
             if (selection) return selection;
             return false;
-        },
-
-        colorSwell: function () { 
-            if(app.temp.swell){
-
-                // note that color swell is active
-                if(!app.temp.colorSwellActive) app.temp.colorSwellActive = true;
-
-                var now = Date.now();
-                var time = app.temp.timeMarker;
-
-                if(!time || now - time > 30){
-
-                    app.temp.timeMarker = Date.now();
-
-                    var element = app.temp.swell;
-                    var prev = app.temp.previousSaturation;
-                    var saturation = app.temp.saturation;
-                    var color = app.temp.swellingColor;
-
-                    if(!saturation) saturation = 0;
-
-                    element.style.borderColor = hsv(color, saturation, 100);
-
-                    if( saturation + 1 < 100 && prev < saturation){ 
-                        app.temp.saturation += 1;
-                        app.temp.previousSaturation = saturation;
-                    }else if(saturation - 1 >= 0 && prev > saturation){ 
-                        app.temp.saturation -= 1 
-                        app.temp.previousSaturation = saturation;
-                    };
-                }
-            // if there is no app.temp.swell, but colorswell is active then delete every
-            }else if(app.temp.colorSwellActive){
-                delete app.temp.saturation;
-                delete app.temp.previousSaturation;
-                delete app.temp.timeMarker;
-                delete app.temp.colorSwellActive;
-                delete app.temp.swellingColor;
-            }
-        },
-        fade:function(element, hue){
-            app.temp.swell = element;
-            app.temp.swellingColor = hue;
-        },
-        stopFade:function(){
-            delete app.temp.swell;
         },
         highlight: [],
         path: []
