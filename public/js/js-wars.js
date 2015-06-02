@@ -98,6 +98,7 @@ app = {
     	selectionIndex: 1,
         selectActive: false,
         cursorMoved: true,
+        saturation:0,
         path: []
     },
 
@@ -2826,10 +2827,10 @@ app.effect = function () {
 
                     app.temp.timeMarker = Date.now();
 
-                    console.log(now);
-
-                    if(!saturation) saturation = 0;
-
+                    var element = app.temp.swell;
+                    var prev = app.temp.previousSaturation;
+                    var saturation = app.temp.saturation;
+                    var color = app.temp.swellingColor;
                     var hsv = 'hsv('+color+', '+saturation+', 100);';
 
                     console.log(hsv);
