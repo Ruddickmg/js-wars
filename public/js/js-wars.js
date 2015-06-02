@@ -1544,7 +1544,7 @@ app.display = function () {
                     // create li item for each option
                     var option = document.createElement('li');
                     option.setAttribute('class', 'modeOption');
-                    option.setAttribute('modeSelectionIndex', o + 1);
+                    option.setAttribute('modeOptionIndex', o + 1);
                     option.setAttribute('id', mi.options[o] + mi.id);
 
                     // create id and display name for each option
@@ -1831,18 +1831,27 @@ app.display = function () {
 
     var select = function (tag, id, display, elementType, max, infiniteScroll) {
 
-        if(app.temp.modeOptionsActive) console.log(app.temp.modeOptionsActive);
-
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if ( app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon) {
-            delete app.temp.horizon;
 
-            // all the ul children from the selected element for highlighting
-            var hudElement = document.getElementById(id);
+            // check if a sub menu has been activated
+            var optionSelectActive = app.temp.modeOptionsActive;
 
+            var app.temp.parentElement = document.getElementById(id);
+
+            // if there is a sub menu activated then select from the sub menu element instead of its parent
+            if(app.temp.child){
+                var hudElement = app.temp.child.element;
+                selectionIndex = app.temp.child.index;
+                tag = app.temp.child.tag;
+            }else{
+                var hudElement = app.temp.parentElement;
+                selectionIndex = app.temp.selectionIndex;
+            }
+
+            // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
             var prev = app.temp.prevIndex;
-            selectionIndex = app.temp.selectionIndex;
             len = elements.length;
             key = app.game.settings.keyMap;
             undo = app.undo.keyPress;
@@ -1866,6 +1875,7 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
+            if()
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             // callback that defines how to display the selected element ( functions located in app.effect )
@@ -1878,44 +1888,45 @@ app.display = function () {
         }
 
         // if the select key has been pressed and an element is available for selection then return its id
-        if(!app.temp.modeOptionsActive){
-            if (key.select in app.keys && selectedElement) {
-                undo(key.select);
+        if (key.select in app.keys && selectedElement) {
+            if(!optionSelectActive){
                 app.temp.selectionIndex = 1;
                 delete app.temp.prevIndex;
                 delete selectedElement;
                 delete selectionIndex;
                 delete prev;
                 delete hide;
+                undo(key.select);
                 return selectedElement.getAttribute('id');
-
-                // if the down key has been pressed then move to the next index ( element ) down
-            } else if (key.down in app.keys) {
-
-                // only movement if the index is less then the length ( do not move to non existant index )
-                if (selectionIndex < len && !infiniteScroll) {
-
-                    // increment to next index
-                    app.temp.selectionIndex += 1;
-                }else if(infiniteScroll){
-                    app.temp.selectionIndex = selectionIndex + 1 > len ? 1 : selectionIndex + 1;
-                    console.log(app.temp.selectionIndex);
-                }
-                undo(key.down);
-
-                // same as above, but up
-            } else if (key.up in app.keys) {
-
-                if (selectionIndex > 1 && !infiniteScroll){
-                    app.temp.selectionIndex -= 1;
-                }else if(infiniteScroll){
-                    app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
-                    console.log(app.temp.selectionIndex);
-                } 
-                undo(key.up);
-            } else if (key.left in app.keys || key.right in app.keys){
-                app.temp.horizon = true;
             }
+            // if the down key has been pressed then move to the next index ( element ) down
+        } else if (key.down in app.keys) {
+
+            // only movement if the index is less then the length ( do not move to non existant index )
+            if (selectionIndex < len && !infiniteScroll) {
+
+                // increment to next index
+                app.temp.selectionIndex += 1;
+            }else if(infiniteScroll){
+                app.temp.selectionIndex = selectionIndex + 1 > len ? 1 : selectionIndex + 1;
+            } 
+            undo(key.down);
+
+            // same as above, but up
+        } else if (key.up in app.keys) {
+
+            if (selectionIndex > 1 && !infiniteScroll){
+                app.temp.selectionIndex -= 1;
+            }else if(infiniteScroll){
+                app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
+            }
+            undo(key.up);
+        } else if (key.left in app.keys){
+            app.temp.horizon = 'left';
+            undo(key.left);
+        }else if(key.right in app.keys){
+            app.temp.horizon = 'right';
+            undo(key.right);
         }
         return false;
     };
@@ -2672,62 +2683,26 @@ app.effect = function () {
         previous = element;
     };
 
-    var select = function(options) {
-
-        console.log('select');
-
-        if(!selectIndex) selectIndex = 0;
-        if (key.select in app.keys && selectedElement) {
-            undo(key.select);
-            delete app.temp.modeOptionsActive;
-            delete selectIndex;
-            delete previous;
-            options[selectIndex].parentNode.style.display = 'none';
-            return options[selectIndex].getAttribute('id');
-
-        }else if(key.up in app.keys){
-            selectIndex -= 1;
-            app.undo.keyPress(key.up);
-
-        }else if(key.down in app.keys){
-            selectIndex += 1;
-            app.undo.keyPress(key.down);
-        }
-
-        if(selecIndex === options.length ){
-            selectIndex = 0;
-        }else if(selectIndex > 0){
-            selectIndex = options.length - 1;
-        }
-
-        if(selectIndex !== pre || !pre){
-            highlight(options[selectIndex]);
-            pre = selectIndex;
-        }
-        return false;
-    };
-
     var menuItemOptions = function ( selectedElement, options ) {
         if (!key) key = app.game.settings.keyMap;
         if (!undo) undo = app.undo.keyPress;
 
         console.log('menuItemOptions');
+        var horizon = app.temp.horizon;
 
-        if(key.left in app.keys){
-            console.log('left');
-            app.temp.modeOptionsActive = false;
-            highlight(selectedElement);
-            undo(key.left);
-            return false;
-
-        }else if(key.right in app.keys){
-            console.log('right');
-            app.temp.modeOptionsActive = true;
-            undo(key.right);
-            return select(options);
-
+        if(horizon){
+            if(horizon === 'left'){
+                console.log('left');
+                delete app.temp.child;
+            }else if(horizon === 'right'){
+                console.log('right');
+                app.temp.child = {
+                    element:options,
+                    tag:'modeOptionIndex',
+                    index:1
+                }
+            }
         }
-        return false;
     };
 
     var findElementsByClass = function (element, className){
@@ -2747,7 +2722,7 @@ app.effect = function () {
 
     var stopFading = function (){
         delete app.temp.swell;
-    }
+    };
 
     return {
 
@@ -2786,9 +2761,8 @@ app.effect = function () {
             }
 
             var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
-            var options = false;
 
-            if(optionMenu[0]){           
+            if(optionMenu[0]){
 
                 var menu = optionMenu[0];
 
@@ -2802,8 +2776,10 @@ app.effect = function () {
 
             var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
             var length = elements.length;
-            console.log(elements);
             var colorHue = 0;
+
+            if(length > 5) console.log(elements);
+            console.log(length);
 
             var position = {oneAbove:ind - 1 < 1 ? length : ind - 1};
             position.twoAbove = position.oneAbove - 1 < 1 ? length : position.oneAbove - 1; 
@@ -2822,12 +2798,10 @@ app.effect = function () {
 
             fade(selectedElement, colorHue);
 
-            console.log(options);
-
             previouslySelected.index = index;
             previouslySelected.element = selectedElement;
 
-            if (options[0]) selection = menuItemOptions(selectedElement, options);
+            if (menu) selection = menuItemOptions(selectedElement, menu);
             if (selection) return selection;
             return false;
         },
