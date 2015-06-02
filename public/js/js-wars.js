@@ -2770,6 +2770,8 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index){ 
 
+            console.log('initial index: '+index);
+
             if(!num) num = app.settings.modeMenuSpacing;
             if(!height) height = app.settings.selectedModeHeight;
             if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
@@ -2790,9 +2792,12 @@ app.effect = function () {
                 var menu = optionMenu[0];
                 var menuHeight = selectedElement.clientHeight;
                 console.log(menu);
+                console.log('menu height: '+menuHeight);
                 menu.style.display = '';
                 previouslySelected.options = menu;
-                selectedElement.style.width = selectedElement.offsetWidth + menu.offsetWidth;
+                console.log('menu width: '+menu.clientWidth);
+                console.log('selected width: '+selectedElement.clientWidth);
+                selectedElement.style.width = selectedElement.clientWidth + menu.clientWidth;
                 menu.style.height = menuHeight;
                 menu.style.fontSize = menuHeight / 3;
                 menu.style.lineHeight = menuHeight / 2;
@@ -2812,6 +2817,7 @@ app.effect = function () {
             for(var a = 0; a < positions.length; a += 1){
                 var pos = positions[a];
                 var indo = position[pos];
+                console.log('position: '+pos+', index: '+indo);
                 var element = app.display.findElementByTag(tag, elements, indo);
                 element.setAttribute('pos', pos);
             }
