@@ -2712,16 +2712,15 @@ app.effect = function () {
 
         console.log('menuItemOptions');
 
-        // show options
-        options[0].parentNode.style.display = '';
-
         if(key.left in app.keys){
+            console.log('left');
             app.temp.modeOptionsActive = false;
             highlight(selectedElement);
             undo(key.left);
             return false;
 
         }else if(key.right in app.keys){
+            console.log('right');
             app.temp.modeOptionsActive = true;
             undo(key.right);
             return select(options);

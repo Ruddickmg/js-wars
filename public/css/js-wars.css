@@ -194,11 +194,13 @@ li[pos=twoBelow] {
     border-bottom: 5px solid;
     border-color: black;
     height:50px;
-    line-height:40px;
+    font-size: 30px;
+    line-height:50px;
 }
 
 .modeOptions {
-    border:inherit;
+    border-left:inherit;
+    background: white;
     float:right;
     height:100px;
     width:150px;
