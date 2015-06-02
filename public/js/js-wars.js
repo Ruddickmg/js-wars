@@ -2658,7 +2658,7 @@ app.settings = {
 
 app.effect = function () {
 
-    var previous, previouslySelected = {}, pre, ind = 1, key, undo, selectIndex, selection = false;
+    var previous, previouslySelected = {}, pre, ind = 1, key, num, height, undo, selectIndex, selection = false;
 
     var highlight = function (element) {
 
@@ -2768,25 +2768,10 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index){ 
 
-            var num = app.settings.modeMenuSpacing;
-            var height = app.settings.selectedModeHeight;
-
-            var options = findElementsByClass(selectedElement, 'modeOption');
-            var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-            var length = elements.length; 
-
+            if(!num) num = app.settings.modeMenuSpacing;
+            if(!height) height = app.settings.selectedModeHeight;
             if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
             if( previouslySelected.index && index > previouslySelected.index ) ind = ind + 1 > length ? 1 : ind + 1;
-
-            var oneAbove = ind - 1 < 1 ? length : ind - 1;
-            var twoAbove = oneAbove - 1 < 1 ? length : oneAbove - 1;
-            var oneBelow = ind + 1 > length ? 1 : ind + 1;
-            var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
-
-            var twoUp = app.display.findElementByTag(tag, elements, twoAbove);
-            var oneUp = app.display.findElementByTag(tag, elements, oneAbove);
-            var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
-            var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
 
             // if the item being hovered over has changed, remove the effects of being hovered over
             if(previouslySelected.index && previouslySelected.index !== index){
@@ -2796,20 +2781,37 @@ app.effect = function () {
                 stopFading();
             }
 
-            var option = findElementsByClass(selectedElement, 'modeOptions');
-            if(option){
-                option.style.display = '';
-                previouslySelected.options = option;
-            }
-            
-            twoUp.setAttribute('pos', 'twoAbove');
-            oneUp.setAttribute('pos', 'oneAbove');
-            oneDown.setAttribute('pos', 'oneBelow');
-            twoDown.setAttribute('pos', 'twoBelow');
+            var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
+            var options = false;
 
-            selectedElement.setAttribute('pos', 'selected');
-            var hue = 0;
-            fade(selectedElement, hue);
+            if(optionMenu[0]){            
+                var menu = optionMenu[0];
+                console.log(menu);
+                menu.style.display = '';
+                previouslySelected.options = menu;
+                options = findElementsByClass(menu, 'modeOption');
+            }
+
+            var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
+            var length = elements.length;
+            var colorHue = 0;
+            var positions = {
+                oneAbove:ind - 1 < 1 ? length : ind - 1, 
+                twoAbove:this.oneAbove - 1 < 1 ? length : this.oneAbove - 1, 
+                oneBelow:ind + 1 > length ? 1 : ind + 1, 
+                twoBelow:this.oneBelow + 1 > length ? 1 : this.oneBelow + 1, 
+            };
+
+            var keys = Object.keys(positions);
+
+            for(var a = 0; a < positions.length; a += 1){
+                var pos = positions[a];
+                var element = ind + 1 > length ? 1 : ind + 1;
+                element = app.display.findElementByTag(tag, elements, twoAbove);
+                element.setAttribute('pos', pos);
+            }
+
+            fade(selectedElement, colorHue);
 
             console.log(options);
 
@@ -2849,6 +2851,7 @@ app.effect = function () {
                 }
             // if there is no app.temp.swell, but colorswell is active then delete every
             }else if(app.temp.colorSwellActive){
+                console.log('deleting');
                 delete app.temp.lightness;
                 delete app.temp.previousSaturation;
                 delete app.temp.timeMarker;
