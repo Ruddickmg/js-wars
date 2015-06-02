@@ -2743,6 +2743,75 @@ app.effect = function () {
 
     return {
 
+        highlightListItem: function (selectedElement, tag, index, prev, elements) {
+
+            // apply highlighting 
+            selectedElement.style.backgroundColor = 'tan';
+
+            // display info on the currently hovered over element
+            if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id);
+
+            // check if there was a previous element that was hovered over
+            if (prev) {
+
+                // if there is then remove its highlighting
+                var prevElement = app.display.findElementByTag( tag, elements, prev);
+                prevElement.style.backgroundColor = '';
+            }
+        },
+
+        scrollSetupMenu:function (selectedElement, tag, index){ 
+
+            var num = app.settings.modeMenuSpacing;
+            var height = app.settings.selectedModeHeight;
+
+            var options = findElementsByClass(selectedElement, 'modeOption');
+            var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
+            var length = elements.length; 
+
+            if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
+            if( previouslySelected.index && index > previouslySelected.index ) ind = ind + 1 > length ? 1 : ind + 1;
+
+            var oneAbove = ind - 1 < 1 ? length : ind - 1;
+            var twoAbove = oneAbove - 1 < 1 ? length : oneAbove - 1;
+            var oneBelow = ind + 1 > length ? 1 : ind + 1;
+            var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
+
+            var twoUp = app.display.findElementByTag(tag, elements, twoAbove);
+            var oneUp = app.display.findElementByTag(tag, elements, oneAbove);
+            var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
+            var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
+
+            // if the item being hovered over has changed, remove the effects of being hovered over
+            if(previouslySelected.index && previouslySelected.index !== index){
+                previouslySelected.element.style.height = '';
+                previouslySelected.element.style.borderColor = 'black';
+                if(previouslySelected.options) previouslySelected.options.style.display = 'none';
+                stopFading();
+            }
+
+            var option = findElementsByClass(selectedElement, 'modeOptions');
+            if(option[0]) previouslySelected.options = option[0];
+
+            twoUp.setAttribute('pos', 'twoAbove');
+            oneUp.setAttribute('pos', 'oneAbove');
+            oneDown.setAttribute('pos', 'oneBelow');
+            twoDown.setAttribute('pos', 'twoBelow');
+
+            selectedElement.setAttribute('pos', 'selected');
+            var hue = 0;
+            fade(selectedElement, hue);
+
+            console.log(options);
+
+            previouslySelected.index = index;
+            previouslySelected.element = selectedElement;
+
+            if (options[0]) selection = menuItemOptions(selectedElement, options);
+            if (selection) return selection;
+            return false;
+        },
+
         colorSwell: function () { 
             if(app.temp.swell){
                 // note that color swell is active
@@ -2788,75 +2857,6 @@ app.effect = function () {
 
         stopFading:function(){
             stopFading();
-        },
-
-        highlightListItem: function (selectedElement, tag, index, prev, elements) {
-
-            // apply highlighting 
-            selectedElement.style.backgroundColor = 'tan';
-
-            // display info on the currently hovered over element
-            if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id);
-
-            // check if there was a previous element that was hovered over
-            if (prev) {
-
-                // if there is then remove its highlighting
-                var prevElement = app.display.findElementByTag( tag, elements, prev);
-                prevElement.style.backgroundColor = '';
-            }
-        },
-
-        scrollSetupMenu:function (selectedElement, tag, index){ 
-
-            var num = app.settings.modeMenuSpacing;
-            var height = app.settings.selectedModeHeight;
-
-            var options = findElementsByClass(selectedElement, 'modeOption');
-            var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-            var length = elements.length; 
-
-            if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
-            if( previouslySelected.index && index > previouslySelected.index ) ind = ind + 1 > length ? 1 : ind + 1;
-
-            var oneAbove = ind - 1 < 1 ? length : ind - 1;
-            var twoAbove = oneAbove - 1 < 1 ? length : oneAbove - 1;
-            var oneBelow = ind + 1 > length ? 1 : ind + 1;
-            var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1;
-
-            var twoUp = app.display.findElementByTag(tag, elements, twoAbove);
-            var oneUp = app.display.findElementByTag(tag, elements, oneAbove);
-            var oneDown = app.display.findElementByTag(tag, elements, oneBelow);
-            var twoDown = app.display.findElementByTag(tag, elements, twoBelow);
-
-            // if the item being hovered over has changed, remove the effects of being hovered over
-            if(previouslySelected.index && previouslySelected.index !== index){
-                previouslySelected.element.style.height = '';
-                previouslySelected.element.style.borderColor = 'black';
-                if(previouslySelected.options) previouslySelected.options.style.display = 'none';
-                this.stopFading();
-            }
-
-            var option = findElementsByClass(selectedElement, 'modeOptions');
-            if(option[0]) previouslySelected.options = option[0];
-
-            twoUp.setAttribute('pos', 'twoAbove');
-            oneUp.setAttribute('pos', 'oneAbove');
-            oneDown.setAttribute('pos', 'oneBelow');
-            twoDown.setAttribute('pos', 'twoBelow');
-
-            selectedElement.setAttribute('pos', 'selected');
-            var hue = 0;
-            this.fade(selectedElement, hue);
-
-            console.log(options);
-
-            previouslySelected.index = index;
-            previouslySelected.element = selectedElement;
-
-            if (options[0]) selection = menuItemOptions(selectedElement, options);
-            if (selection) return selection;
-            return false;
         },
         highlight: [],
         path: []
