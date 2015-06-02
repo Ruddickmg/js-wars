@@ -2788,9 +2788,14 @@ app.effect = function () {
 
             if(optionMenu[0]){            
                 var menu = optionMenu[0];
+                var menuHeight = selectedElement.clientHeight;
                 console.log(menu);
                 menu.style.display = '';
                 previouslySelected.options = menu;
+                selectedElement.style.width = selectedElement.offsetWidth + menu.offsetWidth;
+                menu.style.height = menuHeight;
+                menu.style.fontSize = menuHeight / 3;
+                menu.style.lineHeight = menuHeight / 2;
                 options = findElementsByClass(menu, 'modeOption');
             }
 

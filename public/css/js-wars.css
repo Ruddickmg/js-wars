@@ -107,8 +107,6 @@ h1 {
     color:grey;
 }
 
-
-
 #login,  #selectModeMenu, #selectModeScreen {
     width: 960px;
     height:640px;
@@ -191,6 +189,11 @@ li[pos=twoBelow] {
 
 .modeOption {
     border:inherit;
+}
+
+.modeOptions {
+    float:right;
+    width:80px;
 }
 
 #fbButton {
