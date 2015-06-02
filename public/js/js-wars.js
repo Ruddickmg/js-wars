@@ -2518,7 +2518,8 @@ app.game.settings = {
 app.settings = {
 
     // speed at which color swell.. fading in and out, will cycle (lower is faster)
-    colorSwellSpeed:0.5,
+    colorSwellIncriment:5,
+    colorSwellSpeed:2,
 
     // speed at which the screen will move to next hq at the changinf of turns
     scrollSpeed: 50,
@@ -2659,6 +2660,7 @@ app.settings = {
 app.effect = function () {
 
     var previous, previouslySelected = {}, pre, ind = 1, key, num, height, undo, selectIndex, selection = false;
+    var positionKey = ['oneAbove','twoAbove','oneBelow','twoBelow'];
 
     var highlight = function (element) {
 
@@ -2794,17 +2796,16 @@ app.effect = function () {
 
             var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
             var length = elements.length;
+            console.log(elements);
             var colorHue = 0;
-            var oneAbove = ind - 1 < 1 ? length : ind - 1; 
-            var twoAbove = oneAbove - 1 < 1 ? length : oneAbove - 1; 
-            var oneBelow = ind + 1 > length ? 1 : ind + 1; 
-            var twoBelow = oneBelow + 1 > length ? 1 : oneBelow + 1; 
-            var positions = {oneAbove:oneAbove, twoAbove:twoAbove, oneBelow:oneBelow, twoBelow:twoBelow};
 
-            var keys = Object.keys(positions);
+            var position = {oneAbove:ind - 1 < 1 ? length : ind - 1};
+            position.twoAbove = position.oneAbove - 1 < 1 ? length : position.oneAbove - 1; 
+            position.oneBelow = ind + 1 > length ? 1 : ind + 1; 
+            position.twoBelow = position.oneBelow + 1 > length ? 1 : position.oneBelow + 1; 
 
             for(var a = 0; a < keys.length; a += 1){
-                var pos = keys[a];
+                var pos = positionKey[a];
                 var indo = positions[pos];
                 var element = app.display.findElementByTag(tag, elements, indo);
                 element.setAttribute('pos', pos);
@@ -2836,17 +2837,18 @@ app.effect = function () {
 
                     app.temp.timeMarker = Date.now();
 
+                    var inc = app.settings.colorSwellIncriment;
                     var element = app.temp.swell;
                     var prev = app.temp.previousLightness;
                     var lightness = app.temp.lightness;
                     var color = app.temp.swellingColor;
                     element.style.borderColor = 'hsl('+color+','+100+'%,'+lightness+'%)';
 
-                    if( lightness + 1 <= 100 && prev < lightness || lightness - 1 < 50){
-                        app.temp.lightness += 1;
+                    if( lightness + inc <= 100 && prev < lightness || lightness - inc < 50){
+                        app.temp.lightness += inc;
                         app.temp.previousLightness = lightness;
-                    }else if(lightness - 1 >= 50 && prev > lightness || lightness + 1 > 100){ 
-                        app.temp.lightness -= 1 
+                    }else if(lightness - inc >= 50 && prev > lightness || lightness + inc > 100){ 
+                        app.temp.lightness -= inc;
                         app.temp.previousLightness = lightness;
                     };
                 }
