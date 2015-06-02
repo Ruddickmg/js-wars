@@ -2799,20 +2799,12 @@ app.effect = function () {
 
                 // edit the menu styling to fit the menu item li size
                 menu.style.display = '';
-                menu.style.height = menuHeight + 'px';
-                menu.style.fontSize =  + 'px';
-                menu.style.lineHeight = menuItemHeight + 'px';
 
-                // combine the widths to accomodate 
+                // combine the widths to accomodate options
                 selectedElement.style.width = selectedElement.clientWidth + menu.clientWidth + 'px';
 
+                // get array of options and add the option menu to the previously selected list
                 options = findElementsByClass(menu, 'modeOption');
-                var optionsLength = options.length;
-                for (var o = 0; o < optionsLength; o += 1){
-                    var option = options[0];
-                    option.style.lineHeight = 
-                    option.style.fontSize = menuItemHeight
-                }
                 previouslySelected.options = menu;
             }
 

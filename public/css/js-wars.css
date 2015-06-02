@@ -188,12 +188,20 @@ li[pos=twoBelow] {
 }
 
 .modeOption {
-    border:inherit;
+    border-left: 12px solid;
+    border-right: 12px solid;
+    border-top: 5px solid;
+    border-bottom: 5px solid;
+    border-color: black;
+    height:50px;
+    line-height:40px;
 }
 
 .modeOptions {
+    border:inherit;
     float:right;
-    width:80px;
+    height:100px;
+    width:150px;
     display: inline;
 }
 
