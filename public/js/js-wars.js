@@ -2833,19 +2833,17 @@ app.effect = function () {
                     var prev = app.temp.previousSaturation;
                     var saturation = app.temp.saturation;
                     var color = app.temp.swellingColor;
-                    var hsv = 'hsv('+color+', '+saturation+', 100);';
+                    var hsv = 'hsl('+color+','+saturation+'%,'+100+'%)';
 
                     console.log(hsv);
-                    
+
                     element.style.borderColor = hsv;
                     app.temp.swell.style.borderColor = hsv;
 
-                    if( saturation + 1 <= 100 && prev < saturation || !prev ){
-                        console.log('+ 1');
+                    if( saturation + 1 <= 100 && prev < saturation || saturation - 1 < 0){
                         app.temp.saturation += 1;
                         app.temp.previousSaturation = saturation;
                     }else if(saturation - 1 >= 0 && prev > saturation || saturation + 1 > 100){ 
-                        console.log('-1');
                         app.temp.saturation -= 1 
                         app.temp.previousSaturation = saturation;
                     };
