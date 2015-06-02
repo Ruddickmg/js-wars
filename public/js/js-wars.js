@@ -2780,6 +2780,7 @@ app.effect = function () {
             // if the item being hovered over has changed, remove the effects of being hovered over
             if(previouslySelected.index && previouslySelected.index !== index){
                 previouslySelected.element.style.height = '';
+                previouslySelected.element.style.width = '';
                 previouslySelected.element.style.borderColor = 'black';
                 if(previouslySelected.options) previouslySelected.options.style.display = 'none';
                 stopFading();
@@ -2788,20 +2789,25 @@ app.effect = function () {
             var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
             var options = false;
 
-            if(optionMenu[0]){            
+            if(optionMenu[0]){           
+
                 var menu = optionMenu[0];
-                var menuHeight = selectedElement.clientHeight;
-                console.log(menu);
-                console.log('menu height: '+menuHeight);
+                var menuHeight = selectedElement.clientHeight
+                var menuItemHeight = menuHeight / 2;
+
+                console.log('menu height: ' + menuItemHeight);
+
+                // edit the menu styling to fit the menu item li size
                 menu.style.display = '';
-                previouslySelected.options = menu;
-                console.log('menu width: '+menu.clientWidth);
-                console.log('selected width: '+selectedElement.clientWidth);
-                selectedElement.style.width = selectedElement.clientWidth + menu.clientWidth + 'px';
                 menu.style.height = menuHeight + 'px';
-                menu.style.fontSize = (menuHeight / 3).toString() + 'px';
-                menu.style.lineHeight = (menuHeight / 2).toString() + 'px';
+                menu.style.fontSize = menuItemHeight - 10 + 'px';
+                menu.style.lineHeight = menuItemHeight + 'px';
+
+                // combine the widths to accomodate 
+                selectedElement.style.width = selectedElement.clientWidth + menu.clientWidth + 'px';
+
                 options = findElementsByClass(menu, 'modeOption');
+                previouslySelected.options = menu;
             }
 
             var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
