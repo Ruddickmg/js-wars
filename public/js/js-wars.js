@@ -2517,8 +2517,8 @@ app.game.settings = {
 
 app.settings = {
 
-    // speed at which color swell.. fading in and out, will cycle
-    colorSwellSpeed:25,
+    // speed at which color swell.. fading in and out, will cycle (lower is faster)
+    colorSwellSpeed:10,
 
     // speed at which the screen will move to next hq at the changinf of turns
     scrollSpeed: 50,
