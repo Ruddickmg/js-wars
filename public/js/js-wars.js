@@ -2822,12 +2822,11 @@ app.effect = function () {
 
                 if(!time || now - time > 30){
 
+                    console.log(time);
+
                     app.temp.timeMarker = Date.now();
 
-                    var element = app.temp.swell;
-                    var prev = app.temp.previousSaturation;
-                    var saturation = app.temp.saturation;
-                    var color = app.temp.swellingColor;
+                    console.log(now);
 
                     if(!saturation) saturation = 0;
 
@@ -2837,10 +2836,12 @@ app.effect = function () {
 
                     element.style.borderColor = hsv;
 
-                    if( saturation + 1 < 100 && prev < saturation){ 
+                    if( saturation + 1 < 100 && prev < saturation){
+                        console.log('+ 1');
                         app.temp.saturation += 1;
                         app.temp.previousSaturation = saturation;
                     }else if(saturation - 1 >= 0 && prev > saturation){ 
+                        console.log('-1');
                         app.temp.saturation -= 1 
                         app.temp.previousSaturation = saturation;
                     };
