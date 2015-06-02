@@ -2660,7 +2660,7 @@ app.settings = {
 app.effect = function () {
 
     var previous, previouslySelected = {}, pre, ind = 1, key, num, height, undo, selectIndex, selection = false;
-    var positionKey = ['oneAbove','twoAbove','oneBelow','twoBelow'];
+    var positions = ['oneAbove','twoAbove','oneBelow','twoBelow'];
 
     var highlight = function (element) {
 
@@ -2804,9 +2804,9 @@ app.effect = function () {
             position.oneBelow = ind + 1 > length ? 1 : ind + 1; 
             position.twoBelow = position.oneBelow + 1 > length ? 1 : position.oneBelow + 1; 
 
-            for(var a = 0; a < positionKey.length; a += 1){
-                var pos = positionKey[a];
-                var indo = positions[pos];
+            for(var a = 0; a < positions.length; a += 1){
+                var pos = positions[a];
+                var indo = position[pos];
                 var element = app.display.findElementByTag(tag, elements, indo);
                 element.setAttribute('pos', pos);
             }
