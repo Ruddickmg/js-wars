@@ -187,12 +187,12 @@ li[pos=twoBelow] {
 }
 
 .modeOption {
-    border-left: 12px solid;
-    border-right: 12px solid;
-    border-top: 5px solid;
-    border-bottom: 5px solid;
+    border-left: 8px solid;
+    border-right: 8px solid;
+    border-top: 8px solid;
+    border-bottom: 8px solid;
     border-color: black;
-    height:45px;
+    height:41px;
     font-size: 30px;
     line-height:50px;
 }
@@ -200,7 +200,7 @@ li[pos=twoBelow] {
 .modeOptions {
     position:absolute;
     z-index: 10;
-    right:-155px;
+    right:-162px;
     top:-5px;
     background: white;
     height:100px;
