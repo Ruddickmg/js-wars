@@ -1558,7 +1558,7 @@ app.display = function () {
         }
         // add select menu to select mode screen
         selectModeScreen.appendChild(selectMenu);
-        selectModeScreen.appendChild(info);
+        selectModeScreen.appendChild(footer);
 
         // insert select mode screen into dom
         var exists = document.getElementById('selectModeScreen');
