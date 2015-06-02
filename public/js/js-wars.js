@@ -2833,7 +2833,7 @@ app.effect = function () {
 
                     var hsv = 'hsv('+color+', '+saturation+', 100);';
 
-                    consoe.log(hsv);
+                    console.log(hsv);
 
                     element.style.borderColor = hsv;
 
