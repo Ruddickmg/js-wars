@@ -1494,7 +1494,7 @@ app.display = function () {
         var height = app.settings.selectedModeHeight;
 
         // menu layout
-        var menu = app.settings.selectModeMenu; 
+        var menu = app.settings.selectModeMenu;
 
         // (war room, campaign) eventually integrate ai opponents?
         var selectModeScreen = document.createElement('article');
@@ -1503,6 +1503,13 @@ app.display = function () {
         // create list of selectable modes
         var selectMenu = document.createElement('ul');
         selectMenu.setAttribute('id', 'selectModeMenu');
+
+        // create footer for game info and chat
+        var footer = document.createElement('footer');
+        var info = document.createElement('p');
+        info.setAttribute('id', 'scrollingInfo');
+        footer.setAttribute('id','footer');
+        footer.appendChild(info);
 
         // create and insert information for each mode
         for( var m = 0; m < menu.length; m += 1){
@@ -1551,6 +1558,7 @@ app.display = function () {
         }
         // add select menu to select mode screen
         selectModeScreen.appendChild(selectMenu);
+        selectModeScreen.appendChild(info);
 
         // insert select mode screen into dom
         var exists = document.getElementById('selectModeScreen');
