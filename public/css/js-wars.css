@@ -135,8 +135,8 @@ h1 {
     display: block;
     background:white;
     text-align: center;
-    vertical-align: center;
     font-size: 44px;
+    line-height: 50px;
     padding:3px;
     width: 600px;
     border-left: 12px solid;
@@ -161,6 +161,7 @@ li[pos=oneAbove] {
 li[pos=selected] {
     top:220px;
     height:100px;
+    line-height: 100px;
     font-size: 90px;
     left:50px;
     margin:15px;
