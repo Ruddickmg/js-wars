@@ -1875,7 +1875,6 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
-            if()
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             // callback that defines how to display the selected element ( functions located in app.effect )
