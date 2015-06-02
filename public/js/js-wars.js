@@ -2828,9 +2828,8 @@ app.effect = function () {
                     app.temp.timeMarker = Date.now();
 
                     var element = app.temp.swell;
-                    console.log(element);
                     var prev = app.temp.previousLightness;
-                    var lightness = app.temo.lightness;
+                    var lightness = app.temp.lightness;
                     var color = app.temp.swellingColor;
                     element.style.borderColor = 'hsl('+color+','+100+'%,'+lightness+'%)';
 
