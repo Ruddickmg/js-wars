@@ -1888,6 +1888,7 @@ app.display = function () {
                     app.temp.selectionIndex += 1;
                 }else if(infiniteScroll){
                     app.temp.selectionIndex = selectionIndex + 1 > len ? 1 : selectionIndex + 1;
+                    console.log(app.temp.selectionIndex);
                 }
                 undo(key.down);
 
@@ -1898,6 +1899,7 @@ app.display = function () {
                     app.temp.selectionIndex -= 1;
                 }else if(infiniteScroll){
                     app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
+                    console.log(app.temp.selectionIndex);
                 } 
                 undo(key.up);
             }
