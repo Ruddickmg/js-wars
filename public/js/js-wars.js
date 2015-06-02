@@ -1865,7 +1865,7 @@ app.display = function () {
 
             console.log(selectionIndex);
             selectedElement = findElementByTag(tag, elements, selectionIndex);
-            consoel.log(selectedElement);
+            console.log(selectedElement);
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) var selectedOption = display(selectedElement, tag, selectionIndex, prev, elements);
 
