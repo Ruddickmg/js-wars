@@ -109,6 +109,7 @@ app = {
         co: 'andy',
         name: 'steve'
     }],
+
     cache: {},
     keys: [], // holds array of key pressed events
 
@@ -2821,7 +2822,7 @@ app.effect = function () {
                 var now = Date.now();
                 var time = app.temp.timeMarker;
 
-                if(!time || now - time > 30){
+                if(!time || now - time > 100){
 
                     console.log(time);
 
@@ -2837,7 +2838,7 @@ app.effect = function () {
 
                     element.style.borderColor = hsv;
 
-                    if( saturation + 1 < 100 && prev < saturation){
+                    if( saturation + 1 < 100 && prev < saturation || !prev ){
                         console.log('+ 1');
                         app.temp.saturation += 1;
                         app.temp.previousSaturation = saturation;
