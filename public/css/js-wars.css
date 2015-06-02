@@ -189,8 +189,8 @@ li[pos=twoBelow] {
 .modeOption {
     border-left: 8px solid;
     border-right: 8px solid;
-    border-top: 8px solid;
-    border-bottom: 8px solid;
+    border-top: 7px solid;
+    border-bottom: 7px solid;
     border-color: black;
     height:41px;
     font-size: 30px;
