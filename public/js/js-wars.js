@@ -2831,7 +2831,11 @@ app.effect = function () {
 
                     if(!saturation) saturation = 0;
 
-                    element.style.borderColor = hsv(color, saturation, 100);
+                    var hsv = 'hsv('+color+', '+saturation+', 100);';
+
+                    consoe.log(hsv);
+
+                    element.style.borderColor = hsv;
 
                     if( saturation + 1 < 100 && prev < saturation){ 
                         app.temp.saturation += 1;
