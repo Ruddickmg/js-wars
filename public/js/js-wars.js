@@ -2797,8 +2797,11 @@ app.effect = function () {
             }
 
             var option = findElementsByClass(selectedElement, 'modeOptions');
-            if(option[0]) previouslySelected.options = option[0];
-
+            if(option){
+                option.style.display = '';
+                previouslySelected.options = option;
+            }
+            
             twoUp.setAttribute('pos', 'twoAbove');
             oneUp.setAttribute('pos', 'oneAbove');
             oneDown.setAttribute('pos', 'oneBelow');
