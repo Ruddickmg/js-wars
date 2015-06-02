@@ -99,7 +99,7 @@ app = {
         selectActive: false,
         cursorMoved: true,
         saturation:0,
-        lightness:0,
+        lightness:50,
         path: []
     },
 
@@ -2517,6 +2517,9 @@ app.game.settings = {
 
 app.settings = {
 
+    // speed at which color swell.. fading in and out, will cycle
+    colorSwellSpeed:25,
+
     // speed at which the screen will move to next hq at the changinf of turns
     scrollSpeed: 50,
 
@@ -2823,7 +2826,7 @@ app.effect = function () {
                 var now = Date.now();
                 var time = app.temp.timeMarker;
 
-                if(!time || now - time > 100){
+                if(!time || now - time > app.settings.colorSwellSpeed){
 
                     app.temp.timeMarker = Date.now();
 
@@ -2833,10 +2836,10 @@ app.effect = function () {
                     var color = app.temp.swellingColor;
                     element.style.borderColor = 'hsl('+color+','+100+'%,'+lightness+'%)';
 
-                    if( lightness + 1 <= 50 && prev < lightness || lightness - 1 < 0){
+                    if( lightness + 1 <= 100 && prev < lightness || lightness - 1 < 50){
                         app.temp.lightness += 1;
                         app.temp.previousLightness = lightness;
-                    }else if(lightness - 1 >= 0 && prev > lightness || lightness + 1 > 50){ 
+                    }else if(lightness - 1 >= 50 && prev > lightness || lightness + 1 > 100){ 
                         app.temp.lightness -= 1 
                         app.temp.previousLightness = lightness;
                     };
