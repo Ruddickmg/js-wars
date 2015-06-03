@@ -2679,12 +2679,11 @@ app.effect = function () {
 
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
-                console.log('left');
+                console.log('nooooooo!!!');
                 app.temp.modeOptionsActive = false;
                 app.temp.selectIndex = app.temp.parentIndex;
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
-                console.log('right');
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
                     element:options,
@@ -2737,6 +2736,8 @@ app.effect = function () {
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(previouslySelected.index && previouslySelected.index !== index){
+                console.log('here');
+                console.lot('prev: '+previouslySelected.index+', now: '+index);
                 previouslySelected.element.style.height = '';
                 previouslySelected.element.style.borderColor = 'black';
                 if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
@@ -2784,15 +2785,14 @@ app.effect = function () {
 
                 selectedElement.setAttribute('pos', 'selected');
             }
+
             var colorHue = 0;
             fade(selectedElement, colorHue);
 
             previouslySelected.index = index;
             previouslySelected.element = selectedElement;
 
-            if (menu || app.temp.modeOptionsActive) selection = menuItemOptions(selectedElement, menu);
-            if (selection) return selection;
-            return false;
+            if (menu || app.temp.modeOptionsActive) menuItemOptions(selectedElement, menu);
         },
 
         colorSwell: function () { 
