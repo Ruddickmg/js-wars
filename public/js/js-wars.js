@@ -100,6 +100,7 @@ app = {
     // holds temporary shared variables, usually info on game state changes that need to be accessed globally
     temp: {
     	selectionIndex: 1,
+        menuOptionsActive:false,
         selectActive: false,
         cursorMoved: true,
         saturation:0,
@@ -1896,9 +1897,9 @@ app.display = function () {
             }
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
-
+            console.log(selectedElement);
             // callback that defines how to display the selected element ( functions located in app.effect )
-            if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements);
+            if (selectedElement || app.temp.loopThrough) display(selectedElement, tag, selectionIndex, prev, elements);
 
             // store the last index for future comparison
             app.temp.prevIndex = selectionIndex;
@@ -1906,7 +1907,7 @@ app.display = function () {
         }
 
         // if the select key has been pressed and an element is available for selection then return its id
-        if (key.select in app.keys && selectedElement) {
+        if (key.select in app.keys && selectedElement && !app.temp.menuOptionsActive) {
             app.temp.selectionIndex = 1;
             delete app.temp.prevIndex;
             delete selectedElement;
@@ -2796,7 +2797,12 @@ app.effect = function () {
             fade(selectedElement, selectedElement.getAttribute('hue') || 0);
 
             // toggle sub menu selections
-            if (menu || app.temp.modeOptionsActive) menuItemOptions(selectedElement, menu);
+            if (menu || app.temp.modeOptionsActive){
+                menuItemOptions(selectedElement, menu);
+                app.temp.menuOptionsActive = true;
+            }else{
+                app.temp.menuOptionsActive = false;
+            }
         },
 
         colorSwell: function () { 
