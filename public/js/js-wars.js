@@ -2745,12 +2745,15 @@ app.effect = function () {
             }
         },
 
-        scrollSetupMenu:function (selectedElement, tag, index){ 
+        scrollSetupMenu:function (selectedElement, tag, index, prev, elements){
+
+            var previousElement = app.display.findElementByTag( tag, elements, prev );
 
              // if the item being hovered over has changed, remove the effects of being hovered over
-            if(previouslySelected.index && previouslySelected.index !== index || app.temp.loopThrough){
-                previouslySelected.element.style.height = '';
-                previouslySelected.element.style.borderColor = 'black';
+            if(previousElement){
+                console.log('here');
+                previousElement.style.height = '';
+                previousElement.style.borderColor = '';
                 if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
                 stopFading();
             }
