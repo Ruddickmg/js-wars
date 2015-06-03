@@ -2748,7 +2748,7 @@ app.effect = function () {
                 prev.style.height = '';
                 prev.style.borderColor = 'black';
                 console.log('wtf?');
-                console.lof('prev');
+                console.log(prev);
                 if(!app.temp.modeOptionsActive){
                     var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
