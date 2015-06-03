@@ -2677,13 +2677,15 @@ app.effect = function () {
         if (!undo) undo = app.undo.keyPress;
 
         var modeOptionsActive = app.temp.modeOptionsActive;
+        var parentIndex = app.temp.parentIndex;
         var horizon = app.temp.horizon;
 
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
                 app.temp.modeOptionsActive = false;
-                app.temp.selectionIndex = app.temp.parentIndex;
-                console.log('after parent: '+app.temp.parentIndex);
+                app.temp.selectionIndex = parentIndex;
+                previouslySelected.element = parentIndex;
+                console.log('after parent: '+parentIndex);
                 console.log('sindL '+app.temp.selectionIndex);
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
@@ -2753,8 +2755,13 @@ app.effect = function () {
                 var length = elements.length;
 
                 if(!height) height = app.settings.selectedModeHeight;
-                if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
-                if( previouslySelected.index && index > previouslySelected.index ) ind = ind + 1 > length ? 1 : ind + 1;
+
+                if(previouslySelected.index && previouslySelected.index !== index){
+                    if(index < previouslySelected.index) ind = ind - 1 < 1 ? length : ind - 1;
+                    if(index > previouslySelected.index) ind = ind + 1 > length ? 1 : ind + 1;
+                }else{
+                    ind = index;
+                }
 
                 var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
 
