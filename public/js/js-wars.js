@@ -2684,7 +2684,7 @@ app.effect = function () {
             if(horizon === 'left' && modeOptionsActive){
                 app.temp.modeOptionsActive = false;
                 app.temp.selectionIndex = parentIndex;
-                previouslySelected.element = parentIndex;
+                previouslySelected.index = parentIndex;
                 console.log('after parent: '+parentIndex);
                 console.log('sindL '+app.temp.selectionIndex);
                 delete app.temp.child;
