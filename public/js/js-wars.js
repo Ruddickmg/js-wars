@@ -1834,8 +1834,10 @@ app.display = function () {
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if ( app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon) {
 
+            var modeOptionsActive = app.temp.modeOptionsActive;
+
             // keep track of the index pre sub menu
-            if(!app.temp.modeOptionsActive) app.temp.parentIndex = app.temp.selectionIndex;
+            if(!modeOptionsActive) app.temp.parentIndex = app.temp.selectionIndex;
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
@@ -1849,7 +1851,6 @@ app.display = function () {
 
             // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
-            console.log(elements);
 
             var prev = app.temp.prevIndex;
             len = elements.length;
@@ -1875,7 +1876,6 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
-            console.log('tag: '+tag+', selectionIndex: '+selectionIndex+', elements: '+elements)
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             // callback that defines how to display the selected element ( functions located in app.effect )
@@ -1901,11 +1901,11 @@ app.display = function () {
         } else if (key.down in app.keys) {
 
             // only movement if the index is less then the length ( do not move to non existant index )
-            if (selectionIndex < len && !infiniteScroll) {
+            if (selectionIndex < len && !infiniteScroll || selectionIndex < len && modeOptionsActive) {
 
                 // increment to next index
                 app.temp.selectionIndex += 1;
-            }else if(infiniteScroll){
+            }else if(infiniteScroll && !modeOptionsActive){
                 app.temp.selectionIndex = selectionIndex + 1 > len ? 1 : selectionIndex + 1;
             } 
             undo(key.down);
@@ -1913,9 +1913,9 @@ app.display = function () {
             // same as above, but up
         } else if (key.up in app.keys) {
 
-            if (selectionIndex > 1 && !infiniteScroll){
+            if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
                 app.temp.selectionIndex -= 1;
-            }else if(infiniteScroll){
+            }else if(infiniteScroll && !app.modeOptionsActive){
                 app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
             }
             undo(key.up);
@@ -2679,16 +2679,17 @@ app.effect = function () {
     var menuItemOptions = function ( selectedElement, options ) {
         if (!key) key = app.game.settings.keyMap;
         if (!undo) undo = app.undo.keyPress;
-
+        
+        var modeOptionsActive = app.temp.modeOptionsActive;
         var horizon = app.temp.horizon;
 
         if(horizon){
-            if(horizon === 'left' && app.temp.modeOptionsActive){
+            if(horizon === 'left' && modeOptionsActive){
                 console.log('left');
                 app.temp.modeOptionsActive = false;
                 app.temp.selectIndex = app.temp.parentIndex;
                 delete app.temp.child;
-            }else if(horizon === 'right' && !app.temp.modeOptionsActive){
+            }else if(horizon === 'right' && !modeOptionsActive){
                 console.log('right');
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
@@ -2740,19 +2741,19 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index){ 
 
+             // if the item being hovered over has changed, remove the effects of being hovered over
+            if(previouslySelected.index && previouslySelected.index !== index){
+                previouslySelected.element.style.height = '';
+                previouslySelected.element.style.borderColor = 'black';
+                if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
+                stopFading();
+            }
+
             if(!app.temp.modeOptionsActive){
 
                 if(!height) height = app.settings.selectedModeHeight;
                 if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
                 if( previouslySelected.index && index > previouslySelected.index ) ind = ind + 1 > length ? 1 : ind + 1;
-
-                // if the item being hovered over has changed, remove the effects of being hovered over
-                if(previouslySelected.index && previouslySelected.index !== index){
-                    previouslySelected.element.style.height = '';
-                    previouslySelected.element.style.borderColor = 'black';
-                    if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
-                    stopFading();
-                }
 
                 var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
 
