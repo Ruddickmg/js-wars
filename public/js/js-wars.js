@@ -2743,11 +2743,12 @@ app.effect = function () {
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(prev){
-                console.log('here');
                 console.log(prev);
                 stopFading();
                 prev.style.height = '';
                 prev.style.borderColor = 'black';
+                console.log('wtf?');
+                console.lof('prev');
                 if(!app.temp.modeOptionsActive){
                     var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
@@ -2776,6 +2777,7 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
+                console.log(selectedElement);
             }
 
             // fade the selected element from color to white
