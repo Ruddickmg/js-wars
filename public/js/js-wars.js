@@ -2761,7 +2761,7 @@ app.effect = function () {
             if(previouslySelected.index && previouslySelected.index !== index){
                 previouslySelected.element.style.height = '';
                 previouslySelected.element.style.borderColor = 'black';
-                if(previouslySelected.options) previouslySelected.options.style.display = 'none';
+                if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
                 stopFading();
             }
 
