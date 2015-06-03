@@ -2785,12 +2785,10 @@ app.effect = function () {
                 selectedElement.setAttribute('pos', 'selected');
             }
 
-            var colorHue = 0;
-            fade(selectedElement, colorHue);
+            // fade the selected element from color to white
+            fade(selectedElement, selectedElement.getAttribute('hue') || 0);
 
-            previouslySelected.index = index;
-            previouslySelected.element = selectedElement;
-
+            // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive) menuItemOptions(selectedElement, menu);
         },
 
