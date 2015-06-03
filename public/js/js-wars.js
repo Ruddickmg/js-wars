@@ -1890,6 +1890,8 @@ app.display = function () {
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
+            console.log(prev);
+
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements);
             if (app.temp.horizon) delete app.temp.horizon;
@@ -2750,7 +2752,9 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index, prev, elements){
 
-            var previousElement = app.display.findElementByTag( tag, elements, prev );
+            console.log(prev);
+
+            if(prev) var previousElement = app.display.findElementByTag( tag, elements, prev );
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(previousElement){
