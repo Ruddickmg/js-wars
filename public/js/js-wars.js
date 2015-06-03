@@ -2683,7 +2683,6 @@ app.effect = function () {
                 app.temp.selectIndex = app.temp.parentIndex;
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
-                app.temp.loopThrough = true;
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
                     element:options,
@@ -2691,6 +2690,7 @@ app.effect = function () {
                     index:1
                 }
             }
+            app.temp.loopThrough = true;
         }
     };
 
