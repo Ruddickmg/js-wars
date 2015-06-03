@@ -2755,13 +2755,13 @@ app.effect = function () {
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(previousElement){
+                stopFading();
                 previousElement.style.height = '';
                 previousElement.style.borderColor = '';
                 if(!app.temp.modeOptionsActive){
                     var prevOptions = findElementsByClass(previousElement, 'modeOptions')[0] || false;
                     if(prevOptions && !app.temp.horizon) prevOptions[0].style.display = 'none';
                 }
-                stopFading();
             }
 
             if (app.temp.loopThrough) delete app.temp.loopThrough;
