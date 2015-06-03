@@ -2771,9 +2771,9 @@ app.effect = function () {
                 }
 
                 var oneUp = ind - 1 < 1 ? length : ind - 1;
-                var twoUp = oneAbove - 1 < 1 ? length : oneAbove - 1; 
+                var twoUp = oneUp - 1 < 1 ? length : oneUp - 1; 
                 var oneDown = ind + 1 > length ? 1 : ind + 1; 
-                var twoDown = oneBelow + 1 > length ? 1 : oneBelow + 1;
+                var twoDown = oneDown + 1 > length ? 1 : oneDown + 1;
 
                 console.log('1u: '+oneUp+', 2u: '+twoUp+', 1d: '+oneDown+', twoDown: '+twoDown);
 
