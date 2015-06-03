@@ -1838,7 +1838,8 @@ app.display = function () {
         var modeOptionsActive = app.temp.modeOptionsActive;
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
-        if (app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon ) {
+        if (app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
+            console.log(app.temp.prevIndex  + ' : ' +app.temp.selectionIndex + ' : ' +app.temp.horizon + ' : ' app.temp.loopThrough);
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
@@ -2756,7 +2757,7 @@ app.effect = function () {
                 app.temp.prevElement.style.height = '';
                 app.temp.prevElement.style.borderColor = 'black';
                 console.log('wtf?');
-                console.log(app.temp.prevElement);
+                console.log(prev);
                 if(!app.temp.modeOptionsActive){
                     var prevOptions = findElementsByClass(app.temp.prevElement, 'modeOptions')[0] || false;
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
