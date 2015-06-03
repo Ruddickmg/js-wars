@@ -2703,7 +2703,7 @@ app.effect = function () {
             }else if(horizon === 'right' && !modeOptionsActive){
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
-                    element:options,
+                    element:menu,
                     tag:'modeOptionIndex',
                     index:1
                 }
@@ -2752,13 +2752,10 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index, prev, elements){
 
-            console.log('pre: '+prev);
-
             if(prev) var previousElement = app.display.findElementByTag( tag, elements, prev );
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(previousElement){
-                console.log(previousElement);
                 previousElement.style.height = '';
                 previousElement.style.borderColor = '';
                 if(!app.temp.modeOptionsActive){
@@ -2782,10 +2779,10 @@ app.effect = function () {
                 pos.oneBelow = index + 1 > length ? 1 : index + 1; 
                 pos.twoBelow = pos.oneBelow + 1 > length ? 1 : pos.oneBelow + 1;
 
+                // assign position values for each positon
                 for( var p = 0; p < positions.length; p += 1){
                     var position = positions[p];
                     var posIndex = pos[position];
-                    console.log(position+':'+posIndex);
                     var element = app.display.findElementByTag(tag, elements, posIndex);
                     element.setAttribute('pos', position);
                 }
