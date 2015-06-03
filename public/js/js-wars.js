@@ -1848,9 +1848,6 @@ app.display = function () {
             }
 
             // get the children
-
-            console.log(hudElement);
-            console.log(elementType);
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
             console.log(elements);
 
@@ -1878,6 +1875,7 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
+            console.log('tag: '+tag+', selectionIndex: '+selectionIndex+', elements: '+elements)
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             // callback that defines how to display the selected element ( functions located in app.effect )
@@ -1933,9 +1931,11 @@ app.display = function () {
 
     // find each element by their tag name, get the element that matches the currently selected index and return it
     var findElementByTag = function (tag, element, index) {
+        console.log('len: '+len);
         for (var e = 0; e < len; e += 1) {
             // element returns a string, so must cast the index to string for comparison
             // if the element tag value ( index ) is equal to the currently selected index then return it
+            if(!element[e].getAttribute(tag) console.log(' unworking tag: '+tag+', selectionIndex: '+selectionIndex+', element: '+element)
             if (element[e].getAttribute(tag) === index.toString()) {
                 return element[e];
             }
