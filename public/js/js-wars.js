@@ -2680,7 +2680,7 @@ app.effect = function () {
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
                 app.temp.modeOptionsActive = false;
-                app.temp.selectIndex = app.temp.parentIndex;
+                app.temp.selectionIndex = app.temp.parentIndex;
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
                 app.temp.modeOptionsActive = true;
