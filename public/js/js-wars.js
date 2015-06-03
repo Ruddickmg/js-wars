@@ -2757,10 +2757,10 @@ app.effect = function () {
             if(previousElement){
                 stopFading();
                 previousElement.style.height = '';
-                previousElement.style.borderColor = '';
-                if(!app.temp.modeOptionsActive){
+                previousElement.style.borderColor = 'black';
+                if(!app.temp.modeOptionsActive && prev !== index){
                     var prevOptions = findElementsByClass(previousElement, 'modeOptions')[0] || false;
-                    if(prevOptions && !app.temp.horizon) prevOptions[0].style.display = 'none';
+                    if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
                 }
             }
 
