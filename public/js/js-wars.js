@@ -2752,7 +2752,7 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index, prev, elements){
 
-            console.log(prev);
+            console.log('pre: '+prev);
 
             if(prev) var previousElement = app.display.findElementByTag( tag, elements, prev );
 
