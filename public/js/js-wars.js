@@ -1838,7 +1838,7 @@ app.display = function () {
         var modeOptionsActive = app.temp.modeOptionsActive;
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
-        if (app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
+        if (app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon ) {
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
