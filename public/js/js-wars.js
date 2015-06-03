@@ -1839,7 +1839,8 @@ app.display = function () {
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
                 var hudElement = app.temp.child.element;
-                app.temp.parentIndex = app.temp.selectionIndex; // keep track of selected parent element
+                var parentIndex = app.temp.selectionIndex;
+                app.temp.parentIndex =  parentIndex; // keep track of selected parent element
                 console.log('parent: '+app.temp.parentIndex);
                 app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
@@ -2740,6 +2741,7 @@ app.effect = function () {
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(previouslySelected.index && previouslySelected.index !== index || app.temp.loopThrough){
                 console.log('here');
+                console.log('prev: '+previouslySelected.index + ', now: '+index);
                 if(app.temp.loopThrough) delete app.temp.loopThrough;
                 previouslySelected.element.style.height = '';
                 previouslySelected.element.style.borderColor = 'black';
