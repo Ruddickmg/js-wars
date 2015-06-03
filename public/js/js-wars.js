@@ -1835,10 +1835,10 @@ app.display = function () {
 
     var select = function (tag, id, display, elementType, max, infiniteScroll) {
 
+        var modeOptionsActive = app.temp.modeOptionsActive;
+
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if (app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
-
-            var modeOptionsActive = app.temp.modeOptionsActive;
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
@@ -1888,11 +1888,8 @@ app.display = function () {
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
-            console.log(prev);
-
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements);
-            if (app.temp.horizon) delete app.temp.horizon;
 
             // store the last index for future comparison
             app.temp.prevIndex = selectionIndex;
@@ -2706,6 +2703,7 @@ app.effect = function () {
                     index:1
                 }
             }
+            delete app.temp.horizon;
             app.temp.loopThrough = true;
         }
     };
