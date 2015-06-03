@@ -1940,9 +1940,7 @@ app.display = function () {
 
     // find each element by their tag name, get the element that matches the currently selected index and return it
     var findElementByTag = function (tag, element, index) {
-        console.log('tag: '+tag+', index: '+index+',element: '+element);
         for (var e = 0; e < len; e += 1) {
-            console.log(element[e]);
             // element returns a string, so must cast the index to string for comparison
             // if the element tag value ( index ) is equal to the currently selected index then return it
             if (element[e].getAttribute(tag) === index.toString()) {
@@ -2745,6 +2743,8 @@ app.effect = function () {
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(prev){
+                console.log('here');
+                console.log(prev);
                 stopFading();
                 prev.style.height = '';
                 prev.style.borderColor = 'black';
