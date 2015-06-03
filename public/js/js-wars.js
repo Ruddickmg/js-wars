@@ -2683,7 +2683,7 @@ app.effect = function () {
                 app.temp.modeOptionsActive = false;
                 app.temp.selectionIndex = app.temp.parentIndex;
                 console.log('after parent: '+app.temp.parentIndex);
-                consoel.log('sindL '+app.temp.selectionIndex);
+                console.log('sindL '+app.temp.selectionIndex);
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
                 app.temp.modeOptionsActive = true;
