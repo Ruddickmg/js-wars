@@ -1832,7 +1832,7 @@ app.display = function () {
     var select = function (tag, id, display, elementType, max, infiniteScroll) {
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
-        if ( app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon) {
+        if (app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
 
             var modeOptionsActive = app.temp.modeOptionsActive;
 
@@ -2679,11 +2679,11 @@ app.effect = function () {
 
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
-                console.log('nooooooo!!!');
                 app.temp.modeOptionsActive = false;
                 app.temp.selectIndex = app.temp.parentIndex;
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
+                app.temp.loopThrough = true;
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
                     element:options,
@@ -2735,9 +2735,9 @@ app.effect = function () {
         scrollSetupMenu:function (selectedElement, tag, index){ 
 
              // if the item being hovered over has changed, remove the effects of being hovered over
-            if(previouslySelected.index && previouslySelected.index !== index){
+            if(previouslySelected.index && previouslySelected.index !== index || app.temp.loopThrough){
                 console.log('here');
-                console.log('prev: '+previouslySelected.index+', now: '+index);
+                if(app.temp.loopThrough) delete app.temp.loopThrough;
                 previouslySelected.element.style.height = '';
                 previouslySelected.element.style.borderColor = 'black';
                 if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
