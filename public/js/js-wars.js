@@ -2691,7 +2691,7 @@ app.effect = function () {
         if (!undo) undo = app.undo.keyPress;
 
         // display the menu options
-        menu.style.display = '';
+        if(menu) menu.style.display = '';
         var modeOptionsActive = app.temp.modeOptionsActive;
         var horizon = app.temp.horizon;
 
