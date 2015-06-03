@@ -2685,8 +2685,6 @@ app.effect = function () {
                 app.temp.modeOptionsActive = false;
                 app.temp.selectionIndex = parentIndex;
                 previouslySelected.index = parentIndex;
-                console.log('after parent: '+parentIndex);
-                console.log('sindL '+app.temp.selectionIndex);
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
                 app.temp.modeOptionsActive = true;
@@ -2782,7 +2780,7 @@ app.effect = function () {
                 var oneDown = ind + 1 > length ? 1 : ind + 1; 
                 var twoDown = oneDown + 1 > length ? 1 : oneDown + 1;
 
-                console.log('1u: '+oneUp+', 2u: '+twoUp+', 1d: '+oneDown+', twoDown: '+twoDown);
+                console.log('twoUp: '+twoUp+', oneUp: '+oneUp+', selected: '+index+', oneDown: '+oneDown+', twoDown: '+twoDown);
 
                 var oneAbove = app.display.findElementByTag(tag, elements, oneUp);
                 var twoAbove = app.display.findElementByTag(tag, elements, twoUp);
