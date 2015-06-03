@@ -2750,19 +2750,10 @@ app.effect = function () {
             if(!app.temp.modeOptionsActive){
 
                 var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
+                var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
                 var length = elements.length;
 
                 if(!height) height = app.settings.selectedModeHeight;
-
-                if(previouslySelected.index && previouslySelected.index !== index){
-                    if(index < previouslySelected.index) ind = ind - 1 < 1 ? length : ind - 1;
-                    if(index > previouslySelected.index) ind = ind + 1 > length ? 1 : ind + 1;
-                }else{
-                    ind = index;
-                }
-
-                var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
-
                 if(optionMenu[0]){
 
                     var menu = optionMenu[0];
@@ -2775,9 +2766,9 @@ app.effect = function () {
                     previouslySelected.options = menu;
                 }
 
-                var oneUp = ind - 1 < 1 ? length : ind - 1;
+                var oneUp = index - 1 < 1 ? length : index - 1;
                 var twoUp = oneUp - 1 < 1 ? length : oneUp - 1; 
-                var oneDown = ind + 1 > length ? 1 : ind + 1; 
+                var oneDown = index + 1 > length ? 1 : index + 1; 
                 var twoDown = oneDown + 1 > length ? 1 : oneDown + 1;
 
                 console.log('twoUp: '+twoUp+', oneUp: '+oneUp+', selected: '+index+', oneDown: '+oneDown+', twoDown: '+twoDown);
