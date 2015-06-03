@@ -2762,8 +2762,8 @@ app.effect = function () {
                 previousElement.style.height = '';
                 previousElement.style.borderColor = '';
                 if(!app.temp.modeOptionsActive){
-                    var prevOptions = findElementsByClass(previousElement, 'modeOptions');
-                    if(prevOptions[0]) prevOptions[0].options.style.display = 'none';
+                    var prevOptions = findElementsByClass(previousElement, 'modeOptions')[0] || false;
+                    if(prevOptions && !app.temp.horizon) prevOptions[0].style.display = 'none';
                 }
                 stopFading();
             }
@@ -2773,7 +2773,7 @@ app.effect = function () {
             if(!app.temp.modeOptionsActive){
 
                 var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-                var menu = findElementsByClass(selectedElement, 'modeOptions')[0] || null;
+                var menu = findElementsByClass(selectedElement, 'modeOptions')[0] || false;
                 var length = elements.length;
 
                 // calculate the positions of the surrounding elements by index
