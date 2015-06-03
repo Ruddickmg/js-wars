@@ -2770,24 +2770,20 @@ app.effect = function () {
                     previouslySelected.options = menu;
                 }
 
-                if(length > 5) console.log(elements);
-                console.log(length);
+                var oneUp = ind - 1 < 1 ? length : ind - 1};
+                var twoUp = oneAbove - 1 < 1 ? length : position.oneAbove - 1; 
+                var oneDown = ind + 1 > length ? 1 : ind + 1; 
+                var twoDown = oneBelow + 1 > length ? 1 : position.oneBelow + 1;
 
-                var position = {oneAbove:ind - 1 < 1 ? length : ind - 1};
-                position.twoAbove = position.oneAbove - 1 < 1 ? length : position.oneAbove - 1; 
-                position.oneBelow = ind + 1 > length ? 1 : ind + 1; 
-                position.twoBelow = position.oneBelow + 1 > length ? 1 : position.oneBelow + 1;
+                var oneAbove = app.display.findElementByTag(tag, elements, oneUp);
+                var twoAbove = app.display.findElementByTag(tag, elements, twoUp);
+                var oneBelow = app.display.findElementByTag(tag, elements, oneDown);
+                var twoBelow = app.display.findElementByTag(tag, elements, twoDown);
 
-                for(var a = 0; a < positions.length; a += 1){
-                    var pos = positions[a];
-                    console.log('pos1: '+pos);
-                    var indo = position[pos];
-                    console.log('position: '+pos+', index: '+indo);
-                    var element = app.display.findElementByTag(tag, elements, indo);
-                    console.log('ps2: '+pos)
-                    element.setAttribute('pos', pos);
-                }
-
+                oneAbove.setAttribute('pos', 'oneAbove');
+                twoAbove.setAttribute('pos', 'twoAbove');
+                oneBelow.setAttribute('pos', 'oneBelow');
+                twoBelow.setAttribute('pos', 'twoBelow');
                 selectedElement.setAttribute('pos', 'selected');
             }
 
