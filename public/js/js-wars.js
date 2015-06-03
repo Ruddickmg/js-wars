@@ -1839,8 +1839,10 @@ app.display = function () {
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
                 var hudElement = app.temp.child.element;
-                var parentIndex = app.temp.selectionIndex;
-                app.temp.parentIndex =  parentIndex; // keep track of selected parent element
+
+                // keep track of selected parent element
+                (function (pIndex) {app.temp.parentIndex = pIndex;})(app.temp.selectionIndex);
+
                 console.log('parent: '+app.temp.parentIndex);
                 app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
