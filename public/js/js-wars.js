@@ -1880,7 +1880,7 @@ app.display = function () {
 
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) var selectedOption = display(selectedElement, tag, selectionIndex, prev, elements);
-
+            if (app.temp.horizon) delete app.temp.horizon;
             if(selectedOption) return selectedOption;
 
             // store the last index for future comparison
@@ -2679,7 +2679,7 @@ app.effect = function () {
     var menuItemOptions = function ( selectedElement, options ) {
         if (!key) key = app.game.settings.keyMap;
         if (!undo) undo = app.undo.keyPress;
-        
+
         var modeOptionsActive = app.temp.modeOptionsActive;
         var horizon = app.temp.horizon;
 
