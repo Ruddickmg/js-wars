@@ -2676,29 +2676,19 @@ app.effect = function () {
     var previous, previouslySelected = {}, pre, ind = 1, key, num, height, undo, selectIndex, selection = false;
     var positions = ['oneAbove','twoAbove','oneBelow','twoBelow'];
 
-    var highlight = function (element) {
-
-        console.log('highlight');
-
-        element.style.backgroundColor = 'tan';
-        if(previous) previous.style.backgroundColor = '';
-        previous = element;
-    };
-
     var menuItemOptions = function ( selectedElement, options ) {
         if (!key) key = app.game.settings.keyMap;
         if (!undo) undo = app.undo.keyPress;
 
-        console.log('menuItemOptions');
         var horizon = app.temp.horizon;
 
         if(horizon){
-            if(horizon === 'left'){
+            if(horizon === 'left' && app.temp.modeOptionsActive){
                 console.log('left');
                 app.temp.modeOptionsActive = false;
                 app.temp.selectIndex = app.temp.parentIndex;
                 delete app.temp.child;
-            }else if(horizon === 'right'){
+            }else if(horizon === 'right' && !app.temp.modeOptionsActive){
                 console.log('right');
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
@@ -2750,63 +2740,62 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index){ 
 
-            console.log('initial index: '+index);
+            if(!app.temp.modeOptionsActive){
 
-            if(!num) num = app.settings.modeMenuSpacing;
-            if(!height) height = app.settings.selectedModeHeight;
-            if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
-            if( previouslySelected.index && index > previouslySelected.index ) ind = ind + 1 > length ? 1 : ind + 1;
+                if(!height) height = app.settings.selectedModeHeight;
+                if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
+                if( previouslySelected.index && index > previouslySelected.index ) ind = ind + 1 > length ? 1 : ind + 1;
 
-            // if the item being hovered over has changed, remove the effects of being hovered over
-            if(previouslySelected.index && previouslySelected.index !== index){
-                previouslySelected.element.style.height = '';
-                previouslySelected.element.style.borderColor = 'black';
-                if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
-                stopFading();
+                // if the item being hovered over has changed, remove the effects of being hovered over
+                if(previouslySelected.index && previouslySelected.index !== index){
+                    previouslySelected.element.style.height = '';
+                    previouslySelected.element.style.borderColor = 'black';
+                    if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
+                    stopFading();
+                }
+
+                var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
+
+                if(optionMenu[0]){
+
+                    var menu = optionMenu[0];
+
+                    // display the menu options
+                    menu.style.display = '';
+
+                    // get array of options and add the option menu to the previously selected list
+                    options = findElementsByClass(menu, 'modeOption');
+                    previouslySelected.options = menu;
+                }
+
+                var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
+                var length = elements.length;
+
+                if(length > 5) console.log(elements);
+                console.log(length);
+
+                var position = {oneAbove:ind - 1 < 1 ? length : ind - 1};
+                position.twoAbove = position.oneAbove - 1 < 1 ? length : position.oneAbove - 1; 
+                position.oneBelow = ind + 1 > length ? 1 : ind + 1; 
+                position.twoBelow = position.oneBelow + 1 > length ? 1 : position.oneBelow + 1; 
+
+                for(var a = 0; a < positions.length; a += 1){
+                    var pos = positions[a];
+                    var indo = position[pos];
+                    console.log('position: '+pos+', index: '+indo);
+                    var element = app.display.findElementByTag(tag, elements, indo);
+                    element.setAttribute('pos', pos);
+                }
+
+                selectedElement.setAttribute('pos', 'selected');
             }
-
-            var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
-
-            if(optionMenu[0]){
-
-                var menu = optionMenu[0];
-
-                // display the menu options
-                menu.style.display = '';
-
-                // get array of options and add the option menu to the previously selected list
-                options = findElementsByClass(menu, 'modeOption');
-                previouslySelected.options = menu;
-            }
-
-            var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-            var length = elements.length;
             var colorHue = 0;
-
-            if(length > 5) console.log(elements);
-            console.log(length);
-
-            var position = {oneAbove:ind - 1 < 1 ? length : ind - 1};
-            position.twoAbove = position.oneAbove - 1 < 1 ? length : position.oneAbove - 1; 
-            position.oneBelow = ind + 1 > length ? 1 : ind + 1; 
-            position.twoBelow = position.oneBelow + 1 > length ? 1 : position.oneBelow + 1; 
-
-            for(var a = 0; a < positions.length; a += 1){
-                var pos = positions[a];
-                var indo = position[pos];
-                console.log('position: '+pos+', index: '+indo);
-                var element = app.display.findElementByTag(tag, elements, indo);
-                element.setAttribute('pos', pos);
-            }
-
-            selectedElement.setAttribute('pos', 'selected');
-
             fade(selectedElement, colorHue);
 
             previouslySelected.index = index;
             previouslySelected.element = selectedElement;
 
-            if (menu) selection = menuItemOptions(selectedElement, menu);
+            if (menu || app.temp.modeOptionsActive) selection = menuItemOptions(selectedElement, menu);
             if (selection) return selection;
             return false;
         },
