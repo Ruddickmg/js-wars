@@ -2697,7 +2697,7 @@ app.effect = function () {
         if(menu) menu.style.display = '';
         var modeOptionsActive = app.temp.modeOptionsActive;
         var horizon = app.temp.horizon;
-
+        console.log('jorizon: '+horizon);
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
                 delete app.temp.modeOptionsActive;
@@ -2711,6 +2711,7 @@ app.effect = function () {
                 }
                 console.log(app.temp.child);
             }
+            console.log('in horizon');
             delete app.temp.horizon;
             app.temp.loopThrough = true;
         }
@@ -2764,8 +2765,9 @@ app.effect = function () {
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
                 }
             }
-
-            if (app.temp.loopThrough) delete app.temp.loopThrough;
+            if(app.temp.loopThrough) console.log('loop...');
+            app.temp.loopThrough = false;
+            if(app.temp.loopThrough) console.log('stop!');
 
             if(!app.temp.modeOptionsActive){
 
