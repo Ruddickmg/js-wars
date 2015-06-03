@@ -2788,9 +2788,11 @@ app.effect = function () {
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
                 menuItemOptions(selectedElement, menu);
-                app.temp.menuOptionsActive = true;
-            }else{
-                app.temp.menuOptionsActive = false;
+                if(menu){
+                    app.temp.menuOptionsActive = true;
+                }else{
+                    app.temp.menuOptionsActive = false;
+                }
             }
         },
 
