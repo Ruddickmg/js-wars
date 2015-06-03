@@ -1935,7 +1935,7 @@ app.display = function () {
         for (var e = 0; e < len; e += 1) {
             // element returns a string, so must cast the index to string for comparison
             // if the element tag value ( index ) is equal to the currently selected index then return it
-            if(!element[e].getAttribute(tag)) console.log(' unworking tag: '+tag+', selectionIndex: '+selectionIndex+', element: '+element)''
+            if(!element[e].getAttribute(tag)) console.log(' unworking tag: '+tag+', selectionIndex: '+selectionIndex+', element: '+element);
             if (element[e].getAttribute(tag) === index.toString()) {
                 return element[e];
             }
