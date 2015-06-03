@@ -1845,13 +1845,14 @@ app.display = function () {
                 var hudElement = app.temp.child.element;
                 // keep track of selected parent element
                 app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
-                app.temp.selectionIndex = app.temp.child.index;
+                if (!modeOptionsActive) app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
-            }else{ 
+            }else{
                 if(app.temp.loopThrough){
                     var parentIndex = app.temp.parentIndex;
                     app.temp.selectionIndex = parentIndex;
                     app.temp.prevIndex = parentIndex;
+                    delete app.temp.parentIndex;
                 }
                 var hudElement = document.getElementById(id);
             }
@@ -1906,7 +1907,9 @@ app.display = function () {
             undo(key.select);
             return selectedElement.getAttribute('id');
             // if the down key has been pressed then move to the next index ( element ) down
-        } else if (key.down in app.keys && !app.temp.loopThrough) {
+        } else if (key.down in app.keys) {
+
+            console.log('down');
 
             // only movement if the index is less then the length ( do not move to non existant index )
             if (selectionIndex < len && !infiniteScroll || selectionIndex < len && modeOptionsActive) {
@@ -1919,7 +1922,9 @@ app.display = function () {
             undo(key.down);
 
             // same as above, but up
-        } else if (key.up in app.keys && !app.temp.loopThrough) {
+        } else if (key.up in app.keys) {
+
+            console.log('up');
 
             if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
                 app.temp.selectionIndex -= 1;
