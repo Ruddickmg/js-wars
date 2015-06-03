@@ -1842,11 +1842,13 @@ app.display = function () {
 
                 // keep track of selected parent element
                 //if((function (pIndex) {return pIndex;}(app.temp.selectionIndex));
-                var pind = [app.temp.selectionIndex];
-                app.temp.parentIndex = pind.slice(0)[0];
+                app.temp.parentIndex = app.temp.parentIndex ? app.temp.parentIndex : app.temp.selectionIndex;
                 console.log('parent: '+app.temp.parentIndex);
+
                 app.temp.selectionIndex = app.temp.child.index;
+
                 tag = app.temp.child.tag;
+                
             }else{
                 var hudElement = document.getElementById(id);
             }
