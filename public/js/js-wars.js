@@ -1836,17 +1836,14 @@ app.display = function () {
 
             var modeOptionsActive = app.temp.modeOptionsActive;
 
-            // keep track of the index pre sub menu
-            if(!modeOptionsActive) app.temp.parentIndex = app.temp.selectionIndex;
-
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
                 var hudElement = app.temp.child.element;
-                selectionIndex = app.temp.child.index;
+                app.temp.parentIndex = app.temp.selectionIndex; // keep track of selected parent element
+                app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
             }else{
                 var hudElement = document.getElementById(id);
-                selectionIndex = app.temp.selectionIndex;
             }
 
             // get the children
@@ -1856,6 +1853,7 @@ app.display = function () {
             len = elements.length;
             key = app.game.settings.keyMap;
             undo = app.undo.keyPress;
+            selectionIndex = app.temp.selectionIndex;
 
             // if there is no max set then set max to the length of he array
             if (!max) max = len;
@@ -1931,13 +1929,9 @@ app.display = function () {
 
     // find each element by their tag name, get the element that matches the currently selected index and return it
     var findElementByTag = function (tag, element, index) {
-        console.log('len: '+len);
         for (var e = 0; e < len; e += 1) {
             // element returns a string, so must cast the index to string for comparison
             // if the element tag value ( index ) is equal to the currently selected index then return it
-            console.log(element);
-            console.log(element[e]);
-            if(!element[e].getAttribute(tag)) console.log(' unworking tag: '+tag+', selectionIndex: '+selectionIndex+', element: '+element);
             if (element[e].getAttribute(tag) === index.toString()) {
                 return element[e];
             }
