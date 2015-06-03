@@ -453,7 +453,7 @@ app.undo = function () {
 
         buildUnitScreen: function () {
             var removeArray = ['buildUnitScreen', 'unitInfoScreen', 'optionsMenu'];
-            for (r = 0; r < removeArray.length; r += 1) {
+            for (var r = 0; r < removeArray.length; r += 1) {
                 var remove = document.getElementById(removeArray[r]);
                 if (remove) remove.parentNode.removeChild(remove);
             }
@@ -835,7 +835,7 @@ app.actions = function () {
                 if (app.usersTurn) socket.emit('joinUnits', {combine:combine, unit:selected});
 
                 // combine properties of the selected unit with the target unit
-                for (u = 0; u < props.length; u += 1){
+                for (var u = 0; u < props.length; u += 1){
                     prop = props[u];
                     max = app.units[selected.type].properties[prop];
                     if( combine[prop] + selected[prop] < max ){
@@ -891,7 +891,7 @@ app.calculate = function () {
 
     var findTerrain = function (unit){
         terrain = app.map.terrain;
-        for ( t = 0; t < terrain.length; t += 1){
+        for (var t = 0; t < terrain.length; t += 1){
             if(terrain[t].x === unit.x && terrain[t].y === unit.y){
                 return terrain[t];
             }
@@ -1811,7 +1811,7 @@ app.display = function () {
         // get each unit type for looping over
         var keys = Object.keys(properties);
 
-        for (u = 0; u < keys.length; u += 1) {
+        for (var u = 0; u < keys.length; u += 1) {
 
             // create list for each unit with its cost
             var list = createList(properties[keys[u]], keys[u], allowedProperties, tag);
@@ -2777,16 +2777,17 @@ app.effect = function () {
                 var length = elements.length;
 
                 // calculate the positions of the surrounding elements by index
-                var pos = {oneUp: index - 1 < 1 ? length : index - 1};
-                pos.twoUp = pos.oneUp - 1 < 1 ? length : pos.oneUp - 1; 
-                pos.oneDown = index + 1 > length ? 1 : index + 1; 
-                pos.twoDown = pos.oneDown + 1 > length ? 1 : pos.oneDown + 1;
+                var pos = {oneAbove: index - 1 < 1 ? length : index - 1};
+                pos.twoAbove = pos.oneAbove - 1 < 1 ? length : pos.oneAbove - 1; 
+                pos.oneBelow = index + 1 > length ? 1 : index + 1; 
+                pos.twoBelow = pos.oneBelow + 1 > length ? 1 : pos.oneBelow + 1;
 
                 for( var p = 0; p < positions.length; p += 1){
                     var position = positions[p];
                     var posIndex = pos[position];
                     console.log(position+':'+posIndex);
-                    var oneAbove = app.display.findElementByTag(tag, elements, posIndex);
+                    var element = app.display.findElementByTag(tag, elements, posIndex);
+                    element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
             }
