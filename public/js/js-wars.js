@@ -1835,7 +1835,7 @@ app.display = function () {
         if ( app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon) {
 
             // keep track of the index pre sub menu
-            if(!modeOptionsActive) app.temp.parentIndex = app.temp.selectionIndex;
+            if(modeOptionsActive === undefined || !modeOptionsActive) app.temp.parentIndex = app.temp.selectionIndex;
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
