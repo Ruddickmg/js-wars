@@ -1841,8 +1841,9 @@ app.display = function () {
                 var hudElement = app.temp.child.element;
 
                 // keep track of selected parent element
-                if(!app.temp.loopThrough) (function (pIndex) {app.temp.parentIndex = pIndex;})(app.temp.selectionIndex);
-
+                //if((function (pIndex) {return pIndex;}(app.temp.selectionIndex));
+                var pind = [app.temp.selectionIndex];
+                var app.temp.parentIndex = pind.slice(0)[0];
                 console.log('parent: '+app.temp.parentIndex);
                 app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
