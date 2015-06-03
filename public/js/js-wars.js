@@ -1840,6 +1840,7 @@ app.display = function () {
             if(app.temp.child){
                 var hudElement = app.temp.child.element;
                 app.temp.parentIndex = app.temp.selectionIndex; // keep track of selected parent element
+                console.log('parent: '+app.temp.parentIndex);
                 app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
             }else{
@@ -2681,6 +2682,8 @@ app.effect = function () {
             if(horizon === 'left' && modeOptionsActive){
                 app.temp.modeOptionsActive = false;
                 app.temp.selectionIndex = app.temp.parentIndex;
+                console.log('after parent: '+app.temp.parentIndex);
+                consoel.log('sindL '+app.temp.selectionIndex);
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
                 app.temp.modeOptionsActive = true;
