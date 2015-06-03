@@ -2770,7 +2770,7 @@ app.effect = function () {
                     previouslySelected.options = menu;
                 }
 
-                var oneUp = ind - 1 < 1 ? length : ind - 1};
+                var oneUp = ind - 1 < 1 ? length : ind - 1;
                 var twoUp = oneAbove - 1 < 1 ? length : position.oneAbove - 1; 
                 var oneDown = ind + 1 > length ? 1 : ind + 1; 
                 var twoDown = oneBelow + 1 > length ? 1 : position.oneBelow + 1;
