@@ -2737,7 +2737,7 @@ app.effect = function () {
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(previouslySelected.index && previouslySelected.index !== index){
                 console.log('here');
-                console.lot('prev: '+previouslySelected.index+', now: '+index);
+                console.log('prev: '+previouslySelected.index+', now: '+index);
                 previouslySelected.element.style.height = '';
                 previouslySelected.element.style.borderColor = 'black';
                 if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
