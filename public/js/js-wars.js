@@ -1842,11 +1842,18 @@ app.display = function () {
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
+
+                console.log(app.temp.child);
                 var hudElement = app.temp.child.element;
+                console.log(hudElement);
+
                 // keep track of selected parent element
                 app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
+
                 if(!modeOptionsActive) app.temp.selectionIndex = app.temp.child.index;
+
                 tag = app.temp.child.tag;
+
             }else if(!modeOptionsActive){ 
                 if(app.temp.loopThrough){
                     var parentIndex = app.temp.parentIndex;
@@ -2700,6 +2707,7 @@ app.effect = function () {
                     tag:'modeOptionIndex',
                     index:1
                 }
+                console.log(app.temp.child);
             }
             delete app.temp.horizon;
             app.temp.loopThrough = true;
@@ -2745,12 +2753,12 @@ app.effect = function () {
             if(prev){
                 console.log(prev);
                 stopFading();
-                prev.style.height = '';
-                prev.style.borderColor = 'black';
+                app.temp.prevElement.style.height = '';
+                app.temp.prevElement.style.borderColor = 'black';
                 console.log('wtf?');
-                console.log(prev);
+                console.log(app.temp.prevElement);
                 if(!app.temp.modeOptionsActive){
-                    var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
+                    var prevOptions = findElementsByClass(app.temp.prevElement, 'modeOptions')[0] || false;
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
                 }
             }
