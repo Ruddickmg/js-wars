@@ -1846,7 +1846,6 @@ app.display = function () {
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
 
-                console.log(app.temp.child);
                 var hudElement = app.temp.child.element;
                 console.log(hudElement);
 
@@ -1870,6 +1869,8 @@ app.display = function () {
 
             // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
+            console.log('elems');
+            console.log(elements);
 
             var prev = app.temp.prevElement;
             len = elements.length;
@@ -1896,6 +1897,7 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
+            console.log('tag: '+tag+', selectionIndex: '+selectionIndex+', elements: '+elements);
             selectedElement = findElementByTag(tag, elements, selectionIndex);
             console.log(selectedElement);
             // callback that defines how to display the selected element ( functions located in app.effect )
