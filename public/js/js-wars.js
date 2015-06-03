@@ -1843,7 +1843,7 @@ app.display = function () {
                 // keep track of selected parent element
                 //if((function (pIndex) {return pIndex;}(app.temp.selectionIndex));
                 var pind = [app.temp.selectionIndex];
-                var app.temp.parentIndex = pind.slice(0)[0];
+                app.temp.parentIndex = pind.slice(0)[0];
                 console.log('parent: '+app.temp.parentIndex);
                 app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
