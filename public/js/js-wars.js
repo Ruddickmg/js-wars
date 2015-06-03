@@ -39,6 +39,11 @@ socket.on('disconnect', function() {
   console.log('The client has disconnected!');
 });
 
+
+socket.on('userAdded', function(message) {
+    console.log(message);
+});
+
 /* ---------------------------------------------------------------------------------------------------------*\
     
     add useful methods to prototypes
@@ -1843,11 +1848,12 @@ app.display = function () {
                 app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
                 app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
-            }else if(app.temp.loopThrough){
-                var parentIndex = app.temp.parentIndex;
-                app.temp.selectionIndex = parentIndex;
-                app.temp.prevIndex = parentIndex;
-            }else{
+            }else{ 
+                if(app.temp.loopThrough){
+                    var parentIndex = app.temp.parentIndex;
+                    app.temp.selectionIndex = parentIndex;
+                    app.temp.prevIndex = parentIndex;
+                }
                 var hudElement = document.getElementById(id);
             }
 
