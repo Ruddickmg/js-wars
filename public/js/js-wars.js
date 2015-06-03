@@ -1842,17 +1842,19 @@ app.display = function () {
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
+                consol.log('orev: '+app.temp.prevIndex+', index: '+app.temp.selectionIndex+', horizon: '+app.temp.horizon+', loop: '+app.temp.loopThrough);
                 console.log('active: '+modeOptionsActive);
                 var hudElement = app.temp.child.element;
                 // keep track of selected parent element
                 app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
                 if(!modeOptionsActive) app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
-            }else{ 
+            }else if(!modeOptionsActive){ 
                 if(app.temp.loopThrough){
                     var parentIndex = app.temp.parentIndex;
                     app.temp.selectionIndex = parentIndex;
                     app.temp.prevIndex = parentIndex;
+                    delete app.temp.loopThrough;
                     delete app.temp.parentIndex;
                 }
                 var hudElement = document.getElementById(id);
@@ -1889,9 +1891,8 @@ app.display = function () {
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             // callback that defines how to display the selected element ( functions located in app.effect )
-            if (selectedElement) var selectedOption = display(selectedElement, tag, selectionIndex, prev, elements);
+            if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements);
             if (app.temp.horizon) delete app.temp.horizon;
-            if(selectedOption) return selectedOption;
 
             // store the last index for future comparison
             app.temp.prevIndex = selectionIndex;
@@ -1910,8 +1911,6 @@ app.display = function () {
             // if the down key has been pressed then move to the next index ( element ) down
         } else if (key.down in app.keys) {
 
-            console.log('down');
-
             // only movement if the index is less then the length ( do not move to non existant index )
             if (selectionIndex < len && !infiniteScroll || selectionIndex < len && modeOptionsActive) {
 
@@ -1924,8 +1923,6 @@ app.display = function () {
 
             // same as above, but up
         } else if (key.up in app.keys) {
-
-            console.log('up');
 
             if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
                 app.temp.selectionIndex -= 1;
