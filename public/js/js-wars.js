@@ -2749,6 +2749,7 @@ app.effect = function () {
 
             if(!app.temp.modeOptionsActive){
 
+                var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
                 var length = elements.length;
 
                 if(!height) height = app.settings.selectedModeHeight;
@@ -2769,8 +2770,6 @@ app.effect = function () {
                     previouslySelected.options = menu;
                 }
 
-                var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-
                 if(length > 5) console.log(elements);
                 console.log(length);
 
@@ -2785,7 +2784,7 @@ app.effect = function () {
                     var indo = position[pos];
                     console.log('position: '+pos+', index: '+indo);
                     var element = app.display.findElementByTag(tag, elements, indo);
-                    console.log('ps2: '+pos);
+                    console.log('ps2: '+pos)
                     element.setAttribute('pos', pos);
                 }
 
