@@ -1839,16 +1839,11 @@ app.display = function () {
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
                 var hudElement = app.temp.child.element;
-
                 // keep track of selected parent element
-                //if((function (pIndex) {return pIndex;}(app.temp.selectionIndex));
                 app.temp.parentIndex = app.temp.parentIndex ? app.temp.parentIndex : app.temp.selectionIndex;
-                console.log('parent: '+app.temp.parentIndex);
-
                 app.temp.selectionIndex = app.temp.child.index;
-
                 tag = app.temp.child.tag;
-                
+
             }else{
                 var hudElement = document.getElementById(id);
             }
@@ -2745,8 +2740,6 @@ app.effect = function () {
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(previouslySelected.index && previouslySelected.index !== index || app.temp.loopThrough){
-                console.log('here');
-                console.log('prev: '+previouslySelected.index + ', now: '+index);
                 if(app.temp.loopThrough) delete app.temp.loopThrough;
                 previouslySelected.element.style.height = '';
                 previouslySelected.element.style.borderColor = 'black';
@@ -2755,6 +2748,8 @@ app.effect = function () {
             }
 
             if(!app.temp.modeOptionsActive){
+
+                var length = elements.length;
 
                 if(!height) height = app.settings.selectedModeHeight;
                 if( previouslySelected.index && index < previouslySelected.index ) ind = ind - 1 < 1 ? length : ind - 1;
@@ -2775,7 +2770,6 @@ app.effect = function () {
                 }
 
                 var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-                var length = elements.length;
 
                 if(length > 5) console.log(elements);
                 console.log(length);
@@ -2783,13 +2777,15 @@ app.effect = function () {
                 var position = {oneAbove:ind - 1 < 1 ? length : ind - 1};
                 position.twoAbove = position.oneAbove - 1 < 1 ? length : position.oneAbove - 1; 
                 position.oneBelow = ind + 1 > length ? 1 : ind + 1; 
-                position.twoBelow = position.oneBelow + 1 > length ? 1 : position.oneBelow + 1; 
+                position.twoBelow = position.oneBelow + 1 > length ? 1 : position.oneBelow + 1;
 
                 for(var a = 0; a < positions.length; a += 1){
                     var pos = positions[a];
+                    console.log('pos1: '+pos);
                     var indo = position[pos];
                     console.log('position: '+pos+', index: '+indo);
                     var element = app.display.findElementByTag(tag, elements, indo);
+                    console.log('ps2: '+pos);
                     element.setAttribute('pos', pos);
                 }
 
