@@ -1842,8 +1842,6 @@ app.display = function () {
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
-                console.log('orev: '+app.temp.prevIndex+', index: '+app.temp.selectionIndex+', horizon: '+app.temp.horizon+', loop: '+app.temp.loopThrough);
-                console.log('active: '+modeOptionsActive);
                 var hudElement = app.temp.child.element;
                 // keep track of selected parent element
                 app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
@@ -1863,7 +1861,7 @@ app.display = function () {
             // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
 
-            var prev = app.temp.prevIndex;
+            var prev = app.temp.prevElement;
             len = elements.length;
             key = app.game.settings.keyMap;
             undo = app.undo.keyPress;
@@ -1898,6 +1896,7 @@ app.display = function () {
 
             // store the last index for future comparison
             app.temp.prevIndex = selectionIndex;
+            app.temp.prevElement = selectedElement;
         }
 
         // if the select key has been pressed and an element is available for selection then return its id
@@ -2740,26 +2739,19 @@ app.effect = function () {
             // display info on the currently hovered over element
             if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id);
 
-            // check if there was a previous element that was hovered over
-            if (prev) {
-
-                // if there is then remove its highlighting
-                var prevElement = app.display.findElementByTag( tag, elements, prev);
-                prevElement.style.backgroundColor = '';
-            }
+            // if there is then remove its highlighting
+            if (prev) prev.style.backgroundColor = '';
         },
 
         scrollSetupMenu:function (selectedElement, tag, index, prev, elements){
 
-            if(prev) var previousElement = app.display.findElementByTag( tag, elements, prev );
-
              // if the item being hovered over has changed, remove the effects of being hovered over
-            if(previousElement){
+            if(prev){
                 stopFading();
-                previousElement.style.height = '';
-                previousElement.style.borderColor = 'black';
-                if(!app.temp.modeOptionsActive && prev !== index){
-                    var prevOptions = findElementsByClass(previousElement, 'modeOptions')[0] || false;
+                prev.style.height = '';
+                prev.style.borderColor = 'black';
+                if(!app.temp.modeOptionsActive){
+                    var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
                 }
             }
