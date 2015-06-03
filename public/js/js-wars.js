@@ -1840,10 +1840,13 @@ app.display = function () {
             if(app.temp.child){
                 var hudElement = app.temp.child.element;
                 // keep track of selected parent element
-                app.temp.parentIndex = app.temp.parentIndex ? app.temp.parentIndex : app.temp.selectionIndex;
+                app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
                 app.temp.selectionIndex = app.temp.child.index;
                 tag = app.temp.child.tag;
-
+            }else if(app.temp.loopThrough){
+                var parentIndex = app.temp.parentIndex;
+                app.temp.selectionIndex = parentIndex;
+                app.temp.prevIndex = parentIndex;
             }else{
                 var hudElement = document.getElementById(id);
             }
@@ -2677,14 +2680,12 @@ app.effect = function () {
         if (!undo) undo = app.undo.keyPress;
 
         var modeOptionsActive = app.temp.modeOptionsActive;
-        var parentIndex = app.temp.parentIndex;
         var horizon = app.temp.horizon;
 
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
                 app.temp.modeOptionsActive = false;
-                app.temp.selectionIndex = parentIndex;
-                previouslySelected.index = parentIndex;
+                previouslySelected.index = app.temp.parentIndex;
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
                 app.temp.modeOptionsActive = true;
