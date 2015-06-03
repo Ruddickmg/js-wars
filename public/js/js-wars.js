@@ -1892,7 +1892,6 @@ app.display = function () {
 
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements);
-            if (app.temp.loopThrough) delete app.temp.loopThrough;
             if (app.temp.horizon) delete app.temp.horizon;
 
             // store the last index for future comparison
@@ -2755,6 +2754,8 @@ app.effect = function () {
                 if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
                 stopFading();
             }
+
+            if (app.temp.loopThrough) delete app.temp.loopThrough;
 
             if(!app.temp.modeOptionsActive){
 
