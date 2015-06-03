@@ -1892,6 +1892,7 @@ app.display = function () {
 
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement) display(selectedElement, tag, selectionIndex, prev, elements);
+            if (app.temp.loopThrough) delete app.temp.loopThrough;
             if (app.temp.horizon) delete app.temp.horizon;
 
             // store the last index for future comparison
@@ -2749,7 +2750,6 @@ app.effect = function () {
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(previouslySelected.index && previouslySelected.index !== index || app.temp.loopThrough){
-                if(app.temp.loopThrough) delete app.temp.loopThrough;
                 previouslySelected.element.style.height = '';
                 previouslySelected.element.style.borderColor = 'black';
                 if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
