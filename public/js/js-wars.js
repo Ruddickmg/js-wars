@@ -1903,6 +1903,7 @@ app.display = function () {
 
         // if the select key has been pressed and an element is available for selection then return its id
         if (key.select in app.keys && selectedElement && !app.temp.menuOptionsActive) {
+            console.log('here');
             app.temp.selectionIndex = 1;
             delete app.temp.prevIndex;
             delete selectedElement;
@@ -2681,6 +2682,7 @@ app.settings = {
 
 \* --------------------------------------------------------------------------------------*/
 
+
 app.effect = function () {
 
     var key, undo, positions = ['oneAbove','twoAbove','oneBelow','twoBelow'];
@@ -2755,7 +2757,7 @@ app.effect = function () {
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
                 }
             }
-            
+
             if(app.temp.loopThrough) delete app.temp.loopThrough;
 
             if(!app.temp.modeOptionsActive){
