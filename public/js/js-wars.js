@@ -2680,13 +2680,14 @@ app.settings = {
 
 app.effect = function () {
 
-    var previous, previouslySelected = {}, pre, ind = 1, key, num, height, undo, selectIndex, selection = false;
-    var positions = ['oneAbove','twoAbove','oneBelow','twoBelow'];
+    var key, undo, positions = ['oneAbove','twoAbove','oneBelow','twoBelow'];
 
-    var menuItemOptions = function ( selectedElement, options ) {
+    var menuItemOptions = function ( selectedElement, menu ) {
         if (!key) key = app.game.settings.keyMap;
         if (!undo) undo = app.undo.keyPress;
 
+        // display the menu options
+        menu.style.display = '';
         var modeOptionsActive = app.temp.modeOptionsActive;
         var horizon = app.temp.horizon;
 
@@ -2751,10 +2752,13 @@ app.effect = function () {
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(previousElement){
-                console.log('here');
+                console.log(previousElement);
                 previousElement.style.height = '';
                 previousElement.style.borderColor = '';
-                if(previouslySelected.options && !app.temp.modeOptionsActive) previouslySelected.options.style.display = 'none';
+                if(!app.temp.modeOptionsActive){
+                    var prevOptions = findElementsByClass(previousElement, 'modeOptions');
+                    if(prevOptions[0]) prevOptions[0].options.style.display = 'none';
+                }
                 stopFading();
             }
 
@@ -2763,38 +2767,21 @@ app.effect = function () {
             if(!app.temp.modeOptionsActive){
 
                 var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-                var optionMenu = findElementsByClass(selectedElement, 'modeOptions');
+                var menu = findElementsByClass(selectedElement, 'modeOptions')[0] || null;
                 var length = elements.length;
 
-                if(!height) height = app.settings.selectedModeHeight;
-                if(optionMenu[0]){
+                // calculate the positions of the surrounding elements by index
+                var pos = {oneUp: index - 1 < 1 ? length : index - 1};
+                pos.twoUp = pos.oneUp - 1 < 1 ? length : pos.oneUp - 1; 
+                pos.oneDown = index + 1 > length ? 1 : index + 1; 
+                pos.twoDown = pos.oneDown + 1 > length ? 1 : pos.oneDown + 1;
 
-                    var menu = optionMenu[0];
-
-                    // display the menu options
-                    menu.style.display = '';
-
-                    // get array of options and add the option menu to the previously selected list
-                    options = findElementsByClass(menu, 'modeOption');
-                    previouslySelected.options = menu;
+                for( var p = 0; p < positions.length; p += 1){
+                    var position = positions[p];
+                    var posIndex = pos[position];
+                    console.log(position+':'+posIndex);
+                    var oneAbove = app.display.findElementByTag(tag, elements, posIndex);
                 }
-
-                var oneUp = index - 1 < 1 ? length : index - 1;
-                var twoUp = oneUp - 1 < 1 ? length : oneUp - 1; 
-                var oneDown = index + 1 > length ? 1 : index + 1; 
-                var twoDown = oneDown + 1 > length ? 1 : oneDown + 1;
-
-                console.log('twoUp: '+twoUp+', oneUp: '+oneUp+', selected: '+index+', oneDown: '+oneDown+', twoDown: '+twoDown);
-
-                var oneAbove = app.display.findElementByTag(tag, elements, oneUp);
-                var twoAbove = app.display.findElementByTag(tag, elements, twoUp);
-                var oneBelow = app.display.findElementByTag(tag, elements, oneDown);
-                var twoBelow = app.display.findElementByTag(tag, elements, twoDown);
-
-                oneAbove.setAttribute('pos', 'oneAbove');
-                twoAbove.setAttribute('pos', 'twoAbove');
-                oneBelow.setAttribute('pos', 'oneBelow');
-                twoBelow.setAttribute('pos', 'twoBelow');
                 selectedElement.setAttribute('pos', 'selected');
             }
 
