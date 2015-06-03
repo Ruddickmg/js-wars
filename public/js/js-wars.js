@@ -39,7 +39,6 @@ socket.on('disconnect', function() {
   console.log('The client has disconnected!');
 });
 
-
 socket.on('userAdded', function(message) {
     console.log(message);
 });
@@ -1907,7 +1906,7 @@ app.display = function () {
             undo(key.select);
             return selectedElement.getAttribute('id');
             // if the down key has been pressed then move to the next index ( element ) down
-        } else if (key.down in app.keys) {
+        } else if (key.down in app.keys && !app.temp.loopThrough) {
 
             // only movement if the index is less then the length ( do not move to non existant index )
             if (selectionIndex < len && !infiniteScroll || selectionIndex < len && modeOptionsActive) {
@@ -1920,7 +1919,7 @@ app.display = function () {
             undo(key.down);
 
             // same as above, but up
-        } else if (key.up in app.keys) {
+        } else if (key.up in app.keys && !app.temp.loopThrough) {
 
             if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
                 app.temp.selectionIndex -= 1;
