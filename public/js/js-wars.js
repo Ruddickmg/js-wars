@@ -1840,14 +1840,11 @@ app.display = function () {
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if (app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
-          
-            console.log(app.temp.prevIndex  + ' : ' +app.temp.selectionIndex + ' : ' +app.temp.horizon + ' : ' +app.temp.loopThrough);
-
+        
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
 
                 var hudElement = app.temp.child.element;
-                console.log(hudElement);
 
                 // keep track of selected parent element
                 app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
@@ -1869,8 +1866,6 @@ app.display = function () {
 
             // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
-            console.log('elems');
-            console.log(elements);
 
             var prev = app.temp.prevElement;
             len = elements.length;
@@ -1897,9 +1892,7 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
-            console.log('tag: '+tag+', selectionIndex: '+selectionIndex+', elements: '+elements);
             selectedElement = findElementByTag(tag, elements, selectionIndex);
-            console.log(selectedElement);
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement || app.temp.loopThrough) display(selectedElement, tag, selectionIndex, prev, elements);
 
@@ -1940,8 +1933,8 @@ app.display = function () {
                 app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
             }
             undo(key.up);
-        } else if (key.left in app.keys){
-            app.temp.horizon = 'left';
+        } else if (key.left in app.keys ){
+            if (modeOptionsActive) app.temp.horizon = 'left';
             undo(key.left);
         } else if(key.right in app.keys){
             app.temp.horizon = 'right';
@@ -2700,7 +2693,6 @@ app.effect = function () {
         if(menu) menu.style.display = '';
         var modeOptionsActive = app.temp.modeOptionsActive;
         var horizon = app.temp.horizon;
-        console.log('jorizon: '+horizon);
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
                 delete app.temp.modeOptionsActive;
@@ -2712,9 +2704,7 @@ app.effect = function () {
                     tag:'modeOptionIndex',
                     index:1
                 }
-                console.log(app.temp.child);
             }
-            console.log('in horizon');
             delete app.temp.horizon;
             app.temp.loopThrough = true;
         }
@@ -2757,20 +2747,16 @@ app.effect = function () {
 
              // if the item being hovered over has changed, remove the effects of being hovered over
             if(prev){
-                console.log(prev);
                 stopFading();
                 app.temp.prevElement.style.height = '';
                 app.temp.prevElement.style.borderColor = 'black';
-                console.log('wtf?');
-                console.log(prev);
                 if(!app.temp.modeOptionsActive){
                     var prevOptions = findElementsByClass(app.temp.prevElement, 'modeOptions')[0] || false;
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
                 }
             }
-            if(app.temp.loopThrough) console.log('loop...');
-            app.temp.loopThrough = false;
-            if(app.temp.loopThrough) console.log('stop!');
+            
+            if(app.temp.loopThrough) delete app.temp.loopThrough;
 
             if(!app.temp.modeOptionsActive){
 
@@ -2792,7 +2778,6 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
-                console.log(selectedElement);
             }
 
             // fade the selected element from color to white
