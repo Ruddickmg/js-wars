@@ -1852,7 +1852,7 @@ app.display = function () {
                 // keep track of selected parent element
                 app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
 
-                if(!modeOptionsActive) app.temp.selectionIndex = app.temp.child.index;
+                if(!modeOptionsActive || app.temp.loopThrough) app.temp.selectionIndex = app.temp.child.index;
 
                 tag = app.temp.child.tag;
 
