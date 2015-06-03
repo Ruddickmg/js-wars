@@ -1842,7 +1842,7 @@ app.display = function () {
 
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
-                consol.log('orev: '+app.temp.prevIndex+', index: '+app.temp.selectionIndex+', horizon: '+app.temp.horizon+', loop: '+app.temp.loopThrough);
+                console.log('orev: '+app.temp.prevIndex+', index: '+app.temp.selectionIndex+', horizon: '+app.temp.horizon+', loop: '+app.temp.loopThrough);
                 console.log('active: '+modeOptionsActive);
                 var hudElement = app.temp.child.element;
                 // keep track of selected parent element
