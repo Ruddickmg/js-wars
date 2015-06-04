@@ -80,14 +80,9 @@ app = {
 
     // return an hsl string from either manual settings or object containing hsl values
     hsl:function(h,s,l){
-
-        console.log(h);
-
         var hue = s? h : h.h;
         var saturation = s? s : h.s;
         var lightness = s? l : h.l;
-
-        console.log('h: '+hue+', s: '+saturation+', l:'+lightness);
         return 'hsl('+hue+','+saturation+'%,'+lightness+'%)';
     },
 
@@ -1537,7 +1532,6 @@ app.display = function () {
 
             var mi = menu[m];
             var color = app.hsl(app.settings.colors[mi.id]);
-            console.log('color'+color);
 
             // create li item for each mode
             var item = document.createElement('li');
@@ -1563,8 +1557,6 @@ app.display = function () {
             item.appendChild(leftBlock);
             item.appendChild(text);
             item.appendChild(rightBlock);
-
-            console.log(item);
 
             // if there are further options for the mode
             if(mi.options){
@@ -1601,9 +1593,6 @@ app.display = function () {
         selectModeScreen.appendChild(selectMenu);
         selectModeScreen.appendChild(footer);
 
-        console.log(selectModeScreen);
-
-
         // insert select mode screen into dom
         var exists = document.getElementById('selectModeScreen');
         if(exists) {
@@ -1611,7 +1600,6 @@ app.display = function () {
         }else{
             document.body.insertBefore(selectModeScreen, app.domInsertLocation);
         }
-
     };
 
     var setup = function (name) {
@@ -2807,9 +2795,9 @@ app.effect = function () {
         return elements;
     };
 
-    var fade = function (element, hue){
+    var fade = function (element, id){
         app.temp.swell = element;
-        app.temp.swellingColor = hue;
+        app.temp.swellingColor = ap.settings.colors[id];
     };
 
     var stopFading = function (){
@@ -2927,7 +2915,7 @@ app.effect = function () {
         },
         
         fade:function(element, id){
-            fade(element, ap.settings.colors[id]);
+            fade(element, id);
         },
 
         stopFading:function(){
