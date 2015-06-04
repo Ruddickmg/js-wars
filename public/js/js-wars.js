@@ -1525,35 +1525,31 @@ app.display = function () {
         for( var m = 0; m < menu.length; m += 1){
             var mi = menu[m];
 
+            console.log(mi);
+            
             // create li item for each mode
             var item = document.createElement('li');
             var leftBlock = document.createElement('div');
             var rightBlock = document.createElement('div');
             var text = document.createElement('h1');
 
-            console.log('wtf?');
-
             leftBlock.setAttribute('class', 'leftBlock');
             rightBlock.setAttribute('class', 'rightBlock');
-
-            console.log('heelllooooo?');
-
             text.setAttribute('class', 'text');
-
-            console.log('text');
-
             item.setAttribute('class','modeItem');
-
-            console.log('mode');
-
             item.setAttribute('modeItemIndex', m + 1);
-
-            console.log('hue');
             item.setAttribute('id', mi.id);
+
+            console.log('id?');
+
             item.style.height = height;
+
+            console.log('height?');
 
             // set displayed text for mode selection
             text.innerHTML = mi.display;
+
+            console.log('innnnnnerrrr');
 
             console.log(item);
 
