@@ -2820,7 +2820,7 @@ app.effect = function () {
                 stopFading();
                 prev.style.height = '';
                 prev.style.borderColor = '';
-                block = findElementByClass(prev, 'block')[0] || false;
+                block = findElementsByClass(prev, 'block')[0] || false;
                 if(block) block.style.display = '';
                 if(!app.temp.modeOptionsActive){
                     var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
