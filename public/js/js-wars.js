@@ -1540,6 +1540,7 @@ app.display = function () {
 
             // span is to make a background around the text
             var span = document.createElement('span');
+            span.setAttribute('class', 'textBackground');
             span.innerHTML = mi.display;
 
             // set displayed text for mode selection
@@ -2854,7 +2855,8 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
-                var text = findElementsByClass(selectedElement, 'text')[0] || false;
+                var text = findElementsByClass(selectedElement, 'textBackground')[0] || false;
+                console.log(text);
                 var clientWidth = text.clientWidth;
                 console.log('client: '+clientWidth);
                 var parentWidth = selectedElement.clientWidth;
