@@ -196,7 +196,9 @@ li[pos=twoBelow] {
 
 .text {
     position: absolute;
-    background: white;
+    background-color: white;
+    display: inline;
+    top:0px;
     z-index: 10;
     left:50%;
     right:50%;
