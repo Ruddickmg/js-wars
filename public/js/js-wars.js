@@ -2797,7 +2797,7 @@ app.effect = function () {
 
     var fade = function (element, id){
         app.temp.swell = element;
-        app.temp.swellingColor = ap.settings.colors[id];
+        app.temp.swellingColor = app.settings.colors[id];
     };
 
     var stopFading = function (){
