@@ -185,9 +185,9 @@ li[pos=twoBelow] {
 
 .leftBlock, .rightBlock {
     display: inline-block;
-    width: 100%;
+    width: 20%;
     height: 26px;
-    padding: 2px;
+    margin: 2px;
 }
 
 .leftBlock {

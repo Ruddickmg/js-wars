@@ -2857,13 +2857,14 @@ app.effect = function () {
             }
 
             if(selectedElement.getAttribute('class') === 'modeOption'){
-                selectedElement.parentNode.parentNode.getAttribute('id');
+                id = selectedElement.parentNode.parentNode.id;
+                console.log(id);
             }else{
-                selectedElement.getAttribute('id');
+                id = selectedElement.id;
             }
 
             // fade the selected element from color to white
-            fade(selectedElement, selectedElement.id || 'game');
+            fade(selectedElement, id || 'game');
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
