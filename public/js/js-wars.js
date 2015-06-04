@@ -2820,9 +2820,9 @@ app.effect = function () {
                 stopFading();
                 prev.style.height = '';
                 prev.style.borderColor = '';
-                block = findElementsByClass(prev, 'block')[0] || false;
-                if(block) block.style.display = '';
                 if(!app.temp.modeOptionsActive){
+                    block = findElementsByClass(prev, 'block')[0] || false;
+                    if(block) block.style.display = '';
                     var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
                 }
@@ -2893,7 +2893,7 @@ app.effect = function () {
                     var prev = app.temp.previousLightness;
                     var lightness = app.temp.lightness;
                     var color = app.temp.swellingColor;
-                    element.style.borderColor = app.hsl(color);
+                    element.style.borderColor = app.hsl(color.h, color.s, lightness);
 
                     if( lightness + inc <= 100 && prev < lightness || lightness - inc < color.l){
                         app.temp.lightness += inc;
