@@ -81,11 +81,13 @@ app = {
     // return an hsl string from either manual settings or object containing hsl values
     hsl:function(h,s,l){
         if(!s){
+            console.log('in');
             h = h.h;
             s = s.s;
             l = l.l;
         }
-        return 'hsl('+h+','+s+'%,'+l+'%)'
+        console.log('h: '+h+', s: '+s+', l:'+l);
+        return 'hsl('+h+','+s+'%,'+l+'%)';
     },
 
     turn: function (){
@@ -1531,12 +1533,10 @@ app.display = function () {
 
         // create and insert information for each mode
         for( var m = 0; m < menu.length; m += 1){
+
             var mi = menu[m];
-            console.log(mi);
-            var col = app.settings.colors[mi.id];
-            console.log(col);
-            var color = app.hsl(col);
-            console.log(color);
+            var color = app.hsl(app.settings.colors[mi.id]);
+            console.log('color'+color);
 
             // create li item for each mode
             var item = document.createElement('li');
