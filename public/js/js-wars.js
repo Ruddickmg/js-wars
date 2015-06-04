@@ -1538,10 +1538,15 @@ app.display = function () {
             block.setAttribute('class', 'block');            
             block.style.backgroundColor = color;
 
+            // span is to make a background around the text
+            var span = document.createElement('span');
+            spam.setAttribute('class', 'textBackground');
+            span.innerHTML = mi.display;
+
             // set displayed text for mode selection
             var text = document.createElement('h1');
             text.setAttribute('class', 'text');
-            text.innerHTML = mi.display;
+            text.appendChild(span);
 
             // create li item for each mode
             var item = document.createElement('li');
@@ -1883,8 +1888,6 @@ app.display = function () {
                 }
                 var hudElement = document.getElementById(id);
             }
-
-            console.log(hudElement, elementType);
 
             // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
