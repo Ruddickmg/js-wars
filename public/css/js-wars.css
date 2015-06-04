@@ -175,7 +175,7 @@ li[pos=selected] {
 li[pos=selected] .text {
     line-height: 100px;
     font-size: 90px;
-    border-bottom: 8px;
+    border-bottom: 8px solid;
 }
 
 li[pos=oneBelow] {

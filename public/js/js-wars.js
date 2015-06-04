@@ -2655,7 +2655,7 @@ app.settings = {
             type:'exit',
         },{
             id:'game',
-            display:'Game Setup',
+            display:'Game',
             type:'setup',
             options:['new', 'continue']
         },{
@@ -2672,7 +2672,7 @@ app.settings = {
 
         },{
             id:'store',
-            display:'Game Store',
+            display:'Store',
             type:'store',
     }],
 
