@@ -1532,9 +1532,11 @@ app.display = function () {
         // create and insert information for each mode
         for( var m = 0; m < menu.length; m += 1){
             var mi = menu[m];
-            var color = app.hsl(app.settings.colors[mi.id]);
-            console.log(color);
             console.log(mi);
+            var col = app.settings.colors[mi.id];
+            console.log(col);
+            var color = (app.hsl);
+            console.log(color);
 
             // create li item for each mode
             var item = document.createElement('li');
