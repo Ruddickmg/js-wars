@@ -2862,6 +2862,7 @@ app.effect = function () {
                 var parentWidth = selectedElement.clientWidth;
                 console.log('parent' + parentWidth);
                 var percent = clientWidth / parentWidth;
+                console.log(percent);
                 var transform = clientWidth * (1 + percent);
                 console.log('transform'+transform);
                 text.style.transform = 'scale('+transform+',1)';
