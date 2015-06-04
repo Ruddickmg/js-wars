@@ -82,9 +82,10 @@ app = {
     hsl:function(h,s,l){
         if(!s){
             console.log('in');
+            console.log(h);
             h = h.h;
-            s = s.s;
-            l = l.l;
+            s = h.s;
+            l = h.l;
         }
         console.log('h: '+h+', s: '+s+', l:'+l);
         return 'hsl('+h+','+s+'%,'+l+'%)';
