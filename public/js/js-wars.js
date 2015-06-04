@@ -1539,9 +1539,16 @@ app.display = function () {
             console.log('heelllooooo?');
 
             text.setAttribute('class', 'text');
+
+            console.log('text');
+
             item.setAttribute('class','modeItem');
+
+            console.log('mode');
+
             item.setAttribute('modeItemIndex', m + 1);
-            item.setAttribute('hue', app.settings.colors[mi.id]);
+
+            console.log('hue');
             item.setAttribute('id', mi.id);
             item.style.height = height;
 
