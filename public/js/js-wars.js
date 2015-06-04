@@ -1532,28 +1532,29 @@ app.display = function () {
         // create and insert information for each mode
         for( var m = 0; m < menu.length; m += 1){
             var mi = menu[m];
-
+            var color = app.hsl(app.settings.colors[mi.id]);
+            console.log(color);
             console.log(mi);
 
             // create li item for each mode
             var item = document.createElement('li');
-            var leftBlock = document.createElement('div');
-            var rightBlock = document.createElement('div');
-            var text = document.createElement('h1');
-            var color = app.hsl(app.settings.hsl[mi.id]);
-
-            leftBlock.setAttribute('class', 'leftBlock');
-            rightBlock.setAttribute('class', 'rightBlock');
-            text.setAttribute('class', 'text');
             item.setAttribute('class','modeItem');
             item.setAttribute('modeItemIndex', m + 1);
             item.setAttribute('id', mi.id);
             item.style.height = height;
             item.style.color = color;
-            leftBlock.style.color = color;
-            rightBlock.style.color = color;
+
+            var leftBlock = document.createElement('div');
+            leftBlock.setAttribute('class', 'leftBlock');            
+            leftBlock.style.backgroundColor = color;
+
+            var rightBlock = document.createElement('div');
+            rightBlock.setAttribute('class', 'rightBlock');
+            rightBlock.style.backgroundColor = color;
 
             // set displayed text for mode selection
+            var text = document.createElement('h1');
+            text.setAttribute('class', 'text');
             text.innerHTML = mi.display;
 
             item.appendChild(leftBlock);
@@ -1580,7 +1581,6 @@ app.display = function () {
                     option.setAttribute('class', 'modeOption');
                     option.setAttribute('modeOptionIndex', o + 1);
                     option.setAttribute('id', mi.options[o] + mi.id);
-                    option.setAttribute('hue', app.settings.colors[mi.id]);
 
                     // create id and display name for each option
                     option.innerHTML = mi.options[o];
@@ -2625,7 +2625,7 @@ app.settings = {
     colorSwellSpeed:2,
 
     // colors of menus etc...
-    hsl: {
+    colors: {
         design:{h:216,s:100,l:50},
         store:{h:72, s:100, l:50},
         game:{h:0, s:100, l:50},
@@ -2924,7 +2924,7 @@ app.effect = function () {
         },
         
         fade:function(element, id){
-            fade(element, ap.settings.hsl[id]);
+            fade(element, ap.settings.colors[id]);
         },
 
         stopFading:function(){
