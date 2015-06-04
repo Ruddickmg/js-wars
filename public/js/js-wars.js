@@ -1489,8 +1489,6 @@ app.display = function () {
             var loginScreen = document.getElementById('login');
                 loginScreen.parentNode.removeChild(loginScreen);
 
-            console.log('in');
-
             // display the game selection menu
             selectMode();
 
@@ -1499,9 +1497,6 @@ app.display = function () {
     };
 
     var selectMode = function () { 
-
-
-        console.log('here?');
 
         // height of each mode element
         var height = app.settings.selectedModeHeight;
@@ -1537,18 +1532,22 @@ app.display = function () {
             leftBlock.setAttribute('class', 'leftBlock');
             rightBlock.setAttribute('class', 'rightBlock');
             text.setAttribute('class', 'text');
+            item.setAttribute('class','modeItem');
             item.setAttribute('modeItemIndex', m + 1);
             item.setAttribute('hue', app.settings.colors[mi.id]);
-            item.setAttribute('class','modeItem');
             item.setAttribute('id', mi.id);
             item.style.height = height;
 
             // set displayed text for mode selection
             text.innerHTML = mi.display;
 
+            console.log(item);
+
             item.appendChild(leftBlock);
             item.appendChild(text);
             item.appendChild(rightBlock);
+
+            console.log(item);
 
             // if there are further options for the mode
             if(mi.options){
