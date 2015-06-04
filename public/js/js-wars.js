@@ -1903,7 +1903,6 @@ app.display = function () {
 
         // if the select key has been pressed and an element is available for selection then return its id
         if (key.select in app.keys && selectedElement && !app.temp.menuOptionsActive) {
-            console.log('here');
             app.temp.selectionIndex = 1;
             delete app.temp.prevIndex;
             delete selectedElement;
@@ -2497,6 +2496,47 @@ app.move = function () {
 
 /* --------------------------------------------------------------------------------------*\
     
+    app.modes holds functions forthe selection of game modes / logout etc..
+
+\* --------------------------------------------------------------------------------------*/
+
+app.modes = function (){
+    return{
+        logout: function (){
+            // log user out of facebook
+            FB.logout(function(response) {
+              console.log(response);
+            });
+
+            // open login screen
+            app.display.login();
+        },
+        newGame:function(){
+            alert('set up a new game');
+        },
+        continueGame:function(){
+            alert('continue an old game');
+        }
+        newJoin:function(){
+            alert('join a new game');
+        },
+        continueJoin:function(){
+            alert('join a game that was already started');
+        },
+        designCO:function(){
+            alert('design a co');
+        },
+        designMap:function(){
+            alert('design a map');
+        },
+        store:function(){
+            alert('go to the game store');
+        }
+    };
+}
+
+/* --------------------------------------------------------------------------------------*\
+    
     app.game.settings consolidates all the user customizable options for the game into
     an object for easy and dynamic manipulation
 \* --------------------------------------------------------------------------------------*/
@@ -2747,7 +2787,7 @@ app.effect = function () {
 
         scrollSetupMenu:function (selectedElement, tag, index, prev, elements){
 
-             // if the item being hovered over has changed, remove the effects of being hovered over
+            // if the item being hovered over has changed, remove the effects of being hovered over
             if(prev){
                 stopFading();
                 app.temp.prevElement.style.height = '';
@@ -2759,6 +2799,7 @@ app.effect = function () {
             }
 
             if(app.temp.loopThrough) delete app.temp.loopThrough;
+            if(!app.temp.menuOptionsActive && app.temp.horizon && app.temp.horizon === 'right') delete app.temp.horizon;
 
             if(!app.temp.modeOptionsActive){
 
@@ -4038,18 +4079,16 @@ app.animateEffects = function () {
 app.gameSetup = function (){
 
     // select game mode
-    if(app.user) var game = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5, 'infinite');
+    if(app.user && !app.game.mode) app.game.mode = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5, 'infinite');
 
-    // remove key presses on each iteration
-    if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
-
+    // set up the game based on what mode is being selected
+    if(app.game.mode) var game = app.modes[app.game.mode]();
+    if(app.game.mode) delete app.game.mode;
     // listen for fading colors in and out on selection
     app.effect.colorSwell();
 
     // if a game has been started 
     if (game) {
-
-        console.log(game);
 
         // start game adds players, player info, settings, game type, mode, maps etc to be used in game
         app.start(game);
@@ -4061,6 +4100,9 @@ app.gameSetup = function (){
     }else{
         window.requestAnimationFrame(app.gameSetup);
     }
+
+    // remove key presses on each iteration
+    if ( app.keys.length > 0 ) app.keys.splice(0,app.keys.length);
 };
 
 /* --------------------------------------------------------------------------------------------------------*\
