@@ -190,7 +190,7 @@ li[pos=twoBelow] {
 
 .block {
     z-index: 1;
-    width: 100%;
+    width: 95%;
     height: 26px;
     margin: 2px;
 }

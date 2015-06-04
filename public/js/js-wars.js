@@ -1538,21 +1538,15 @@ app.display = function () {
             block.setAttribute('class', 'block');            
             block.style.backgroundColor = color;
 
-            console.log('span');
-
             // span is to make a background around the text
             var span = document.createElement('span');
             span.innerHTML = mi.display;
-
-            console.log(span);
 
             // set displayed text for mode selection
             var text = document.createElement('h1');
             text.setAttribute('class', 'text');
             text.appendChild(span);
 
-            console.log(text);
-            
             // create li item for each mode
             var item = document.createElement('li');
             item.setAttribute('class','modeItem');
