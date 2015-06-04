@@ -1538,10 +1538,16 @@ app.display = function () {
             block.setAttribute('class', 'block');            
             block.style.backgroundColor = color;
 
+            // span is to make a background around the text
+            var span = document.createElement('span');
+            span.setAttribute('class', 'textBackground');
+            span.innerHTML = mi.display;
+
             // set displayed text for mode selection
             var text = document.createElement('h1');
             text.setAttribute('class', 'text');
             text.style.borderColor = color;
+            text.appendChild(span);
 
             // create li item for each mode
             var item = document.createElement('li');
@@ -2850,7 +2856,8 @@ app.effect = function () {
                 }
                 selectedElement.setAttribute('pos', 'selected');
                 var text = findElementsByClass(selectedElement, 'text')[0] || false;
-                var clientWidth = text.clientWidth;
+                var background = findElementsByClass(text, 'textBackground')[0] || false;
+                var clientWidth = background.offsetWidth;
                 console.log('client: '+clientWidth);
                 var parentWidth = selectedElement.clientWidth;
                 console.log('parent' + parentWidth);
