@@ -2851,7 +2851,7 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
-                block = findElementByClass(selectedElement, 'block')[0] || false;
+                block = findElementsByClass(selectedElement, 'block')[0] || false;
                 if (block) block.style.display = 'none';
             }
 
