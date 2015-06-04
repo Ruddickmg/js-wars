@@ -2496,7 +2496,7 @@ app.move = function () {
 
 /* --------------------------------------------------------------------------------------*\
     
-    app.modes holds functions forthe selection of game modes / logout etc..
+    app.modes holds functions for the selection of game modes / logout etc..
 
 \* --------------------------------------------------------------------------------------*/
 
@@ -2516,7 +2516,7 @@ app.modes = function (){
         },
         continueGame:function(){
             alert('continue an old game');
-        }
+        },
         newJoin:function(){
             alert('join a new game');
         },
