@@ -1535,7 +1535,7 @@ app.display = function () {
             console.log(mi);
             var col = app.settings.colors[mi.id];
             console.log(col);
-            var color = (app.hsl);
+            var color = app.hsl(col);
             console.log(color);
 
             // create li item for each mode
