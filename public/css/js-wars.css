@@ -129,6 +129,7 @@ h1 {
 }
 
 .modeItem {
+    text-align: center;
     position: absolute;
     display: block;
     background:white;
@@ -195,10 +196,9 @@ li[pos=twoBelow] {
     margin: 2px;
 }
 
-.text, .text h1 {
+.text {
     position: absolute;
     background-color: white;
-    display:inline-block;
     top:0px;
     z-index: 10;
     left:5%;
