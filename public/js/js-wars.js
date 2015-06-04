@@ -1588,6 +1588,8 @@ app.display = function () {
         }else{
             document.body.insertBefore(selectModeScreen, app.domInsertLocation);
         }
+
+        console.log(selectModeScreen);
     };
 
     var setup = function (name) {
@@ -2846,7 +2848,11 @@ app.effect = function () {
                 selectedElement.setAttribute('pos', 'selected');
             }
 
-            var id = selectedElement.getAttribute('class') === 'modeOption' ? selectedElement.parentNode.parentNode.id : selectedElement.id;
+            if(selectedElement.getAttribute('class') === 'modeOption'){
+                selectedElement.parentNode.parentNode.getAttribute('id');
+            }else{
+                selectedElement.getAttribute('id');
+            }
 
             // fade the selected element from color to white
             fade(selectedElement, id || 'game');
