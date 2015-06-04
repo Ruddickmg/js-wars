@@ -2861,7 +2861,8 @@ app.effect = function () {
                 console.log('client: '+clientWidth);
                 var parentWidth = selectedElement.clientWidth;
                 console.log('parent' + parentWidth);
-                var transform = clientWidth / parentWidth;
+                var percent = clientWidth / parentWidth;
+                var transform = clientWidth * (1 + percent);
                 console.log('transform'+transform);
                 text.style.transform = 'scale('+transform+',1)';
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
