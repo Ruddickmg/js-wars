@@ -198,6 +198,7 @@ li[pos=twoBelow] {
 .text, .text h1 {
     position: absolute;
     background-color: white;
+    display:inline-block;
     top:0px;
     z-index: 10;
     left:5%;
