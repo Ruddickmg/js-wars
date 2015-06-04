@@ -2854,6 +2854,10 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
+                spacing = selectedElement.id.length / 100;
+                console.log(spacing);
+                var text = findElementsByClass(selectedElement, 'text')[0] || false;
+                text.style.letterSpacing = spacing + '%';
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
                 if (block) block.style.display = 'none';
             }

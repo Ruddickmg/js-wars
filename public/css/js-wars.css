@@ -191,6 +191,7 @@ li[pos=twoBelow] {
 .block {
     z-index: 1;
     width: 95%;
+    right: 2px;
     height: 26px;
     margin: 2px;
 }
@@ -199,8 +200,8 @@ li[pos=twoBelow] {
     position: absolute;
     top:0px;
     z-index: 10;
-    left:5%;
-    right:5%;
+    left:1%;
+    right:1%;
     text-align: center;
     font-size: 25px;
     line-height: 30px;
