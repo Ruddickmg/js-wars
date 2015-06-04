@@ -1581,6 +1581,9 @@ app.display = function () {
         selectModeScreen.appendChild(selectMenu);
         selectModeScreen.appendChild(footer);
 
+        console.log(selectModeScreen);
+
+
         // insert select mode screen into dom
         var exists = document.getElementById('selectModeScreen');
         if(exists) {
@@ -1589,7 +1592,6 @@ app.display = function () {
             document.body.insertBefore(selectModeScreen, app.domInsertLocation);
         }
 
-        console.log(selectModeScreen);
     };
 
     var setup = function (name) {
@@ -1878,6 +1880,8 @@ app.display = function () {
                 }
                 var hudElement = document.getElementById(id);
             }
+
+            console.log(hudElement, elementType);
 
             // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
