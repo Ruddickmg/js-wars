@@ -1525,13 +1525,25 @@ app.display = function () {
 
             // create li item for each mode
             var item = document.createElement('li');
+            var leftBlock = document.createElement('div');
+            var rightBlock = document.createElement('div');
+            var text = document.createElement('h1');
+
+            leftBlock.setAttribute('class', 'leftBlock');
+            rightBlock.setAttribute('class', 'rightBlock');
+            text.setAttribute('class', 'text');
             item.setAttribute('modeItemIndex', m + 1);
+            item.setAttribute('hue', app.settings.colors[mi.id]);
             item.setAttribute('class','modeItem');
             item.setAttribute('id', mi.id);
             item.style.height = height;
 
             // set displayed text for mode selection
-            item.innerHTML = mi.display;
+            text.innerHTML = mi.display;
+
+            item.appendChild(leftBlock);
+            item.appendChild(text);
+            item.appendChild(rightBlock);
 
             // if there are further options for the mode
             if(mi.options){
@@ -1551,6 +1563,7 @@ app.display = function () {
                     option.setAttribute('class', 'modeOption');
                     option.setAttribute('modeOptionIndex', o + 1);
                     option.setAttribute('id', mi.options[o] + mi.id);
+                    option.setAttribute('hue', app.settings.colors[mi.id]);
 
                     // create id and display name for each option
                     option.innerHTML = mi.options[o];
@@ -1933,12 +1946,14 @@ app.display = function () {
                 app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
             }
             undo(key.up);
-        } else if (key.left in app.keys ){
-            if (modeOptionsActive) app.temp.horizon = 'left';
-            undo(key.left);
-        } else if(key.right in app.keys){
-            app.temp.horizon = 'right';
-            undo(key.right);
+        } else if (app.temp.menuOptionsActive){
+            if (key.left in app.keys ){
+                if (modeOptionsActive) app.temp.horizon = 'left';
+                undo(key.left);
+            } else if(key.right in app.keys){
+                app.temp.horizon = 'right';
+                undo(key.right);
+            }
         }
         return false;
     };
@@ -2507,26 +2522,23 @@ app.modes = function (){
             FB.logout(function(response) {
               console.log(response);
             });
-
-            // open login screen
-            app.display.login();
         },
-        newGame:function(){
+        newgame:function(){
             alert('set up a new game');
         },
-        continueGame:function(){
+        continuegame:function(){
             alert('continue an old game');
         },
-        newJoin:function(){
+        newjoin:function(){
             alert('join a new game');
         },
-        continueJoin:function(){
+        continuejoin:function(){
             alert('join a game that was already started');
         },
-        designCO:function(){
+        designco:function(){
             alert('design a co');
         },
-        designMap:function(){
+        designmap:function(){
             alert('design a map');
         },
         store:function(){
@@ -2585,6 +2597,15 @@ app.settings = {
     // speed at which color swell.. fading in and out, will cycle (lower is faster)
     colorSwellIncriment:1.5,
     colorSwellSpeed:2,
+
+    // colors of menus etc...
+    hsl: {
+        design:{h:216,s:100,l:50},
+        store:{h:72, s:100, l:50},
+        game:{h:0, s:100, l:50},
+        join:{h:144, s:100, l:50},
+        logout:{h:288, s:100, l:50}
+    },
 
     // speed at which the screen will move to next hq at the changinf of turns
     scrollSpeed: 50,
@@ -2823,8 +2844,10 @@ app.effect = function () {
                 selectedElement.setAttribute('pos', 'selected');
             }
 
+            var id = selectedElement.getAttribute('class') === 'modeOption' ? selectedElement.parentNode.parentNode.id : selectedElement.id;
+
             // fade the selected element from color to white
-            fade(selectedElement, selectedElement.getAttribute('hue') || 0);
+            fade(selectedElement, id || 'game');
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
@@ -2854,19 +2877,19 @@ app.effect = function () {
                     var prev = app.temp.previousLightness;
                     var lightness = app.temp.lightness;
                     var color = app.temp.swellingColor;
-                    element.style.borderColor = 'hsl('+color+','+100+'%,'+lightness+'%)';
+                    element.style.borderColor = 'hsl('+color.h+','+color.s+'%,'+lightness+'%)';
 
-                    if( lightness + inc <= 100 && prev < lightness || lightness - inc < 50){
+                    if( lightness + inc <= 100 && prev < lightness || lightness - inc < color.l){
                         app.temp.lightness += inc;
                         app.temp.previousLightness = lightness;
-                    }else if(lightness - inc >= 50 && prev > lightness || lightness + inc > 100){ 
+                    }else if(lightness - inc >= color.l && prev > lightness || lightness + inc > color.l){ 
                         app.temp.lightness -= inc;
                         app.temp.previousLightness = lightness;
                     };
                 }
             // if there is no app.temp.swell, but colorswell is active then delete every
             }else if(app.temp.colorSwellActive){
-                console.log('deleting');
+                console.log('deleting'); // check this !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
                 delete app.temp.lightness;
                 delete app.temp.previousSaturation;
                 delete app.temp.timeMarker;
@@ -2875,8 +2898,8 @@ app.effect = function () {
             }
         },
         
-        fade:function(element, hue){
-            fade(element, hue);
+        fade:function(element, id){
+            fade(element, ap.settings.hsl[id]);
         },
 
         stopFading:function(){
