@@ -80,15 +80,15 @@ app = {
 
     // return an hsl string from either manual settings or object containing hsl values
     hsl:function(h,s,l){
-        if(!s){
-            console.log('in');
-            console.log(h);
-            h = h.h;
-            s = h.s;
-            l = h.l;
-        }
-        console.log('h: '+h+', s: '+s+', l:'+l);
-        return 'hsl('+h+','+s+'%,'+l+'%)';
+
+        console.log(h);
+
+        var hue = s? h : h.h;
+        var saturation = s? s : h.s;
+        var lightness = s? l : h.l;
+
+        console.log('h: '+hue+', s: '+saturation+', l:'+lightness);
+        return 'hsl('+hue+','+saturation+'%,'+lightness+'%)';
     },
 
     turn: function (){
@@ -2875,7 +2875,7 @@ app.effect = function () {
             }
 
             // fade the selected element from color to white
-            fade(selectedElement, id || 'game');
+            fade(selectedElement, selectedElement.id || 'game');
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
