@@ -1519,6 +1519,8 @@ app.display = function () {
         footer.setAttribute('id','footer');
         footer.appendChild(info);
 
+        console.log('before...');
+
         // create and insert information for each mode
         for( var m = 0; m < menu.length; m += 1){
             var mi = menu[m];
@@ -1529,8 +1531,13 @@ app.display = function () {
             var rightBlock = document.createElement('div');
             var text = document.createElement('h1');
 
+            console.log('wtf?');
+
             leftBlock.setAttribute('class', 'leftBlock');
             rightBlock.setAttribute('class', 'rightBlock');
+
+            console.log('heelllooooo?');
+
             text.setAttribute('class', 'text');
             item.setAttribute('class','modeItem');
             item.setAttribute('modeItemIndex', m + 1);
