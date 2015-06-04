@@ -1533,6 +1533,16 @@ app.display = function () {
             var mi = menu[m];
             var color = app.hsl(app.settings.colors[mi.id]);
 
+            // block is the background bar
+            var block = document.createElement('div');
+            block.setAttribute('class', 'block');            
+            block.style.backgroundColor = color;
+
+            // set displayed text for mode selection
+            var text = document.createElement('h1');
+            text.setAttribute('class', 'text');
+            text.innerHTML = mi.display;
+
             // create li item for each mode
             var item = document.createElement('li');
             item.setAttribute('class','modeItem');
@@ -1540,23 +1550,8 @@ app.display = function () {
             item.setAttribute('id', mi.id);
             item.style.height = height;
             item.style.color = color;
-
-            var leftBlock = document.createElement('div');
-            leftBlock.setAttribute('class', 'leftBlock');            
-            leftBlock.style.backgroundColor = color;
-
-            var rightBlock = document.createElement('div');
-            rightBlock.setAttribute('class', 'rightBlock');
-            rightBlock.style.backgroundColor = color;
-
-            // set displayed text for mode selection
-            var text = document.createElement('h1');
-            text.setAttribute('class', 'text');
-            text.innerHTML = mi.display;
-
-            item.appendChild(leftBlock);
+            item.appendChild(block);
             item.appendChild(text);
-            item.appendChild(rightBlock);
 
             // if there are further options for the mode
             if(mi.options){
@@ -2758,7 +2753,7 @@ app.settings = {
 
 app.effect = function () {
 
-    var key, undo, positions = ['oneAbove','twoAbove','oneBelow','twoBelow'];
+    var key, undo, block, positions = ['oneAbove','twoAbove','oneBelow','twoBelow'];
 
     var menuItemOptions = function ( selectedElement, menu ) {
         if (!key) key = app.game.settings.keyMap;
@@ -2823,10 +2818,12 @@ app.effect = function () {
             // if the item being hovered over has changed, remove the effects of being hovered over
             if(prev){
                 stopFading();
-                app.temp.prevElement.style.height = '';
-                app.temp.prevElement.style.borderColor = 'black';
+                prev.style.height = '';
+                prev.style.borderColor = '';
+                block = findElementByClass(prev, 'block')[0] || false;
+                if(block) block.style.display = '';
                 if(!app.temp.modeOptionsActive){
-                    var prevOptions = findElementsByClass(app.temp.prevElement, 'modeOptions')[0] || false;
+                    var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
                     if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
                 }
             }
@@ -2854,6 +2851,8 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
+                block = findElementByClass(selectedElement, 'block')[0] || false;
+                if (block) block.style.display = 'none';
             }
 
             if(selectedElement.getAttribute('class') === 'modeOption'){

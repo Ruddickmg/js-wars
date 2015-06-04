@@ -183,23 +183,17 @@ li[pos=twoBelow] {
     left:-250px;
 }
 
-.leftBlock, .rightBlock {
-    display: inline-block;
-    width: 20%;
+.block {
+    width: 100%;
     height: 26px;
     margin: 2px;
 }
 
-.leftBlock {
-    float: left;
-}
-
-.rightBlock {
-    float: right;
-}
-
 .text {
-    display: inline-block;
+    display: absolute;
+    background: white;
+    left:50%;
+    right:50%;
     text-align: center;
     font-size: 25px;
     line-height: 30px;
