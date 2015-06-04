@@ -2854,12 +2854,14 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
-                spacing = 100 / selectedElement.id.length;
-                console.log(spacing);
                 var text = findElementsByClass(selectedElement, 'text')[0] || false;
-                console.log(text);
-                text.style.letterSpacing = spacing + '%';
-                console.log(text);                
+                var clientWidth = text.clientWidth;
+                console.log('client: '+clientWidth);
+                var parentWidth = selectedElement.clientWidth;
+                console.log('parent' + parentWidth);
+                var transform = clientWidth / parentWidth;
+                console.log('transform'+transform);
+                text.style.transform = 'scale('+transform+',1)';
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
                 if (block) block.style.display = 'none';
             }
