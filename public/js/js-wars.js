@@ -2857,7 +2857,7 @@ app.effect = function () {
                 selectedElement.setAttribute('pos', 'selected');
                 var text = findElementsByClass(selectedElement, 'text')[0] || false;
                 var background = findElementsByClass(text, 'textBackground')[0] || false;
-                var clientWidth = backgrond.clientWidth;
+                var clientWidth = background.clientWidth;
                 console.log('client: '+clientWidth);
                 var parentWidth = selectedElement.clientWidth;
                 console.log('parent' + parentWidth);
