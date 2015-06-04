@@ -1489,6 +1489,8 @@ app.display = function () {
             var loginScreen = document.getElementById('login');
                 loginScreen.parentNode.removeChild(loginScreen);
 
+            console.log('in');
+
             // display the game selection menu
             selectMode();
 
@@ -1497,6 +1499,9 @@ app.display = function () {
     };
 
     var selectMode = function () { 
+
+
+        console.log('here?');
 
         // height of each mode element
         var height = app.settings.selectedModeHeight;

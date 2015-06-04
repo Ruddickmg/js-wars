@@ -132,9 +132,6 @@ h1 {
     position: absolute;
     display: block;
     background:white;
-    text-align: center;
-    font-size: 25px;
-    line-height: 30px;
     height:30px;
     width: 500px;
     border-left: 12px solid;
@@ -184,6 +181,26 @@ li[pos=oneBelow] {
 li[pos=twoBelow] {
     top:510px;
     left:-250px;
+}
+
+.leftBlock, .rightBlock {
+    width: 100%;
+    height: 26px;
+    padding: 2px;
+}
+
+.leftBlock {
+    float: left;
+}
+
+.rightBlock {
+    float: right;
+}
+
+.text {
+    text-align: center;
+    font-size: 25px;
+    line-height: 30px;
 }
 
 .modeOption {
