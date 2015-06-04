@@ -78,6 +78,16 @@ Array.prototype.offsetArray = function (offsetArray) {
 
 app = {
 
+    // return an hsl string from either manual settings or object containing hsl values
+    hsl:function(h,s,l){
+        if(!s){
+            h = h.h;
+            s = s.s;
+            l = l.l;
+        }
+        return 'hsl('+h+','+s+'%,'+l+'%)'
+    },
+
     turn: function (){
         // make note of whose turn it is
         if( app.game.currentPlayer.fbid === app.user.fbid ){
@@ -1519,19 +1529,18 @@ app.display = function () {
         footer.setAttribute('id','footer');
         footer.appendChild(info);
 
-        console.log('before...');
-
         // create and insert information for each mode
         for( var m = 0; m < menu.length; m += 1){
             var mi = menu[m];
 
             console.log(mi);
-            
+
             // create li item for each mode
             var item = document.createElement('li');
             var leftBlock = document.createElement('div');
             var rightBlock = document.createElement('div');
             var text = document.createElement('h1');
+            var color = app.hsl(app.settings.hsl[mi.id]);
 
             leftBlock.setAttribute('class', 'leftBlock');
             rightBlock.setAttribute('class', 'rightBlock');
@@ -1539,19 +1548,13 @@ app.display = function () {
             item.setAttribute('class','modeItem');
             item.setAttribute('modeItemIndex', m + 1);
             item.setAttribute('id', mi.id);
-
-            console.log('id?');
-
             item.style.height = height;
-
-            console.log('height?');
+            item.style.color = color;
+            leftBlock.style.color = color;
+            rightBlock.style.color = color;
 
             // set displayed text for mode selection
             text.innerHTML = mi.display;
-
-            console.log('innnnnnerrrr');
-
-            console.log(item);
 
             item.appendChild(leftBlock);
             item.appendChild(text);
@@ -2662,12 +2665,10 @@ app.settings = {
             id:'logout',
             display:'Logout',
             type:'exit',
-            color:'grey',
         },{
             id:'game',
             display:'Game Setup',
             type:'setup',
-            color:'blue',
             options:['new', 'continue']
         },{
             id:'join',
@@ -2679,14 +2680,12 @@ app.settings = {
             id:'design',
             display:'Design',
             type:'design',
-            color:'green',
             options:['map', 'CO']
 
         },{
             id:'store',
             display:'Game Store',
             type:'store',
-            color:'red',
     }],
 
     capture: 20,
@@ -2903,7 +2902,7 @@ app.effect = function () {
                     var prev = app.temp.previousLightness;
                     var lightness = app.temp.lightness;
                     var color = app.temp.swellingColor;
-                    element.style.borderColor = 'hsl('+color.h+','+color.s+'%,'+lightness+'%)';
+                    element.style.borderColor = app.hsl(color);
 
                     if( lightness + inc <= 100 && prev < lightness || lightness - inc < color.l){
                         app.temp.lightness += inc;
