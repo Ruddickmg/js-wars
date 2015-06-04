@@ -2516,12 +2516,15 @@ app.move = function () {
 \* --------------------------------------------------------------------------------------*/
 
 app.modes = function (){
-    return{
+    
+    return {
         logout: function (){
+            alert('log out!');
+            /*  
             // log user out of facebook
             FB.logout(function(response) {
               console.log(response);
-            });
+            });*/
         },
         newgame:function(){
             alert('set up a new game');
@@ -2733,7 +2736,6 @@ app.settings = {
         }
     },
 };
-
 
 /* --------------------------------------------------------------------------------------*\
 	
