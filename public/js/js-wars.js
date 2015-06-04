@@ -1545,6 +1545,7 @@ app.display = function () {
             // set displayed text for mode selection
             var text = document.createElement('h1');
             text.setAttribute('class', 'text');
+            text.style.borderColor = color;
             text.appendChild(span);
 
             // create li item for each mode
