@@ -2829,6 +2829,7 @@ app.effect = function () {
                         var bg = app.temp.prevBackground;
                         bg.style.transform = '';
                         bg.style.backgroundColor = 'white';
+                    }
                     block = findElementsByClass(prev, 'block')[0] || false;
                     if(block) block.style.display = '';
                     var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
