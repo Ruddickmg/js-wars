@@ -2860,12 +2860,26 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
-                //var text = findElementsByClass(selectedElement, 'text')[0] || false;
+                var text = findElementsByClass(selectedElement, 'text')[0] || false;
                 var background = selectedElement.getElementsByTagName('span')[0] || false;
-                app.temp.prevBackground = background;
-                var transform = 1 + (background.offsetWidth / selectedElement.clientWidth);
-                background.style.transform = 'scale('+transform+',1)';
-                background.style.backgroundColor = 'none';
+                if(text && background){
+                    var letters = text.innerHTML.length;
+                    console.log('letters: '+letters);
+                    app.temp.prevBackground = background;
+
+                    // get the width of the text devided by the width of the parent element divided by two to split between letter spacing and stretching
+                    var diff = (background.offsetWidth / selectedElement.clientWidth) / 2;
+                    var transform = diff + 1;
+                    var spacing = (diff * background.offsetWidth) / letters;
+                    console.log('spacing'+spacing);
+                    console.log('pre: '+transform);
+                    while((transform * 2) * background.offsetWidth > 480) transform -= .01;
+                    console.log('post: '+transform);
+                    text.style.letterSpacing = spacing + 'px';
+                    background.style.transform = 'scale('+transform+',1)';
+                    background.style.backgroundColor = 'none';
+                };
+               
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
                 if (block) block.style.display = 'none';
             }
