@@ -110,6 +110,7 @@ h1 {
 
 .modeItem {
     position: absolute;
+    text-align: center;
     display: block;
     background:white;
     height:30px;
