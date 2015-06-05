@@ -2861,11 +2861,9 @@ app.effect = function () {
                 console.log('client: '+clientWidth);
                 var parentWidth = selectedElement.clientWidth;
                 console.log('parent' + parentWidth);
-                var percent = clientWidth / parentWidth;
-                console.log(percent);
-                var transform = 1 + percent;
+                var transform = 1 + (clientWidth / parentWidth);
                 console.log('transform'+transform);
-                text.style.transform = 'scale('+transform+',1)';
+                background.style.transform = 'scale('+transform+',1)';
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
                 if (block) block.style.display = 'none';
             }
