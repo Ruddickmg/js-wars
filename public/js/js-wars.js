@@ -1964,7 +1964,8 @@ app.display = function () {
             undo(key.up);
         } else if (app.temp.menuOptionsActive){
             if (key.left in app.keys ){
-                if (modeOptionsActive) app.temp.horizon = 'left';
+                console.log('in it left');
+                app.temp.horizon = 'left';
                 undo(key.left);
             } else if(key.right in app.keys){
                 app.temp.horizon = 'right';
