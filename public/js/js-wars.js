@@ -2894,7 +2894,7 @@ app.effect = function () {
                     console.log('post space: '+spacing);
                     console.log('post: '+transform);
                     text.style.letterSpacing = spacing + 'px';
-                    background.style.transform = 'scale('+transform+',1)';
+                    //background.style.transform = 'scale('+transform+',1)';
                     background.style.backgroundColor = 'none';
                     text.style.backgroundColor = 'none';
                 };
