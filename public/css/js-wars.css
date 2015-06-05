@@ -131,7 +131,6 @@ h1 {
 .modeItem {
     position: absolute;
     display: block;
-    overflow: hidden;
     background:white;
     height:30px;
     width: 500px;
@@ -174,6 +173,9 @@ li[pos=selected] {
 }
 
 li[pos=selected] .text {
+    left:1%;
+    right: 1%;
+    overflow: hidden;
     margin-left:0%;
     margin-right:0%;
     top: -5px;
