@@ -2824,8 +2824,8 @@ app.effect = function () {
                 stopFading();
                 prev.style.height = '';
                 prev.style.borderColor = '';
-                if(app.temp.prevBackground) app.temp.prev.backgrond.style.transform = '';
                 if(!app.temp.modeOptionsActive){
+                    if(app.temp.prevBackground) app.temp.prev.backgrond.style.transform = '';
                     block = findElementsByClass(prev, 'block')[0] || false;
                     if(block) block.style.display = '';
                     var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
