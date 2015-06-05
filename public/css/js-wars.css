@@ -109,9 +109,8 @@ h1 {
 }
 
 .modeItem {    
-    transition-delay: height 0.3s;
-    transition: left 0.5s ease, top 0.5s ease, height .2s ease;
-
+    transition: left 0.5s ease, top 0.5s ease, height 0.2s 0.3s ease;
+    z-index: 9;
     position: absolute;
     text-align: center;
     display: block;
@@ -144,11 +143,13 @@ li[pos=twoAbove] {
 }
 
 li[pos=oneAbove] {
+    z-index: 10;
     left:-100px;
     top:150px;
 }
 
 li[pos=selected] {
+    z-index: 11;
     top:250px;
     height:100px;
 
@@ -169,6 +170,7 @@ li[pos=selected] .text {
 }
 
 li[pos=oneBelow] {
+    z-index: 10;
     left:-100px;
     top:430px;
 }
