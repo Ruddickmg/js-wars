@@ -2824,6 +2824,7 @@ app.effect = function () {
                 stopFading();
                 prev.style.height = '';
                 prev.style.borderColor = '';
+                if(app.temp.prevBackground) app.temp.prev.backgrond.style.transform = '';
                 if(!app.temp.modeOptionsActive){
                     block = findElementsByClass(prev, 'block')[0] || false;
                     if(block) block.style.display = '';
@@ -2855,13 +2856,10 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
-                var text = findElementsByClass(selectedElement, 'text')[0] || false;
-                var background = findElementsByClass(text, 'textBackground')[0] || false;
-                var clientWidth = background.offsetWidth;
-                console.log('client: '+clientWidth);
-                var parentWidth = selectedElement.clientWidth;
-                console.log('parent' + parentWidth);
-                var transform = 1 + (clientWidth / parentWidth);
+                //var text = findElementsByClass(selectedElement, 'text')[0] || false;
+                var background = selectedElement.getElementsByTagName('span')[0] || false;
+                app.temp.prev.background = background;
+                var transform = 1 + (background.offsetWidth / selectedElement.clientWidth);
                 console.log('transform'+transform);
                 background.style.transform = 'scale('+transform+',1)';
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
