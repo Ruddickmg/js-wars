@@ -2865,7 +2865,7 @@ app.effect = function () {
                 app.temp.prevBackground = background;
                 var transform = 1 + (background.offsetWidth / selectedElement.clientWidth);
                 background.style.transform = 'scale('+transform+',1)';
-                background.style.backgroundColor = '';
+                background.style.backgroundColor = 'none';
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
                 if (block) block.style.display = 'none';
             }
