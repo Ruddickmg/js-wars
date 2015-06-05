@@ -137,7 +137,7 @@ h1 {
 }
 
 li[pos=twoAbove] {
-    transtion:none;
+    transition:none;
     top:100px;
     left:-250px;
 }
