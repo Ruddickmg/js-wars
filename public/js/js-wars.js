@@ -1955,7 +1955,7 @@ app.display = function () {
 
             // same as above, but up
         } else if (key.up in app.keys) {
-
+            console.log('mode: '+modeOptionsActive+', menu: '+app.temp.menuOptionsActive);
             if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
                 app.temp.selectionIndex -= 1;
             }else if(infiniteScroll && !app.modeOptionsActive){
@@ -1963,9 +1963,9 @@ app.display = function () {
             }
             undo(key.up);
         } else if (app.temp.menuOptionsActive){
+
             if (key.left in app.keys ){
-                console.log('in it left');
-                app.temp.horizon = 'left';
+                if (modeOptionsActive) app.temp.horizon = 'left';
                 undo(key.left);
             } else if(key.right in app.keys){
                 app.temp.horizon = 'right';
@@ -2846,6 +2846,7 @@ app.effect = function () {
             }
 
             if(app.temp.loopThrough) delete app.temp.loopThrough;
+
             if(!app.temp.menuOptionsActive && app.temp.horizon && app.temp.horizon === 'right') delete app.temp.horizon;
 
             if(!app.temp.modeOptionsActive){
