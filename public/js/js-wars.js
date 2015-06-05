@@ -2873,8 +2873,8 @@ app.effect = function () {
                     var spacing = (diff * background.offsetWidth) / letters;
                     console.log('spacing'+spacing);
                     console.log('pre: '+transform);
-                    while((transform * 2) * background.offsetWidth > 480) transform -= .01;
-                    console.log('post: '+transform);
+                    //while((transform * 2) * background.offsetWidth > 480) transform -= .01;
+                    //console.log('post: '+transform);
                     text.style.letterSpacing = spacing + 'px';
                     background.style.transform = 'scale('+transform+',1)';
                     background.style.backgroundColor = 'none';
