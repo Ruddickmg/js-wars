@@ -2859,22 +2859,36 @@ app.effect = function () {
                     var element = app.display.findElementByTag(tag, elements, posIndex);
                     element.setAttribute('pos', position);
                 }
+
                 selectedElement.setAttribute('pos', 'selected');
                 var text = findElementsByClass(selectedElement, 'text')[0] || false;
                 var background = selectedElement.getElementsByTagName('span')[0] || false;
+
                 if(text && background){
+
                     var letters = selectedElement.id.length;
+                    var parentWidth = selectedElement.clientWidth;
+                    var bgWidth = background.offsetWidt;
+
                     console.log('letters: '+letters);
                     app.temp.prevBackground = background;
 
                     // get the width of the text devided by the width of the parent element divided by two to split between letter spacing and stretching
-                    var diff = (background.offsetWidth / selectedElement.clientWidth);
+                    var diff = (bgWidth / parentWidth ) / 2;
                     var transform = diff + 1;
-                    var spacing = (diff * background.offsetWidth) / letters;
+                    var spacing = (diff * bgWidth) / letters;
+                    var half = (parentWidth - 10)/2;
+                    var bgHalf = bgWidth/2;
+
                     console.log('spacing'+spacing);
                     console.log('pre: '+transform);
-                    //while((transform * 2) * background.offsetWidth > 480) transform -= .01;
-                    //console.log('post: '+transform);
+
+                    // if the
+                    while(transform * bgHalf > half) transform -= .01;
+                    while(diff * bgHalf > half) spacing -= .01;
+
+                    console.log('post space: '+spacing);
+                    console.log('post: '+transform);
                     text.style.letterSpacing = spacing + 'px';
                     background.style.transform = 'scale('+transform+',1)';
                     background.style.backgroundColor = 'none';
