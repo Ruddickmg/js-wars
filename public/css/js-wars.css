@@ -175,6 +175,7 @@ li[pos=selected] {
 li[pos=selected] .text {
     left:1%;
     right: 1%;
+    overflow: hidden;
     margin-left:0%;
     margin-right:0%;
     top: -5px;
