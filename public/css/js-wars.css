@@ -87,27 +87,7 @@ h1 {
     transform: translate(-50%,-50%);
 }
 
-#game {
-    color:blue;
-}
-
-#join {
-    color:red;
-}
-
-#design {
-    color:green;
-}
-
-#store {
-    color:yellow;
-}
-
-#logout {
-    color:grey;
-}
-
-#login,  #selectModeMenu, #selectModeScreen {
+#login, #selectModeMenu, #selectModeScreen {
     width: 960px;
     height:640px;
 }
