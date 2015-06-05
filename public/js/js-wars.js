@@ -1955,7 +1955,6 @@ app.display = function () {
 
             // same as above, but up
         } else if (key.up in app.keys) {
-            console.log('menu: '+app.temp.menuOptionsActive);
             if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
                 app.temp.selectionIndex -= 1;
             }else if(infiniteScroll && !app.modeOptionsActive){
@@ -2767,15 +2766,12 @@ app.effect = function () {
         if (!key) key = app.game.settings.keyMap;
         if (!undo) undo = app.undo.keyPress;
 
-        console.log('here');
-
         // display the menu options
         if(menu) menu.style.display = '';
         var modeOptionsActive = app.temp.modeOptionsActive;
         var horizon = app.temp.horizon;
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
-                console.log('left');
                 delete app.temp.modeOptionsActive;
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
