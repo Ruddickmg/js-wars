@@ -109,7 +109,7 @@ h1 {
 }
 
 .modeItem {    
-    transition: left 0.5s ease, top 0.5s ease, right 0.5s 0.5s ease;
+    transition: left 0.5s ease, top 0.5s ease;
     z-index: 9;
     position: absolute;
     text-align: center;
@@ -170,6 +170,7 @@ li[pos=selected] .text {
 }
 
 li[pos=selected] .modeOptions {
+    transition: right 0.5s 0.5s ease;
     right:-162px;
 };
 
@@ -222,9 +223,10 @@ li[pos=twoBelow] {
 }
 
 .modeOptions {
+    transition: right 0.5s 0.5s ease;
     position:absolute;
     z-index: -1;
-    right:0;
+    right:0px;
     top:-5px;
     background: white;
     height:200px;
