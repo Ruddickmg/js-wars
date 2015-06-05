@@ -2858,7 +2858,7 @@ app.effect = function () {
                 selectedElement.setAttribute('pos', 'selected');
                 //var text = findElementsByClass(selectedElement, 'text')[0] || false;
                 var background = selectedElement.getElementsByTagName('span')[0] || false;
-                app.temp.prev.background = background;
+                app.temp.prevBackground = background;
                 var transform = 1 + (background.offsetWidth / selectedElement.clientWidth);
                 console.log('transform'+transform);
                 background.style.transform = 'scale('+transform+',1)';
