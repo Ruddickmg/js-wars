@@ -172,6 +172,7 @@ li[pos=oneBelow] {
 }
 
 li[pos=twoBelow] {
+    transition:none;
     top:510px;
     left:-250px;
 }
