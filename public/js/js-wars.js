@@ -2893,7 +2893,7 @@ app.effect = function () {
                     background.style.transform = 'scale('+transform+',1)';
 
                     // remove background
-                    background.style.backgroundColor = 'blue';
+                    background.style.backgroundColor = 'transparent';
                 };
                 
                 // hide the background bar
