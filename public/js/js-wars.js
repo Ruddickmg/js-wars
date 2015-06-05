@@ -2865,20 +2865,24 @@ app.effect = function () {
                 var background = selectedElement.getElementsByTagName('span')[0] || false;
 
                 if(text && background){
-
+                    app.temp.prevBackground = background;
                     var letters = selectedElement.id.length;
                     var parentWidth = selectedElement.clientWidth;
                     var bgWidth = background.offsetWidt;
 
-                    console.log('letters: '+letters);
-                    app.temp.prevBackground = background;
+                    console.log('bgWidth: '+bgWidth+', parentWidth: '+parentWidth);
 
                     // get the width of the text devided by the width of the parent element divided by two to split between letter spacing and stretching
                     var diff = (bgWidth / parentWidth ) / 2;
+
+                    console.log(diff);
+
                     var transform = diff + 1;
                     var spacing = (diff * bgWidth) / letters;
                     var half = (parentWidth - 10)/2;
                     var bgHalf = bgWidth/2;
+
+                    console.log('halfL '+half+', bgHalf: '+bgHalf);
 
                     console.log('spacing'+spacing);
                     console.log('pre: '+transform);
