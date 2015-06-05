@@ -2863,7 +2863,7 @@ app.effect = function () {
                 var text = findElementsByClass(selectedElement, 'text')[0] || false;
                 var background = selectedElement.getElementsByTagName('span')[0] || false;
                 if(text && background){
-                    var letters = text.innerHTML.length;
+                    var letters = selectedElement.id.length;
                     console.log('letters: '+letters);
                     app.temp.prevBackground = background;
 
