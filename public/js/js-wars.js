@@ -2868,21 +2868,21 @@ app.effect = function () {
                     app.temp.prevBackground = background;
                     var letters = selectedElement.id.length;
                     var parentWidth = selectedElement.clientWidth;
-                    var bgWidth = background.offsetWidt;
+                    var bgWidth = background.offsetWidth;
 
                     console.log('bgWidth: '+bgWidth+', parentWidth: '+parentWidth);
 
                     // get the width of the text devided by the width of the parent element divided by two to split between letter spacing and stretching
                     var diff = (bgWidth / parentWidth ) / 2;
 
-                    console.log(diff);
+                    console.log('diff: '+diff);
 
                     var transform = diff + 1;
                     var spacing = (diff * bgWidth) / letters;
                     var half = (parentWidth - 10)/2;
                     var bgHalf = bgWidth/2;
 
-                    console.log('halfL '+half+', bgHalf: '+bgHalf);
+                    console.log('half: '+half+', bgHalf: '+bgHalf);
 
                     console.log('spacing'+spacing);
                     console.log('pre: '+transform);
