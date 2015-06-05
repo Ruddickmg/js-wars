@@ -109,7 +109,7 @@ h1 {
 }
 
 .modeItem {
-    transition: all 0.5s ease;
+    transition: left 0.5s ease-in, top 0.5s ease-in;
     position: absolute;
     text-align: center;
     display: block;
@@ -120,6 +120,7 @@ h1 {
     border-right: 12px solid;
     border-top: 5px solid;
     border-bottom: 5px solid;
+    border-color: black;
 }
 
 #footer {
@@ -136,13 +137,11 @@ h1 {
 }
 
 li[pos=twoAbove] {
-    border-color: black;
     top:100px;
     left:-250px;
 }
 
 li[pos=oneAbove] {
-    border-color: black;
     left:-100px;
     top:150px;
 }
@@ -168,13 +167,11 @@ li[pos=selected] .text {
 }
 
 li[pos=oneBelow] {
-    border-color: black;
     left:-100px;
     top:430px;
 }
 
 li[pos=twoBelow] {
-    border-color: black;
     top:510px;
     left:-250px;
 }
