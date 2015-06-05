@@ -116,6 +116,9 @@ app = {
         path: []
     },
 
+    // holds previously selected elements for resetting to defaults
+    prev:{},
+
     users: [{
         co: 'sami',
         name: 'grant'
@@ -417,7 +420,7 @@ app.undo = function () {
 
         hudHilight:function(){
             app.temp.selectionIndex = 1;
-            if(app.temp.prevIndex) delete app.temp.prevIndex;
+            if(app.prev.index) delete app.prev.index;
             if (app.temp.optionsActive) {
                 show('coStatusHud');
                 delete app.temp.optionsActive;
@@ -435,7 +438,7 @@ app.undo = function () {
             if(app.temp.actionsActive){
                 app.actions.unset();
                 delete app.settings.target;
-                delete app.temp.prevActionIndex;
+                delete app.prev.actionIndex;
                 delete app.temp.attackableArray;
                 this.display('actionHud');
                 this.display('damageDisplay');
@@ -722,13 +725,13 @@ app.actions = function () {
             index -= 1;
         }
 
-        if( index !== app.temp.prevActionIndex ){
+        if( index !== app.prev.actionIndex ){
             // cycle through target selectino
             if (index < 0 && index) index = len - 1;
             if (index === len) index = 0
             damage = attackableArray[index].damage;
             app.display.damage(damage);
-            app.temp.prevActionIndex = index;
+            app.prev.actionIndex = index;
 
             // create target for rendering at specified coordinates
             app.settings.target = {
@@ -1865,7 +1868,7 @@ app.display = function () {
         var modeOptionsActive = app.temp.modeOptionsActive;
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
-        if (app.temp.prevIndex !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
+        if (app.prev.index !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
         
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
@@ -1883,7 +1886,7 @@ app.display = function () {
                 if(app.temp.loopThrough){
                     var parentIndex = app.temp.parentIndex;
                     app.temp.selectionIndex = parentIndex;
-                    app.temp.prevIndex = parentIndex;
+                    app.prev.index = parentIndex;
                     delete app.temp.loopThrough;
                     delete app.temp.parentIndex;
                 }
@@ -1893,7 +1896,7 @@ app.display = function () {
             // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
 
-            var prev = app.temp.prevElement;
+            var prev = app.prev.element;
             len = elements.length;
             key = app.game.settings.keyMap;
             undo = app.undo.keyPress;
@@ -1923,14 +1926,14 @@ app.display = function () {
             if (selectedElement || app.temp.loopThrough) display(selectedElement, tag, selectionIndex, prev, elements);
 
             // store the last index for future comparison
-            app.temp.prevIndex = selectionIndex;
-            app.temp.prevElement = selectedElement;
+            app.prev.index = selectionIndex;
+            app.prev.element = selectedElement;
         }
 
         // if the select key has been pressed and an element is available for selection then return its id
         if (key.select in app.keys && selectedElement && !app.temp.menuOptionsActive) {
             app.temp.selectionIndex = 1;
-            delete app.temp.prevIndex;
+            delete app.prev.index;
             delete selectedElement;
             delete selectionIndex;
             delete prev;
@@ -2825,11 +2828,12 @@ app.effect = function () {
                 prev.style.height = '';
                 prev.style.borderColor = '';
                 if(!app.temp.modeOptionsActive){
-                    if(app.temp.prevBackground){
-                        var bg = app.temp.prevBackground;
+                    if(app.prev.background){
+                        var bg = app.prev.background;
                         bg.style.transform = '';
                         bg.style.backgroundColor = 'white';
                     }
+                    if(app.prev.text) app.prev.text.style.letterSpacing = '';
                     block = findElementsByClass(prev, 'block')[0] || false;
                     if(block) block.style.display = '';
                     var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
@@ -2859,46 +2863,41 @@ app.effect = function () {
                     var element = app.display.findElementByTag(tag, elements, posIndex);
                     element.setAttribute('pos', position);
                 }
-
                 selectedElement.setAttribute('pos', 'selected');
+
+                // get the h1 text element of the selected mode and its background span
                 var text = findElementsByClass(selectedElement, 'text')[0] || false;
                 var background = selectedElement.getElementsByTagName('span')[0] || false;
 
                 if(text && background){
-                    app.temp.prevBackground = background;
+                    // save the background and text for resetting on new selection
+                    app.prev.background = background;
+                    app.prev.text = text;
+
+                    //  get the length of the id (same as inner html);
                     var letters = selectedElement.id.length;
+
+                    // get the width of the text and the width of its parent
                     var parentWidth = selectedElement.clientWidth;
                     var bgWidth = background.offsetWidth;
 
-                    console.log('bgWidth: '+bgWidth+', parentWidth: '+parentWidth);
-
-                    // get the width of the text devided by the width of the parent element divided by two to split between letter spacing and stretching
+                    // devide the text width by the width of the parent element and divide it by 4 to split between letter spacing and stretching
                     var diff = (bgWidth / parentWidth ) / 4;
+                    var transform = diff + 1; // find the amount of stretch to fill the parent
+                    var spacing = (diff * bgWidth) / letters; // find the amount of spacing between letters to fill the parent
 
-                    console.log('diff: '+diff);
-
-                    var transform = diff + 1;
-                    var spacing = (diff * bgWidth) / letters;
-                    var half = (parentWidth - 10)/2;
-                    var bgHalf = bgWidth/2;
-
-                    console.log('half: '+half+', bgHalf: '+bgHalf);
-
-                    console.log('spacing'+spacing);
-                    console.log('pre: '+transform);
-
-                    // if the
-                    //while(transform * bgHalf > half) transform -= .01;
-                    //while(diff * bgHalf > half) spacing -= .01;
-
-                    console.log('post space: '+spacing);
-                    console.log('post: '+transform);
+                    // set spacing
                     text.style.letterSpacing = spacing + 'px';
-                    //background.style.transform = 'scale('+transform+',1)';
+
+                    // stretch letters
+                    background.style.transform = 'scale('+transform+',1)';
+
+                    // remove background
                     background.style.backgroundColor = 'none';
                     text.style.backgroundColor = 'none';
                 };
-               
+                
+                // hide the background bar
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
                 if (block) block.style.display = 'none';
             }
@@ -2938,24 +2937,25 @@ app.effect = function () {
 
                     var inc = app.settings.colorSwellIncriment;
                     var element = app.temp.swell;
-                    var prev = app.temp.previousLightness;
+                    var prev = app.prev.lightness;
+
                     var lightness = app.temp.lightness;
                     var color = app.temp.swellingColor;
                     element.style.borderColor = app.hsl(color.h, color.s, lightness);
 
                     if( lightness + inc <= 100 && prev < lightness || lightness - inc < color.l){
                         app.temp.lightness += inc;
-                        app.temp.previousLightness = lightness;
+                        app.prev.lightness = lightness;
                     }else if(lightness - inc >= color.l && prev > lightness || lightness + inc > color.l){ 
                         app.temp.lightness -= inc;
-                        app.temp.previousLightness = lightness;
+                        app.prev.lightness = lightness;
                     };
                 }
             // if there is no app.temp.swell, but colorswell is active then delete every
             }else if(app.temp.colorSwellActive){
                 console.log('deleting'); // check this !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
                 delete app.temp.lightness;
-                delete app.temp.previousSaturation;
+                delete app.prev.saturation;
                 delete app.temp.timeMarker;
                 delete app.temp.colorSwellActive;
                 delete app.temp.swellingColor;
