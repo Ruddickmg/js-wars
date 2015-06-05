@@ -210,6 +210,8 @@ li[pos=twoBelow] {
 }
 
 .text span {
+    padding-left: 3px;
+    padding-right: 3px;
     display: block;
     background-color: white;
 }
