@@ -2825,7 +2825,10 @@ app.effect = function () {
                 prev.style.height = '';
                 prev.style.borderColor = '';
                 if(!app.temp.modeOptionsActive){
-                    if(app.temp.prevBackground) app.temp.prevBackgrond.style.transform = '';
+                    if(app.temp.prevBackground){
+                        var bg = app.temp.prevBackground;
+                        bg.style.transform = '';
+                        bg.style.backgroundColor = 'white';
                     block = findElementsByClass(prev, 'block')[0] || false;
                     if(block) block.style.display = '';
                     var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
@@ -2860,8 +2863,8 @@ app.effect = function () {
                 var background = selectedElement.getElementsByTagName('span')[0] || false;
                 app.temp.prevBackground = background;
                 var transform = 1 + (background.offsetWidth / selectedElement.clientWidth);
-                console.log('transform'+transform);
                 background.style.transform = 'scale('+transform+',1)';
+                background.style.backgroundColor = '';
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
                 if (block) block.style.display = 'none';
             }
@@ -4346,7 +4349,7 @@ app.draw = function (canvas, dimensions, base) {
 
         hudCanvas: function (object, objectClass) {
 
-            // draw a backgrond behind terrain and building elements
+            // draw a background behind terrain and building elements
             if (objectClass !== 'unit') animationObjects.plain(canvas, setPosition(smallX, smallY));
 
             if (app.cache[object]) { // use cached drawing if available
