@@ -1955,7 +1955,7 @@ app.display = function () {
 
             // same as above, but up
         } else if (key.up in app.keys) {
-            console.log('mode: '+modeOptionsActive+', menu: '+app.temp.menuOptionsActive);
+            console.log('menu: '+app.temp.menuOptionsActive);
             if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
                 app.temp.selectionIndex -= 1;
             }else if(infiniteScroll && !app.modeOptionsActive){
@@ -2919,7 +2919,7 @@ app.effect = function () {
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
                 menuItemOptions(selectedElement, menu);
-                if(menu){
+                if(menu && !app.temp.menuOptionsActive){
                     app.temp.menuOptionsActive = true;
                 }else{
                     app.temp.menuOptionsActive = false;
