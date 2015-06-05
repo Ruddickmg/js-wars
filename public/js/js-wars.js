@@ -2863,7 +2863,7 @@ app.effect = function () {
                 console.log('parent' + parentWidth);
                 var percent = clientWidth / parentWidth;
                 console.log(percent);
-                var transform = (clientWidth * (1 + percent))/100;
+                var transform = 1 + percent;
                 console.log('transform'+transform);
                 text.style.transform = 'scale('+transform+',1)';
                 block = findElementsByClass(selectedElement, 'block')[0] || false;
