@@ -2868,7 +2868,7 @@ app.effect = function () {
                     app.temp.prevBackground = background;
 
                     // get the width of the text devided by the width of the parent element divided by two to split between letter spacing and stretching
-                    var diff = (background.offsetWidth / selectedElement.clientWidth) / 2;
+                    var diff = (background.offsetWidth / selectedElement.clientWidth);
                     var transform = diff + 1;
                     var spacing = (diff * background.offsetWidth) / letters;
                     console.log('spacing'+spacing);
