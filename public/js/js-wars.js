@@ -2873,7 +2873,7 @@ app.effect = function () {
                     console.log('bgWidth: '+bgWidth+', parentWidth: '+parentWidth);
 
                     // get the width of the text devided by the width of the parent element divided by two to split between letter spacing and stretching
-                    var diff = (bgWidth / parentWidth ) / 2;
+                    var diff = (bgWidth / parentWidth ) / 4;
 
                     console.log('diff: '+diff);
 
@@ -2888,13 +2888,13 @@ app.effect = function () {
                     console.log('pre: '+transform);
 
                     // if the
-                    while(transform * bgHalf > half) transform -= .01;
-                    while(diff * bgHalf > half) spacing -= .01;
+                    //while(transform * bgHalf > half) transform -= .01;
+                    //while(diff * bgHalf > half) spacing -= .01;
 
                     console.log('post space: '+spacing);
                     console.log('post: '+transform);
                     text.style.letterSpacing = spacing + 'px';
-                    //background.style.transform = 'scale('+transform+',1)';
+                    background.style.transform = 'scale('+transform+',1)';
                     background.style.backgroundColor = 'none';
                     text.style.backgroundColor = 'none';
                 };
