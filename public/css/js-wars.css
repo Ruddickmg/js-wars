@@ -109,7 +109,6 @@ h1 {
 }
 
 .modeItem {
-    transition: all 0.5s ease;
     position: absolute;
     text-align: center;
     display: block;
@@ -137,8 +136,6 @@ h1 {
 }
 
 li[pos=twoAbove] {
-    z-index: 9;
-    transition:none;
     top:100px;
     left:-250px;
 }
@@ -174,8 +171,6 @@ li[pos=oneBelow] {
 }
 
 li[pos=twoBelow] {
-    z-index: 9;
-    transition:none;
     top:510px;
     left:-250px;
 }
