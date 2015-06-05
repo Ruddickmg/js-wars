@@ -110,7 +110,6 @@ h1 {
 
 .modeItem {
     transition: all 0.5s ease;
-    z-index: 10;
     position: absolute;
     text-align: center;
     display: block;
