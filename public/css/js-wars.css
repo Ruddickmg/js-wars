@@ -175,7 +175,7 @@ li[pos=selected] .text {
     line-height: 90px;
     font-size: 100px;
     font-weight: bold;
-    border-bottom: 24px solid;
+    border-bottom: 30px solid;
 }
 
 li[pos=selected] .modeOptions {
