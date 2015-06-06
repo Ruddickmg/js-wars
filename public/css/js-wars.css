@@ -166,7 +166,7 @@ li[pos=selected] {
 }
 
 li[pos=selected] .text {
-    left:2%;
+    left:1%;
     right: 1%;
     overflow: hidden;
     margin-left:0%;
@@ -240,7 +240,7 @@ li[pos=twoBelow] {
     top:-5px;
     background: white;
     height:215px;
-    width:200px;
+    width:190px;
 }
 
 #fbButton {
