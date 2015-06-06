@@ -147,7 +147,7 @@ h1 {
 }
 
 li[pos=twoAbove] {
-    top:136px;
+    top:140px;
     left:-250px;
 }
 
@@ -160,7 +160,7 @@ li[pos=oneAbove] {
 li[pos=selected] {
     z-index: 11;
     top:280px;
-    height:105px;
+    height:108px;
     left:50px;
     margin:15px;
 }
