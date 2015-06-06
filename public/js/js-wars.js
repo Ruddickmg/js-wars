@@ -4254,14 +4254,22 @@ app.animateEffects = function () {
 
 app.gameSetup = function (){
 
+    var game = false;
+
     // select game mode
     if(app.user && !app.game.mode) app.game.mode = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.setupMenuMovement, 'li', 5, 'infinite');
 
     // set up the game based on what mode is being selected
-    if(app.game.mode) var game = app.modes[app.game.mode]();
-    if(app.game.mode) delete app.game.mode;
+    if(app.game.mode){
+        if(app.game.mode === 'logout') return app.modes[app.game.mode]();
+        game = app.modes[app.game.mode]();
+    }
+
     // listen for fading colors in and out on selection
     app.effect.colorSwell();
+
+    // scroll info on hovered elements, user joins etc in footer scroll bar
+    app.effect.scrollInfo();
 
     // if a game has been started 
     if (game) {
