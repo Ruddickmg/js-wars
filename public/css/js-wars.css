@@ -161,7 +161,7 @@ li[pos=selected] {
     z-index: 11;
     top:278px;
     height:118px;
-    left:58px;
+    left:60px;
     margin:15px;
 }
 
@@ -180,7 +180,7 @@ li[pos=selected] .text {
 
 li[pos=selected] .modeOptions {
     transition: right 0.5s 0.1s ease;
-    right:-162px;
+    right:-212px;
 }
 
 li[pos=oneBelow] {
