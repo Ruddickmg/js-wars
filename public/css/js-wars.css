@@ -199,7 +199,7 @@ li[pos=twoBelow] {
     z-index: 8;
     width: 99%;
     right: 2px;
-    height: 26px;
+    height: 30px;
     margin: 2px;
 }
 
@@ -211,7 +211,7 @@ li[pos=twoBelow] {
     margin-right:50%;
     text-align: center;
     font-size: 25px;
-    line-height: 30px;
+    line-height: 34px;
 }
 
 .text span {
