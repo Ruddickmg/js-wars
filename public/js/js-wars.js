@@ -1571,7 +1571,7 @@ app.display = function () {
                 options.setAttribute('class', 'modeOptions');
 
                 // default to not showing options (hide them when not selected)
-                options.style.display = 'none';
+                //options.style.display = 'none';
 
                 for(var o = 0; o < length; o += 1){
 
@@ -2767,7 +2767,7 @@ app.effect = function () {
         if (!undo) undo = app.undo.keyPress;
 
         // display the menu options
-        if(menu) menu.style.display = '';
+        //if(menu) menu.style.display = '';
         var modeOptionsActive = app.temp.modeOptionsActive;
         var horizon = app.temp.horizon;
         if(horizon){
