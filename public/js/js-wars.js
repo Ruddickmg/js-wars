@@ -1484,7 +1484,7 @@ app.dom = function (){
 
 app.display = function () {
 
-    var sideX, sideY, selectionIndex, selectedElement, hide, len, prevX;
+    var sideX, sideY, selectionIndex, selectedElement, hide, len, prevX, selectable = true;
     var optionsActive, unitSelectionActive = false;
 
     // format is where the login is coming from, allowing different actions for different login sources
@@ -1927,7 +1927,7 @@ app.display = function () {
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
             // callback that defines how to display the selected element ( functions located in app.effect )
-            if (selectedElement || app.temp.loopThrough) display(selectedElement, tag, selectionIndex, prev, elements);
+            if (selectedElement || app.temp.loopThrough) selectable = display(selectedElement, tag, selectionIndex, prev, elements);
 
             // store the last index for future comparison
             app.prev.index = selectionIndex;
@@ -1935,16 +1935,21 @@ app.display = function () {
         }
 
         // if the select key has been pressed and an element is available for selection then return its id
-        if (key.select in app.keys && selectedElement && !app.temp.menuOptionsActive) {
+        if (key.select in app.keys && selectedElement && selectable) {
+
             app.temp.selectionIndex = 1;
+
             delete app.prev.index;
             delete selectedElement;
             delete selectionIndex;
             delete prev;
             delete hide;
+
             undo(key.select);
+
             return selectedElement.getAttribute('id');
             // if the down key has been pressed then move to the next index ( element ) down
+
         } else if (key.down in app.keys) {
 
             // only movement if the index is less then the length ( do not move to non existant index )
@@ -1968,11 +1973,15 @@ app.display = function () {
         } else if (app.temp.menuOptionsActive){
 
             if (key.left in app.keys ){
+
                 if (modeOptionsActive) app.temp.horizon = 'left';
                 undo(key.left);
+
             } else if(key.right in app.keys){
+
                 app.temp.horizon = 'right';
                 undo(key.right);
+
             }
         }
         return false;
@@ -2822,6 +2831,8 @@ app.effect = function () {
 
             // if there is then remove its highlighting
             if (prev) prev.style.backgroundColor = '';
+
+            return true;
         },
 
         scrollSetupMenu:function (selectedElement, tag, index, prev, elements){
@@ -2933,10 +2944,12 @@ app.effect = function () {
                 menuItemOptions(selectedElement, menu);
                 if(menu){
                     app.temp.menuOptionsActive = true;
+                    return false; // tells select that it is not selectable since it has further options
                 }else if(!app.temp.modeOptionsActive){
                     app.temp.menuOptionsActive = false;
                 }
             }
+            return true;
         },
 
         colorSwell: function () { 
