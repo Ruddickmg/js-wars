@@ -2984,20 +2984,29 @@ app.effect = function () {
             if(app.temp.scroll){
 
                 var now = Date.now();
+                
                 if(now - app.prev.scrollTime > 10){
                     app.prev.scrollTime = now;
 
-                    var p, len, footer, text = app.settings.scrollMessages[app.temp.scroll];
-                    var footer = app.temp.footer;
+                    if(app.prev.scroll !== app.temp.scroll){
+                        delete app.temp.p;
+                        delete app.temp.footer;
+                    }
+
+                    console.log('here');
+
+                    var p = app.temp.p, footer = app.temp.footer;
 
                     if(!footer) footer = app.temp.footer = document.getElementById('footer');
 
+                    console.log(footer);
 
-                    if(footer) app.temp.p = footer.getElementsByTagName('p')[0] || false;
+                    if(footer && !p) p = app.temp.p = footer.getElementsByTagName('p')[0] || false;
+
                     if(p){
                         var start = -p.offsetWidth;
-                        p.innerHTML = text;
-                        
+                        p.innerHTML = app.settings.scrollMessages[app.temp.scroll];
+
                         console.log('p offset width: ' + start);
 
                         if(!app.temp.scrollPosition) app.temp.scrollPosition = start;
