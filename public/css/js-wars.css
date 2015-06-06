@@ -147,19 +147,19 @@ h1 {
 }
 
 li[pos=twoAbove] {
-    top:150px;
+    top:120px;
     left:-250px;
 }
 
 li[pos=oneAbove] {
     z-index: 10;
     left:-100px;
-    top:200px;
+    top:205px;
 }
 
 li[pos=selected] {
     z-index: 11;
-    top:300px;
+    top:280px;
     height:100px;
 
     left:50px;
