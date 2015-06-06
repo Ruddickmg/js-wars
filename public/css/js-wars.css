@@ -181,7 +181,7 @@ li[pos=selected] .text {
 
 li[pos=selected] .modeOptions {
     transition: right 0.5s 0.1s ease;
-    right:-206px;
+    right:-208px;
 }
 
 li[pos=oneBelow] {
@@ -241,7 +241,14 @@ li[pos=twoBelow] {
     top:-5px;
     background: white;
     height:215px;
-    width:190px;
+    width:200px;
+}
+
+.modeTitle {
+    top:50px;
+    left: 50px;
+    font-size: 100px;
+    font-weight: bold;
 }
 
 #fbButton {
