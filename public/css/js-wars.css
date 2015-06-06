@@ -166,16 +166,16 @@ li[pos=selected] {
 }
 
 li[pos=selected] .text {
-    left:1%;
+    left:2%;
     right: 1%;
     overflow: hidden;
     margin-left:0%;
     margin-right:0%;
     top: -5px;
     line-height: 90px;
-    font-size: 90px;
+    font-size: 100px;
     font-weight: bold;
-    border-bottom: 20px solid;
+    border-bottom: 24px solid;
 }
 
 li[pos=selected] .modeOptions {
