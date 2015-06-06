@@ -118,8 +118,8 @@ app = {
 
     // holds previously selected elements for resetting to defaults
     prev:{
-        scrollTime: 0;
-        scroll: false;
+        scrollTime: 0,
+        scroll: false
     },
 
     users: [{
