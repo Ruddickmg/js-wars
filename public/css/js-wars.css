@@ -160,7 +160,7 @@ li[pos=oneAbove] {
 li[pos=selected] {
     z-index: 11;
     top:278px;
-    height:114px;
+    height:115px;
     left:50px;
     margin:15px;
 }
