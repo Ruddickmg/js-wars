@@ -2988,7 +2988,7 @@ app.effect = function () {
                     app.prev.scrollTime = now;
 
                     var p, len, text = app.settings.scrollMessages[app.temp.scroll];
-                    if(!app.temp.footer) app.temp.footer = document.getElementsById('footer');
+                    if(!app.temp.footer) app.temp.footer = document.getElementById('footer');
                     var max = app.temp.footer.offsetWidth;
 
                     if(footer) app.temp.p = footer.getElementsByTagName('p')[0] || false;
