@@ -116,11 +116,6 @@ h1 {
     display: block;
     height:30px;
     width: 500px;
-    border-left: 12px solid;
-    border-right: 12px solid;
-    border-top: 5px solid;
-    border-bottom: 5px solid;
-    border-color: black;
 }
 
 .modeBackground {
@@ -129,6 +124,11 @@ h1 {
     width: 100%;
     height: 100%;
     background:white;
+    border-left: 12px solid;
+    border-right: 12px solid;
+    border-top: 5px solid;
+    border-bottom: 5px solid;
+    border-color: black;
 };
 
 #footer {

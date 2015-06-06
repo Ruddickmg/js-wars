@@ -2829,13 +2829,16 @@ app.effect = function () {
             // if the item being hovered over has changed, remove the effects of being hovered over
             if(prev){
                 stopFading();
-                prev.style.height = '';
-                prev.style.borderColor = '';
+                var background = findElementsByClass(prev, 'modeBackground')[0] || false;
+                if(background){
+                    background.style.height = '';
+                    background.style.borderColor = '';
+                }
                 if(!app.temp.modeOptionsActive){
-                    if(app.prev.background){
-                        var bg = app.prev.background;
-                        bg.style.transform = '';
-                        bg.style.backgroundColor = 'white';
+                    if(app.prev.textBackground){
+                        var tbg = app.prev.textBackground;
+                        tbg.style.transform = '';
+                        tbg.style.backgroundColor = 'white';
                     }
                     if(app.prev.text) app.prev.text.style.letterSpacing = '';
                     block = findElementsByClass(prev, 'block')[0] || false;
@@ -2876,7 +2879,7 @@ app.effect = function () {
 
                 if(text && background){
                     // save the background and text for resetting on new selection
-                    app.prev.background = background;
+                    app.prev.textBackground = background;
                     app.prev.text = text;
 
                     //  get the length of the id (same as inner html);
@@ -2913,8 +2916,11 @@ app.effect = function () {
                 id = selectedElement.id;
             }
 
+            // get border of background div            
+            var border = findElementsByClass(selectedElement, 'modeBackground')[0] || false;
+
             // fade the selected element from color to white
-            fade(selectedElement, id || 'game');
+            if (border) fade(border, id || 'game');
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
