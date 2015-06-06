@@ -117,7 +117,10 @@ app = {
     },
 
     // holds previously selected elements for resetting to defaults
-    prev:{},
+    prev:{
+        scrollTime = 0;
+        scroll = false;
+    },
 
     users: [{
         co: 'sami',
@@ -1931,7 +1934,7 @@ app.display = function () {
                 var showElement = findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
-console
+
             selectedElement = findElementByTag(tag, elements, selectionIndex);
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement || app.temp.loopThrough) selectable = display(selectedElement, tag, selectionIndex, prev, elements);
@@ -2633,6 +2636,19 @@ app.game.settings = {
 
 app.settings = {
 
+    // messages to display in the bottom scroll bar as items are hovered over and people join games, etc..
+    scrollMessages:{
+        logout:'select to log out of the game',
+        newgame:'Start and set up a new game',
+        continuegame:'Resume a saved game',
+        newjoin:'Find and join a new game',
+        continuejoin:'Re-Join a saved game started at an earlier time',
+        COdesign:'Customize the look of your CO',
+        mapdesign:'Create your own custom maps',
+        design:'Design maps or edit CO appearance',
+        store:'Purchase maps, CO\'s, and other game goods' 
+    },
+
     // speed at which color swell.. fading in and out, will cycle (lower is faster)
     colorSwellIncriment:1.5,
     colorSwellSpeed:2,
@@ -2869,6 +2885,11 @@ app.effect = function () {
                 }
             }
 
+            if(!app.prev.scroll || app.temp.scroll !== app.prev.scroll ){
+                app.prev.scroll = app.temp.scroll;
+                app.temp.scroll = selectedElement.id; 
+            } 
+
             if(app.temp.loopThrough) delete app.temp.loopThrough;
 
             if(!app.temp.menuOptionsActive && app.temp.horizon && app.temp.horizon === 'right') delete app.temp.horizon;
@@ -2960,6 +2981,36 @@ app.effect = function () {
 
         scrollInfo:function(){
 
+            if(app.temp.scroll){
+
+                var now = Date.now();
+                if(now - app.prev.scrollTime > 10){
+                    app.prev.scrollTime = now;
+
+                    var p, len, text = app.settings.scrollMessages[app.temp.scroll];
+                    if(!app.temp.footer) app.temp.footer = document.getElementsById('footer');
+                    var max = app.temp.footer.offsetWidth;
+
+                    if(footer) app.temp.p = footer.getElementsByTagName('p')[0] || false;
+                    if(p){
+                        var start = -p.offsetWidth;
+
+                        console.log('p offset width: ' + start);
+
+                        if(!app.temp.scrollPosition) app.temp.scrollPosition = start;
+                        var pos = app.temp.scrollPosition;
+                        if(pos){
+                            if(pos <= max){
+                                p.innerHTML = text;
+                                p.style.left = app.temp.scrollPosition;
+                                app.temp.scrollPosition += 1;
+                            }else{
+                                app.temp.scrollPosition = start;
+                            }
+                        };
+                    }
+                }
+            }
         },
 
         colorSwell: function () { 
