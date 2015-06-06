@@ -186,11 +186,11 @@ li[pos=selected] .modeOptions {
 li[pos=oneBelow] {
     z-index: 10;
     left:-100px;
-    top:430px;
+    top:460px;
 }
 
 li[pos=twoBelow] {
-    top:510px;
+    top:500px;
     left:-250px;
 }
 
