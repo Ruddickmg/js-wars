@@ -1966,7 +1966,7 @@ app.display = function () {
         } else if (key.up in app.keys) {
             if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
                 app.temp.selectionIndex -= 1;
-            }else if(infiniteScroll && !app.modeOptionsActive){
+            }else if(infiniteScroll && !modeOptionsActive){
                 app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
             }
             undo(key.up);
