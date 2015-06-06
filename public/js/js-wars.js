@@ -1519,6 +1519,13 @@ app.display = function () {
         var selectModeScreen = document.createElement('article');
         selectModeScreen.setAttribute('id','selectModeScreen');
 
+        // create title to display on page
+        var title = document.createElement('h1');
+        title.setAttribute('id', 'modeTitle');
+        title.innerHTML = 'Select * Mode';
+        selectModeScreen.appendChild(title);
+
+
         // create list of selectable modes
         var selectMenu = document.createElement('ul');
         selectMenu.setAttribute('id', 'selectModeMenu');
@@ -1538,7 +1545,7 @@ app.display = function () {
 
             // block is the background bar
             var block = document.createElement('div');
-            block.setAttribute('class', 'block');            
+            block.setAttribute('class', 'block');
             block.style.backgroundColor = color;
 
             var background = document.createElement('div');
@@ -1924,7 +1931,7 @@ app.display = function () {
                 var showElement = findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
-
+console
             selectedElement = findElementByTag(tag, elements, selectionIndex);
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement || app.temp.loopThrough) selectable = display(selectedElement, tag, selectionIndex, prev, elements);
@@ -2835,7 +2842,7 @@ app.effect = function () {
             return true;
         },
 
-        scrollSetupMenu:function (selectedElement, tag, index, prev, elements){
+        setupMenuMovement:function (selectedElement, tag, index, prev, elements){
 
             // if the item being hovered over has changed, remove the effects of being hovered over
             if(prev){
@@ -2925,7 +2932,6 @@ app.effect = function () {
 
             if(selectedElement.getAttribute('class') === 'modeOption'){
                 id = selectedElement.parentNode.parentNode.id;
-                console.log(id);
             }else{
                 id = selectedElement.id;
             }
@@ -2950,6 +2956,10 @@ app.effect = function () {
                 }
             }
             return true;
+        },
+
+        scrollInfo:function(){
+
         },
 
         colorSwell: function () { 
@@ -2982,7 +2992,6 @@ app.effect = function () {
                 }
             // if there is no app.temp.swell, but colorswell is active then delete every
             }else if(app.temp.colorSwellActive){
-                console.log('deleting'); // check this !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
                 delete app.temp.lightness;
                 delete app.prev.saturation;
                 delete app.temp.timeMarker;
@@ -4195,7 +4204,7 @@ app.animateEffects = function () {
 app.gameSetup = function (){
 
     // select game mode
-    if(app.user && !app.game.mode) app.game.mode = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.scrollSetupMenu, 'li', 5, 'infinite');
+    if(app.user && !app.game.mode) app.game.mode = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.setupMenuMovement, 'li', 5, 'infinite');
 
     // set up the game based on what mode is being selected
     if(app.game.mode) var game = app.modes[app.game.mode]();
