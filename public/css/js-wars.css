@@ -194,6 +194,7 @@ li[pos=twoBelow] {
 }
 
 .block {
+    position: absolute;
     z-index: 8;
     width: 99%;
     right: 2px;
