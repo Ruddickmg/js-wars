@@ -180,7 +180,7 @@ li[pos=selected] .text {
 
 li[pos=selected] .modeOptions {
     transition: right 0.5s 0.1s ease;
-    right:-202px;
+    right:-208px;
 }
 
 li[pos=oneBelow] {
