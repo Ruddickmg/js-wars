@@ -104,6 +104,7 @@ h1 {
 }
 
 #selectModeMenu{
+    text-transform: uppercase;
     background:white;
     overflow: hidden;
 }
@@ -180,7 +181,7 @@ li[pos=selected] .text {
 
 li[pos=selected] .modeOptions {
     transition: right 0.5s 0.1s ease;
-    right:-208px;
+    right:-206px;
 }
 
 li[pos=oneBelow] {
@@ -240,7 +241,7 @@ li[pos=twoBelow] {
     top:-5px;
     background: white;
     height:215px;
-    width:200px;
+    width:198px;
 }
 
 #fbButton {
