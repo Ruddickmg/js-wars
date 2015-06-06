@@ -148,12 +148,12 @@ h1 {
 
 li[pos=twoAbove] {
     top:141px;
-    left:-220px;
+    left:-170px;
 }
 
 li[pos=oneAbove] {
     z-index: 10;
-    left:-90px;
+    left:-40px;
     top:205px;
 }
 
@@ -161,7 +161,7 @@ li[pos=selected] {
     z-index: 11;
     top:278px;
     height:118px;
-    left:56px;
+    left:58px;
     margin:15px;
 }
 
@@ -185,13 +185,13 @@ li[pos=selected] .modeOptions {
 
 li[pos=oneBelow] {
     z-index: 10;
-    left:-90px;
+    left:-40px;
     top:462px;
 }
 
 li[pos=twoBelow] {
     top:526px;
-    left:-220px;
+    left:-170px;
 }
 
 .block {
@@ -240,7 +240,7 @@ li[pos=twoBelow] {
     top:-5px;
     background: white;
     height:215px;
-    width:150px;
+    width:200px;
 }
 
 #fbButton {
