@@ -241,10 +241,10 @@ li[pos=twoBelow] {
     top:-5px;
     background: white;
     height:215px;
-    width:200px;
+    width:198px;
 }
 
-.modeTitle {
+#modeTitle {
     top:50px;
     left: 50px;
     font-size: 100px;
