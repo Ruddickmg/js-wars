@@ -2833,6 +2833,9 @@ app.effect = function () {
                 if(background){
                     background.style.height = '';
                     background.style.borderColor = '';
+                }else{
+                    prev.style.height = '';
+                    prev.style.borderColor = '';
                 }
                 if(!app.temp.modeOptionsActive){
                     if(app.prev.textBackground){
@@ -2918,9 +2921,12 @@ app.effect = function () {
 
             // get border of background div            
             var border = findElementsByClass(selectedElement, 'modeBackground')[0] || false;
-
+            var element = selectedElement;
+            
             // fade the selected element from color to white
-            if (border) fade(border, id || 'game');
+            if (border) element = border;
+
+            fade(element, id || 'game');
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
