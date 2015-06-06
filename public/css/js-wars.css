@@ -114,7 +114,7 @@ h1 {
     position: absolute;
     text-align: center;
     display: block;
-    height:34px;
+    height:35px;
     width: 500px;
 }
 
@@ -147,14 +147,14 @@ h1 {
 }
 
 li[pos=twoAbove] {
-    top:140px;
+    top:141px;
     left:-250px;
 }
 
 li[pos=oneAbove] {
     z-index: 10;
     left:-100px;
-    top:204px;
+    top:205px;
 }
 
 li[pos=selected] {
@@ -190,7 +190,7 @@ li[pos=oneBelow] {
 }
 
 li[pos=twoBelow] {
-    top:528px;
+    top:526px;
     left:-250px;
 }
 
@@ -239,7 +239,7 @@ li[pos=twoBelow] {
     right:0px;
     top:-5px;
     background: white;
-    height:200px;
+    height:215px;
     width:150px;
 }
 
