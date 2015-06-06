@@ -2837,7 +2837,7 @@ app.effect = function () {
                     block = findElementsByClass(prev, 'block')[0] || false;
                     if(block) block.style.display = '';
                     var prevOptions = findElementsByClass(prev, 'modeOptions')[0] || false;
-                    if(prevOptions && !app.temp.horizon) prevOptions.style.display = 'none';
+                    if(prevOptions && !app.temp.horizon) prevOptions.style.opacity = 0;
                 }
             }
 
