@@ -2567,10 +2567,10 @@ app.modes = function (){
         continuejoin:function(){
             alert('join a game that was already started');
         },
-        designco:function(){
+        COdesign:function(){
             alert('design a co');
         },
-        designmap:function(){
+        mapdesign:function(){
             alert('design a map');
         },
         store:function(){
