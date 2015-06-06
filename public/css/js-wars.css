@@ -160,8 +160,7 @@ li[pos=oneAbove] {
 li[pos=selected] {
     z-index: 11;
     top:280px;
-    height:100px;
-
+    height:105px;
     left:50px;
     margin:15px;
 }
@@ -173,8 +172,9 @@ li[pos=selected] .text {
     margin-left:0%;
     margin-right:0%;
     top: -5px;
-    line-height: 85px;
-    font-size: 80px;
+    line-height: 90px;
+    font-size: 85px;
+    font-weight: bold;
     border-bottom: 15px solid;
 }
 
