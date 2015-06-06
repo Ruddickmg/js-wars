@@ -2987,21 +2987,24 @@ app.effect = function () {
                 if(now - app.prev.scrollTime > 10){
                     app.prev.scrollTime = now;
 
-                    var p, len, text = app.settings.scrollMessages[app.temp.scroll];
-                    if(!app.temp.footer) app.temp.footer = document.getElementById('footer');
-                    var max = app.temp.footer.offsetWidth;
+                    var p, len, footer, text = app.settings.scrollMessages[app.temp.scroll];
+                    var footer = app.temp.footer;
+
+                    if(!footer) footer = app.temp.footer = document.getElementById('footer');
+
 
                     if(footer) app.temp.p = footer.getElementsByTagName('p')[0] || false;
                     if(p){
                         var start = -p.offsetWidth;
-
+                        p.innerHTML = text;
+                        
                         console.log('p offset width: ' + start);
 
                         if(!app.temp.scrollPosition) app.temp.scrollPosition = start;
                         var pos = app.temp.scrollPosition;
                         if(pos){
-                            if(pos <= max){
-                                p.innerHTML = text;
+
+                            if(pos <= footer.offsetWidth){
                                 p.style.left = app.temp.scrollPosition;
                                 app.temp.scrollPosition += 1;
                             }else{
