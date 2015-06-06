@@ -1541,6 +1541,9 @@ app.display = function () {
             block.setAttribute('class', 'block');            
             block.style.backgroundColor = color;
 
+            var background = document.createElement('div');
+            background.setAttribute('class', 'modeBackground');
+
             // span is to make a background around the text
             var span = document.createElement('span');
             span.setAttribute('class', 'textBackground');
@@ -1559,6 +1562,7 @@ app.display = function () {
             item.setAttribute('id', mi.id);
             item.style.height = height;
             item.style.color = color;
+            item.appendChild(background);
             item.appendChild(block);
             item.appendChild(text);
 
