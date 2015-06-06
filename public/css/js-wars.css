@@ -115,7 +115,7 @@ h1 {
     text-align: center;
     display: block;
     height:35px;
-    width: 480px;
+    width: 484px;
 }
 
 .modeBackground {
@@ -148,12 +148,12 @@ h1 {
 
 li[pos=twoAbove] {
     top:141px;
-    left:-150px;
+    left:-145px;
 }
 
 li[pos=oneAbove] {
     z-index: 10;
-    left:-20px;
+    left:-15px;
     top:205px;
 }
 
@@ -161,7 +161,7 @@ li[pos=selected] {
     z-index: 11;
     top:278px;
     height:118px;
-    left:64px;
+    left:62px;
     margin:15px;
 }
 
@@ -185,13 +185,13 @@ li[pos=selected] .modeOptions {
 
 li[pos=oneBelow] {
     z-index: 10;
-    left:-20px;
+    left:-15px;
     top:462px;
 }
 
 li[pos=twoBelow] {
     top:526px;
-    left:-150px;
+    left:-145px;
 }
 
 .block {
