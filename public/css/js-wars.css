@@ -180,7 +180,7 @@ li[pos=selected] .text {
 
 li[pos=selected] .modeOptions {
     transition: right 0.5s 0.1s ease;
-    right:-212px;
+    right:-202px;
 }
 
 li[pos=oneBelow] {
@@ -240,7 +240,7 @@ li[pos=twoBelow] {
     top:-5px;
     background: white;
     height:215px;
-    width:190px;
+    width:200px;
 }
 
 #fbButton {
