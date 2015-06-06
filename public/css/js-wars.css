@@ -148,19 +148,19 @@ h1 {
 
 li[pos=twoAbove] {
     top:141px;
-    left:-250px;
+    left:-270px;
 }
 
 li[pos=oneAbove] {
     z-index: 10;
-    left:-100px;
+    left:-110px;
     top:205px;
 }
 
 li[pos=selected] {
     z-index: 11;
     top:278px;
-    height:116px;
+    height:118px;
     left:50px;
     margin:15px;
 }
@@ -185,13 +185,13 @@ li[pos=selected] .modeOptions {
 
 li[pos=oneBelow] {
     z-index: 10;
-    left:-100px;
+    left:-110px;
     top:462px;
 }
 
 li[pos=twoBelow] {
     top:526px;
-    left:-250px;
+    left:-270px;
 }
 
 .block {
