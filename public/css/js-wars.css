@@ -260,7 +260,9 @@ li[pos=twoBelow] {
 
 #modeTitle {
     top:60px;
+    left:50px;
     color:white;
+    position: absolute;
     font-size: 100px;
     font-weight: bold;
     text-transform: uppercase;
