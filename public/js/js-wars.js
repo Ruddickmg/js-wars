@@ -2985,6 +2985,7 @@ app.effect = function () {
 
         scrollInfo:function(now){
             if(app.temp.scroll){
+
                 if(now - app.prev.scrollTime > 5){
 
                     app.prev.scrollTime = now;
@@ -3009,10 +3010,8 @@ app.effect = function () {
                         
                         var pos = app.temp.scrollPosition;
 
-                        if(pos){
-                            console.log('positioin: '+pos);
-                            console.log(footer.offsetWidth);
-                            if(pos <= footer.offsetWidth || pos === 0){
+                        if(pos !== undefined){
+                            if(pos <= footer.offsetWidth ){
                                 p.style.left = pos + 'px';
                                 app.temp.scrollPosition += 2;
                             }else{
