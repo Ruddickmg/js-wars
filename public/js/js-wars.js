@@ -3017,9 +3017,9 @@ app.effect = function () {
 
                         console.log(p);
 
-                        p.innerHTML = app.settings.scrollMessages[app.temp.scroll];
+                        text.innerHTML = app.settings.scrollMessages[app.temp.scroll];
 
-                        console.log('p offset width: ' + start);
+                        console.log('text offset width: ' + start);
 
                         if(!app.temp.scrollPosition) app.temp.scrollPosition = start;
                         var pos = app.temp.scrollPosition;
