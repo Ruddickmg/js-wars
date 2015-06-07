@@ -3018,7 +3018,7 @@ app.effect = function () {
                                 console.log(p);
                                 app.temp.scrollPosition += 1;
                             }else{
-                                console.log('restart!!!!!!');
+                                console.log('restart!!!!!!!');
                                 app.temp.scrollPosition = start;
                             }
                         };
