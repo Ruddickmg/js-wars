@@ -3003,24 +3003,20 @@ app.effect = function () {
                     }
                     if(p && text){
 
-                        var start = -text.offsetWidth;
-
                         text.innerHTML = app.settings.scrollMessages[app.temp.scroll];
 
-                        if(!app.temp.scrollPosition) app.temp.scrollPosition = start;
+                        if(!app.temp.scrollPosition) app.temp.scrollPosition = -text.offsetWidth;
 
                         var pos = app.temp.scrollPosition;
 
                         if(pos){
 
                             if(pos <= footer.offsetWidth){
-                                console.log('position: '+pos);
                                 p.style.left = pos + 'px';
-                                console.log(p);
                                 app.temp.scrollPosition += 1;
                             }else{
                                 console.log('restart!!!!!!!');
-                                app.temp.scrollPosition = start;
+                                app.temp.scrollPosition = -text.offsetWidth;
                             }
                         };
                     }

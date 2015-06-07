@@ -152,7 +152,7 @@ h1 {
     background: black;
 }
 
-.scrollingInfo {
+#scrollingInfo {
     position:absolute;
     display: block;
     line-height: 60px;
