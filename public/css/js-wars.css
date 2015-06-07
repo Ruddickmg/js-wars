@@ -90,7 +90,6 @@ h1 {
     position:absolute;
     top: 395px;
     left: 720px;
-    right:auto;
     transform: translate(-50%,-50%);
 }
 
@@ -215,7 +214,7 @@ h1 {
 
 #selectModeScreen {
     z-index: 14;
-    background-color: tan;
+    background: tan;
     overflow: hidden;
 }
 
