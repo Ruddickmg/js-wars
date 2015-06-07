@@ -3007,7 +3007,7 @@ app.effect = function () {
                     console.log(footer);
 
                     if(footer && !p) p = app.temp.p = footer.getElementsByTagName('p')[0] || false;
-                    if(footer && !text) text = app.temp.footerText = footer.getElementById('footerText');
+                    if(footer && !text) text = app.temp.footerText = document.getElementById('footerText');
 
                     if(p && text){
 
