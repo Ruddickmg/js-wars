@@ -1485,7 +1485,7 @@ app.dom = function (){
     app.display handles all the display screens and the users interaction with them
 \* ------------------------------------------------------------------------------------------------------*/
 
-app.display = function () {
+app.display = function () { 
 
     var sideX, sideY, selectionIndex, selectedElement, hide, len, prevX, selectable = true;
     var optionsActive, unitSelectionActive = false;
@@ -1525,7 +1525,7 @@ app.display = function () {
         // create title to display on page
         var title = document.createElement('h1');
         title.setAttribute('id', 'modeTitle');
-        title.innerHTML = 'Select * Mode';
+        title.innerHTML = 'Select*Mode';
         selectModeScreen.appendChild(title);
 
 
