@@ -81,7 +81,7 @@ h1 {
 
 .gameScreen {
     border-right: inset 3px hsl(0,0%,20%);
-    border-bottom:inset 3px hsl(0,0%,25%);
+    border-bottom:inset 3px hsl(0,0%,15%);
     border-left:inset 3px hsl(0,0%,40%);
     border-top:inset 3px hsl(0,0%,40%);
 }

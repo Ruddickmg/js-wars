@@ -2998,8 +2998,6 @@ app.effect = function () {
                         delete app.temp.footer;
                     }
 
-                    console.log('here');
-
                     var p = app.temp.p, footer = app.temp.footer, text = app.temp.footerText;
 
                     if(!footer) footer = app.temp.footer = document.getElementById('footer');
@@ -3011,11 +3009,7 @@ app.effect = function () {
 
                     if(p && text){
 
-                        console.log(text)
-
                         var start = -text.offsetWidth;
-
-                        console.log(p);
 
                         text.innerHTML = app.settings.scrollMessages[app.temp.scroll];
 
@@ -3030,6 +3024,7 @@ app.effect = function () {
                         if(pos){
 
                             if(pos <= footer.offsetWidth){
+                                console.log('footer width: '+footer.offsetWidth)
                                 p.style.left = app.temp.scrollPosition;
                                 app.temp.scrollPosition += 1;
                             }else{
