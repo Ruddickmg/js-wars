@@ -2984,14 +2984,9 @@ app.effect = function () {
         scrollInfo:function(){
 
             if(app.temp.scroll){
-
-                var now = Date.now();
-
                 if(now - app.prev.scrollTime > 10){
-                    
-                    app.prev.scrollTime = now;
 
-                    console.log('now'+now);
+                    app.prev.scrollTime = now;
 
                     if(app.prev.scroll !== app.temp.scroll){
                         delete app.temp.p;
@@ -3001,33 +2996,29 @@ app.effect = function () {
                     var p = app.temp.p, footer = app.temp.footer, text = app.temp.footerText;
 
                     if(!footer) footer = app.temp.footer = document.getElementById('footer');
-
-                    console.log(footer);
-
-                    if(footer && !p) p = app.temp.p = footer.getElementsByTagName('p')[0] || false;
-                    if(footer && !text) text = app.temp.footerText = document.getElementById('footerText');
-
+                    if(footer){
+                        if (!p) p = app.temp.p = footer.getElementsByTagName('p')[0] || false;
+                        if (!text) text = app.temp.footerText = document.getElementById('footerText');
+                    }
                     if(p && text){
 
                         var start = -text.offsetWidth;
 
                         text.innerHTML = app.settings.scrollMessages[app.temp.scroll];
 
-                        console.log('text offset width: ' + start);
-
                         if(!app.temp.scrollPosition) app.temp.scrollPosition = start;
 
                         var pos = app.temp.scrollPosition;
 
-                        console.log('position: '+pos);
-
                         if(pos){
 
                             if(pos <= footer.offsetWidth){
-                                console.log('footer width: '+footer.offsetWidth)
-                                p.style.left = app.temp.scrollPosition;
+                                console.log('position: '+pos);
+                                p.style.left = pos;
+                                console.log(p);
                                 app.temp.scrollPosition += 1;
                             }else{
+                                console.log('restart!!!!!!');
                                 app.temp.scrollPosition = start;
                             }
                         };
