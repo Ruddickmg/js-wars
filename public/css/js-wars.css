@@ -79,6 +79,10 @@ h1 {
     font-family: arial;
 }
 
+.gameScreen {
+    border: inset 5px solid black;
+}
+
 .gameScreen, #login, #selectModeScreen {
     position:absolute;
     top: 395px;
@@ -94,12 +98,12 @@ h1 {
 
 #login {
     z-index: 15;
-    background: rgba(43,43,43,.8);;
+    background: rgba(43,43,43,.8);
 }
 
 #selectModeScreen {
-    z-index:14;
-    background:white;
+    z-index: 14;
+    background: white;
     overflow: hidden;
 }
 
@@ -142,7 +146,7 @@ h1 {
     bottom:0;
     width:100%;
     height:64px;
-    background: rgba(0,0,0,.9);
+    background: black;
 }
 
 #footer p {

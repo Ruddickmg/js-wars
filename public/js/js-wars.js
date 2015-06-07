@@ -1939,6 +1939,9 @@ app.display = function () {
             }
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
+
+            if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
+
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement || app.temp.loopThrough) selectable = display(selectedElement, tag, selectionIndex, prev, elements);
 
@@ -2985,7 +2988,10 @@ app.effect = function () {
                 var now = Date.now();
 
                 if(now - app.prev.scrollTime > 10){
+                    
                     app.prev.scrollTime = now;
+
+                    console.log('now'+now);
 
                     if(app.prev.scroll !== app.temp.scroll){
                         delete app.temp.p;
