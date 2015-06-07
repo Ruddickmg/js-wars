@@ -1536,6 +1536,9 @@ app.display = function () {
         // create footer for game info and chat
         var footer = document.createElement('footer');
         var info = document.createElement('p');
+        var footSpan = document.createElement('span');
+        footSpan.setAttribute('id','footerText');
+        info.appendChild(footSpan);
         info.setAttribute('id', 'scrollingInfo');
         footer.setAttribute('id','footer');
         footer.appendChild(info);
@@ -2885,11 +2888,6 @@ app.effect = function () {
                 }
             }
 
-            if(!app.prev.scroll || app.temp.scroll !== app.prev.scroll ){
-                app.prev.scroll = app.temp.scroll;
-                app.temp.scroll = selectedElement.id; 
-            } 
-
             if(app.temp.loopThrough) delete app.temp.loopThrough;
 
             if(!app.temp.menuOptionsActive && app.temp.horizon && app.temp.horizon === 'right') delete app.temp.horizon;
@@ -2914,6 +2912,7 @@ app.effect = function () {
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
+
 
                 // get the h1 text element of the selected mode and its background span
                 var text = findElementsByClass(selectedElement, 'text')[0] || false;
@@ -2984,7 +2983,7 @@ app.effect = function () {
             if(app.temp.scroll){
 
                 var now = Date.now();
-                
+
                 if(now - app.prev.scrollTime > 10){
                     app.prev.scrollTime = now;
 
@@ -2995,16 +2994,23 @@ app.effect = function () {
 
                     console.log('here');
 
-                    var p = app.temp.p, footer = app.temp.footer;
+                    var p = app.temp.p, footer = app.temp.footer, text = app.temp.footerText;
 
                     if(!footer) footer = app.temp.footer = document.getElementById('footer');
 
                     console.log(footer);
 
                     if(footer && !p) p = app.temp.p = footer.getElementsByTagName('p')[0] || false;
+                    if(footer && !text) text = app.temp.footerText = footer.getElementById('footerText');
 
-                    if(p){
-                        var start = -p.offsetWidth;
+                    if(p && text){
+
+                        console.log(text)
+
+                        var start = -text.offsetWidth;
+
+                        console.log(p);
+
                         p.innerHTML = app.settings.scrollMessages[app.temp.scroll];
 
                         console.log('p offset width: ' + start);
