@@ -215,7 +215,7 @@ h1 {
 
 #selectModeScreen {
     z-index: 14;
-    background: tan;
+    background-color: tan;
     overflow: hidden;
 }
 
