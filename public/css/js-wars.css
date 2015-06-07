@@ -80,8 +80,10 @@ h1 {
 }
 
 .gameScreen {
-    border: inset 5px solid black;
-}
+    border-right: inset 4px hsl(0,0%,25%);
+    border-bottom:inset 4px hsl(0,0%,25%);
+    border-left:inset 4px hsl(0,0%,40%);
+    border-top:inset 4px hsl(0,0%,40%);}
 
 .gameScreen, #login, #selectModeScreen {
     position:absolute;
