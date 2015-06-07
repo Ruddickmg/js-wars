@@ -3013,9 +3013,9 @@ app.effect = function () {
                         if(pos !== undefined){
                             if(pos <= footer.offsetWidth ){
                                 p.style.left = pos + 'px';
-                                app.temp.scrollPosition += 2;
+                                app.temp.scrollPosition += 3;
                             }else{
-                                app.temp.scrollPosition = -text.offsetWidth * 2;
+                                app.temp.scrollPosition = -text.offsetWidth * 3;
                             }
                         };
                     }
