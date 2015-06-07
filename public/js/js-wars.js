@@ -2645,8 +2645,10 @@ app.settings = {
     // messages to display in the bottom scroll bar as items are hovered over and people join games, etc..
     scrollMessages:{
         logout:'select to log out of the game',
-        newgame:'Start and set up a new game',
+        game:'Create or continue a saved game',
+        newgame:'Set up a new game',
         continuegame:'Resume a saved game',
+        join:'Join a new or saved game',
         newjoin:'Find and join a new game',
         continuejoin:'Re-Join a saved game started at an earlier time',
         COdesign:'Customize the look of your CO',
@@ -2981,8 +2983,7 @@ app.effect = function () {
             return true;
         },
 
-        scrollInfo:function(){
-
+        scrollInfo:function(now){
             if(app.temp.scroll){
                 if(now - app.prev.scrollTime > 10){
 
@@ -3027,17 +3028,16 @@ app.effect = function () {
             }
         },
 
-        colorSwell: function () { 
+        colorSwell: function (now) { 
             if(app.temp.swell){
                 // note that color swell is active
                 if(!app.temp.colorSwellActive) app.temp.colorSwellActive = true;
 
-                var now = Date.now();
-                var time = app.temp.timeMarker;
+                var time = app.prev.swellTime;
 
                 if(!time || now - time > app.settings.colorSwellSpeed){
 
-                    app.temp.timeMarker = Date.now();
+                    app.prev.swellTime = now;
 
                     var inc = app.settings.colorSwellIncriment;
                     var element = app.temp.swell;
@@ -4269,6 +4269,7 @@ app.animateEffects = function () {
 app.gameSetup = function (){
 
     var game = false;
+    var now = Date.now();
 
     // select game mode
     if(app.user && !app.game.mode) app.game.mode = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.setupMenuMovement, 'li', 5, 'infinite');
@@ -4280,10 +4281,10 @@ app.gameSetup = function (){
     }
 
     // listen for fading colors in and out on selection
-    app.effect.colorSwell();
+    app.effect.colorSwell(now);
 
     // scroll info on hovered elements, user joins etc in footer scroll bar
-    app.effect.scrollInfo();
+    app.effect.scrollInfo(now);
 
     // if a game has been started 
     if (game) {
