@@ -3010,9 +3010,10 @@ app.effect = function () {
                         var pos = app.temp.scrollPosition;
 
                         if(pos){
+                            console.log('positioin: '+pos);
                             if(pos <= footer.offsetWidth){
                                 p.style.left = pos + 'px';
-                                app.temp.scrollPosition += 1;
+                                app.temp.scrollPosition += 2;
                             }else{
                                 app.temp.scrollPosition = -text.offsetWidth;
                             }
