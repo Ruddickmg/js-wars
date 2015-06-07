@@ -152,7 +152,7 @@ h1 {
     background: black;
 }
 
-#footer p {
+.scrollingInfo {
     position:absolute;
     display: block;
     line-height: 60px;

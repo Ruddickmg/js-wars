@@ -2998,7 +2998,7 @@ app.effect = function () {
 
                     if(!footer) footer = app.temp.footer = document.getElementById('footer');
                     if(footer){
-                        if (!p) p = app.temp.p = footer.getElementsByTagName('p')[0] || false;
+                        if (!p) p = app.temp.p = document.getElementById('scrollingInfo');
                         if (!text) text = app.temp.footerText = document.getElementById('footerText');
                     }
                     if(p && text){
@@ -3015,7 +3015,7 @@ app.effect = function () {
 
                             if(pos <= footer.offsetWidth){
                                 console.log('position: '+pos);
-                                p.style.left = pos;
+                                p.style.left = pos + 'px';
                                 console.log(p);
                                 app.temp.scrollPosition += 1;
                             }else{
