@@ -3022,7 +3022,11 @@ app.effect = function () {
                         console.log('text offset width: ' + start);
 
                         if(!app.temp.scrollPosition) app.temp.scrollPosition = start;
+
                         var pos = app.temp.scrollPosition;
+
+                        console.log('position: '+pos);
+
                         if(pos){
 
                             if(pos <= footer.offsetWidth){
