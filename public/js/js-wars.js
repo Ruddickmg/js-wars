@@ -3005,22 +3005,15 @@ app.effect = function () {
 
                         text.innerHTML = app.settings.scrollMessages[app.temp.scroll];
 
-                        if(!app.temp.scrollPosition){
-                            app.temp.scrollPosition = -text.offsetWidth;
-                            console.log('setting postion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-                        } 
-
+                        if(app.temp.scrollPosition === undefined) app.temp.scrollPosition = -text.offsetWidth;
+                        
                         var pos = app.temp.scrollPosition;
 
                         if(pos){
-                                console.log('width of footer: '+footer.offsetWidth);
-                                console.log('position: '+pos);
                             if(pos <= footer.offsetWidth){
-
                                 p.style.left = pos + 'px';
                                 app.temp.scrollPosition += 1;
                             }else{
-                                console.log('restart!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1');
                                 app.temp.scrollPosition = -text.offsetWidth;
                             }
                         };
