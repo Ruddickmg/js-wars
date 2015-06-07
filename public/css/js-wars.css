@@ -180,6 +180,7 @@ li[pos=selected] {
 }
 
 li[pos=selected] .text {
+    transition: all 0.1s 0.2s ease;
     left:1%;
     right: 1%;
     overflow: hidden;
@@ -193,7 +194,8 @@ li[pos=selected] .text {
 }
 
 li[pos=selected] .modeOptions {
-    transition: right 0.3s 0.1s ease;
+    transition: right 0.3s 0.3s ease;
+    background: white;
     right:-208px;
 }
 
@@ -247,12 +249,11 @@ li[pos=twoBelow] {
 }
 
 .modeOptions {
-    transition: right 0.3s 0.1s ease;
+    transition: right 0.3s 0.3s ease;
     position:absolute;
     z-index: 5;
     right:0px;
     top:-5px;
-    background: white;
     height:215px;
     width:196px;
 }
