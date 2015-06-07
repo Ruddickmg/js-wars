@@ -3011,6 +3011,7 @@ app.effect = function () {
 
                         if(pos){
                             console.log('positioin: '+pos);
+                            console.log(footer.offsetWidth);
                             if(pos <= footer.offsetWidth){
                                 p.style.left = pos + 'px';
                                 app.temp.scrollPosition += 2;
