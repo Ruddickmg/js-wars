@@ -3015,7 +3015,7 @@ app.effect = function () {
                                 p.style.left = pos + 'px';
                                 app.temp.scrollPosition += 2;
                             }else{
-                                app.temp.scrollPosition = -text.offsetWidth;
+                                app.temp.scrollPosition = -text.offsetWidth * 2;
                             }
                         };
                     }
