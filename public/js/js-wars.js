@@ -3093,7 +3093,7 @@ app.effect = function () {
                     text.style.letterSpacing = spacing + 'px';
 
                     // stretch letters
-                    background.style.transform = 'scale('+transform+',1)';
+                    //background.style.transform = 'scale('+transform+',1)';
 
                     // remove background
                     background.style.backgroundColor = 'transparent';
