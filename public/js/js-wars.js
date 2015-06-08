@@ -2220,20 +2220,21 @@ app.display = function () {
             index = app.scroll.verticle()[limit](selectionIndex, len, 1);
             app.temp.selectionIndex = index;
         } else {
-            console.log('here');
             index = app.scroll.verticle().finite(selectionIndex, len, 1);
-            console.log(index);
             if(index) app.temp.selectionIndex = index;
         }
 
         if(app.temp.menuOptionsActive){
-            var horizon = app.scroll.horizontal().finite(1, 2, 1);
+            var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 2, 1);
             if(horizon){
                 if(horizon === 2){
                     app.temp.horizon = 'right';
+                    console.log('right');
                 }else if(modeOptionsActive && horizon === 1){
+                    console.log('left');
                     app.temp.horizon = 'left';
                 }
+                app.prev.horizon = horizon;
             }
         }
         return false;
@@ -2908,7 +2909,8 @@ app.scroll = function () {
         },
         finite: function (index, max, min) {
             var point = index + this.scroll;
-            if (point <= max && point >= 1) return point;
+            if (point <= max && point >= min) return point;
+            return 0;
         }
     };
 }();
@@ -2934,9 +2936,11 @@ app.effect = function () {
         var horizon = app.temp.horizon;
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
+                console.log('ok');
                 delete app.temp.modeOptionsActive;
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
+                console.log('yup');
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
                     element:menu,
