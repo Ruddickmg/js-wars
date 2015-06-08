@@ -2217,21 +2217,24 @@ app.display = function () {
             // if the down key has been pressed then move to the next index ( element ) down
 
         } else if(!modeOptionsActive){
-            index = app.scroll.verticle()[limit](selectionIndex, len, 1);
+            index = app.scroll.verticle()[limit](selectionIndex, 1, len);
             app.temp.selectionIndex = index;
         } else {
-            index = app.scroll.verticle().finite(selectionIndex, len, 1);
+            console.log('here');
+            index = app.scroll.verticle().finite(selectionIndex, 1, len);
+            if(index){
+                console.log(index);
+                consoe.log(selectedElement);
+            } 
             if(index) app.temp.selectionIndex = index;
         }
 
         if(app.temp.menuOptionsActive){
-            var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 2, 1);
+            var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
             if(horizon){
                 if(horizon === 2){
                     app.temp.horizon = 'right';
-                    console.log('right');
                 }else if(modeOptionsActive && horizon === 1){
-                    console.log('left');
                     app.temp.horizon = 'left';
                 }
                 app.prev.horizon = horizon;
@@ -2910,7 +2913,7 @@ app.scroll = function () {
         finite: function (index, max, min) {
             var point = index + this.scroll;
             if (point <= max && point >= min) return point;
-            return 0;
+            return false;
         }
     };
 }();
@@ -2936,11 +2939,9 @@ app.effect = function () {
         var horizon = app.temp.horizon;
         if(horizon){
             if(horizon === 'left' && modeOptionsActive){
-                console.log('ok');
                 delete app.temp.modeOptionsActive;
                 delete app.temp.child;
             }else if(horizon === 'right' && !modeOptionsActive){
-                console.log('yup');
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
                     element:menu,
@@ -3017,7 +3018,7 @@ app.effect = function () {
             var categories = document.getElementById('categories');
             var catList = categories.children;
             var len = catList.length - 1;
-            var category = app.scroll.horizontal().infinite(app.temp.categoryIndex, len , 0);
+            var category = app.scroll.horizontal().infinite(app.temp.categoryIndex, 0 , len);
             if(prevous !== undefined) previous.style.display = none;
             var show = catList[category];
             show.style.display = '';
