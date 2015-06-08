@@ -2217,6 +2217,7 @@ app.display = function () {
             // if the down key has been pressed then move to the next index ( element ) down
 
         } else if(!modeOptionsActive){
+            console.log(limit);
             index = app.scroll.verticle()[limit](selectionIndex, len, 1);
             app.temp.selectionIndex = index;
         } else {
@@ -2901,7 +2902,7 @@ app.scroll = function () {
         },
         infinite: function (index, max, min) {
             var point = index + this.scroll;
-            var def = this.scroll > 0 ? max : min;
+            var def = this.scroll < 0 ? max : min;
             return point > max || point < min ? def : point;
         },
         finite: function (index, max, min) {
