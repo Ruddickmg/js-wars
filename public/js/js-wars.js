@@ -2665,7 +2665,7 @@ app.modes = function (){
 app.scroll = function () {
 
     var undo = app.undo.keyPress;
-    var key = app.settings.keyMap;
+    var key = app.game.settings.keyMap;
 
     var scroll = function (neg, pos){
         if (key[neg] in app.keys){
@@ -3044,7 +3044,7 @@ app.effect = function () {
             highlightListItem(selectedElement, tag, index, prev, elements);
             var categories = document.getElementById('categories');
             var catList = categories.children;
-            var category = scrollHorizon(catList, true);
+            var category = app.scroll.horizontal.infinite(app.temp.categoryIndex, catList.length, 0);
             //category.
         },
 
