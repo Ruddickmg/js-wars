@@ -2921,6 +2921,7 @@ app.effect = function () {
         var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
         if(menu) menu.style.opacity = 1;
 
+        console.log('horizon' + horizon);
         // display the menu options
         if(horizon && prev !== horizon){
 
@@ -3051,6 +3052,8 @@ app.effect = function () {
 
             if(!app.temp.modeOptionsActive){
 
+                console.log('here');
+
                 delete app.temp.modeOptionMenu;
                 var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
                 app.temp.modeOptionMenu = findElementsByClass(selectedElement, 'modeOptions')[0] || false;
@@ -3122,6 +3125,7 @@ app.effect = function () {
             fade(element, id || 'game');
 
             var menu = app.temp.modeOptionMenu;
+            console.log(menu);
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
