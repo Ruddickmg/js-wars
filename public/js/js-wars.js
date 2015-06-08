@@ -2136,12 +2136,9 @@ app.display = function () {
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if (app.prev.index !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
-
-            console.log('index '+ app.temp.selectionIndex);
         
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
-                console.log('here');
                 var hudElement = app.temp.child.element;
                 console.log(hudElement);
 
@@ -2155,9 +2152,7 @@ app.display = function () {
                 tag = app.temp.child.tag;
 
             }else if(!modeOptionsActive){ 
-                console.log('there');
                 if(app.temp.loopThrough){
-                    console.log('wtf?');
                     var parentIndex = app.temp.parentIndex;
                     app.temp.selectionIndex = parentIndex;
                     app.prev.index = parentIndex;
@@ -2194,9 +2189,7 @@ app.display = function () {
                 var showElement = findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
-            console.log('tag: '+tag+', selection index: '+selectionIndex+', elements: '+elements);
             selectedElement = findElementByTag(tag, elements, selectionIndex);
-            console.log('out select');
 
             if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
 
@@ -2926,20 +2919,17 @@ app.effect = function () {
 
         var prev = app.prev.horizon;
         var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
+        if(menu) menu.style.opacity = 1;
 
         // display the menu options
         if(horizon && prev !== horizon){
 
             var modeOptionsActive = app.temp.modeOptionsActive;
 
-            console.log('horizon: '+horizon);
-            if(menu) menu.style.opacity = 1;
             if(horizon === 1 && modeOptionsActive){
-                console.log('1!');
                 delete app.temp.modeOptionsActive;
                 delete app.temp.child;
             }else if(horizon === 2 && !modeOptionsActive){
-                console.log('2!');
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
                     element:menu,
@@ -2947,7 +2937,6 @@ app.effect = function () {
                     index:1
                 }
             }
-            console.log('done');
             delete app.temp.horizon;
             app.prev.horizon = horizon;
             app.temp.loopThrough = true;
