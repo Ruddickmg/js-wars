@@ -2144,8 +2144,6 @@ app.display = function () {
                 // keep track of selected parent element
                 app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
 
-                console.log(app.temp.parentIndex);
-
                 if(!modeOptionsActive || app.temp.loopThrough) app.temp.selectionIndex = app.temp.child.index;
 
                 tag = app.temp.child.tag;
@@ -2921,7 +2919,6 @@ app.effect = function () {
         var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
         if(menu) menu.style.opacity = 1;
 
-        console.log('horizon' + horizon);
         // display the menu options
         if(horizon && prev !== horizon){
 
@@ -3052,8 +3049,6 @@ app.effect = function () {
 
             if(!app.temp.modeOptionsActive){
 
-                console.log('here');
-
                 delete app.temp.modeOptionMenu;
                 var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
                 app.temp.modeOptionMenu = findElementsByClass(selectedElement, 'modeOptions')[0] || false;
@@ -3125,7 +3120,6 @@ app.effect = function () {
             fade(element, id || 'game');
 
             var menu = app.temp.modeOptionMenu;
-            console.log(menu);
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
@@ -3173,7 +3167,6 @@ app.effect = function () {
                                 app.temp.scrollPosition += 3;
                             }else{
                                 app.temp.scrollPosition = -text.offsetWidth * 4;
-                                console.log(app.temp.scrollPosition);
                             }
                         }
                     }
