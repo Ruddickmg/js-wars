@@ -2187,7 +2187,7 @@ app.display = function () {
                 var showElement = findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
-            console.log('in select');
+            console.log('tag: '+tag+', selection index: '+selectionIndex+', elements: '+elements);
             selectedElement = findElementByTag(tag, elements, selectionIndex);
             console.log('out select');
 
