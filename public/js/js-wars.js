@@ -2224,7 +2224,7 @@ app.display = function () {
             index = app.scroll.verticle().finite(selectionIndex, 1, len);
             if(index){
                 console.log(index);
-                consoe.log(selectedElement);
+                console.log(selectedElement);
             } 
             if(index) app.temp.selectionIndex = index;
         }
