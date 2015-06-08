@@ -2905,12 +2905,12 @@ app.scroll = function () {
             this.scroll = scroll('up','down');
             return this;
         },
-        infinite: function (index, max, min) {
+        infinite: function (index, min, max) {
             var point = index + this.scroll;
             var def = this.scroll < 0 ? max : min;
             return point > max || point < min ? def : point;
         },
-        finite: function (index, max, min) {
+        finite: function (index, min, max) {
             var point = index + this.scroll;
             if (point <= max && point >= min) return point;
             return false;
