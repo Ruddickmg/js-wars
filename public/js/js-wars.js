@@ -2194,15 +2194,12 @@ app.display = function () {
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement || app.temp.loopThrough){
                 selectable = display(selectedElement, tag, selectionIndex, prev, elements);
-                console.log('selectable: '+selectable);
             } 
 
             // store the last index for future comparison
             app.prev.index = selectionIndex;
             app.prev.element = selectedElement;
         }
-
-        console.log(selectable);
 
         // if the select key has been pressed and an element is available for selection then return its id
         if (key.select in app.keys && selectedElement && selectable) {
@@ -2832,14 +2829,14 @@ app.modes = function (){
             });*/
         },
         newgame:function(){
-            if(!app.temp.mapOrGameElement) app.temp.mapOrGameElement = mapOrGame('map', [app.map]);
+            if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', [app.map]);
             app.display.select('categorySelectionIndex', 'selectMapScreen', app.effect.mapOrGameSelect, 5);
         },
         continuegame:function(){
             alert('continue an old game');
         },
         newjoin:function(){
-            if(!app.temp.mapOrGameElement) app.temp.mapOrGameElement = mapOrGame('game');
+            if(!app.temp.gameSelect) app.temp.gameSelect = app.display.mapOrGame('game', games);
             app.display.select('gameSelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 5);
         },
         continuejoin:function(){
@@ -3052,7 +3049,6 @@ app.effect = function () {
 
             if(!app.temp.modeOptionsActive){
 
-                //delete app.temp.modeOptionMenu;
                 var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
                 var menu = findElementsByClass(selectedElement, 'modeOptions')[0] || false;
                 var length = elements.length;
@@ -3121,8 +3117,6 @@ app.effect = function () {
             if (border) element = border;
 
             fade(element, id || 'game');
-
-            //var menu = app.temp.modeOptionMenu;
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
