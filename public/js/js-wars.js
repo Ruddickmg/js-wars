@@ -2930,6 +2930,7 @@ app.effect = function () {
 
         // display the menu options
         if(prev !== horizon){
+            console.log('horizon: '+horizon);
             if(menu) menu.style.opacity = 1;
             if(horizon === 1 && modeOptionsActive){
                 console.log('1!');
