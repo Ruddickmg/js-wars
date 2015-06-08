@@ -197,6 +197,253 @@ window.addEventListener("keyup", function (e) {
     app.keys.splice(e.keyCode, 1);
 }, false);
 
+/* --------------------------------------------------------------------------------------*\
+    
+    app.game.settings consolidates all the user customizable options for the game into
+    an object for easy and dynamic manipulation
+\* --------------------------------------------------------------------------------------*/
+
+app.game.settings = {
+    // amount of income per building per turn, 1000 - 9500 incrimenting by 500, default is 1000
+    income: 1000,
+
+    // toggle fog
+    fog:false,
+
+    // toggle weather setting
+    weather:'random',
+
+    // end of game on number of turns completed 1 - 99, 0 is off
+    turns:0,
+
+    // end game on cartain number of buildings captured 1 - 52,  0 is off
+    capture:0,
+
+    //  toggle co powers active.. default on
+    power: true,
+
+    // toggle attack animations.. default off
+    visuals: false,
+
+    // keyboard settings
+    keyMap: {
+        exit: 27,
+        select: 13,
+        up: 38,
+        down: 40,
+        left: 37,
+        right: 39
+    }
+};
+
+/* --------------------------------------------------------------------------------------*\
+    
+    app.settings consolidates all the customizable options and rules for the game into
+    an object for easy and dynamic manipulation
+\* --------------------------------------------------------------------------------------*/
+
+app.settings = {
+
+    // messages to display in the bottom scroll bar as items are hovered over and people join games, etc..
+    scrollMessages:{
+        logout:'select to log out of the game',
+        game:'Create or continue a saved game',
+        newgame:'Set up a new game',
+        continuegame:'Resume a saved game',
+        join:'Join a new or saved game',
+        newjoin:'Find and join a new game',
+        continuejoin:'Re-Join a saved game started at an earlier time',
+        COdesign:'Customize the look of your CO',
+        mapdesign:'Create your own custom maps',
+        design:'Design maps or edit CO appearance',
+        store:'Purchase maps, CO\'s, and other game goods' 
+    },
+
+    // speed at which color swell.. fading in and out, will cycle (lower is faster)
+    colorSwellIncriment:1.5,
+    colorSwellSpeed:2,
+
+    // colors of menus etc...
+    colors: {
+        design:{h:216,s:100,l:50},
+        store:{h:72, s:100, l:50},
+        game:{h:0, s:100, l:50},
+        join:{h:144, s:100, l:50},
+        logout:{h:288, s:100, l:50}
+    },
+
+    // speed at which the screen will move to next hq at the changinf of turns
+    scrollSpeed: 50,
+
+    // types to look through when determining terrains effect on unit movement
+    obsticleTypes: ['unit', 'terrain'],
+
+    // list of the effects each obsticle has on each unit type
+    obsticleStats: {
+        mountain: {
+            infantry: 2,
+            apc:2
+        },
+        wood: {
+            infantry: 1,
+            apc:2
+        },
+        plain: {
+            infantry: 1,
+            apc:1
+        },
+        unit: {
+            infantry: 1,
+            apc:1
+        }
+    },
+
+    selectedModeHeight: 75,
+
+    selectModeMenu:[{
+            id:'logout',
+            display:'Logout',
+            type:'exit',
+        },{
+            id:'game',
+            display:'Game',
+            type:'setup',
+            options:['new', 'continue']
+        },{
+            id:'join',
+            display:'Join',
+            type:'join',
+            color:'yellow',
+            options:['new', 'continue']
+        },{
+            id:'design',
+            display:'Design',
+            type:'design',
+            options:['map', 'CO']
+
+        },{
+            id:'store',
+            display:'Store',
+            type:'store',
+    }],
+
+    categories:{
+        two:{
+            type:'1 on 1'
+        },
+        three: {
+            type:'3 Player'
+        },
+        four:{
+            type:'4 Player'
+        },
+        five:{
+            type:'5 Player'
+        },
+        six:{
+            type:'6 Player'
+        },
+        seven:{
+            type:'7 Player'
+        },
+        eight:{
+            type:'8 Player'
+        },
+        preDeployed:{
+            type:'Pre-Deployed'
+        }
+    },
+
+    capture: 20,
+
+    combinableProperties:['fuel','health','ammo'],
+
+    // terrain each unit is allowed to walk on
+    movable: {
+        foot: ['plain', 'river', 'mountain', 'wood', 'road', 'building'],
+        wheels: ['plain', 'wood', 'road', 'building'],
+        flight: ['plain', 'river', 'mountain', 'wood', 'road', 'water', 'building'],
+        boat: ['water', 'building']
+    },
+
+    options: {
+        unit: {
+            name: 'Unit'
+        },
+        intel: {
+            name: 'Intel'
+        },
+        options: {
+            name: 'Options'
+        },
+        save: {
+            name: 'Save'
+        },
+        end: {
+            name: 'End'
+        }
+    },
+
+    buildingDisplayElement: {
+        city:{
+            numberOf:0,
+            type:'city'
+        },
+        base:{
+            numberOf:0,
+            type:'base'
+        },
+        airport:{
+            numberOf:0,
+            type:'airport'
+        },
+        seaport:{
+            numberOf:0,
+            type:'seaport'
+        },
+    },
+
+    // dimensions of diplay hud
+    hudWidth: 120,
+    hudHeight: 200,
+    hudLeft: 1050,
+
+    // spacing / positioning of mode menu selection elements
+    modeMenuSpacing:20,
+
+    // displayable attributes for the building count element on map/game selection
+    buildingDisplay:['numberOf', 'canvas'],
+
+    // which attributes of objects ( unit, buildings etc ) will be displayed in hud
+    hoverInfo: ['ammo', 'health', 'name', 'fuel', 'def', 'canvas'],
+
+    // which actions can be displayed
+    actionsDisplay: ['attack', 'capture', 'wait', 'name'],
+
+    // unit info attributes for display
+    unitInfoDisplay: ['movement', 'vision', 'fuel', 'weapon1', 'weapon2', 'property', 'value'],
+
+    // which attributes of units will be displayed on unit selection/purchase/building hud
+    unitSelectionDisplay: ['name', 'cost'],
+
+    // options attributes for displ
+    optionsDisplay: ['options', 'unit', 'intel', 'save', 'end', 'name'],
+
+    // map elements that cannot be selected
+    notSelectable: ['terrain', 'hq', 'city'],
+
+    // cursor settings
+    cursor: {
+        x: 6,
+        y: 4,
+        speed: 50,
+        scroll: {
+            x: 0,
+            y: 0
+        }
+    },
+};
+
 /* ---------------------------------------------------------------------------------------------------------*\
 	
 	app.start sets up the game with the players and other info necessary for the new game
@@ -2698,253 +2945,6 @@ app.scroll = function () {
         }
     };
 }();
-
-/* --------------------------------------------------------------------------------------*\
-    
-    app.game.settings consolidates all the user customizable options for the game into
-    an object for easy and dynamic manipulation
-\* --------------------------------------------------------------------------------------*/
-
-app.game.settings = {
-    // amount of income per building per turn, 1000 - 9500 incrimenting by 500, default is 1000
-    income: 1000,
-
-    // toggle fog
-    fog:false,
-
-    // toggle weather setting
-    weather:'random',
-
-    // end of game on number of turns completed 1 - 99, 0 is off
-    turns:0,
-
-    // end game on cartain number of buildings captured 1 - 52,  0 is off
-    capture:0,
-
-    //  toggle co powers active.. default on
-    power: true,
-
-    // toggle attack animations.. default off
-    visuals: false,
-
-    // keyboard settings
-    keyMap: {
-        exit: 27,
-        select: 13,
-        up: 38,
-        down: 40,
-        left: 37,
-        right: 39
-    }
-};
-
-/* --------------------------------------------------------------------------------------*\
-	
-	app.settings consolidates all the customizable options and rules for the game into
-	an object for easy and dynamic manipulation
-\* --------------------------------------------------------------------------------------*/
-
-app.settings = {
-
-    // messages to display in the bottom scroll bar as items are hovered over and people join games, etc..
-    scrollMessages:{
-        logout:'select to log out of the game',
-        game:'Create or continue a saved game',
-        newgame:'Set up a new game',
-        continuegame:'Resume a saved game',
-        join:'Join a new or saved game',
-        newjoin:'Find and join a new game',
-        continuejoin:'Re-Join a saved game started at an earlier time',
-        COdesign:'Customize the look of your CO',
-        mapdesign:'Create your own custom maps',
-        design:'Design maps or edit CO appearance',
-        store:'Purchase maps, CO\'s, and other game goods' 
-    },
-
-    // speed at which color swell.. fading in and out, will cycle (lower is faster)
-    colorSwellIncriment:1.5,
-    colorSwellSpeed:2,
-
-    // colors of menus etc...
-    colors: {
-        design:{h:216,s:100,l:50},
-        store:{h:72, s:100, l:50},
-        game:{h:0, s:100, l:50},
-        join:{h:144, s:100, l:50},
-        logout:{h:288, s:100, l:50}
-    },
-
-    // speed at which the screen will move to next hq at the changinf of turns
-    scrollSpeed: 50,
-
-    // types to look through when determining terrains effect on unit movement
-    obsticleTypes: ['unit', 'terrain'],
-
-    // list of the effects each obsticle has on each unit type
-    obsticleStats: {
-        mountain: {
-            infantry: 2,
-            apc:2
-        },
-        wood: {
-            infantry: 1,
-            apc:2
-        },
-        plain: {
-            infantry: 1,
-            apc:1
-        },
-        unit: {
-            infantry: 1,
-            apc:1
-        }
-    },
-
-    selectedModeHeight: 75,
-
-    selectModeMenu:[{
-            id:'logout',
-            display:'Logout',
-            type:'exit',
-        },{
-            id:'game',
-            display:'Game',
-            type:'setup',
-            options:['new', 'continue']
-        },{
-            id:'join',
-            display:'Join',
-            type:'join',
-            color:'yellow',
-            options:['new', 'continue']
-        },{
-            id:'design',
-            display:'Design',
-            type:'design',
-            options:['map', 'CO']
-
-        },{
-            id:'store',
-            display:'Store',
-            type:'store',
-    }],
-
-    categories:{
-        two:{
-            type:'1 on 1'
-        },
-        three: {
-            type:'3 Player'
-        },
-        four:{
-            type:'4 Player'
-        },
-        five:{
-            type:'5 Player'
-        },
-        six:{
-            type:'6 Player'
-        },
-        seven:{
-            type:'7 Player'
-        },
-        eight:{
-            type:'8 Player'
-        },
-        preDeployed:{
-            type:'Pre-Deployed'
-        }
-    },
-
-    capture: 20,
-
-    combinableProperties:['fuel','health','ammo'],
-
-    // terrain each unit is allowed to walk on
-    movable: {
-        foot: ['plain', 'river', 'mountain', 'wood', 'road', 'building'],
-        wheels: ['plain', 'wood', 'road', 'building'],
-        flight: ['plain', 'river', 'mountain', 'wood', 'road', 'water', 'building'],
-        boat: ['water', 'building']
-    },
-
-    options: {
-        unit: {
-            name: 'Unit'
-        },
-        intel: {
-            name: 'Intel'
-        },
-        options: {
-            name: 'Options'
-        },
-        save: {
-            name: 'Save'
-        },
-        end: {
-            name: 'End'
-        }
-    },
-
-    buildingDisplayElement: {
-        city:{
-            numberOf:0,
-            type:'city'
-        },
-        base:{
-            numberOf:0,
-            type:'base'
-        },
-        airport:{
-            numberOf:0,
-            type:'airport'
-        },
-        seaport:{
-            numberOf:0,
-            type:'seaport'
-        },
-    },
-
-    // dimensions of diplay hud
-    hudWidth: 120,
-    hudHeight: 200,
-    hudLeft: 1050,
-
-    // spacing / positioning of mode menu selection elements
-    modeMenuSpacing:20,
-
-    // displayable attributes for the building count element on map/game selection
-    buildingDisplay:['numberOf', 'canvas'],
-
-    // which attributes of objects ( unit, buildings etc ) will be displayed in hud
-    hoverInfo: ['ammo', 'health', 'name', 'fuel', 'def', 'canvas'],
-
-    // which actions can be displayed
-    actionsDisplay: ['attack', 'capture', 'wait', 'name'],
-
-    // unit info attributes for display
-    unitInfoDisplay: ['movement', 'vision', 'fuel', 'weapon1', 'weapon2', 'property', 'value'],
-
-    // which attributes of units will be displayed on unit selection/purchase/building hud
-    unitSelectionDisplay: ['name', 'cost'],
-
-    // options attributes for displ
-    optionsDisplay: ['options', 'unit', 'intel', 'save', 'end', 'name'],
-
-    // map elements that cannot be selected
-    notSelectable: ['terrain', 'hq', 'city'],
-
-    // cursor settings
-    cursor: {
-        x: 6,
-        y: 4,
-        speed: 50,
-        scroll: {
-            x: 0,
-            y: 0
-        }
-    },
-};
 
 /* --------------------------------------------------------------------------------------*\
 	
