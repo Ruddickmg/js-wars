@@ -2662,20 +2662,19 @@ app.modes = function (){
     an object for easy and dynamic manipulation
 \* --------------------------------------------------------------------------------------*/
 
-app.scroll = function (index) {
+app.scroll = function () {
 
     var undo = app.undo.keyPress;
     var key = app.settings.keyMap;
 
     var scroll = function (neg, pos){
         if (key[neg] in app.keys){
-                undo(key[neg]);
-                return -1;
-            } else if (key[pos] in app.keys){
-                undo(key[pos]);
-                return 1;
-            }    
-        }
+            undo(key[neg]);
+            return -1;
+        } else if (key[pos] in app.keys) {
+            undo(key[pos]);
+            return 1;
+        }    
         return 0;
     };
 
