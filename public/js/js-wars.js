@@ -2140,7 +2140,6 @@ app.display = function () {
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
                 var hudElement = app.temp.child.element;
-                console.log(hudElement);
 
                 // keep track of selected parent element
                 app.temp.parentIndex = app.temp.parentIndex || app.temp.selectionIndex;
@@ -2189,13 +2188,15 @@ app.display = function () {
                 var showElement = findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
+
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
 
             // callback that defines how to display the selected element ( functions located in app.effect )
-            if (selectedElement || app.temp.loopThrough) selectable = display(selectedElement, tag, selectionIndex, prev, elements);
-
+            if (selectedElement || app.temp.loopThrough || key.left in app.keys || key.right in app.keys){
+                selectable = display(selectedElement, tag, selectionIndex, prev, elements);
+            } 
             // store the last index for future comparison
             app.prev.index = selectionIndex;
             app.prev.element = selectedElement;
@@ -3121,7 +3122,6 @@ app.effect = function () {
             fade(element, id || 'game');
 
             var menu = app.temp.modeOptionMenu;
-            console.log(menu);
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
