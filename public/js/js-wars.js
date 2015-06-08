@@ -2136,6 +2136,8 @@ app.display = function () {
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if (app.prev.index !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
+
+            console.log('index '+ app.temp.selectionIndex);
         
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
@@ -2153,7 +2155,9 @@ app.display = function () {
                 tag = app.temp.child.tag;
 
             }else if(!modeOptionsActive){ 
+                console.log('there');
                 if(app.temp.loopThrough){
+                    console.log('wtf?');
                     var parentIndex = app.temp.parentIndex;
                     app.temp.selectionIndex = parentIndex;
                     app.prev.index = parentIndex;
@@ -2221,6 +2225,7 @@ app.display = function () {
             // if the down key has been pressed then move to the next index ( element ) down
         }else{
             index = app.scroll.verticle()[limit](selectionIndex, 1, len);
+            console.log(index);
             if(index) app.temp.selectionIndex = index;
         }
         return false;
