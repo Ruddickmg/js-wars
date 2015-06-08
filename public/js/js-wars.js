@@ -2844,7 +2844,7 @@ app.settings = {
         },
         six:{
             type:'6 Player'
-        }
+        },
         seven:{
             type:'7 Player'
         },
