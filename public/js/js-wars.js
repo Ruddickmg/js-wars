@@ -1975,7 +1975,7 @@ app.display = function () {
             index = app.scroll.verticle.finite(selectionIndex, len, 1);
             if(index) app.temp.selectionIndex = index;
         } else if(app.temp.menuOptionsActive){
-            var horizon = app.scroll.horizontal.finite(1, 2, 1).;
+            var horizon = app.scroll.horizontal.finite(1, 2, 1);
             if(horizon){
                 if(horizon === 2){
                     app.temp.horizon = 'right';
