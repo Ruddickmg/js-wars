@@ -2215,13 +2215,15 @@ app.display = function () {
             return selectedElement.getAttribute('id');
             // if the down key has been pressed then move to the next index ( element ) down
 
-        } else if(modeOptionsActive || infiniteScroll){
+        } else if(modeOptionsActive){
             index = app.scroll.verticle().infinite(selectionIndex, len, 1);
             app.temp.selectionIndex = index;
-        } else if(!modeOptionsActive){
+        } else {
             index = app.scroll.verticle().finite(selectionIndex, len, 1);
             if(index) app.temp.selectionIndex = index;
-        } else if(app.temp.menuOptionsActive){
+        }
+
+        if(app.temp.menuOptionsActive){
             var horizon = app.scroll.horizontal().finite(1, 2, 1);
             if(horizon){
                 if(horizon === 2){
@@ -2231,44 +2233,6 @@ app.display = function () {
                 }
             }
         }
-
-/*        if (key.down in app.keys) {
-
-            // only movement if the index is less then the length ( do not move to non existant index )
-            if (selectionIndex < len && !infiniteScroll || selectionIndex < len && modeOptionsActive) {
-
-                // increment to next index
-                app.temp.selectionIndex += 1;
-            }else if(infiniteScroll && !modeOptionsActive){
-                app.temp.selectionIndex = selectionIndex + 1 > len ? 1 : selectionIndex + 1;
-            }
-
-            undo(key.down);
-
-            // same as above, but up
-        } else if (key.up in app.keys) {
-
-            if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
-                app.temp.selectionIndex -= 1;
-            }else if(infiniteScroll && !modeOptionsActive){
-                app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
-            }
-
-            undo(key.up);
-        } else if (app.temp.menuOptionsActive){
-
-            if (key.left in app.keys ){
-
-                if (modeOptionsActive) app.temp.horizon = 'left';
-                undo(key.left);
-
-            } else if(key.right in app.keys){
-
-                app.temp.horizon = 'right';
-                undo(key.right);
-
-            }
-        }*/
         return false;
     };
 
