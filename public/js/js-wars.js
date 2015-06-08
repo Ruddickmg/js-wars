@@ -4426,7 +4426,7 @@ app.gameSetup = function (){
     if(app.user && !app.game.mode){
         app.game.mode = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.setupMenuMovement, 'li', 5, 'infinite');
         if(app.game.mode){
-            var setupMenu = document.getElementById('gameSetup');
+            var setupMenu = document.getElementById('setupScreen');
             var remove = setupMenu.children;
             for(var c = 0; c < clear.length; c += 1){
                 var clear = remove[c];
