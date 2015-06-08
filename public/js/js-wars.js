@@ -3007,10 +3007,19 @@ app.effect = function () {
 
         mapOrGameSelect:function(selectedElement, tag, index, prev, elements){
             highlightListItem(selectedElement, tag, index, prev, elements);
+            var previous = app.prev.category;
             var categories = document.getElementById('categories');
             var catList = categories.children;
-            var category = app.scroll.horizontal().infinite(app.temp.categoryIndex, catList.length, 0);
-            //category.
+            var len = catList.length - 1;
+            var category = app.scroll.horizontal().infinite(app.temp.categoryIndex, len , 0);
+            if(prevous !== undefined) previous.style.display = none;
+            var show = catList[category];
+            show.style.display = '';
+            if(show.id !== previous.id){
+                app.prev.category = show;
+                return show.id;
+            }
+            return false;
         },
 
         setupMenuMovement:function (selectedElement, tag, index, prev, elements){
