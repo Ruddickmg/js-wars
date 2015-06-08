@@ -2218,18 +2218,6 @@ app.display = function () {
         }else{
             index = app.scroll.verticle()[limit](selectionIndex, 1, len);
             if(index) app.temp.selectionIndex = index;
-
-            if(app.temp.menuOptionsActive){
-                var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
-                if(horizon){
-                    if(horizon === 2){
-                        app.temp.horizon = 'right';
-                    }else if(modeOptionsActive && horizon === 1){
-                        app.temp.horizon = 'left';
-                    }
-                    app.prev.horizon = horizon;
-                }
-            }
         }
         return false;
     };
@@ -2926,15 +2914,18 @@ app.effect = function () {
 
     var menuItemOptions = function ( selectedElement, menu ) {
 
+        console.log('here');
+
+        var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
+        var modeOptionsActive = app.temp.modeOptionsActive;
+
         // display the menu options
         if(menu) menu.style.opacity = 1;
-        var modeOptionsActive = app.temp.modeOptionsActive;
-        var horizon = app.temp.horizon;
         if(horizon){
-            if(horizon === 'left' && modeOptionsActive){
+            if(horizon === 1 && modeOptionsActive){
                 delete app.temp.modeOptionsActive;
                 delete app.temp.child;
-            }else if(horizon === 'right' && !modeOptionsActive){
+            }else if(horizon === 2 && !modeOptionsActive){
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
                     element:menu,
@@ -2943,6 +2934,7 @@ app.effect = function () {
                 }
             }
             delete app.temp.horizon;
+            app.prev.horizon = horizon;
             app.temp.loopThrough = true;
         }
     };
