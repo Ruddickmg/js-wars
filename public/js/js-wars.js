@@ -2218,7 +2218,6 @@ app.display = function () {
             // if the down key has been pressed then move to the next index ( element ) down
         }else{
             index = app.scroll.verticle()[limit](selectionIndex, 1, len);
-            console.log(index);
             if(index) app.temp.selectionIndex = index;
         }
         return false;
@@ -3061,7 +3060,6 @@ app.effect = function () {
                 pos.twoAbove = pos.oneAbove - 1 < 1 ? length : pos.oneAbove - 1; 
                 pos.oneBelow = index + 1 > length ? 1 : index + 1; 
                 pos.twoBelow = pos.oneBelow + 1 > length ? 1 : pos.oneBelow + 1;
-                console.log('in');
                 // assign position values for each positon
                 for( var p = 0; p < positions.length; p += 1){
                     var position = positions[p];
@@ -3069,9 +3067,7 @@ app.effect = function () {
                     var element = app.display.findElementByTag(tag, elements, posIndex);
                     element.setAttribute('pos', position);
                 }
-                console.log('out');
                 selectedElement.setAttribute('pos', 'selected');
-
 
                 // get the h1 text element of the selected mode and its background span
                 var text = findElementsByClass(selectedElement, 'text')[0] || false;
