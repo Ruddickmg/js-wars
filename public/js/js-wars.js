@@ -2187,8 +2187,9 @@ app.display = function () {
                 var showElement = findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
-
+            console.log('in select');
             selectedElement = findElementByTag(tag, elements, selectionIndex);
+            console.log('out select');
 
             if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
 
@@ -3057,7 +3058,7 @@ app.effect = function () {
                 pos.twoAbove = pos.oneAbove - 1 < 1 ? length : pos.oneAbove - 1; 
                 pos.oneBelow = index + 1 > length ? 1 : index + 1; 
                 pos.twoBelow = pos.oneBelow + 1 > length ? 1 : pos.oneBelow + 1;
-
+                console.log('in');
                 // assign position values for each positon
                 for( var p = 0; p < positions.length; p += 1){
                     var position = positions[p];
@@ -3065,6 +3066,7 @@ app.effect = function () {
                     var element = app.display.findElementByTag(tag, elements, posIndex);
                     element.setAttribute('pos', position);
                 }
+                console.log('out');
                 selectedElement.setAttribute('pos', 'selected');
 
 
