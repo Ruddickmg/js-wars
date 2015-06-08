@@ -3125,6 +3125,7 @@ app.effect = function () {
             fade(element, id || 'game');
 
             var menu = app.temp.modeOptionMenu;
+            console.log(menu);
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
