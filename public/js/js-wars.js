@@ -4428,7 +4428,7 @@ app.gameSetup = function (){
         if(app.game.mode){
             var setupMenu = document.getElementById('setupScreen');
             var remove = setupMenu.children;
-            for(var c = 0; c < clear.length; c += 1){
+            for(var c = 0; c < remove.length; c += 1){
                 var clear = remove[c];
                 if(clear.id !== 'title'){
                     setupMenu.removeChild(clear);
