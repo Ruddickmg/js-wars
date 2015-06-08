@@ -2190,20 +2190,21 @@ app.display = function () {
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
             if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
-            
-            delete app.temp.selectable;
 
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement || app.temp.loopThrough){
-                app.temp.selectable = display(selectedElement, tag, selectionIndex, prev, elements);
-            }
+                selectable = display(selectedElement, tag, selectionIndex, prev, elements);
+                console.log('selectable: '+selectable);
+            } 
             // store the last index for future comparison
             app.prev.index = selectionIndex;
             app.prev.element = selectedElement;
         }
 
+        console.log(selectable);
+
         // if the select key has been pressed and an element is available for selection then return its id
-        if (key.select in app.keys && selectedElement && app.temp.selectable) {
+        if (key.select in app.keys && selectedElement && selectable) {
 
             app.temp.selectionIndex = 1;
 
