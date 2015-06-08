@@ -2217,11 +2217,12 @@ app.display = function () {
             // if the down key has been pressed then move to the next index ( element ) down
 
         } else if(!modeOptionsActive){
-            console.log(limit);
             index = app.scroll.verticle()[limit](selectionIndex, len, 1);
             app.temp.selectionIndex = index;
         } else {
+            console.log('here');
             index = app.scroll.verticle().finite(selectionIndex, len, 1);
+            console.log(index);
             if(index) app.temp.selectionIndex = index;
         }
 
@@ -2230,8 +2231,8 @@ app.display = function () {
             if(horizon){
                 if(horizon === 2){
                     app.temp.horizon = 'right';
-                }else if(modeOptionsActive){
-                    app.temp.horizon = 'right';
+                }else if(modeOptionsActive && horizon === 1){
+                    app.temp.horizon = 'left';
                 }
             }
         }
