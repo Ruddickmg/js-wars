@@ -87,7 +87,7 @@ h1 {
     border-top:inset 3px hsl(0,0%,40%);
 }
 
-.gameScreen, #login, #selectModeScreen {
+.gameScreen, #login, #setupScreen {
     position:absolute;
     top: 395px;
     left: 720px;
@@ -203,7 +203,7 @@ h1 {
         0 0 10px hsl(216,100%,50%);
 }
 
-#login, #selectModeMenu, #selectModeScreen {
+#login, #selectModeMenu, #setupScreen {
     width: 960px;
     height:640px;
 }
@@ -213,7 +213,7 @@ h1 {
     background: rgba(43,43,43,.8);
 }
 
-#selectModeScreen {
+#setupScreen {
     z-index: 14;
     overflow: hidden;
 }
