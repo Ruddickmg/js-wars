@@ -2888,8 +2888,8 @@ app.settings = {
 
     buildingDisplayElement: {
         city:{
-            type:'city'
             numberOf:0,
+            type:'city'
         },
         base:{
             numberOf:0,
