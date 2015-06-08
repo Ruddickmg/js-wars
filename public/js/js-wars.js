@@ -2132,6 +2132,7 @@ app.display = function () {
     var select = function (tag, id, display, elementType, max, infiniteScroll) {
 
         var index, horizon, modeOptionsActive = app.temp.modeOptionsActive;
+        var limit = infiniteScroll ? 'infinite' : 'finite';
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if (app.prev.index !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
@@ -2215,8 +2216,8 @@ app.display = function () {
             return selectedElement.getAttribute('id');
             // if the down key has been pressed then move to the next index ( element ) down
 
-        } else if(modeOptionsActive){
-            index = app.scroll.verticle().infinite(selectionIndex, len, 1);
+        } else if(!modeOptionsActive){
+            index = app.scroll.verticle()[limit](selectionIndex, len, 1);
             app.temp.selectionIndex = index;
         } else {
             index = app.scroll.verticle().finite(selectionIndex, len, 1);
