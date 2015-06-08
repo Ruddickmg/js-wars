@@ -2196,6 +2196,7 @@ app.display = function () {
                 selectable = display(selectedElement, tag, selectionIndex, prev, elements);
                 console.log('selectable: '+selectable);
             } 
+
             // store the last index for future comparison
             app.prev.index = selectionIndex;
             app.prev.element = selectedElement;
@@ -3051,9 +3052,9 @@ app.effect = function () {
 
             if(!app.temp.modeOptionsActive){
 
-                delete app.temp.modeOptionMenu;
+                //delete app.temp.modeOptionMenu;
                 var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-                app.temp.modeOptionMenu = findElementsByClass(selectedElement, 'modeOptions')[0] || false;
+                var menu = findElementsByClass(selectedElement, 'modeOptions')[0] || false;
                 var length = elements.length;
 
                 // calculate the positions of the surrounding elements by index
@@ -3121,7 +3122,7 @@ app.effect = function () {
 
             fade(element, id || 'game');
 
-            var menu = app.temp.modeOptionMenu;
+            //var menu = app.temp.modeOptionMenu;
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
