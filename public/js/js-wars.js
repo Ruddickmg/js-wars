@@ -2915,13 +2915,13 @@ app.effect = function () {
     var menuItemOptions = function ( selectedElement, menu ) {
 
         console.log('here');
-
+        var prev = app.prev.horizon;
         var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
         var modeOptionsActive = app.temp.modeOptionsActive;
 
         // display the menu options
-        if(menu) menu.style.opacity = 1;
-        if(horizon){
+        if(prev !== horizon){
+            if(menu) menu.style.opacity = 1;
             if(horizon === 1 && modeOptionsActive){
                 delete app.temp.modeOptionsActive;
                 delete app.temp.child;
@@ -3047,8 +3047,9 @@ app.effect = function () {
 
             if(!app.temp.modeOptionsActive){
 
+                delete app.temp.modeOptionMenu;
                 var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-                var menu = findElementsByClass(selectedElement, 'modeOptions')[0] || false;
+                app.temp.modeOptionMenu = findElementsByClass(selectedElement, 'modeOptions')[0] || false;
                 var length = elements.length;
 
                 // calculate the positions of the surrounding elements by index
@@ -3117,6 +3118,8 @@ app.effect = function () {
             if (border) element = border;
 
             fade(element, id || 'game');
+
+            var menu = app.temp.modeOptionMenu;
 
             // toggle sub menu selections
             if (menu || app.temp.modeOptionsActive){
