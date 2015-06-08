@@ -2220,13 +2220,9 @@ app.display = function () {
             index = app.scroll.verticle()[limit](selectionIndex, 1, len);
             app.temp.selectionIndex = index;
         } else {
-            console.log('here');
             index = app.scroll.verticle().finite(selectionIndex, 1, len);
-            if(index){
-                console.log(index);
-                console.log(selectedElement);
-            } 
-            if(index) app.temp.selectionIndex = index;
+            if (index) console.log(index);
+            if (index) app.temp.selectionIndex = index;
         }
 
         if(app.temp.menuOptionsActive){
@@ -2892,8 +2888,8 @@ app.scroll = function () {
         } else if (key[pos] in app.keys) {
             undo(key[pos]);
             return 1;
-        }    
-        return 0;
+        }
+        return false;
     };
 
     return {
@@ -2911,8 +2907,10 @@ app.scroll = function () {
             return point > max || point < min ? def : point;
         },
         finite: function (index, min, max) {
-            var point = index + this.scroll;
-            if (point <= max && point >= min) return point;
+            if(this.scroll){
+                var point = index + this.scroll;
+                if (point <= max && point >= min) return point;
+            }
             return false;
         }
     };
