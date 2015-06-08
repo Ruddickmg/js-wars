@@ -2135,7 +2135,7 @@ app.display = function () {
         var limit = infiniteScroll && !modeOptionsActive ? 'infinite' : 'finite';
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
-        if (app.prev.index !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
+        if (app.prev.index !== app.temp.selectionIndex || key.left in app.keys || key.right in app.keys || app.temp.loopThrough) {
         
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
@@ -2194,7 +2194,7 @@ app.display = function () {
             if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
 
             // callback that defines how to display the selected element ( functions located in app.effect )
-            if (selectedElement || app.temp.loopThrough || key.left in app.keys || key.right in app.keys){
+            if (selectedElement || app.temp.loopThrough){
                 selectable = display(selectedElement, tag, selectionIndex, prev, elements);
             } 
             // store the last index for future comparison
