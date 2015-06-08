@@ -2276,7 +2276,7 @@ app.display = function () {
 
         mapOrGame:function(type){
             return mapOrGameSelect(type);
-        };
+        },
 
         findElementByTag: function (tag, index, element) {
             return findElementByTag(tag, index, element);

@@ -80,6 +80,7 @@ h1 {
 }
 
 .gameScreen {
+    background: rgb(43,43,43);
     border-right: inset 3px hsl(0,0%,10%);
     border-bottom:inset 3px hsl(0,0%,15%);
     border-left:inset 3px hsl(0,0%,40%);
@@ -213,6 +214,7 @@ h1 {
 }
 
 #selectModeScreen {
+    position: absolute;
     z-index: 14;
     background: tan;
     overflow: hidden;
