@@ -2900,6 +2900,7 @@ app.scroll = function () {
         },
         finite: function (index, min, max) {
             if(this.scroll){
+                console.log(this.scroll);
                 var point = index + this.scroll;
                 if (point <= max && point >= min) return point;
             }
@@ -2923,13 +2924,14 @@ app.effect = function () {
 
     var menuItemOptions = function ( selectedElement, menu ) {
 
-        console.log('here');
         var prev = app.prev.horizon;
         var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
-        var modeOptionsActive = app.temp.modeOptionsActive;
 
         // display the menu options
-        if(prev !== horizon){
+        if(horizon && prev !== horizon){
+
+            var modeOptionsActive = app.temp.modeOptionsActive;
+
             console.log('horizon: '+horizon);
             if(menu) menu.style.opacity = 1;
             if(horizon === 1 && modeOptionsActive){
