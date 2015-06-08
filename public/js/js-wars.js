@@ -3045,8 +3045,7 @@ app.effect = function () {
             var categories = document.getElementById('categories');
             var catList = categories.children;
             var category = scrollHorizon(catList, true);
-            category.
-
+            //category.
         },
 
         setupMenuMovement:function (selectedElement, tag, index, prev, elements){
@@ -3207,7 +3206,7 @@ app.effect = function () {
             }
         },
 
-        gameOr
+        //gameOr
 
         colorSwell: function (now) { 
             if(app.temp.swell){
