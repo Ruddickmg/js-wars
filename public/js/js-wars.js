@@ -2216,6 +2216,8 @@ app.display = function () {
             // if the down key has been pressed then move to the next index ( element ) down
 
         } else if(modeOptionsActive || infiniteScroll){
+            console.log(app.scroll.verticle);
+            console.log(app.scroll.infinite);
             index = app.scroll.verticle.infinite(selectionIndex, len, 1);
             app.temp.selectionIndex = index;
         } else if(!modeOptionsActive){

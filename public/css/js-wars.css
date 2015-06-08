@@ -214,7 +214,6 @@ h1 {
 }
 
 #selectModeScreen {
-    position: absolute;
     z-index: 14;
     background: tan;
     overflow: hidden;
@@ -222,7 +221,7 @@ h1 {
 
 #selectModeMenu{
     text-transform: uppercase;
-    background: white;
+    background: tan;
     overflow: hidden;
 }
 
