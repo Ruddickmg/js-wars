@@ -2927,9 +2927,11 @@ app.effect = function () {
         if(prev !== horizon){
             if(menu) menu.style.opacity = 1;
             if(horizon === 1 && modeOptionsActive){
+                console.log('1!');
                 delete app.temp.modeOptionsActive;
                 delete app.temp.child;
             }else if(horizon === 2 && !modeOptionsActive){
+                console.log('2!');
                 app.temp.modeOptionsActive = true;
                 app.temp.child = {
                     element:menu,
@@ -2937,6 +2939,7 @@ app.effect = function () {
                     index:1
                 }
             }
+            console.log('done');
             delete app.temp.horizon;
             app.prev.horizon = horizon;
             app.temp.loopThrough = true;
