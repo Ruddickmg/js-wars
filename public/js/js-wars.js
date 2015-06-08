@@ -2215,19 +2215,20 @@ app.display = function () {
 
             return selectedElement.getAttribute('id');
             // if the down key has been pressed then move to the next index ( element ) down
+        }else{
+            index = app.scroll.verticle()[limit](selectionIndex, 1, len);
+            if(index) app.temp.selectionIndex = index;
 
-        index = app.scroll.verticle()[limit](selectionIndex, 1, len);
-        if(index) app.temp.selectionIndex = index;
-
-        if(app.temp.menuOptionsActive){
-            var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
-            if(horizon){
-                if(horizon === 2){
-                    app.temp.horizon = 'right';
-                }else if(modeOptionsActive && horizon === 1){
-                    app.temp.horizon = 'left';
+            if(app.temp.menuOptionsActive){
+                var horizon = app.scroll.horizontal().finite(app.prev.horizon || 1, 1, 2);
+                if(horizon){
+                    if(horizon === 2){
+                        app.temp.horizon = 'right';
+                    }else if(modeOptionsActive && horizon === 1){
+                        app.temp.horizon = 'left';
+                    }
+                    app.prev.horizon = horizon;
                 }
-                app.prev.horizon = horizon;
             }
         }
         return false;
