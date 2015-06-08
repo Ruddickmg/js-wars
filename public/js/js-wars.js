@@ -2695,7 +2695,7 @@ app.scroll = function (index) {
         },
         finite: function (index, max, min) {
             var point = index + this.scroll;
-            if (point <= max && point => 1) return point;
+            if (point <= max && point >= 1) return point;
         }
     };
 }();
