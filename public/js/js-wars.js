@@ -1519,15 +1519,14 @@ app.display = function () {
         var menu = app.settings.selectModeMenu;
 
         // (war room, campaign) eventually integrate ai opponents?
-        var selectModeScreen = document.createElement('article');
-        selectModeScreen.setAttribute('id','selectModeScreen');
+        var setupScreen = document.createElement('article');
+        setupScreen.setAttribute('id','setupScreen');
 
         // create title to display on page
         var title = document.createElement('h1');
-        title.setAttribute('id', 'modeTitle');
+        title.setAttribute('id', 'title');
         title.innerHTML = 'Select*Mode';
-        selectModeScreen.appendChild(title);
-
+        setupScreen.appendChild(title);
 
         // create list of selectable modes
         var selectMenu = document.createElement('ul');
@@ -1611,15 +1610,15 @@ app.display = function () {
             selectMenu.appendChild(item);
         }
         // add select menu to select mode screen
-        selectModeScreen.appendChild(selectMenu);
-        selectModeScreen.appendChild(footer);
+        setupScreen.appendChild(selectMenu);
+        setupScreen.appendChild(footer);
 
         // insert select mode screen into dom
-        var exists = document.getElementById('selectModeScreen');
+        var exists = document.getElementById('setupScreen');
         if(exists) {
-            exists.parentNode.replaceChild(selectModeScreen, exists);
+            exists.parentNode.replaceChild(setupScreen, exists);
         }else{
-            document.body.insertBefore(selectModeScreen, app.domInsertLocation);
+            document.body.insertBefore(setupScreen, app.domInsertLocation);
         }
     };
 
@@ -1714,7 +1713,7 @@ app.display = function () {
             section: 'optionsMenu',
             div: 'optionSelect'
         };
-        var element = displayInfo(app.settings.options, app.settings.optionsDisplay, elements, 'optionSelectionIndex');
+        var element = displayInfo(app.settings.options, app.settings.optionsDisplay, elements, 'optionSelectionIndex', true);
         if (element) {
         	optionsActive = true;
             return element;
@@ -1808,7 +1807,7 @@ app.display = function () {
             section: 'actionHud',
             div: 'actions'
         };
-        displayInfo(actions, app.settings.actionsDisplay, elements, 'actionSelectionIndex');
+        displayInfo(actions, app.settings.actionsDisplay, elements, 'actionSelectionIndex', true);
     };
 
     var unitInfo = function (building, unit, tag) {
@@ -1830,7 +1829,7 @@ app.display = function () {
                 };
             }
         }
-        displayInfo(properties, allowed, elements);
+        displayInfo(properties, allowed, elements, false, true);
     };
 
     var selectionInterface = function (building) {
@@ -1841,10 +1840,10 @@ app.display = function () {
             section: 'buildUnitScreen',
             div: 'selectUnitScreen'
         };
-        displayInfo(units, app.settings.unitSelectionDisplay, elements, 'unitSelectionIndex', 7);
+        displayInfo(units, app.settings.unitSelectionDisplay, elements, 'unitSelectionIndex', true);
     };
 
-    var displayInfo = function (properties, allowedProperties, elements, tag) {
+    var displayInfo = function (properties, allowedProperties, elements, tag, insert) {
 
         // build the outside screen container or use the existing element
         var display = document.createElement('section');
@@ -1868,21 +1867,24 @@ app.display = function () {
             innerScreen.appendChild(list.ul);
         }
 
-        if (exists) {
-            exists.parentNode.replaceChild(innerScreen, exists);
-        } else {
-            // add select screen to build screen container
-            display.appendChild(innerScreen);
+        if(insert){
+            if (exists) {
+                exists.parentNode.replaceChild(innerScreen, exists);
+            } else {
+                // add select screen to build screen container
+                display.appendChild(innerScreen);
 
-            // insert build screen into dom
-            document.body.insertBefore(display, app.domInsertLocation);
+                // insert build screen into dom
+                document.body.insertBefore(display, app.domInsertLocation);
+            }
         }
-        return true;
+
+        return display;
     };
 
     var select = function (tag, id, display, elementType, max, infiniteScroll) {
 
-        var modeOptionsActive = app.temp.modeOptionsActive;
+        var index, horizon, modeOptionsActive = app.temp.modeOptionsActive;
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
         if (app.prev.index !== app.temp.selectionIndex || app.temp.horizon || app.temp.loopThrough) {
@@ -1966,7 +1968,24 @@ app.display = function () {
             return selectedElement.getAttribute('id');
             // if the down key has been pressed then move to the next index ( element ) down
 
-        } else if (key.down in app.keys) {
+        } else if(modeOptionsActive || infiniteScroll){
+            index = app.scroll.verticle.infinite(selectionIndex, len, 1);
+            app.temp.selectionIndex = index;
+        } else if(!modeOptionsActive){
+            index = app.scroll.verticle.finite(selectionIndex, len, 1);
+            if(index) app.temp.selectionIndex = index;
+        } else if(app.temp.menuOptionsActive){
+            var horizon = app.scroll.horizontal.finite(1, 2, 1).;
+            if(horizon){
+                if(horizon === 2){
+                    app.temp.horizon = 'right';
+                }else if(modeOptionsActive){
+                    app.temp.horizon = 'right';
+                }
+            }
+        }
+
+/*        if (key.down in app.keys) {
 
             // only movement if the index is less then the length ( do not move to non existant index )
             if (selectionIndex < len && !infiniteScroll || selectionIndex < len && modeOptionsActive) {
@@ -1975,16 +1994,19 @@ app.display = function () {
                 app.temp.selectionIndex += 1;
             }else if(infiniteScroll && !modeOptionsActive){
                 app.temp.selectionIndex = selectionIndex + 1 > len ? 1 : selectionIndex + 1;
-            } 
+            }
+
             undo(key.down);
 
             // same as above, but up
         } else if (key.up in app.keys) {
+
             if (selectionIndex > 1 && !infiniteScroll || selectionIndex > 1 && modeOptionsActive){
                 app.temp.selectionIndex -= 1;
             }else if(infiniteScroll && !modeOptionsActive){
                 app.temp.selectionIndex = selectionIndex - 1 < 1 ? len : selectionIndex - 1;
             }
+
             undo(key.up);
         } else if (app.temp.menuOptionsActive){
 
@@ -1999,7 +2021,7 @@ app.display = function () {
                 undo(key.right);
 
             }
-        }
+        }*/
         return false;
     };
 
@@ -2054,7 +2076,7 @@ app.display = function () {
     };
 
     // create a canvas to display the hovered map element in the hud
-    var hudCanvas = function (canvasId, type, objectClass) {
+    var hudCanvas = function (canvasId, type, objectClass) {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
 
         var canvas = document.createElement('canvas'); // create canvas
         var context = canvas.getContext(app.ctx); // get context
@@ -2074,10 +2096,10 @@ app.display = function () {
     };
 
     var createList = function (object, id, displayedAttributes, canvasId) {
-        var canvas;
-        if (canvasId) {
+        
+        if (canvasId && displayedAttributes.hasValue('canvas')) {
             // create canvas and add it to the object
-            canvas = hudCanvas(canvasId, object.type, id);
+            var canvas = hudCanvas(canvasId, object.type, id);
             object.canvas = canvas.canvas;
         }
 
@@ -2087,6 +2109,7 @@ app.display = function () {
         // create an unordered list and give it the specified id
         var ul = document.createElement('ul');
         ul.setAttribute("id", id);
+        if(object.id) ul.setAttribute('itemNumber', object.id);
 
         // go through each property and create a list element for ivart, then add it to the ul;
         for (var i = 0; i < properties.length; i += 1) {
@@ -2217,7 +2240,43 @@ app.display = function () {
         hidden.style.display = 'none';
     };
 
+    var mapOrGameSelect = function (type, items) {
+
+        var elements = {
+            section: type+'SelectScreen',
+            div:'select'+type.uc_first()+'Screen'
+        };
+
+        var catElements = {
+            section: 'categorySelectScreen',
+            div:'selectCategoryScreen'
+        };
+
+        var buildingElements = {
+            section:'buildingsDisplay',
+            div:'numberOfBuildings'
+        };
+
+        var selector = document.getElementById('setupScreen');
+        title = selector.children[0];
+        title.innerHTML = 'Select*'+type;
+
+        var items = displayInfo(items, ['name'], elements, 'mapSelectionIndex');
+        var buildings = displayInfo(app.settings.buildingDisplayElement, app.settings.buildingDisplay, buildingElements, 'building');
+        var categories = displayInfo(app.settings.categories, '*', catElements, 'categorySelectionIndex');
+
+        selector.appendChild(buildings);
+        selector.appendChild(items);
+        selector.appendChild(categories);
+
+        return selector;
+    };
+
     return {
+
+        mapOrGame:function(type){
+            return mapOrGameSelect(type);
+        };
 
         findElementByTag: function (tag, index, element) {
             return findElementByTag(tag, index, element);
@@ -2572,13 +2631,15 @@ app.modes = function (){
             });*/
         },
         newgame:function(){
-            alert('set up a new game');
+            if(!app.temp.mapOrGameElement) app.temp.mapOrGameElement = mapOrGame('map', [app.map]);
+            app.display.select('categorySelectionIndex', 'selectMapScreen', app.effect.mapOrGameSelect, 5);
         },
         continuegame:function(){
             alert('continue an old game');
         },
         newjoin:function(){
-            alert('join a new game');
+            if(!app.temp.mapOrGameElement) app.temp.mapOrGameElement = mapOrGame('game');
+            app.display.select('gameSelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 5);
         },
         continuejoin:function(){
             alert('join a game that was already started');
@@ -2591,6 +2652,50 @@ app.modes = function (){
         },
         store:function(){
             alert('go to the game store');
+        }
+    };
+}();
+
+/* --------------------------------------------------------------------------------------*\
+    
+    app.game.settings consolidates all the user customizable options for the game into
+    an object for easy and dynamic manipulation
+\* --------------------------------------------------------------------------------------*/
+
+app.scroll = function (index) {
+
+    var undo = app.undo.keyPress;
+    var key = app.settings.keyMap;
+
+    var scroll = function (neg, pos){
+        if (key[neg] in app.keys){
+                undo(key[neg]);
+                return -1;
+            } else if (key[pos] in app.keys){
+                undo(key[pos]);
+                return 1;
+            }    
+        }
+        return 0;
+    };
+
+    return {
+        horizontal:function (){
+            this.scroll = scroll('left','right');
+            return this;
+        },
+        verticle:function(){
+            this.scroll = scroll('up','down');
+            return this;
+        },
+        infinite: function (index, max, min) {
+            var point = index + this.scroll;
+            var def = this.scroll > 0 ? max : min;
+            return point > max || point < min ? def : point;
+        },
+        finite: function (index, max, min) {
+            var point = index + this.scroll;
+            if (point <= max && point => 1) return point;
         }
     };
 }();
@@ -2725,6 +2830,33 @@ app.settings = {
             type:'store',
     }],
 
+    categories:{
+        1on1:{
+            type:'1 on 1'
+        },
+        3p: {
+            type:'3 Player'
+        },
+        4p:{
+            type:'4 Player'
+        },
+        5p:{
+            type:'5 Player'
+        },
+        6p:{
+            type:'6 Player'
+        }
+        7p:{
+            type:'7 Player'
+        },
+        8p:{
+            type:'8 Player'
+        },
+        preDeployed:{
+            type:'Pre-Deployed'
+        }
+    },
+
     capture: 20,
 
     combinableProperties:['fuel','health','ammo'],
@@ -2755,6 +2887,25 @@ app.settings = {
         }
     },
 
+    buildingDisplayElement: {
+        city:{
+            type:'city'
+            numberOf:0,
+        },
+        base:{
+            numberOf:0,
+            type:'base'
+        },
+        airport:{
+            numberOf:0,
+            type:'airport'
+        },
+        seaport:{
+            numberOf:0,
+            type:'seaport'
+        },
+    },
+
     // dimensions of diplay hud
     hudWidth: 120,
     hudHeight: 200,
@@ -2762,6 +2913,9 @@ app.settings = {
 
     // spacing / positioning of mode menu selection elements
     modeMenuSpacing:20,
+
+    // displayable attributes for the building count element on map/game selection
+    buildingDisplay:['numberOf', 'canvas'],
 
     // which attributes of objects ( unit, buildings etc ) will be displayed in hud
     hoverInfo: ['ammo', 'health', 'name', 'fuel', 'def', 'canvas'],
@@ -2807,8 +2961,6 @@ app.effect = function () {
     var key, undo, block, positions = ['oneAbove','twoAbove','oneBelow','twoBelow'];
 
     var menuItemOptions = function ( selectedElement, menu ) {
-        if (!key) key = app.game.settings.keyMap;
-        if (!undo) undo = app.undo.keyPress;
 
         // display the menu options
         if(menu) menu.style.opacity = 1;
@@ -2850,20 +3002,52 @@ app.effect = function () {
         delete app.temp.swell;
     };
 
+    var scrollLeftAndRight = function (elements, infiniteScroll) {
+        var scrollIndex = app.temp.scrollIndex;
+        var max = elements.length - 1;
+        var horizon = app.temp.horizon;
+        var def;
+        if(horizon){
+            if(horizon === 'left'){
+                def = infiniteScroll ? max : scrollIndex;
+                app.temp.scrollIndex = scrollIndex - 1 < 0 ? def : scrollIndex - 1; 
+            }else if(horizon === 'right'){
+                def = infiniteScroll ? 0 : scrollIndex;
+                app.temp.scrollIndex = scrollIndex + 1 > max ? def : scrollIndex + 1; 
+            }
+            delete app.temp.horizon;
+            app.temp.loopThrough = true;
+        }
+        return elements[app.temp.scrollIndex];
+    };
+
+    var highlightListItem = function (selectedElement, tag, index, prev, elements) {
+
+        // apply highlighting 
+        selectedElement.style.backgroundColor = 'tan';
+
+        // display info on the currently hovered over element
+        if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id);
+
+        // if there is then remove its highlighting
+        if (prev) prev.style.backgroundColor = '';
+
+        return true;
+    };
+
     return {
 
         highlightListItem: function (selectedElement, tag, index, prev, elements) {
+            return highlightListItem(selectedElement, tag, index, prev, elements);
+        },
 
-            // apply highlighting 
-            selectedElement.style.backgroundColor = 'tan';
+        mapOrGameSelect:function(selectedElement, tag, index, prev, elements){
+            highlightListItem(selectedElement, tag, index, prev, elements);
+            var categories = document.getElementById('categories');
+            var catList = categories.children;
+            var category = scrollHorizon(catList, true);
+            category.
 
-            // display info on the currently hovered over element
-            if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id);
-
-            // if there is then remove its highlighting
-            if (prev) prev.style.backgroundColor = '';
-
-            return true;
         },
 
         setupMenuMovement:function (selectedElement, tag, index, prev, elements){
@@ -3018,11 +3202,13 @@ app.effect = function () {
                                 app.temp.scrollPosition = -text.offsetWidth * 4;
                                 console.log(app.temp.scrollPosition);
                             }
-                        };
+                        }
                     }
                 }
             }
         },
+
+        gameOr
 
         colorSwell: function (now) { 
             if(app.temp.swell){
@@ -3082,6 +3268,9 @@ app.effect = function () {
 \* --------------------------------------------------------------------------------------*/
 
 app.map = {
+    name:'First map',
+    id:1,
+    players:2,
     background: {
         type: 'plain',
         x: 20,
@@ -4268,7 +4457,19 @@ app.gameSetup = function (){
     var now = Date.now();
 
     // select game mode
-    if(app.user && !app.game.mode) app.game.mode = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.setupMenuMovement, 'li', 5, 'infinite');
+    if(app.user && !app.game.mode){
+        app.game.mode = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.setupMenuMovement, 'li', 5, 'infinite');
+        if(app.game.mode){
+            var setupMenu = document.getElementById('gameSetup');
+            var remove = setupMenu.children;
+            for(var c = 0; c < clear.length; c += 1){
+                var clear = remove[c];
+                if(clear.id !== 'title'){
+                    setupMenu.removeChild(clear);
+                }
+            }
+        }
+    }
 
     // set up the game based on what mode is being selected
     if(app.game.mode){
