@@ -2216,15 +2216,13 @@ app.display = function () {
             // if the down key has been pressed then move to the next index ( element ) down
 
         } else if(modeOptionsActive || infiniteScroll){
-            console.log(app.scroll.verticle);
-            console.log(app.scroll.infinite);
-            index = app.scroll.verticle.infinite(selectionIndex, len, 1);
+            index = app.scroll.verticle().infinite(selectionIndex, len, 1);
             app.temp.selectionIndex = index;
         } else if(!modeOptionsActive){
-            index = app.scroll.verticle.finite(selectionIndex, len, 1);
+            index = app.scroll.verticle().finite(selectionIndex, len, 1);
             if(index) app.temp.selectionIndex = index;
         } else if(app.temp.menuOptionsActive){
-            var horizon = app.scroll.horizontal.finite(1, 2, 1);
+            var horizon = app.scroll.horizontal().finite(1, 2, 1);
             if(horizon){
                 if(horizon === 2){
                     app.temp.horizon = 'right';
@@ -3046,7 +3044,7 @@ app.effect = function () {
             highlightListItem(selectedElement, tag, index, prev, elements);
             var categories = document.getElementById('categories');
             var catList = categories.children;
-            var category = app.scroll.horizontal.infinite(app.temp.categoryIndex, catList.length, 0);
+            var category = app.scroll.horizontal().infinite(app.temp.categoryIndex, catList.length, 0);
             //category.
         },
 
