@@ -2830,25 +2830,25 @@ app.settings = {
     }],
 
     categories:{
-        1on1:{
+        two:{
             type:'1 on 1'
         },
-        3p: {
+        three: {
             type:'3 Player'
         },
-        4p:{
+        four:{
             type:'4 Player'
         },
-        5p:{
+        five:{
             type:'5 Player'
         },
-        6p:{
+        six:{
             type:'6 Player'
         }
-        7p:{
+        seven:{
             type:'7 Player'
         },
-        8p:{
+        eight:{
             type:'8 Player'
         },
         preDeployed:{
