@@ -472,14 +472,14 @@ li[pos=twoBelow] {
 }
 
 #buildingsDisplay{
-    display: inline-block;
     width: 400px;
-    height: 100px;
+    height: 98px;
     left: 580px;
-    top: 12px;
+    top: 10px;
 }
 
-#city, #base, #airport, #seaport {
+#buildingsDisplayItem {
+    display: inline-block;
     width:64px;
     height: 64px;
 }
@@ -487,22 +487,28 @@ li[pos=twoBelow] {
 #mapSelectScreen {
     width:400px;
     height:350px;
-    left:-10px;
+    left:-12px;
     top:250px;
 }
 
 #categorySelectScreen{
     display: inline-block;
-    top:100px;
-    left:-10px;
+    top:150px;
+    left:-12px;
     height: 88px;
     width:400px;
+}
+
+#selectCategoryScreenItem {
+    display: inline-block;
+    height: 64px;
+    width: 100%;
 }
 
 #buildUnitScreen {
     width:400px;
     height:470px;
-    left:260px;
+    left:280px;
     top:250px;
 }
 
@@ -513,7 +519,6 @@ li[pos=twoBelow] {
     font-size: 50px;
     text-shadow: -2px -2px 0 rgba(0,0,0,1), 2px -2px 0 rgba(0,0,0,1), -2px 2px 0 rgba(0,0,0,1) , 2px 2px 0 rgba(0,0,0,1) , 2px 0 0 rgba(0,0,0,1) , -2px 0 0 rgba(0,0,0,1) , 0 -2px 0 rgba(0,0,0,1) , 0 2px 0 rgba(0,0,0,1),  4px 0 0 rgba(0,0,0,1), 5px -1px 0 rgba(0,0,0,0.25) , 5px 1px 0 rgba(0,0,0,0.25) , 5px 0 0 rgba(0,0,0,1);
 }
-
 
 /*red border*/
 #actions,
