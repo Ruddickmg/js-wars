@@ -472,7 +472,7 @@ li[pos=twoBelow] {
 }
 
 #buildingsDisplay{
-    width: 366px;
+    width: 370px;
     height: 98px;
     left: 584px;
     top: 10px;
@@ -485,7 +485,7 @@ li[pos=twoBelow] {
 }
 
 #mapSelectScreen {
-    width:350px;
+    width:348px;
     height:356px;
     left:-12px;
     top:268px;
@@ -495,7 +495,7 @@ li[pos=twoBelow] {
     display: inline-block;
     top:142px;
     left:-12px;
-    width:365px;
+    width:348px;
     height: 98px;
 }
 
