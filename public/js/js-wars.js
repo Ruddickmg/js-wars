@@ -1869,6 +1869,7 @@ app.display = function () {
         }
     };
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     var setup = function (name) {
         var room = {};
         var hq = [];
@@ -2859,7 +2860,6 @@ app.modes = function (){
                 app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
                 console.log(app.temp.mapSelect);
             }
-            alert('done with new game screen');
             //app.display.select('categorySelectionIndex', 'selectMapScreen', app.effect.mapOrGameSelect, 5);
         },
         continuegame:function(){
@@ -2988,25 +2988,6 @@ app.effect = function () {
 
     var stopFading = function (){
         delete app.temp.swell;
-    };
-
-    var scrollLeftAndRight = function (elements, infiniteScroll) {
-        var scrollIndex = app.temp.scrollIndex;
-        var max = elements.length - 1;
-        var horizon = app.temp.horizon;
-        var def;
-        if(horizon){
-            if(horizon === 'left'){
-                def = infiniteScroll ? max : scrollIndex;
-                app.temp.scrollIndex = scrollIndex - 1 < 0 ? def : scrollIndex - 1; 
-            }else if(horizon === 'right'){
-                def = infiniteScroll ? 0 : scrollIndex;
-                app.temp.scrollIndex = scrollIndex + 1 > max ? def : scrollIndex + 1; 
-            }
-            delete app.temp.horizon;
-            app.temp.loopThrough = true;
-        }
-        return elements[app.temp.scrollIndex];
     };
 
     var highlightListItem = function (selectedElement, tag, index, prev, elements) {
@@ -4455,8 +4436,10 @@ app.gameSetup = function (){
         if(app.game.mode){
             var setupMenu = document.getElementById('setupScreen');
             var remove = setupMenu.children;
+            console.log(remove);
             for(var c = 0; c < remove.length; c += 1){
                 var clear = remove[c];
+                console.log(clear.id);
                 if(clear.id !== 'title'){
                     setupMenu.removeChild(clear);
                 }
