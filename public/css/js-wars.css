@@ -493,10 +493,10 @@ li[pos=twoBelow] {
 
 #categorySelectScreen{
     display: inline-block;
-    top:142px;
+    top:140px;
     left:-12px;
     width:346px;
-    height: 98px;
+    height: 100px;
 }
 
 .selectCategoryScreenItem {
