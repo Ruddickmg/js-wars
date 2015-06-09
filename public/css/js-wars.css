@@ -215,12 +215,13 @@ h1 {
 
 #setupScreen {
     z-index: 14;
+    background: tan;
     overflow: hidden;
 }
 
 #selectModeMenu{
     text-transform: uppercase;
-    background: tan;
+    background: transparent;
     overflow: hidden;
 }
 
