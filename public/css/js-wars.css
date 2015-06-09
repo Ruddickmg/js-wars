@@ -98,6 +98,7 @@ h1 {
     top:10px;
     left:15px;
     color:white;
+    transform: scale(1,.7);
     position: absolute;
     font-size: 100px;
     font-weight: bold;
