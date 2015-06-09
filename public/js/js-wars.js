@@ -2104,15 +2104,22 @@ app.display = function () {
         // get each unit type for looping over
         var keys = Object.keys(properties);
 
+        console.log(keys);
         for (var u = 0; u < keys.length; u += 1) {
 
             // create list for each unit with its cost
             var list = createList(properties[keys[u]], keys[u], allowedProperties, tag);
+
+            console.log(list);
+
             if (tag) list.ul.setAttribute(tag, u + 1);
 
             // add list to the select screen
             innerScreen.appendChild(list.ul);
         }
+
+        console.log('innerScreen~~!!!');
+        console.log(innerScreen);
 
         if(insert){
             if (exists) {
@@ -2125,7 +2132,6 @@ app.display = function () {
                 document.body.insertBefore(display, app.domInsertLocation);
             }
         }
-
         return display;
     };
 
@@ -2304,6 +2310,8 @@ app.display = function () {
         // get a list of property names
         var properties = Object.keys(object);
 
+        console.log(properties)
+
         // create an unordered list and give it the specified id
         var ul = document.createElement('ul');
         ul.setAttribute("id", id);
@@ -2314,7 +2322,8 @@ app.display = function () {
 
             // properties
             var props = properties[i];
-
+            console.log(props);
+            console.log(object[props]);
             // only use properties specified in the displayed attributes array
             if (displayedAttributes === '*' || displayedAttributes.hasValue(props)) {
 
@@ -2339,6 +2348,8 @@ app.display = function () {
                 ul.appendChild(li);
             }
         }
+        console.log('ul!!');
+        console.log(ul);
         // return the ul and canvas info
         return {
             ul: ul,
