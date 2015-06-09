@@ -2116,7 +2116,7 @@ app.display = function () {
 
             if (tag) list.ul.setAttribute(tag, u + 1);
 
-            if(inner) list.ul.setAttribute('class', inner + 'item');    
+            if(inner) list.ul.setAttribute('class', inner + 'Item');    
 
             // add list to the select screen
             innerScreen.appendChild(list.ul);
@@ -2454,8 +2454,6 @@ app.display = function () {
     };
 
     var mapOrGameSelect = function (type, items) {
-
-        console.log(items);
 
         var elements = {
             section: type+'SelectScreen',

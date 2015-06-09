@@ -533,8 +533,13 @@ li[pos=twoBelow] {
 
 /*  inner map/game select css stuff */
 .numberOfBuildingsItem,
-.selectCategoryScreenitem, 
-.selectCategoryScreenitem li {
+.selectCategoryScreenItem{
+    overflow: hidden;
+}
+
+.selectMapScreenItem
+.numberOfBuildingsItem li,
+.selectCategoryScreenItem li {
     white-space: nowrap;
     display: inline-block;
     height: 64px;
@@ -543,8 +548,15 @@ li[pos=twoBelow] {
     font-size: 30px;
 }
 
-.numberOfBuildingsItem {
+.numberOfBuildingsItem li{
     width:64px;
+}
+
+.numberOf {
+    position:absolute;
+    z-index: 5;
+    bottom:2px;
+    right:2px;
 }
 
 #selectMapScreen {
