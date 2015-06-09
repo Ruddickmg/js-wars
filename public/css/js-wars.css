@@ -459,7 +459,8 @@ li[pos=twoBelow] {
 #optionsMenu,
 #unitInfoScreen,
 #buildUnitScreen,
-#buildingsDisplay {
+#buildingsDisplay,
+#mapSelectScreen {
     padding: 3px;
     position: absolute;
     z-index: 10;
@@ -476,6 +477,8 @@ li[pos=twoBelow] {
     top: 100px;
 }
 
+
+#mapSelectScreen,
 #buildUnitScreen {
     width:400px;
     height:470px;
@@ -493,7 +496,8 @@ li[pos=twoBelow] {
 
 #actions,
 #optionSelect,
-#selectUnitScreen, 
+#selectUnitScreen,
+#selectMapScreen,
 #unitInfo,
 #numberOfBuildings {
     background: rgba(255,0,0,.05);
