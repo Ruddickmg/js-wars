@@ -458,7 +458,8 @@ li[pos=twoBelow] {
 #actionHud,
 #optionsMenu,
 #unitInfoScreen,
-#buildUnitScreen {
+#buildUnitScreen,
+#buildingsDisplay {
     padding: 3px;
     position: absolute;
     z-index: 10;
@@ -468,6 +469,7 @@ li[pos=twoBelow] {
     box-shadow: 4px 0px 2px 1px black;
 }
 
+#buildingsDisplay,
 #buildUnitScreen {
     width:400px;
     height:470px;
@@ -486,7 +488,8 @@ li[pos=twoBelow] {
 #actions,
 #optionSelect,
 #selectUnitScreen, 
-#unitInfo {
+#unitInfo,
+#numberOfBuildings {
     background: rgba(255,0,0,.05);
     overflow: hidden;
     border-radius: 1%;
@@ -691,8 +694,7 @@ bottom: -28px;
 left: 44px;
 }
 
-#damage
-{
+#damage {
 position: relative;
 width: 125px;
 height: 65px;
@@ -705,8 +707,7 @@ background: #FF0000;
 border-radius: 7px;
 }
 
-#damage:after
-{
+#damage:after {
 content: '';
 position: absolute;
 border-style: solid;
