@@ -96,7 +96,7 @@ h1 {
 
 #title {
     top:10px;
-    left:-20px;
+    left:-40px;
     color:white;
     transform: scale(.8,1);
     position: absolute;
@@ -500,11 +500,7 @@ li[pos=twoBelow] {
     height: 100px;
 }
 
-.selectCategoryScreenItem {
-    display: inline-block;
-    height: 64px;
-    width: 100%;
-}
+
 
 #buildUnitScreen {
     width:400px;
@@ -541,6 +537,14 @@ li[pos=twoBelow] {
     border-right:solid red 5px;
     border-top:solid red 12px;
     border-bottom:solid red 12px;
+}
+
+.selectCategoryScreenItem, .selectCategoryScreenItem li {
+    white-space: nowrap;
+    display: inline-block;
+    height: 64px;
+    line-height: 64px;
+    font-size: 25px;
 }
 
 #selectMapScreen {
