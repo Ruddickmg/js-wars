@@ -472,20 +472,20 @@ li[pos=twoBelow] {
 }
 
 #buildingsDisplay{
-    width: 370px;
+    width: 376px;
     height: 98px;
     left: 584px;
     top: 10px;
 }
 
-#buildingsDisplayItem {
+.numberOfBuildingsItem {
     display:inline-block;
     width:64px;
     height: 64px;
 }
 
 #mapSelectScreen {
-    width:348px;
+    width:346px;
     height:356px;
     left:-12px;
     top:268px;
@@ -495,11 +495,11 @@ li[pos=twoBelow] {
     display: inline-block;
     top:142px;
     left:-12px;
-    width:348px;
+    width:346px;
     height: 98px;
 }
 
-#selectCategoryScreenItem {
+.selectCategoryScreenItem {
     display: inline-block;
     height: 64px;
     width: 100%;
