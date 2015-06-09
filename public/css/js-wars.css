@@ -471,13 +471,20 @@ li[pos=twoBelow] {
 }
 
 #buildingsDisplay{
+    display: inline-block;
     width: 400px;
-    height: 94px;
+    height: 100px;
     left: 580px;
-    top: 16px;
+    top: 12px;
 }
 
-#mapSelectScreen,
+#mapSelectScreen {
+    width:400px;
+    height:400px;
+    left:20px;
+    top:250px;
+}
+
 #buildUnitScreen {
     width:400px;
     height:470px;
