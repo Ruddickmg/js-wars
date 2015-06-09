@@ -479,12 +479,6 @@ li[pos=twoBelow] {
     top: 10px;
 }
 
-.numberOfBuildingsItem {
-    display:inline-block;
-    width:64px;
-    height: 64px;
-}
-
 #mapSelectScreen {
     width:346px;
     height:356px;
@@ -536,13 +530,21 @@ li[pos=twoBelow] {
     border-bottom:solid red 12px;
 }
 
+
+/*  inner map/game select css stuff */
+.numberOfBuildingsItem,
 .selectCategoryScreenitem, 
 .selectCategoryScreenitem li {
     white-space: nowrap;
     display: inline-block;
     height: 64px;
+    width: 100%;
     line-height: 64px;
-    font-size: 25px;
+    font-size: 30px;
+}
+
+.numberOfBuildingsItem {
+    width:64px;
 }
 
 #selectMapScreen {
