@@ -472,7 +472,7 @@ li[pos=twoBelow] {
 }
 
 #buildingsDisplay{
-    width: 340px;
+    width: 380px;
     height: 98px;
     left: 584px;
     top: 10px;
@@ -485,7 +485,7 @@ li[pos=twoBelow] {
 }
 
 #mapSelectScreen {
-    width:400px;
+    width:380px;
     height:356px;
     left:-12px;
     top:268px;
@@ -496,7 +496,7 @@ li[pos=twoBelow] {
     top:142px;
     left:-12px;
     height: 98px;
-    width:400px;
+    width:380px;
 }
 
 #selectCategoryScreenItem {
