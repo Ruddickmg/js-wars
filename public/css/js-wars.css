@@ -472,7 +472,7 @@ li[pos=twoBelow] {
 }
 
 #buildingsDisplay{
-    width: 400px;
+    width: 300px;
     height: 98px;
     left: 580px;
     top: 10px;
@@ -488,12 +488,12 @@ li[pos=twoBelow] {
     width:400px;
     height:350px;
     left:-12px;
-    top:250px;
+    top:266px;
 }
 
 #categorySelectScreen{
     display: inline-block;
-    top:150px;
+    top:136px;
     left:-12px;
     height: 88px;
     width:400px;
