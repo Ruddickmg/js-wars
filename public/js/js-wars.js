@@ -2118,6 +2118,9 @@ app.display = function () {
             innerScreen.appendChild(list.ul);
         }
 
+        // add select screen to build screen container
+        display.appendChild(innerScreen);
+
         console.log('innerScreen~~!!!');
         console.log(innerScreen);
 
@@ -2125,9 +2128,6 @@ app.display = function () {
             if (exists) {
                 exists.parentNode.replaceChild(innerScreen, exists);
             } else {
-                // add select screen to build screen container
-                display.appendChild(innerScreen);
-
                 // insert build screen into dom
                 document.body.insertBefore(display, app.domInsertLocation);
             }
