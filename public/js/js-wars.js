@@ -2092,8 +2092,6 @@ app.display = function () {
 
     var displayInfo = function (properties, allowedProperties, elements, tag, insert) {
 
-        console.log(properties);
-
         // build the outside screen container or use the existing element
         var display = document.createElement('section');
         display.setAttribute('id', elements.section);
@@ -2297,7 +2295,7 @@ app.display = function () {
 
     var createList = function (object, id, displayedAttributes, canvasId) {
         
-        if (canvasId && displayedAttributes.hasValue('canvas')) {
+        if (canvasId && displayedAttributes !== '*' && displayedAttributes.hasValue('canvas')) {
             // create canvas and add it to the object
             var canvas = hudCanvas(canvasId, object.type, id);
             object.canvas = canvas.canvas;
