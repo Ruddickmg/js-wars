@@ -2092,6 +2092,8 @@ app.display = function () {
 
     var displayInfo = function (properties, allowedProperties, elements, tag, insert) {
 
+        var inner = elements.div;
+
         // build the outside screen container or use the existing element
         var display = document.createElement('section');
         display.setAttribute('id', elements.section);
@@ -2099,7 +2101,7 @@ app.display = function () {
         // build inner select screen or use existing one
         var exists = document.getElementById(elements.div);
         var innerScreen = document.createElement('div');
-        innerScreen.setAttribute('id', elements.div);
+        innerScreen.setAttribute('id', inner);
 
         // get each unit type for looping over
         var keys = Object.keys(properties);
@@ -2113,6 +2115,8 @@ app.display = function () {
             console.log(list);
 
             if (tag) list.ul.setAttribute(tag, u + 1);
+
+            if(inner) list.ul.setAttribute('class', inner + 'item');    
 
             // add list to the select screen
             innerScreen.appendChild(list.ul);
