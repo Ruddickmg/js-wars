@@ -460,7 +460,8 @@ li[pos=twoBelow] {
 #unitInfoScreen,
 #buildUnitScreen,
 #buildingsDisplay,
-#mapSelectScreen {
+#mapSelectScreen,
+#categorySelectScreen {
     padding: 3px;
     position: absolute;
     z-index: 10;
@@ -478,11 +479,24 @@ li[pos=twoBelow] {
     top: 12px;
 }
 
+#city, #base, #airport, #seaport {
+    width:64px;
+    height: 64px;
+}
+
 #mapSelectScreen {
     width:400px;
-    height:400px;
-    left:20px;
+    height:350px;
+    left:-10px;
     top:250px;
+}
+
+#categorySelectScreen{
+    display: inline-block;
+    top:100px;
+    left:-10px;
+    height: 88px;
+    width:400px;
 }
 
 #buildUnitScreen {
@@ -507,7 +521,8 @@ li[pos=twoBelow] {
 #selectUnitScreen,
 #selectMapScreen,
 #unitInfo,
-#numberOfBuildings {
+#numberOfBuildings,
+#selectCategoryScreen {
     background: rgba(255,0,0,.05);
     overflow: hidden;
     border-radius: 1%;
