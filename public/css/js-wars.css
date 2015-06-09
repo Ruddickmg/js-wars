@@ -492,15 +492,12 @@ li[pos=twoBelow] {
     top:268px;
 }
 
-#categorySelectScreen{
-    display: inline-block;
+#categorySelectScreen {
     top:140px;
     left:-12px;
     width:346px;
     height: 100px;
 }
-
-
 
 #buildUnitScreen {
     width:400px;
@@ -539,7 +536,8 @@ li[pos=twoBelow] {
     border-bottom:solid red 12px;
 }
 
-.selectCategoryScreenItem, .selectCategoryScreenItem li {
+.selectCategoryScreenitem, 
+.selectCategoryScreenitem li {
     white-space: nowrap;
     display: inline-block;
     height: 64px;
