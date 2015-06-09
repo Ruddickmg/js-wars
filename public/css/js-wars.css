@@ -469,7 +469,13 @@ li[pos=twoBelow] {
     box-shadow: 4px 0px 2px 1px black;
 }
 
-#buildingsDisplay,
+#buildingsDisplay{
+    width: 500px;
+    height: 64px;
+    left: 500px;
+    top: 100px;
+}
+
 #buildUnitScreen {
     width:400px;
     height:470px;
