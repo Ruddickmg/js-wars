@@ -2489,8 +2489,8 @@ app.display = function () {
 
     return {
 
-        mapOrGame:function(type){
-            return mapOrGameSelect(type);
+        mapOrGame:function(type, items){
+            return mapOrGameSelect(type, items);
         },
 
         findElementByTag: function (tag, index, element) {
