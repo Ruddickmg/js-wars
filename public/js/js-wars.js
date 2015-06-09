@@ -2458,16 +2458,29 @@ app.display = function () {
         };
 
         var selector = document.getElementById('setupScreen');
+        console.log('here');
+
         title = selector.children[0];
         title.innerHTML = 'Select*'+type;
 
+        console.log(selector);
+
+        console.log(title);
+
         var items = displayInfo(items, ['name'], elements, 'mapSelectionIndex');
+        console.log(items);
+
         var buildings = displayInfo(app.settings.buildingDisplayElement, app.settings.buildingDisplay, buildingElements, 'building');
+        console.log(buildings);
+
         var categories = displayInfo(app.settings.categories, '*', catElements, 'categorySelectionIndex');
+        console.log(categories);
 
         selector.appendChild(buildings);
         selector.appendChild(items);
         selector.appendChild(categories);
+
+        console.log(selector);
 
         return selector;
     };
@@ -2831,8 +2844,12 @@ app.modes = function (){
             });*/
         },
         newgame:function(){
-            if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', [app.map]);
-            app.display.select('categorySelectionIndex', 'selectMapScreen', app.effect.mapOrGameSelect, 5);
+            if(!app.temp.mapSelect) {
+                app.temp.mapSelect = app.display.mapOrGame('map', [app.map]);
+                console.log(app.temp.mapSelect);
+            }
+            alert('done with new game screen');
+            //app.display.select('categorySelectionIndex', 'selectMapScreen', app.effect.mapOrGameSelect, 5);
         },
         continuegame:function(){
             alert('continue an old game');
@@ -3172,8 +3189,6 @@ app.effect = function () {
                 }
             }
         },
-
-        //gameOr
 
         colorSwell: function (now) { 
             if(app.temp.swell){
