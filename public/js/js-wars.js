@@ -2092,6 +2092,8 @@ app.display = function () {
 
     var displayInfo = function (properties, allowedProperties, elements, tag, insert) {
 
+        console.log(properties);
+
         // build the outside screen container or use the existing element
         var display = document.createElement('section');
         display.setAttribute('id', elements.section);
