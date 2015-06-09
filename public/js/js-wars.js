@@ -2442,6 +2442,8 @@ app.display = function () {
 
     var mapOrGameSelect = function (type, items) {
 
+        console.log(items);
+
         var elements = {
             section: type+'SelectScreen',
             div:'select'+type.uc_first()+'Screen'
@@ -2845,7 +2847,7 @@ app.modes = function (){
         },
         newgame:function(){
             if(!app.temp.mapSelect) {
-                app.temp.mapSelect = app.display.mapOrGame('map', [app.map]);
+                app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
                 console.log(app.temp.mapSelect);
             }
             alert('done with new game screen');
@@ -3400,6 +3402,8 @@ app.map = {
     }],
     unit: []
 };
+
+app.maps = [app.map];
 
 /* --------------------------------------------------------------------------------------*\
     
