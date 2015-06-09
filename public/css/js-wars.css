@@ -488,14 +488,14 @@ li[pos=twoBelow] {
     width:400px;
     height:350px;
     left:-12px;
-    top:266px;
+    top:268px;
 }
 
 #categorySelectScreen{
     display: inline-block;
-    top:136px;
+    top:140px;
     left:-12px;
-    height: 88px;
+    height: 94px;
     width:400px;
 }
 
