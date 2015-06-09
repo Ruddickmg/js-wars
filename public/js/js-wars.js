@@ -1869,7 +1869,6 @@ app.display = function () {
         }
     };
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     var setup = function (name) {
         var room = {};
         var hq = [];
@@ -4436,6 +4435,8 @@ app.gameSetup = function (){
         if(app.game.mode){
             var setupMenu = document.getElementById('setupScreen');
             var remove = setupMenu.children;
+            var footer = document.getElementById('footer');
+            footer.style.display = 'none';
             console.log(remove);
             for(var c = 0; c < remove.length; c += 1){
                 var clear = remove[c];
@@ -4466,7 +4467,7 @@ app.gameSetup = function (){
         app.start(game);
 
         // start game loop
-        app.gameLoop();
+        return app.gameLoop();
 
     // if the game hasnt been started then keep looping the setup menu
     }else{
