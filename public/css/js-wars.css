@@ -96,7 +96,7 @@ h1 {
 
 #title {
     top:10px;
-    left:10px;
+    left:0px;
     color:white;
     transform: scale(.8,1);
     position: absolute;
@@ -543,10 +543,13 @@ li[pos=twoBelow] {
     border-bottom:solid red 12px;
 }
 
-#selectMapScreen,
+#selectMapScreen {
+    height:94%;
+}
+
 #numberOfBuildings,
 #selectCategoryScreen {
-    height: 91.5%;
+    height: 80%;
 }
 
 #actions ul,
