@@ -539,7 +539,6 @@ li[pos=twoBelow] {
 }
 
 
-.numberOfBuildingsItem li,
 .selectCategoryScreenItem li {
     white-space: nowrap;
     display: inline-block;
