@@ -547,9 +547,9 @@ li[pos=twoBelow] {
     font-size: 30px;
 }
 
-.selectMapScreenItem {
+.selectMapScreenItem li{
+    line-height: 64px;
     height: 64px;
-    width: 100%;
 }
 
 .numberOfBuildingsItem {
