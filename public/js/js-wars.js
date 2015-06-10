@@ -2137,6 +2137,8 @@ app.display = function () {
 
     var select = function (tag, id, display, elementType, max, infiniteScroll) {
 
+        console.log('here');
+
         var index, horizon, modeOptionsActive = app.temp.modeOptionsActive;
         var limit = infiniteScroll && !modeOptionsActive ? 'infinite' : 'finite';
 
@@ -2224,6 +2226,8 @@ app.display = function () {
             delete selectionIndex;
             delete prev;
             delete hide;
+
+            console.log('deleted');
 
             undo(key.select);
 
@@ -2843,17 +2847,11 @@ app.modes = function (){
         },
         newgame:function(){
 
-            console.log('newgame');
-            
             if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
 
             app.display.select('categorySelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 'ul', 1); 
 
-            console.log('one');
-
             var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
-
-            console.log('two');
 
             if(map){
                 alert(map);
@@ -4438,11 +4436,9 @@ app.gameSetup = function (){
             var remove = setupMenu.children;
             var footer = document.getElementById('footer');
             footer.style.display = 'none';
-            console.log(remove);
-            for(var c = 0; c < remove.length; c += 1){
+            for (var c = 0; c < remove.length; c += 1) {
                 var clear = remove[c];
-                console.log(clear.id);
-                if(clear.id !== 'title'){
+                if (clear.id !== 'title') {
                     setupMenu.removeChild(clear);
                 }
             }
