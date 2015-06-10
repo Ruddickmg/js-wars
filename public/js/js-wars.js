@@ -2857,18 +2857,22 @@ app.modes = function (){
             });*/
         },
         newgame:function(){
-            if(!app.temp.mapSelect) {
-                app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
-                console.log(app.temp.mapSelect);
+            if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
+            var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 5);
+            app.display.select('categorySelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 1); 
+            if(map){
+                alert(map);
+                return map;  
             }
-            //app.display.select('categorySelectionIndex', 'selectMapScreen', app.effect.mapOrGameSelect, 5);
+            return false;
         },
         continuegame:function(){
             alert('continue an old game');
         },
         newjoin:function(){
             if(!app.temp.gameSelect) app.temp.gameSelect = app.display.mapOrGame('game', games);
-            app.display.select('gameSelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 5);
+            app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 5);
+            app.display.select('gameSelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 1);
         },
         continuejoin:function(){
             alert('join a game that was already started');
