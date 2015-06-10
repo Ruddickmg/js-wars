@@ -550,7 +550,7 @@ li[pos=twoBelow] {
 }
 
 .numberOfBuildingsItem {
-    padding:5px;
+    margin:5px;
     width:64px;
     height: 64px;
 }
@@ -566,12 +566,12 @@ li[pos=twoBelow] {
 }
 
 #selectMapScreen {
-    height:93%;
+    height:93.5%;
 }
 
 #numberOfBuildings,
 #selectCategoryScreen {
-    height: 78%;
+    height: 77%;
 }
 
 #actions ul,
