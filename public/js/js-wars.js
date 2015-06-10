@@ -2164,6 +2164,7 @@ app.display = function () {
                 }
                 var hudElement = document.getElementById(id);
             }
+            console.log('id: '+ id);
             console.log(elementType);
             console.log(hudElement);
 
@@ -2194,6 +2195,8 @@ app.display = function () {
                 var showElement = findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
+
+            console.log('tag: '+tag+', index: '+selectionIndex);
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
@@ -2839,9 +2842,19 @@ app.modes = function (){
             });*/
         },
         newgame:function(){
+
+            console.log('newgame');
+            
             if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
-            var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
+
             app.display.select('categorySelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 'ul', 1); 
+
+            console.log('one');
+
+            var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
+
+            console.log('two');
+
             if(map){
                 alert(map);
                 return map;
