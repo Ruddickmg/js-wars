@@ -538,7 +538,11 @@ li[pos=twoBelow] {
     display: inline-block;
 }
 
-.selectMapScreenItem li,
+.selectMapScreenItem li {
+    height: 64px;
+    width: 100%;
+}
+
 .numberOfBuildingsItem li,
 .selectCategoryScreenItem li {
     white-space: nowrap;
