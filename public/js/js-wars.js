@@ -2197,7 +2197,12 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
+            console.log('tag: '+tag+', selectionIndex: '+selectionIndex+', elements:');
+            console.log(elements);
+
             selectedElement = findElementByTag(tag, elements, selectionIndex);
+
+            console.log(selectedElement);
 
             if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
 
@@ -2471,30 +2476,17 @@ app.display = function () {
         };
 
         var selector = document.getElementById('setupScreen');
-        console.log('here');
 
         title = selector.children[0];
         title.innerHTML = 'Select*'+type;
 
-        console.log(selector);
-
-        console.log(title);
-
         var items = displayInfo(items, ['name'], elements, 'mapSelectionIndex');
-        console.log(items);
-
         var buildings = displayInfo(app.settings.buildingDisplayElement, app.settings.buildingDisplay, buildingElements, 'building');
-        console.log(buildings);
-
         var categories = displayInfo(app.settings.categories, '*', catElements, 'categorySelectionIndex');
-        console.log(categories);
 
         selector.appendChild(buildings);
         selector.appendChild(items);
         selector.appendChild(categories);
-
-        console.log(selector);
-
         return selector;
     };
 
