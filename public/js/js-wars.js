@@ -2850,7 +2850,7 @@ app.modes = function (){
 
             if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
 
-            app.display.select('categorySelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 'ul', 1); 
+            app.effect.horizontalSelect(app.temp.mapSelect.getElementById('categories'));
 
             var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
 
@@ -3009,8 +3009,8 @@ app.effect = function () {
             return highlightListItem(selectedElement, tag, index, prev, elements);
         },
 
-        mapOrGameSelect:function(selectedElement, tag, index, prev, elements){
-//            highlightListItem(selectedElement, tag, index, prev, elements);
+        mapOrGameSelect:function(parent){
+            highlightListItem(selectedElement, tag, index, prev, elements);
             var previous = app.prev.category;
             var categories = document.getElementById('categories');
             var catList = categories.children;
