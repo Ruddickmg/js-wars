@@ -541,6 +541,10 @@ li[pos=twoBelow] {
 .selectCategoryScreenItem li {
     white-space: nowrap;
     display: inline-block;
+}
+
+.selectCategoryScreenItem li,
+.selectCategoryScreenItem {
     height: 64px;
     line-height: 64px;
     font-size: 30px;
