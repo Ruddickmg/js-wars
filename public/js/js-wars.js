@@ -2137,8 +2137,6 @@ app.display = function () {
 
     var select = function (tag, id, display, elementType, max, infiniteScroll) {
 
-        console.log('here: '+app.prev.index);
-
         var index, horizon, modeOptionsActive = app.temp.modeOptionsActive;
         var limit = infiniteScroll && !modeOptionsActive ? 'infinite' : 'finite';
 
@@ -2220,7 +2218,7 @@ app.display = function () {
         if (key.select in app.keys && selectedElement && selectable) {
 
             app.temp.selectionIndex = 1
-            
+
             delete app.temp.modeOptionsActive;
             delete app.temp.parentIndex;
             delete app.temp.child;
@@ -3012,7 +3010,7 @@ app.effect = function () {
         },
 
         mapOrGameSelect:function(selectedElement, tag, index, prev, elements){
-            highlightListItem(selectedElement, tag, index, prev, elements);
+//            highlightListItem(selectedElement, tag, index, prev, elements);
             var previous = app.prev.category;
             var categories = document.getElementById('categories');
             var catList = categories.children;
