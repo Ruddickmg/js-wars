@@ -2199,7 +2199,7 @@ app.display = function () {
 
             console.log(selectedElement);
 
-            if(selectElement) if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
+            if(selectedElement) if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
 
             // callback that defines how to display the selected element ( functions located in app.effect )
             if (selectedElement || app.temp.loopThrough){
