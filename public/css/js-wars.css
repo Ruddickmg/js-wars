@@ -550,7 +550,8 @@ li[pos=twoBelow] {
 }
 
 .numberOfBuildingsItem {
-    margin:15px;
+    margin:12px;
+    margin-top:5px;
     width:64px;
     height: 64px;
 }
