@@ -538,7 +538,7 @@ li[pos=twoBelow] {
     display: inline-block;
 }
 
-.selectMapScreenItem
+.selectMapScreenItem li,
 .numberOfBuildingsItem li,
 .selectCategoryScreenItem li {
     white-space: nowrap;
