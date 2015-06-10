@@ -2858,11 +2858,11 @@ app.modes = function (){
         },
         newgame:function(){
             if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
-            var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 5);
-            app.display.select('categorySelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 1); 
+            var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
+            app.display.select('categorySelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 'ul', 1); 
             if(map){
                 alert(map);
-                return map;  
+                return map;
             }
             return false;
         },
