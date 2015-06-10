@@ -2220,7 +2220,8 @@ app.display = function () {
         if (key.select in app.keys && selectedElement && selectable) {
 
             app.temp.selectionIndex = 1
-
+            
+            delete app.temp.modeOptionsActive;
             delete app.temp.parentIndex;
             delete app.temp.child;
             delete app.prev.index;
