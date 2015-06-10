@@ -2137,13 +2137,13 @@ app.display = function () {
 
     var select = function (tag, id, display, elementType, max, infiniteScroll) {
 
-        console.log('here');
+        console.log('here: '+app.prev.index);
 
         var index, horizon, modeOptionsActive = app.temp.modeOptionsActive;
         var limit = infiniteScroll && !modeOptionsActive ? 'infinite' : 'finite';
 
         // if the index is not the same as it was prior, then highlight the new index ( new element )
-        if (app.prev.index !== app.temp.selectionIndex || key.left in app.keys || key.right in app.keys || app.temp.loopThrough) {
+        if (!app.prev.index || app.prev.index !== app.temp.selectionIndex || key.left in app.keys || key.right in app.keys || app.temp.loopThrough) {
         
             // if there is a sub menu activated then select from the sub menu element instead of its parent
             if(app.temp.child){
@@ -2164,9 +2164,9 @@ app.display = function () {
                     delete app.temp.loopThrough;
                     delete app.temp.parentIndex;
                 }
+                console.log('id: '+ id);
                 var hudElement = document.getElementById(id);
             }
-            console.log('id: '+ id);
             console.log(elementType);
             console.log(hudElement);
 
@@ -2219,8 +2219,10 @@ app.display = function () {
         // if the select key has been pressed and an element is available for selection then return its id
         if (key.select in app.keys && selectedElement && selectable) {
 
-            app.temp.selectionIndex = 1;
+            app.temp.selectionIndex = 1
 
+            delete app.temp.parentIndex;
+            delete app.temp.child;
             delete app.prev.index;
             delete selectedElement;
             delete selectionIndex;
