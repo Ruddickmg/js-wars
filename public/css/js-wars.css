@@ -538,14 +538,18 @@ li[pos=twoBelow] {
     display: inline-block;
 }
 
-
+.numberOfBuildingsItem li,
 .selectCategoryScreenItem li {
     white-space: nowrap;
     display: inline-block;
     height: 64px;
-    width: 100%;
     line-height: 64px;
     font-size: 30px;
+}
+
+.selectMapScreenItem {
+    height: 64px;
+    width: 100%;
 }
 
 .numberOfBuildingsItem {
