@@ -1716,6 +1716,8 @@ app.dom = function (){
         getImmediateChildrenByTagName: function(element, type){
             var elements = [];
             var children = element.childNodes;
+            console.log(element);
+            console.log(children);
             var name = type.toUpperCase();
             var len = children.length;
             for(var i = 0; i < len; i += 1) {
@@ -2162,6 +2164,8 @@ app.display = function () {
                 }
                 var hudElement = document.getElementById(id);
             }
+            console.log(elementType);
+            console.log(hudElement);
 
             // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
@@ -2190,9 +2194,6 @@ app.display = function () {
                 var showElement = findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
-
-            console.log('tag: '+tag+', selectionIndex: '+selectionIndex+', elements:');
-            console.log(elements);
 
             selectedElement = findElementByTag(tag, elements, selectionIndex);
 
