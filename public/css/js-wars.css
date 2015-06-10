@@ -544,7 +544,7 @@ li[pos=twoBelow] {
 }
 
 .selectCategoryScreenItem li,
-.selectCategoryScreenItem {
+.selectMapScreenItem li {
     height: 64px;
     line-height: 64px;
     font-size: 30px;
