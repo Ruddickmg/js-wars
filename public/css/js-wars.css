@@ -548,13 +548,17 @@ li[pos=twoBelow] {
     left:100%;
 }
 
-.selectCategoryScreen [position=center]{
+.selectCategoryScreenItem [position=center]{
     position: absolute;
 }
 
 .selectCategoryScreenItem [pos=left] {
     position: absolute;
     left:-100%;
+}
+
+.selectCategoryScreenItem {
+    transition: left 0.3s ease;
 }
 
 .selectCategoryScreenItem li,
