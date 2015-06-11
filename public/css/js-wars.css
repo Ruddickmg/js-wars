@@ -543,6 +543,20 @@ li[pos=twoBelow] {
     display: inline-block;
 }
 
+.selectCategoryScreenItem [pos=left] {
+    position: absolute;
+    left:100%;
+}
+
+.selectCategoryScreen [position=center]{
+    position: absolute;
+}
+
+.selectCategoryScreenItem [pos=left] {
+    position: absolute;
+    left:-100%;
+}
+
 .selectCategoryScreenItem li,
 .selectMapScreenItem li {
     height: 64px;

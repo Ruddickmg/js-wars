@@ -3043,9 +3043,23 @@ app.effect = function () {
 
             var category = app.scroll.horizontal().infinite(app.temp.categoryIndex, 0 , len);
 
+            // get the elements to the left and right of the selected category and position them as such
+            var neg = category - 1;
+            var pos = category + 1;
+            var left = categories[ neg < 0 ? len : neg ];
+            var right = categories[ pos < len ? pos : 0 ];
+
+            // get the category for display
             var show = categories[category];
 
+            // display selected
             show.style.display = '';
+            show.setAttribute('pos', 'center');
+
+            //position left and right
+            left.setAttribute('pos', 'left');
+            right.setAttribute('pos', 'right');
+
             if(show.id !== previous.id){
                 app.prev.category = show;
                 return show.id;
