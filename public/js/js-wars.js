@@ -107,6 +107,7 @@ app = {
 
     // holds temporary shared variables, usually info on game state changes that need to be accessed globally
     temp: {
+        categoryIndex:0,
     	selectionIndex: 1,
         menuOptionsActive:false,
         selectActive: false,
@@ -2456,8 +2457,10 @@ app.display = function () {
         hidden.style.display = 'none';
     };
 
+    // create page for selecting map or game to join/create
     var mapOrGameSelect = function (type, items) {
 
+        // name screen elements
         var elements = {
             section: type+'SelectScreen',
             div:'select'+type.uc_first()+'Screen'
@@ -2473,18 +2476,37 @@ app.display = function () {
             div:'numberOfBuildings'
         };
 
+        // get the screen
         var selector = document.getElementById('setupScreen');
 
+        // get the title and change it to select whatever type we are selecting
         title = selector.children[0];
         title.innerHTML = 'Select*'+type;
 
-        var items = displayInfo(items, ['name'], elements, 'mapSelectionIndex');
-        var buildings = displayInfo(app.settings.buildingDisplayElement, app.settings.buildingDisplay, buildingElements, 'building');
-        var categories = displayInfo(app.settings.categories, '*', catElements, 'categorySelectionIndex');
+        // create elements
+        var item = displayInfo(items, ['name'], elements, 'mapSelectionIndex');
 
+        // display buildings and how many are on each map
+        var buildings = displayInfo(app.settings.buildingDisplayElement, app.settings.buildingDisplay, buildingElements, 'building');
+
+        // display catagories 2p, 3p, 4p, etc...
+        var categories = displayInfo(app.settings.categories, '*', catElements, 'categorySelectionIndex');
+        var cats = categories.children;
+        var len = cats.length;
+
+        // hide categories for displaying only one at a time
+        for(var c = 0; c < len; c += 1){
+            cats[c].style.display = 'none';
+        }
+
+        // add elements to the screen
         selector.appendChild(buildings);
-        selector.appendChild(items);
+        selector.appendChild(item);
         selector.appendChild(categories);
+
+        console.log(selector);
+
+        //return the modified screen element
         return selector;
     };
 
@@ -2849,7 +2871,9 @@ app.modes = function (){
         newgame:function(){
 
             if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
-
+            
+            console.log(app.temp.mapSelect);
+            
             app.effect.horizontalSelect(app.temp.mapSelect.getElementById('categories'));
 
             var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
@@ -2995,7 +3019,7 @@ app.effect = function () {
         selectedElement.style.backgroundColor = 'tan';
 
         // display info on the currently hovered over element
-        if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id);
+        if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id); /// selected unnacounted for
 
         // if there is then remove its highlighting
         if (prev) prev.style.backgroundColor = '';
@@ -3009,15 +3033,18 @@ app.effect = function () {
             return highlightListItem(selectedElement, tag, index, prev, elements);
         },
 
-        mapOrGameSelect:function(parent){
-            highlightListItem(selectedElement, tag, index, prev, elements);
+        horizontalSelect:function (parent) {
+
             var previous = app.prev.category;
-            var categories = document.getElementById('categories');
-            var catList = categories.children;
-            var len = catList.length - 1;
+            if(prevous !== undefined) previous.style.display = 'none';
+
+            var categories = parent.children;
+            var len = categories.length - 1;
+
             var category = app.scroll.horizontal().infinite(app.temp.categoryIndex, 0 , len);
-            if(prevous !== undefined) previous.style.display = none;
-            var show = catList[category];
+
+            var show = categories[category];
+
             show.style.display = '';
             if(show.id !== previous.id){
                 app.prev.category = show;
