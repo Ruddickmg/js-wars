@@ -2176,11 +2176,8 @@ app.display = function () {
                     delete app.temp.loopThrough;
                     delete app.temp.parentIndex;
                 }
-                console.log('id: '+ id);
                 var hudElement = document.getElementById(id);
             }
-            console.log(elementType);
-            console.log(hudElement);
 
             // get the children
             var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
@@ -2210,11 +2207,7 @@ app.display = function () {
                 showElement.style.display = '';
             }
 
-            console.log('tag: '+tag+', index: '+selectionIndex);
-
             selectedElement = app.dom.findElementByTag(tag, elements, selectionIndex);
-
-            console.log(selectedElement);
 
             if(selectedElement) if( !app.prev.scroll || app.temp.scroll !== app.prev.scroll ) app.temp.scroll = selectedElement.id; 
 
@@ -2241,9 +2234,6 @@ app.display = function () {
             delete selectionIndex;
             delete prev;
             delete hide;
-
-            console.log('deleted');
-
             undo(key.select);
 
             return selectedElement.getAttribute('id');
@@ -2513,7 +2503,6 @@ app.display = function () {
         },
 
         mapOrGameSelection: function (id, elements) {
-            console.log(id);
             var replace = document.getElementById(id);
             replace.parentNode.replaceChild(elements, replace);
         },
@@ -2876,7 +2865,7 @@ app.modes = function (){
 
             if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame(mapElements, app.maps);
 
-            var category = app.effect.horizontalSelect(document.getElementById('selectCategoryScreen'));
+            var category = app.effect.horizontalScroll(document.getElementById('selectCategoryScreen'));
 
             if(category){
                 // use category to get maps from db then re populate maps !!!!!!!!!!!!!!!!!!
@@ -2894,7 +2883,7 @@ app.modes = function (){
             return false;
         },
         continuegame:function(){
-            alert('continue an old game');
+            alert('continue an old game is under construction. try new game or join new');
         },
         newjoin:function(){
             if(!app.temp.gameSelect) app.temp.gameSelect = app.display.mapOrGame('game', games);
@@ -2902,16 +2891,16 @@ app.modes = function (){
             app.display.select('gameSelectionIndex', 'selectCategoryScreen', app.effect.mapOrGameSelect, 1);
         },
         continuejoin:function(){
-            alert('join a game that was already started');
+            alert('continue join is under construction, try new game or join new');
         },
         COdesign:function(){
-            alert('design a co');
+            alert('design a co is under construction. try new game or join new');
         },
         mapdesign:function(){
-            alert('design a map');
+            alert('design a map is under construction. try new game or join new');
         },
         store:function(){
-            alert('go to the game store');
+            alert('go to the game store is under construction. try new game or join new');
         }
     };
 }();
@@ -3024,6 +3013,8 @@ app.effect = function () {
 
     var highlightListItem = function (selectedElement, tag, index, prev, elements) {
 
+        console.log(selectedElement);
+
         // apply highlighting 
         selectedElement.style.backgroundColor = 'tan';
 
@@ -3042,7 +3033,7 @@ app.effect = function () {
             return highlightListItem(selectedElement, tag, index, prev, elements);
         },
 
-        horizontalSelect:function (parent) {
+        horizontalScroll:function (parent) {
 
             var previous = app.prev.category;
 
