@@ -2491,13 +2491,10 @@ app.display = function () {
 
         // display catagories 2p, 3p, 4p, etc...
         var categories = displayInfo(app.settings.categories, '*', catElements, 'categorySelectionIndex');
-        console.log(categories);
-        console.log(categories.children[0]);
         var cats = categories.children[0].children;
-        console.log(cats);
-        var len = cats.length;
 
         // hide categories for displaying only one at a time
+        var len = cats.length;
         for(var c = 0; c < len; c += 1){
             cats[c].style.display = 'none';
         }
@@ -3035,7 +3032,8 @@ app.effect = function () {
         horizontalSelect:function (parent) {
 
             var previous = app.prev.category;
-            if(prevous !== undefined) previous.style.display = 'none';
+
+            if(previous !== undefined) previous.style.display = 'none';
 
             var categories = parent.children;
             var len = categories.length - 1;
