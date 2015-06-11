@@ -2491,7 +2491,10 @@ app.display = function () {
 
         // display catagories 2p, 3p, 4p, etc...
         var categories = displayInfo(app.settings.categories, '*', catElements, 'categorySelectionIndex');
-        var cats = categories.children;
+        console.log(categories);
+        console.log(categories.children[0]);
+        var cats = categories.children[0].children;
+        console.log(cats);
         var len = cats.length;
 
         // hide categories for displaying only one at a time
@@ -2503,8 +2506,6 @@ app.display = function () {
         selector.appendChild(buildings);
         selector.appendChild(item);
         selector.appendChild(categories);
-
-        console.log(selector);
 
         //return the modified screen element
         return selector;
@@ -2871,10 +2872,8 @@ app.modes = function (){
         newgame:function(){
 
             if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
-            
-            console.log(app.temp.mapSelect);
-            
-            app.effect.horizontalSelect(app.temp.mapSelect.getElementById('categories'));
+                        
+            app.effect.horizontalSelect(document.getElementById('categories'));
 
             var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
 
