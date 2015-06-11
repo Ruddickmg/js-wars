@@ -2512,7 +2512,8 @@ app.display = function () {
             return mapOrGameDisplay(type, items);
         },
 
-        mapOrGameSelection: function (id, elemets) {
+        mapOrGameSelection: function (id, elements) {
+            console.log(id);
             var replace = document.getElementById(id);
             replace.parentNode.replaceChild(elements, replace);
         },
@@ -2874,15 +2875,15 @@ app.modes = function (){
         newgame:function(){
 
             if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame(mapElements, app.maps);
-                        
+
             var category = app.effect.horizontalSelect(document.getElementById('selectCategoryScreen'));
 
             if(category){
-                /// use category to get maps from db then re populate maps!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+                // use category to get maps from db then re populate maps !!!!!!!!!!!!!!!!!!
                 var maps = app.maps; 
                 var elements = app.display.info(maps, ['name'], mapElements, 'mapSelectionIndex');
-                app.display.mapOrGameSelection(app.temp.mapSelect, elements);
-            } 
+                app.display.mapOrGameSelection(mapElements.section, elements);
+            }
 
             var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
 
