@@ -1714,6 +1714,18 @@ app.select = function () {
 app.dom = function (){
 
     return {
+        
+        // find each element by their tag name, get the element that matches the currently selected index and return it
+        findElementByTag: function (tag, element, index) {
+            for (var e = 0; e < len; e += 1) {
+                // element returns a string, so must cast the index to string for comparison
+                // if the element tag value ( index ) is equal to the currently selected index then return it
+                if (element[e].getAttribute(tag) === index.toString()) {
+                    return element[e];
+                }
+            }
+        },
+
         getImmediateChildrenByTagName: function(element, type){
             var elements = [];
             var children = element.childNodes;
@@ -2187,19 +2199,19 @@ app.display = function () {
                 for (var h = 1; h <= hide; h += 1) {
 
                     // find each element that needs to be hidden and hide it
-                    var hideElement = findElementByTag(tag, h, elements);
+                    var hideElement = app.dom.findElementByTag(tag, h, elements);
                     hideElement.style.display = 'none';
                 }
             } else if (selectionIndex <= len - max && hide) {
 
                 // show hidden elements as they are hovered over
-                var showElement = findElementByTag(tag, elements, selectionIndex);
+                var showElement = app.dom.findElementByTag(tag, elements, selectionIndex);
                 showElement.style.display = '';
             }
 
             console.log('tag: '+tag+', index: '+selectionIndex);
 
-            selectedElement = findElementByTag(tag, elements, selectionIndex);
+            selectedElement = app.dom.findElementByTag(tag, elements, selectionIndex);
 
             console.log(selectedElement);
 
@@ -2240,17 +2252,6 @@ app.display = function () {
             if(index) app.temp.selectionIndex = index;
         }
         return false;
-    };
-
-    // find each element by their tag name, get the element that matches the currently selected index and return it
-    var findElementByTag = function (tag, element, index) {
-        for (var e = 0; e < len; e += 1) {
-            // element returns a string, so must cast the index to string for comparison
-            // if the element tag value ( index ) is equal to the currently selected index then return it
-            if (element[e].getAttribute(tag) === index.toString()) {
-                return element[e];
-            }
-        }
     };
 
     // get information on terrain and return an object with required information for display
@@ -2458,13 +2459,7 @@ app.display = function () {
     };
 
     // create page for selecting map or game to join/create
-    var mapOrGameSelect = function (type, items) {
-
-        // name screen elements
-        var elements = {
-            section: type+'SelectScreen',
-            div:'select'+type.uc_first()+'Screen'
-        };
+    var mapOrGameDisplay = function (elements, items) {
 
         var catElements = {
             section: 'categorySelectScreen',
@@ -2481,7 +2476,7 @@ app.display = function () {
 
         // get the title and change it to select whatever type we are selecting
         title = selector.children[0];
-        title.innerHTML = 'Select*'+type;
+        title.innerHTML = 'Select*'+ elements.type;
 
         // create elements
         var item = displayInfo(items, ['name'], elements, 'mapSelectionIndex');
@@ -2510,12 +2505,15 @@ app.display = function () {
 
     return {
 
+        info:displayInfo,
+
         mapOrGame:function(type, items){
-            return mapOrGameSelect(type, items);
+            return mapOrGameDisplay(type, items);
         },
 
-        findElementByTag: function (tag, index, element) {
-            return findElementByTag(tag, index, element);
+        mapOrGameSelection: function (id, elemets) {
+            var replace = document.getElementById(id);
+            replace.parentNode.replaceChild(elements, replace);
         },
 
         checkLoginState: function () {
@@ -2528,7 +2526,6 @@ app.display = function () {
            login();
         },
 
-        // 
         actions: function (options) {
             var actions = Object.keys(options);
             var actionsObj = {};
@@ -2856,6 +2853,13 @@ app.move = function () {
 \* --------------------------------------------------------------------------------------*/
 
 app.modes = function (){
+
+    // name screen elements
+    var mapElements = {
+        section: 'mapSelectScreen',
+        div:'selectMapScreen',
+        type:'map'
+    };
     
     return {
         logout: function (){
@@ -2868,9 +2872,16 @@ app.modes = function (){
         },
         newgame:function(){
 
-            if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
+            if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame(mapElements, app.maps);
                         
-            app.effect.horizontalSelect(document.getElementById('selectCategoryScreen'));
+            var category = app.effect.horizontalSelect(document.getElementById('selectCategoryScreen'));
+
+            if(category){
+                /// use category to get maps from db then re populate maps!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+                var maps = app.maps; 
+                var elements = app.display.info(maps, ['name'], mapElements, 'mapSelectionIndex');
+                app.display.mapOrGameSelection(app.temp.mapSelect, elements);
+            } 
 
             var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
 
@@ -3110,7 +3121,7 @@ app.effect = function () {
                 for( var p = 0; p < positions.length; p += 1){
                     var position = positions[p];
                     var posIndex = pos[position];
-                    var element = app.display.findElementByTag(tag, elements, posIndex);
+                    var element = app.dom.findElementByTag(tag, elements, posIndex);
                     element.setAttribute('pos', position);
                 }
                 selectedElement.setAttribute('pos', 'selected');
