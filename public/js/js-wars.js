@@ -3031,8 +3031,6 @@ app.effect = function () {
 
         horizontalSelect:function (parent) {
 
-            console.log(parent);
-
             var previous = app.prev.category;
 
             if(previous !== undefined) previous.style.display = 'none';
@@ -3059,7 +3057,7 @@ app.effect = function () {
             left.setAttribute('pos', 'left');
             right.setAttribute('pos', 'right');
 
-            if(show.id !== previous.id){
+            if(previous === undefined || show.id !== previous.id){
                 app.prev.category = show;
                 return show.id;
             }
