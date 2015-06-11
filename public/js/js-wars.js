@@ -107,7 +107,7 @@ app = {
 
     // holds temporary shared variables, usually info on game state changes that need to be accessed globally
     temp: {
-        categoryIndex:0,
+        category:0,
     	selectionIndex: 1,
         menuOptionsActive:false,
         selectActive: false,
@@ -3038,7 +3038,7 @@ app.effect = function () {
             var categories = parent.children;
             var len = categories.length - 1;
 
-            var category = app.scroll.horizontal().infinite(app.temp.categoryIndex, 0 , len);
+            var category = app.scroll.horizontal().infinite(app.temp.category, 0 , len);
 
             // get the elements to the left and right of the selected category and position them as such
             var neg = category - 1;
