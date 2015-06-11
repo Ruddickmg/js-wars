@@ -2870,7 +2870,7 @@ app.modes = function (){
 
             if(!app.temp.mapSelect) app.temp.mapSelect = app.display.mapOrGame('map', app.maps);
                         
-            app.effect.horizontalSelect(document.getElementById('categories'));
+            app.effect.horizontalSelect(document.getElementById('selectCategoryScreen'));
 
             var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
 
@@ -3030,6 +3030,8 @@ app.effect = function () {
         },
 
         horizontalSelect:function (parent) {
+
+            console.log(parent);
 
             var previous = app.prev.category;
 
