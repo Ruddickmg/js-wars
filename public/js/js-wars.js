@@ -3243,6 +3243,7 @@ app.effect = function () {
                 }
             // if there is no app.temp.swell, but colorswell is active then delete every
             }else if(app.temp.colorSwellActive){
+                
                 delete app.temp.lightness;
                 delete app.prev.saturation;
                 delete app.temp.timeMarker;
