@@ -3004,8 +3004,6 @@ app.effect = function () {
 
     var highlightListItem = function (selectedElement, tag, index, prev, elements) {
 
-        console.log(selectedElement);
-
         // apply highlighting 
         selectedElement.style.backgroundColor = 'tan';
 
@@ -3020,9 +3018,11 @@ app.effect = function () {
 
     return {
 
-        highlightListItem: function (selectedElement, tag, index, prev, elements) {
-            return highlightListItem(selectedElement, tag, index, prev, elements);
-        },
+        highlightListItem:highlightListItem,
+        fade:fade,
+        stopFading:stopFading,
+        highlight: [],
+        path: [],
 
         horizontalScroll:function (parent) {
 
@@ -3249,17 +3249,7 @@ app.effect = function () {
                 delete app.temp.colorSwellActive;
                 delete app.temp.swellingColor;
             }
-        },
-        
-        fade:function(element, id){
-            fade(element, id);
-        },
-
-        stopFading:function(){
-            stopFading();
-        },
-        highlight: [],
-        path: []
+        }
     }
 }();
 
