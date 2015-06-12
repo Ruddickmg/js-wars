@@ -1730,8 +1730,6 @@ app.dom = function (){
         getImmediateChildrenByTagName: function(element, type){
             var elements = [];
             var children = element.childNodes;
-            console.log(element);
-            console.log(children);
             var name = type.toUpperCase();
             var len = children.length;
             for(var i = 0; i < len; i += 1) {
@@ -2497,6 +2495,9 @@ app.display = function () {
     return {
 
         info:displayInfo,
+        selectionInterface: selectionInterface,
+        select: select,
+        damage: damageDisplay,
 
         mapOrGame:function(type, items){
             return mapOrGameDisplay(type, items);
@@ -2526,14 +2527,6 @@ app.display = function () {
             hideElement('coStatusHud'); // hide co status hud
 			action(actionsObj);
             return this;
-        },
-
-        selectionInterface: function (building, tag) {
-            return selectionInterface(building, tag);
-        },
-
-        select: function (tag, id, display, selected, elementType, max) {
-            return select(tag, id, display, selected, elementType, max);
         },
 
         listen: function () {
@@ -2588,10 +2581,6 @@ app.display = function () {
         coStatus: function () {
             if (!app.temp.optionsActive && !app.temp.actionsActive) coStatus(app.game.currentPlayer);
             return this;
-        },
-
-        damage: function (damage) {
-            return damageDisplay(damage);
         },
 
         path: function (cursor) {
@@ -2872,6 +2861,7 @@ app.modes = function (){
                 var maps = app.maps; 
                 var elements = app.display.info(maps, ['name'], mapElements, 'mapSelectionIndex');
                 app.display.mapOrGameSelection(mapElements.section, elements);
+                delete app.prev.index; // reset index
             }
 
             var map = app.display.select('mapSelectionIndex', 'selectMapScreen', app.effect.highlightListItem, 'ul', 5);
@@ -2881,6 +2871,7 @@ app.modes = function (){
                 return map;
             }
             return false;
+
         },
         continuegame:function(){
             alert('continue an old game is under construction. try new game or join new');
