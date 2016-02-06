@@ -6,7 +6,7 @@ examples:
 
 this repo is a bit behind, you can interact with the game @ http://marcusruddick.com/projects/js-wars/
 
-and here is a link to its latest public form (under construction): http://jswars.com/
+and here is a link to its latest public form (under construction): www.jswars.com
 
 Gameplay:
 ========
