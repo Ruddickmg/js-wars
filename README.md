@@ -6,7 +6,7 @@ Lacal:
 
 this repo is a bit behind, you can see the game functioning @ http://marcusruddick.com/projects/js-wars/
 
-and here is a link to it with the menus (under construction): http://jswars-jswars.rhcloud.com/
+and here is a link to it with the menus (under construction): http://jswars.com/
 
 Gameplay:
 ========
