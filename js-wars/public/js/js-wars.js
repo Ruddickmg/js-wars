@@ -1,53 +1,1560 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* ----------------------------------------------------------------------------------------------------------*\
+    
+    handles actions that a unit can take
+    
+\* ----------------------------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+app.calculate = require('../game/calculate.js');
+app.select = require('../game/select.js');
+app.settings = require('../settings/game.js');
+app.undo = require('../tools/undo.js');
+app.animate = require('../game/animate.js');
+app.units = require('../objects/units.js');
+app.actions = require('../game/actions.js');
+//app.display = require('../tools/display.js');
+//app.game = require('../menu/game.js');
+
+module.exports = function () {
+    
+    var prevIndex, len, prevLen, damage, undo, key, active = false, attackableArray;
+    var options = {};
+    var index = 0;
+    var round = Math.round;
+
+    // detect any attackable units within selected units attack range
+    var attackable = function (selected) {
+
+        var attackable = [];
+
+        // get selected units position
+        var x = selected.x;
+        var y = selected.y;
+
+        // find its neighbors 
+        var neighbors = [{
+            x: x + 1,
+            y: y
+        }, {
+            x: x,
+            y: y + 1
+        }, {
+            x: x - 1,
+            y: y
+        }, {
+            x: x,
+            y: y - 1
+        }]; // to be replaced with a range algorithm
+
+        // get list of units
+        var units = app.map.unit;
+        var neighbor, unit;
+
+        // get unit types that the selected unit can attack
+        if(selected.canAttack){
+
+            var canAttack = selected.canAttack;
+
+            // get the id of the current player
+            var player = app.game.currentPlayer().id;
+
+            if (!selected.attacked){
+                for (var n = 0; n < neighbors.length; n += 1) {
+                    // each neighbor
+                    neighbor = neighbors[n];
+
+                    for (var u = 0; u < units.length; u += 1) {
+                        // each unit
+                        unit = units[u];
+                        unit.ind = u; // set for easy retrieval and editing;
+
+                        // if the selected unit can attack its neighbor and the neighbor is not the current players unit
+                        if (canAttack.hasValue(unit.transportaion) && neighbor.x === unit.x && neighbor.y === unit.y && unit.player !== player) {
+
+                            // calcualte damage percentage for each attackable unit
+                            unit.damage = app.calculate.damage(unit);
+
+                            // add the neighbor to an array of neighbors the selected unit can attack
+                            attackable.push(unit);
+                        }
+                    }
+                }
+                // if their are any units in the attackable array, then return it, otherwise return false
+                if (attackable[0]){
+                    return attackable;
+                }
+            }
+        }
+        return false;
+    };
+
+    // check if the building the selected unit has landed on can be captured or not
+    var capturable = function (selected) {
+
+        // if the selected unit can capture buildings then continue
+        if (selected.capture && !selected.captured) {
+
+            // get a list of buildings on the map
+            buildings = app.map.building;
+
+            for (var b = 0; b < buildings.length; b += 1) {
+
+                building = buildings[b]; // each building
+
+                // if the building does not already belong to the selected unit, and the unit is on the building then return it
+                if (building.player !== selected.player && building.x === selected.x && building.y === selected.y) {
+                    building.ind = b;
+                    return building;
+                }
+            }
+        }
+        // return false if the building cannot be captured by the selected unit
+        return false;
+    };
+
+    var destroy = function (ind) {app.map.unit.splice(ind, 1);};
+
+    var unsetPersistingVars = function () {
+        delete len; 
+        delete prevLen;
+        delete damage;
+        options = {};
+        index = 0;
+    };
+
+    var attack = function (attacked, damage, attacker, retaliate) {
+        if(attacked.health - damage > 0){
+            app.map.unit[attacked.ind].health = attacked.health - damage;
+            var selected = attacker ? attacker : app.select.unit();
+            app.map.unit[selected.ind].attacked = true; // show that unit has attacked this turn
+            var retaliation = retaliate ? retaliate : round(app.calculate.damage(selected, app.map.unit[attacked.ind])/10);
+            if(app.usersTurn) {
+                socket.emit('attack', { 
+                    attacker:selected,
+                    unit:attacked,
+                    damage:damage,
+                    retaliation:retaliation
+                });
+            }
+            if( selected.health - retaliation > 0 ){
+                app.map.unit[selected.ind].health = selected.health - retaliation;
+            }else{
+                app.game.destroyUnit(selected.player);
+                destroy(selected.ind);
+            }
+        }else{
+            app.game.destroyUnit(attacked.player);
+            destroy(attacked.ind);
+        }
+        if(app.usersTurn){
+            unsetPersistingVars();
+            delete app.settings.target;
+            app.undo.all();
+        }
+        window.requestAnimationFrame(app.animate('unit'));
+    };
+
+    // display a target for selecting which opposing unit to attack
+    var choseAttack = function (attackable) {
+
+        attackableArray = attackableArray ? attackableArray : attackable; 
+
+        if(!key) key = app.game.settings.keyMap;
+        if(!undo) undo = app.undo.keyPress;
+        if(!len || len !== attackableArray.length){
+            len = attackableArray.length;
+            prevLen = len;
+        }
+
+        // move to the next attackableArray unit
+        if (app.key.pressed('up') || app.key.pressed('right')) { // Player holding up
+            undo(key.up);
+            undo(key.right);
+            index += 1;
+        }
+
+        // move to the previous attackableArray unit
+        if (app.key.pressed('down') || app.key.pressed('left')) { // Player holding down
+            undo(key.down);
+            undo(key.left);
+            index -= 1;
+        }
+
+        if( index !== app.prev.actionIndex ){
+            // cycle through target selectino
+            if (index < 0 && index) index = len - 1;
+            if (index === len) index = 0
+            damage = attackableArray[index].damage;
+            app.display.damage(damage);
+            app.prev.actionIndex = index;
+
+            // create target for rendering at specified coordinates
+            app.settings.target = {
+                x: attackableArray[index].x,
+                y: attackableArray[index].y
+            };
+        }
+
+        // if the target has been selected return it
+        if (app.key.pressed('enter')) {
+            undo(key.select);
+            app.def.cursorMoved = true;
+            window.requestAnimationFrame(app.animate('cursor')); // animate changes
+            return {unit:attackableArray[index], damage:round(damage/10)};
+        }
+        window.requestAnimationFrame(app.animate('cursor')); // animate changes
+    };
+
+    return {
+
+        unset:unsetPersistingVars,
+        active: function () {return active},
+        activate: function () {active = true},
+        deactivate: function () {active = false},
+        clear: function () {attackableArray = false},
+
+        // check to see if any actions can be perfomed
+        check: function (combine) {
+
+            // use selected unit
+            var selected = app.select.unit();
+
+            // find any attackable opponents 
+            var canAttack = attackable(selected);
+
+            // find any capturable buildings
+            var canCapture = capturable(selected);
+
+            // add buildings or opponenets to an object containing possible actions
+            if (canAttack) options.attack = canAttack;
+            if (canCapture) options.capture = canCapture;
+            if(combine){
+                if (combine.combine) options.combine = combine;
+                if (combine.load) options.load = combine;
+            }
+            if (canCapture || canAttack || combine) options.wait = true;
+
+            // if there are any actions that can be taken then return them
+            if (options.wait){
+                return options;
+            }
+            return false;
+        },
+
+        // capture a building
+        capture: function (capturing) {
+            if(options.capture){
+                var building = capturing ? capturing.building : options.capture;
+                var unit = capturing ? capturing.unit : app.select.unit();
+                if (app.usersTurn) socket.emit('capture', {building:building, unit:unit});
+                var capture = app.game.currentPlayer.co.capture ? app.game.currentPlayer.co.capture(unit.health) : unit.health;
+
+                // if the building has not between catpured all the way
+                if (building.capture - capture > 0) {
+
+                    // subtract the amount of capture dealt by the unit from the buildings capture level
+                    app.map.building[building.ind].capture -= capture;
+                    app.map.unit[unit.ind].captured = true;
+                    app.undo.all();
+                    return true;
+
+                // if the building is done being captured and is not a headquarters
+                } else if (building.type !== 'hq') {
+                    // assign the building to the capturing player
+                    app.map.building[building.ind].player = unit.player;
+                    app.map.building[building.ind].capture = app.settings.capture;
+                    app.map.unit[unit.ind].captured = true;
+                    app.undo.all();
+                    return true;
+                }
+
+                // otherwise assign all the buildings belonging to the owner of the captured hq to the capturing player
+                var buildings = app.map.building;
+                var defeated = buildings[building.ind].player;
+                for(var b = 0; b < buildings.length; b += 1){
+                    if( buildings[b].player === defeated ){
+                        app.map.building[b].player = unit.player;
+                    }
+                }
+
+                app.game.playerDefeated(defeated);
+                app.map.unit[unit.ind].captured = true;
+                app.undo.all();
+                alert('player '+defeated+' defeated');
+                if(app.game.players().length === 1){
+                    alert('player '+app.game.players()[0].id+' wins!');
+                }
+            }
+        },
+
+        load: function () {
+            if(options.load){
+                var load = options.load;
+                var selected = app.select.unit();
+                app.map.unit[load.ind].loaded = load.loaded.concat(app.map.unit.splice(selected.ind,1));
+                app.undo.all();
+                window.requestAnimationFrame(app.animate('unit'));
+            }
+            return false;
+        },
+
+        combine: function (combine) {
+            if (options.combine){    
+                var combine = combine ? combine.combine : options.combine;
+                var selected = combine ? combine.unit : app.select.unit();
+                var props = app.settings.combinableProperties;
+
+                // emit units to be combined to other players games for syncronization
+                if (app.usersTurn) socket.emit('joinUnits', {combine:combine, unit:selected});
+
+                // combine properties of the selected unit with the target unit
+                for (var u = 0; u < props.length; u += 1){
+                    prop = props[u];
+                    max = app.units[selected.type].properties[prop];
+                    if( combine[prop] + selected[prop] < max ){
+                        app.map.unit[combine.ind][prop] += selected[prop];
+                    }else{
+                        app.map.unit[combine.ind][prop] = max;
+                    }
+                }
+
+                // remove selected unit  
+                app.map.unit.splice(selected.ind, 1);
+                app.undo.all();
+                window.requestAnimationFrame(app.animate('unit'));
+            }
+            return false;
+        },
+
+        wait: function () {
+            unsetPersistingVars();
+            app.undo.all();
+            app.undo.display('actionHud');
+        },
+
+        attack: function (battle) {
+            if( options.attack || battle ){
+                if(!app.settings.hideCursor && app.actions.active()) app.settings.hideCursor = true;
+                var attacked = battle ? battle : choseAttack(options.attack);
+                if ( attacked ) {
+                    delete options;
+                    return attack(attacked.unit, attacked.damage, attacked.attacker, attacked.retaliation);
+                }
+                if (app.actions.active()) window.requestAnimationFrame(app.actions.attack);
+            }
+        }
+    };
+}();
+},{"../game/actions.js":1,"../game/animate.js":2,"../game/calculate.js":4,"../game/select.js":8,"../objects/units.js":15,"../settings/app.js":16,"../settings/game.js":17,"../tools/undo.js":24}],2:[function(require,module,exports){
+/* ----------------------------------------------------------------------------------------------------------*\
+
+    The animate functions insert the draw methods into the specified canvas for rendering and then make a 
+    call to the canvas to render those drawings with the render method. Calling the render method of an
+    initialized canvas object will render the animations once. If a loop is wanted ( for changing animations 
+    for example ), you may pass the parent function into the render function to be called recursively.
+
+\*-----------------------------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+
+module.exports = function (objectName) {
+    if(typeof objectName === 'string'){
+        app[objectName + 'Canvas'].setAnimations(app['draw' + objectName.uc_first()]).render();
+    }else{
+        for(var i = 0; i < object.length; i += 1){
+            app[objectName + 'Canvas'].setAnimations(app['draw' + objectName.uc_first()]).render();
+        }
+    }
+};
+},{"../settings/app.js":16}],3:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\
     
-    socket connection handlers
+    app.build handles the creation of new units, buildings or terrain on the map
     
 \* ---------------------------------------------------------------------------------------------------------*/
 
-var socket = io.connect("http://127.0.0.1:8080") || io.connect("http://jswars-jswars.rhcloud.com:8000");
+app = require('../settings/app.js');
+//app.game = require('../menu/game.js');
+app.buildings = require('../objects/buildings.js');
+app.animate = require('../game/animate.js');
+app.select =  require('../game/select.js');
+//app.effect = require('../game/effect.js');
+app.undo = require('../tools/undo.js');
+// app.display = require('../tools/display.js');
 
-socket.on('player', function(player){app.game.setPlayer(player);});
-socket.on('userAdded', function(message){app.chat.display(message);});
-socket.on('gameReadyMessage', function(message){app.chat.display(message);});
-socket.on('propertyChange', function(properties){app.game.changeProperties(properties);});
-socket.on('readyStateChange', function(player){app.game.playerReady(player);});
-socket.on('addPlayer', function(player){app.game.addPlayer(player);});
-socket.on('room', function(room){app.game.room(room);});
-socket.on('addRoom',function(room){app.game.addRoom(room);});
-socket.on('removeRoom', function(room){app.game.removeRoom(room);});
-socket.on('disc', function(user){
-    app.chat.display({message:'has been disconnected.', user:user.name.uc_first()});
-    app.game.removePlayer(user);
-});
-socket.on('userJoined', function(user){
-    app.game.addPlayer(user);
-    if(!user.cp) app.chat.display({message:'has joined the game.', user:user.name.uc_first()});
-});
-socket.on('userLeft', function(user){
-    app.chat.display({message:'has left the game.', user:user.name.uc_first()});
-    app.game.removePlayer(user);
-});
-socket.on('userRemoved', function (user) {
-    app.chat.display({message:'has been removed from the game.', user:user.name.uc_first()});
-    app.game.removePlayer(user);
-});
 
-socket.on('back', function(){app.modes.boot();app.game.back();});
-socket.on('cursorMove', function(move){app.keys.push(move);});
-socket.on('attack', function(attack){app.actions.attack(attack);});
-socket.on('joinUnits', function(combine){app.actions.combine(combine);});
-socket.on('capture', function(capture){app.actions.capture(capture);});
-socket.on('endTurn', function(){app.options.end();});
-socket.on('moveUnit', function(move){
-    app.map[move.type][move.index].x = move.x;
-    app.map[move.type][move.index].y = move.y;
-    window.requestAnimationFrame(app.animateUnit);
-});
+module.exports = function () {
 
+    // create new unit if/after one is selected
+    var createUnit = function (building, unitType, player) {
+
+        var player = app.game.currentPlayer();
+
+        // create a new unit object with input
+        var newUnit = {
+            x: building.x,
+            y: building.y,
+            obsticle: 'unit',
+            player: player
+        };
+
+        // get the requested unit types information from its reposetory
+        var unit = app.buildings[building.type][unitType];
+
+        // get the cost of the selected unit type
+        var cost = unit.cost;
+
+        // subtract the cost of the unit from the current players gold if they have enough
+        if (currentPlayer.gold - cost > 0) {
+            currentPlayer.gold -= cost;
+        }
+
+        // get the properties of the requested unit type
+        var unitProperties = unit.properties;
+
+        // get the names of the properties
+        var properties = Object.keys(unitProperties);
+
+        for (var p = 0; p < properties.length; p += 1) {
+
+            // go through and add each property to the new unit object
+            newUnit[properties[p]] = unitProperties[properties[p]]; // this may cause issues if pointers to original object properties persist, probly not, but keep en eye out
+        }
+
+        // set movement to zero for newly created units
+        newUnit.movement = 0;
+
+        // return the new unit
+        return newUnit;
+    };
+
+    return {
+
+        // select and create units
+        units: function () {
+
+            // get the building types
+            var building = app.select.building();
+            if (building) {
+
+                // display the unit select menu
+                var unit = app.display.select('unitSelectionIndex', 'selectUnitScreen', app.effect.highlightListItem, 'ul', 7);
+
+                // if a unit has been selected then create it
+                if (unit) {
+
+                    // create and add the new unit to the map
+                    app.map.unit.push(createUnit(building, unit, app.game.currentPlayer().id));
+                    app.undo.all(); // removes the selection screen and variables created during its existance
+                    app.def.cursorMoved = true; // refreshes the hud system to detect new unit on map;
+                    window.requestAnimationFrame(app.animate('unit')); // animate the changes
+                }
+            }
+            return this;
+        }
+    };
+}();
+},{"../game/animate.js":2,"../game/select.js":8,"../objects/buildings.js":13,"../settings/app.js":16,"../tools/undo.js":24}],4:[function(require,module,exports){
+/* ----------------------------------------------------------------------------------------------------------*\
+    
+    handles calculations like pathfinding and the definition of movement range
+
+\* ----------------------------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+app.settings = require('../settings/game.js');
+//app.game = require('../menu/game.js');
+app.select = require('../game/select.js');
+app.heap = require('../tools/binaryHeap.js');
+
+module.exports = function () {
+
+    var abs = Math.abs;
+    var floor = Math.floor;
+    var random = Math.random;
+    var round = Math.round;
+
+    var numberOfBuildings = function(map){
+
+        // clear out previous numbers
+        var display = app.settings.buildingDisplayElement;
+        var types = Object.keys(display);
+        var len = types.length;
+        for(var t = 0; t < len; t += 1){
+            app.settings.buildingDisplayElement[types[t]].numberOf = 0;
+        }
+
+        // get selected maps building list
+        var buildings = map.buildings;
+        var num = buildings.length;
+
+        // add one for each building type found  to the building display list
+        for (var n = 0; n < num; n += 1){
+            var type = buildings[n].type;
+
+            if(type !== 'hq') app.settings.buildingDisplayElement[type].numberOf += 1; 
+        }
+        return app.settings.buildingDisplayElement;
+    };
+
+    var findTerrain = function (unit){
+        terrain = app.map.terrain;
+        for (var t = 0; t < terrain.length; t += 1){
+            if(terrain[t].x === unit.x && terrain[t].y === unit.y){
+                return terrain[t];
+            }
+        }
+        return false;
+    };
+
+    var rand = function(){return floor((random() * 9) + 1)};
+
+    var calcDamage = function (attacked, attacker) {
+        var r = rand();
+        var baseDamage = attacker.baseDamage[attacked.type];
+        var coAttack = app.game.currentPlayer().co.attack(attacker);
+        var coDefense = app.game.players()[attacked.player - 1].co.defense(attacked);
+        var terrainDefense = findTerrain(attacked).def;
+        terrainDefense = !terrainDefense ? 1 : terrainDefense;
+        var defenderHP = attacked.health;
+        var attackerHP = attacker.health;
+        return round((abs(baseDamage * coAttack/100 + r) * (attackerHP/10) * abs((200-(coDefense + terrainDefense * defenderHP))/100)));
+    };
+
+    var attackRange = function () {
+
+    };
+
+    // create a range of movement based on the unit allowed square movement
+    var movementCost = function (origin, x, y) {
+
+        // calculate the difference between the current cursor location and the origin, add the operation on the axis being moved on
+        return abs((origin.x + x) - origin.x) + abs((origin.y + y) - origin.y);
+    };
+
+    // calculate true offset location considering movement and position
+    var offset = function (off, orig) {
+        var ret = [];
+        var inRange = function (obj) {
+            if (abs(obj.x - orig.x) + abs(obj.y - orig.y) <= orig.movement && obj.x >= 0 && obj.y >= 0) {
+                return true;
+            }
+            return false;
+        };
+
+        // if the selected unit can move on the terrain ( obsticle ) then calculate the offset
+        if (orig.movable.hasValue(off.obsticle)) {
+            var opX = off.x < orig.x ? -1 : 1;
+            var opY = off.y < orig.y ? -1 : 1;
+            var x = (orig.x + (orig.movement * opX) - (off.cost * opX) + opX);
+            var y = (orig.y + (orig.movement * opY) - (off.cost * opY) + opY);
+            var objX = {
+                x: x,
+                y: off.y
+            };
+            var objY = {
+                x: off.x,
+                y: y
+            };
+            if (inRange(objX)) ret.push(objX);
+            if (inRange(objY)) ret.push(objY);
+        } else {
+            // otherwise add the specific location of the obsticle to the offset array 
+            ret.push({
+                x: off.x,
+                y: off.y
+            }); // check this if issues with unit offset, could be faulty method of dealing with this problem
+        }
+        return ret;
+    };
+
+    // detect if a square is an obsticle
+    var findObsticles = function (x, y) {
+
+        // loop over obsticle types
+        for (var ot = 0; ot < app.settings.obsticleTypes.length; ot += 1) {
+
+            // check if the currently examined grid square is one of the obsticle types
+            var obs = app.select.hovered(app.settings.obsticleTypes[ot], x, y);
+
+            // if it is and has a cost etc.. then return it
+            if (obs.stat === true) {
+                return app.map[obs.objectClass][obs.ind];
+            }
+        }
+    };
+    var cleanGrid = function (g) {
+        var del = ['ind', 'p', 'f', 'g', 'visited', 'closed', 'heapIndex'];
+        for (var a = 1; a < g.length; a += 1) {
+            for (var b = 0; b < del.length; b += 1) {
+                delete g[a][del[b]];
+            }
+        }
+    },
+    getNeighbors = function (c) {
+        var x = c.x;
+        var y = c.y;
+        var g, gpx, gpy;
+        var neighbors = [];
+        for (var l = 0; l < grid.length; l += 1) {
+            g = grid[l];
+            gpx = abs(g.x - x);
+            gpy = abs(g.y - y);
+
+            // if the distance from the current square is only one and 
+            if (gpx < 2 && gpy < 2 && gpx !== gpy && !g.closed) neighbors.push(g);
+        }
+
+        if (mode === undefined) {}
+        return neighbors;
+    },
+    dist = function (c) {
+        var dx1 = c.x - dest.x;
+        var dy1 = c.y - dest.y;
+        var dx2 = orig.x - dest.x;
+        var dy2 = orig.y - dest.y;
+        var cross = abs(dx1 * dy2 - dx2 * dy1);
+        var rand = Math.floor(Math.random()+1)/(1000);
+        return ((abs(c.x - dest.x) + abs(c.y - dest.y)) + (cross * rand));
+    };
+
+    var pathfinder = function (orig, dest, grid, mode) {
+        var mov = orig.movement, neighbor, neighbors, x, y, cur, start = grid[0], open = app.heap('f');
+        start.heapIndex = open.push(start);
+
+        while (open.size()) {
+
+            cur = open.pop();
+            cur.closed = true;
+
+            // if the destination has been reached, return the array of values
+            if (dest.x === cur.x && dest.y === cur.y) {
+                ret = [cur];
+                while (cur.p) {ret.push(cur.p); cur = cur.p;}
+                if (ret.length <= mov + 1) {cleanGrid(grid); return mode ? ret : mode;}
+            }
+
+            neighbors = getNeighbors(cur);
+
+            for (var i = 0; i < n.length; i += 1) {
+
+                neighbor = neighbors[i]; // current neighboring square
+                cost = cur.g + neighbor.cost;
+
+                // if the neghboring square has been inspected before then ignore it or if the cost
+                // of moving to the neighboring square is more then allowed then ignore it
+                if (neighbor.closed || cost > mov) continue;
+
+                // if the current square is in the open array and a better position then update it
+                if (neighbor.heapIndex === undefined || neighbor.g > cur.g) {
+
+                    neighbor.g = cost; // distance from start to neighboring square
+                    neighbor.h = cost + dist(neighbor, dest); // distance from neighboring to destination
+                    neighbor.f = cost + neighbor.h; // distance from start to neighboring square added to the distance from neighboring square to destination
+                    neighbor.p = cur;
+
+                    // if the neighboring square hasent been encountered add it to the open list for comparison
+                    if (neighbor.heapIndex === undefined) {
+                        neighbor.heapIndex = open.push(neighbor);
+                    }else{
+                        // otherwise sort the heap in consideration of the new score
+                        open.sort(neighbor.heapIndex);
+                    }
+                }
+            }
+        }
+        cleanGrid(grid); // clean all assigned variables from grid so they wont interfier with future path finding in a loop
+
+        // if the goal is to tell if a path can be reached or not, and it couldnt be reached
+        // return the destination as an unreachable location
+        if (mode !== undefined) return dest;
+    };
+
+    // calculate the movement costs of terrain land marks etc..
+    var evaluateOffset = function (origin, dest, grid) {
+
+        var range = [];
+
+        for (var i = 0; i < dest.length; i += 1) {
+
+            var g = grid.slice(0);
+
+            var path = pathfinder(origin, dest[i], g, 'subtract');
+
+            if (path) range.push(path);
+        }
+
+        return range;
+    };
+
+    // check which side of the screen the cursor is on
+    var checkSide = function (axis) {
+        var d = app.cursorCanvas.dimensions();
+        var m = axis === 'x' ? d.width / 64 : d.height / 64; // screen width
+        var x = app.settings.cursor.scroll[axis]; // map position relative to scroll
+        if (app.settings.cursor.x > (m / 2) + x) return true;
+        return false;
+    };
+
+    // calculate income
+    var calcIncome = function (player) {
+
+        // get the amount of income per building for current game
+        var income = app.game.settings().funds;
+        var owner, count = 0;
+        var buildings = app.map.building; // buildings list
+
+        for (var b = 0; b < buildings.length; b += 1) {
+
+            // count the number of buildings that belong to the current player
+            if (buildings[b].player === player) {
+                count += 1;
+            }
+        }
+        // return the income ( amount of buildings multiplied by income per building set for game )
+        return count * income;
+    };
+
+    return {
+
+        numberOfBuildings: numberOfBuildings,
+
+        damage: function (attacked, attacker) {
+            attacker = !attacker ? app.select.unit() : attacker;
+            return calcDamage( attacked, attacker );
+        },
+
+        // finds path
+        path: function (orig, dest, grid, mode) {
+            return pathfinder(orig, dest, grid, mode);
+        },
+
+        // returns cursor location ( left or right side of screen )
+        side: function (axis) {
+            if (checkSide(axis)) return 'right';
+            return 'left';
+        },
+
+        // calculate income
+        income: function (player) {
+            return calcIncome(player.id);
+        },
+
+        // find range of allowed movement over variable terrain
+        range: function () {
+
+            if (app.select.unit()) {
+
+                var id = 0; // id for grid point identificaion;
+                var range = [];
+                var offs = [];
+                var selected = app.select.unit();
+
+                // amount of allotted movement for unit
+                var len = selected.movement;
+
+                // loop through x and y axis range of movement
+                for (var ex = -len; ex <= len; ex += 1) {
+                    for (var wy = -len; wy <= len; wy += 1) {
+
+                        // if movement cost is less then or eual to the allotted movement then add it to the range array
+                        if (movementCost(selected, ex, wy) <= selected.movement) {
+
+                            // incremient id
+                            id += 1;
+
+                            // add origin to range of movement values
+                            var x = selected.x + ex;
+                            var y = selected.y + wy;
+
+                            // locate obsticles                                 
+                            var obsticle = findObsticles(x, y);
+
+                            if (obsticle !== undefined) {
+
+                                // get the number of offset movement from the obsticle based on unit type and obsticle type
+                                var obsticleOffset = app.settings.obsticleStats[obsticle.obsticle][app.select.unit().type];
+
+                                if (obsticleOffset !== undefined) {
+                                    if (selected.x === x && selected.y === y) {
+                                        range.unshift({
+                                            x: x,
+                                            y: y,
+                                            cost: 0,
+                                            g: 0,
+                                            f: 0,
+                                            ind: 0,
+                                            id: id,
+                                            type: 'highlight'
+                                        });
+                                    } else {
+                                        // make an array of obsticleOffset values, starting point, plus movement, and the amount of obsticleOffset beyond that movement
+                                        obsticle.cost = obsticleOffset;
+                                        obsticle.id = id;
+                                        range.push(obsticle);
+                                        offs = offs.concat(offset(obsticle, selected));
+                                    }
+                                }
+                            } else {
+                                range.push({
+                                    x: x,
+                                    y: y,
+                                    cost: 1,
+                                    id: id,
+                                    type: 'highlight'
+                                });
+                            }
+                        }
+                    }
+                }
+                return range.offsetArray(evaluateOffset(selected, offs, range));
+            }
+            return false;
+        }
+    };
+}();
+},{"../game/select.js":8,"../settings/app.js":16,"../settings/game.js":17,"../tools/binaryHeap.js":18}],5:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    holds all co's, their skills and implimentation
+
+\* --------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+
+module.exports = function () {
+
+    var percent = function (amount) {
+        return amount / 100;
+    };
+
+    var addToEach = function(player, funk, property, amount, parameter1, parameter2, parameter3) {
+        if(!parameter) parameter = 100;
+        var units = app.map.unit;
+        for ( var u = 0; u < units.length; u += 1 ){
+            if( units[u].player === player.id ){
+                app.map.unit[u][property] = funk( unit[u], property, amount, parameter1, parameter2, parameter3 );
+            }
+        }
+    };
+
+    var editProperty = function(unit, property, amount, parameter){
+        if( unit[property] + amount > parameter ){
+            return parameter;
+        }else{
+            return unit[property] + amount;
+        }
+    };
+
+    var filter = function (unit, property, amount, max, parameter1, parameter2){
+        if(unit[parameter1] === parameter2){
+            if(unit[property] + amount > max){
+                return max;
+            }else{
+                return unit[property] + amount;
+            }
+        }
+    };
+
+    var editRange = function (unit, property, amount){
+        if(unit.damageType === 'ranged'){
+            unit.range.hi += amount;
+            return unit.range;
+        }
+    };
+
+    var editArray = function (unit, property, amount, parameter1, parameter2){
+        var baseDamage = {};
+        var damage = Object.keys(unit[property]);
+        for(var d = 0; d < damage.length; d += 1 ){
+
+            // if there is no perameter then simply find the percentage added to all units
+            if(!parameter1){
+                var dam = unit[property][damage[d]];
+
+                // add the damage plus the percent of increase
+                baseDamage[damage[d]] *= amount;
+
+            // if there is a parameter then only add to the damage type specified in the perameter
+            }else if ( unit[parameter1] === parameter2 ){
+
+                var dam = unit[property][damage[d]];
+                baseDamage[damage[d]] *= amount
+            }
+        }
+        return baseDamage;
+    };
+
+    return {
+
+        andy: function (player) {
+
+            var image = 'red';
+            var special = 100;
+            var powerActive = false;
+            var superPowerActive = false;
+            var damage = 100;
+
+            return {
+                image: image,
+                name:'Andy',
+                power:function(){
+                    addToEach(player, editProperty(), 'health', 2, 10);
+                },
+                superPower:function(){
+                    superPowerActive = true;
+                    addToEach(player, editProperty(),'health', 5, 10);
+                    addToEach(player, editProperty(),'movement', 1);
+                    special = 130;
+                },
+                attack:function(){
+                    return damage * percent(special);
+                },
+                defense:function(){
+                    return 100;
+                },
+                endPower:function(){
+                    if(superPowerActive){
+                        addToEach(player, editProperty(),'movement', -1);
+                        special = 100;
+                        superPowerActive = false;
+                    }
+                }
+            }
+        },
+        max: function (player) {
+            var image = 'blue';
+            var damage = 100;
+            var special = 120;
+            var powerActive = false;
+            var superPowerActive = false;  
+
+            return {
+                image:image,
+                name:'Max',     
+                power:function(){
+                    powerActive = true;
+                    special = 140;
+                },
+                superPower:function(){
+                    powerActive = true;
+                    special = 170;
+                },
+                attack:function(unit){
+                    if( unit.damageType === 'direct' ){
+                        return damage * percent(special);
+                    }else{
+                        return damage;
+                    }
+                },
+                defense:function(){
+                    return 100;
+                },
+                endPower:function(){
+                    if(powerActive){
+                        special = 120;
+                        powerActive = false;
+                    }
+                },
+                build:function(unit){
+                    unit.range.hi -= 1;
+                    return unit;
+                }
+            }
+        },
+        sami: function (player) {
+
+            var image = 'green';
+            var damage = 100;
+            var special = 120;
+            var powerActive = false;
+            var superPowerActive = false;  
+            var capSpecial = 150;
+            var penalty = 90;
+
+            return {
+                image:image,
+                name:'Sami',
+                power: function (){
+                    powerActive = true;
+                    addToEach(player, filter(), 'movement', 1, 20, 'transportaion', 'foot');
+                    special = 170;
+                },
+                superPower: function(){
+                   superPowerActive = true;
+                    addToEach(player, filter(), 'movement', 2, 20, 'transportaion', 'foot');
+                    special = 200;
+                    capSpecial = 2000;
+                },
+                attack: function(unit){
+                    if(unit.transportaion === 'foot'){
+                        return damage * percent(special);
+                    }else if(unit.damageType === direct){
+                        return damage * percent(penalty);
+                    }
+                    return damage;
+                },
+                defense:function(){
+                    return 100;
+                },
+                endPower:function(){
+                    if(powerActive){
+                        addToEach(player, filter(), 'movement', -1, 20, 'transportaion', 'foot');
+                    }else if(superPowerActive){
+                        addToEach(player, filter(), 'movement', -2, 20, 'transportaion', 'foot');
+                    }
+                    special = 120;
+                },
+                capture: function (capture){
+                    return capture * percent(capSpecial);
+                }
+            };
+        }
+    };
+}();
+},{"../settings/app.js":16}],6:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------------------------*\
+
+    app.draw provides a set of methods for interacting with, scaling, caching, coordinating  
+    and displaying the drawings/animations provided in the app.animations
+
+\*---------------------------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+app.animations = require('../objects/animations.js');
+app.settings = require('../settings/game.js');
+
+module.exports = function (canvas, dimensions, base) {
+    
+    var w, h, width, height;
+    var temp = {}; // holds temporary persistant variables that can be passed between functions ( similar to static variables / functions )
+
+    // base is the amount of pixles in each grid square, used to scale canvas elements if needed
+    base = base === null || base === undefined ? 64 : base;
+
+    // set/get width and height dimensions for the game map
+    if (dimensions === null || dimensions === undefined) {
+        w = 64;
+        h = 64;
+    } else {
+        width = dimensions.width;
+        height = dimensions.height;
+        w = width / 15;
+        h = height / 10;
+    }
+
+    var animationObjects = app.animations(width, height);
+
+    // creates a small canvas
+    var smallCanvas = function () {
+        var smallCanvas = document.createElement('canvas');
+        smallCanvas.width = w * 2;
+        smallCanvas.height = h * 2;
+        return smallCanvas;
+    };
+
+    // caches drawings so they can be recalled without redrawing ( performance boost in certain situations )
+    var cacheDrawing = function (name) {
+
+        // create a canvas
+        var canvas = smallCanvas();
+
+        // get context  
+        var cacheCanvas = canvas.getContext(app.ctx);
+
+        // set the position of the image to the center of the cached canvas                         
+        var position = setPosition((w / 2), (h / 2));
+
+        // draw image to cache to canvas
+        animationObjects[name](cacheCanvas, position);
+
+        // cache the canvas with drawing on it ( drawings cached by their class name )
+        app.cache[name] = canvas;
+    };
+
+    // calculates the base for scaling
+    var calcBase = function (d) {
+        return d / base;
+    };
+
+    // scales items by calculating their base size multplied by 
+    var scale = function (type, value) {
+        var multiple = type === 'w' ? calcBase(w) : calcBase(h);
+        return value === null || value === undefined ? multiple : multiple * value;
+    };
+
+    // creates a friendlier interface for drawing and automatically scales drawings etc for screen size
+    var setPosition = function (x, yAxis) {
+
+        var y = yAxis + h;
+
+        return {
+            // u = right, will move right the amonut of pixles specified
+            r: function (number) {
+                return x + scale('w', number);
+            },
+            // u = left, will move left the amonut of pixles specified
+            l: function (number) {
+                return x - scale('w', number);
+            },
+            // u = down, will move down the amonut of pixles specified
+            d: function (number) {
+                return y + scale('h', number);
+            },
+            // u = up, will move up the amonut of pixles specified
+            u: function (number) {
+                return y - scale('h', number);
+            },
+            // x is the x axis
+            x: x,
+            // y is the y axis
+            y: y,
+            // width
+            w: w,
+            // height
+            h: h,
+            // random number generator, used for grass background texture
+            random: function (min, max) {
+                return (Math.random() * (max - min)) + min;
+            }
+        };
+    };
+
+    // offset of small canvas drawing ( since the drawing is larger then single grid square it needs to be centered )
+    var smallX = w / 2;
+    var smallY = h / 2;
+
+    return {
+
+        // cache all images for performant display ( one drawing to rule them all )
+        cache: function () {
+            this.cached = true;
+            return this;
+        },
+
+        // place drawings where they belong on board based on coorinates
+        coordinate: function (objectClass, object, coordinet) {
+
+            var s = {}; // holder for scroll coordinates
+            var name; // holder for the name of an object to be drawn
+            var scroll = app.settings.cursor.scroll; // scroll positoion ( map relative to display area )
+            var wid = (w * 16); // display range
+            var len = (h * 11);
+
+            // get the coordinates for objects to be drawn
+            coordinates = coordinet === undefined ? app[objectClass][object] : coordinet;
+
+            // for each coordinates
+            for (var c = 0; c < coordinates.length; c += 1) {
+
+                // var s modifys the coordinates of the drawn objects to allow scrolling behavior
+                // subtract the amount that the cursor has moved beyond the screen width from the 
+                // coordinates x and y axis, making them appear to move in the opposite directon
+                s.x = (coordinates[c].x * w) - (scroll.x * w);
+                s.y = (coordinates[c].y * h) - (scroll.y * h);
+
+                // only display coordinates that are withing the visable screen
+                if (s.x >= 0 && s.y >= 0 && s.x <= wid && s.y <= len) {
+
+                    // get the name of the object to be drawn on the screen
+                    name = objectClass === 'map' && coordinet === undefined ? coordinates[c].type : object;
+
+                    // if it is specified to be cached
+                    if (this.cached) {
+
+                        // check if it has already been cached and cache the drawing if it has not yet been cached
+                        if (app.cache[name] === undefined) cacheDrawing(name);
+
+                        // draw the cached image to the canvas at the coordinates minus 
+                        // its offset to make sure its centered in the correct position
+                        canvas.drawImage(app.cache[name], s.x - smallX, s.y - smallY);
+
+                    } else {
+
+                        // if it is not cached then draw the image normally at its specified coordinates
+                        animationObjects[name](canvas, setPosition(s.x, s.y));
+                    }
+                }
+            }
+        },
+
+        // fills background
+        background: function (object) {
+            for (var x = 0; x < app.map[object].x; x += 1) {
+                for (var y = 0; y < app.map[object].y; y += 1) {
+                    animationObjects[app.map[object].type](canvas, setPosition(x * w, y * h));
+                }
+            }
+        },
+
+        hudCanvas: function (object, objectClass) {
+
+            // draw a background behind terrain and building elements
+            if (objectClass !== 'unit') animationObjects.plain(canvas, setPosition(smallX, smallY));
+
+            if (app.cache[object]) { // use cached drawing if available
+                canvas.drawImage(app.cache[object], 0, 0);
+            } else {
+                animationObjects[object](canvas, setPosition(smallX, smallY));
+            }
+        }
+    };
+};
+},{"../objects/animations.js":12,"../settings/app.js":16,"../settings/game.js":17}],7:[function(require,module,exports){
+/* ----------------------------------------------------------------------------------------------------------*\
+    
+    app.options handles the in game options selection, end turn, save etc.
+    
+\* ----------------------------------------------------------------------------------------------------------*/
+app = require('../settings/app.js');
+//app.game = require('../menu/game.js');
+
+module.exports = function () {
+
+    var active = false;
+
+    // move to next player on turn change
+    var nextPlayer = function () {
+
+        var players = app.game.players();
+
+        // if the player is the last in the array return the first player
+        if (app.game.currentPlayer().id === players.length) return players[0];
+
+        // return the next player
+        return app.game.players()[app.game.currentPlayer().id];
+    };
+
+    var endTurn = function () {
+        // get the next player
+        var player = nextPlayer();
+
+        // end power if it is active
+        player.co.endPower();
+
+        // assign the next player as the current player
+        app.game.setCurrentPlayer(player);
+
+        // make note of whose turn it is
+        app.game.turn();
+
+        // move the screen to the next players headquarters
+        app.move.screenToHQ(player);
+
+        // refresh the movement points of the players units
+        app.move.refresh(player);
+
+        // add this turns income
+        app.game.setCurrentPlayerGold(player.gold + app.calculate.income(player));
+    };
+
+    return {
+        unit: function () {
+            alert('unit!');
+        },
+
+        intel: function () {
+            alert('intel');
+        },
+
+        options: function () {
+            alert('options');
+        },
+
+        save: function () {
+            alert('save');
+        },
+
+        // end turn
+        end: function () {
+            endTurn();
+            if(app.usersTurn) socket.emit('endTurn', 'end');
+            return this;
+        },
+        active:function(){return active;},
+        activate:function(){active = true;},
+        deactivate:function(){active = false;}
+    };
+}();
+},{"../settings/app.js":16}],8:[function(require,module,exports){
+/* ------------------------------------------------------------------------------------------------------*\
+    
+    app.select handles the selection and movement of map elements
+    
+\* ------------------------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+app.undo = require('../tools/undo.js');
+app.settings = require('../settings/game.js');
+app.animate = require('../game/animate.js');
+app.actions = require('../game/actions.js');
+app.calculate = require('../game/calculate.js');
+//app.display = require('../tools/display.js');
+
+module.exports = function () {
+
+    var selected = {}, abs = Math.abs, active = false, range = [], hovered = false;
+
+    // moves a unit
+    var move = function (type, index) {
+
+        // if there is a selected unit and select is active and the select key has been pressed
+        if (selected.unit && active && app.key.pressed('enter')) {
+
+            app.undo.keyPress(app.key.enter);
+
+            // cursor location
+            var cursor = app.settings.cursor;
+
+            // selected unit
+            var unit = select.unit;
+
+            // check if square moving to has a unit on it
+            var landing = gridPoint('unit');
+
+            // get the unit to combine with
+            if ( landing ) var combine = app.map.unit[landing.ind];
+
+            // if the unit being landed on belongs to the current player, is the same type of unit but is not the same unit
+            if( combine && combine.player === unit.player && combine.ind !== unit.ind ){
+
+                // if is the same unit then combine units
+                if ( combine.type === unit.type ){  
+                    combine.combine = true;
+
+                // if the unit is a transport and the unit being moved into can be loaded into that transport, then show the option to load into the transport
+                }else if(combine.transport && unit.load.hasValue(unit.type) && unit.loaded.length < unit.transport.length){
+                    combine.load = true;
+                }
+                if( combine.load || combine.combine ){
+                    // get actions for the unit
+                    var actions = app.actions.check(combine);
+
+                    // if there are actions returned then display them
+                    if(actions.wait) app.display.actions(actions);
+                }
+            }else{
+                
+                // calculate how many squares were moved
+                var xmove = abs(unit.x - cursor.x);
+                var ymove = abs(unit.y - cursor.y);
+
+                // remove the amount of squares moved from the units allowed movement for the turn
+                app.map.unit[unit.ind].movement -= xmove + ymove;
+
+                // change selected units position to the cursor location
+                app.map[type][index].x = cursor.x;
+                app.map[type][index].y = cursor.y;
+                socket.emit('moveUnit', {index:index, type:type, x:cursor.x, y:cursor.y});
+
+                //animate the changes
+                window.requestAnimationFrame(app.animate('unit'));
+
+                // check to see if actions can be taken
+                var actions = app.actions.check();
+            }
+            
+            // remove the range and path hilights
+            app.undo.effect('highlight').effect('path');
+
+            // if there are actions that can be taken then display the necessary options
+            if ( actions.wait ) {
+                app.display.actions(actions);
+
+            // if there are no actions then deselect the unit
+            } else {
+                app.undo.all();
+            }
+            return true;
+        }
+        return false;
+    };
+
+    var element = function (type, index) {
+        //  if the index input is undefined or false then use the current cursor location (!index will fail for 0)
+        if (index === undefined || index === false) {
+
+            var hover = gridPoint(type);
+
+            // if the selectable status is not false and the map element is defined then select it
+            if (hover) select(type, hover.ind);
+
+        } else {
+            // if there is an index supplied then use it allong with the type
+            select(type, index);
+        }
+        // if an object was selected then return true, otherwise return false
+        return selected.unit ? true : false;
+    };
+
+    var select = function (type, index) {
+
+        // if their is not a selection active and the cursor is not hovering over empty terrain, 
+        // then do the following when the select key is pressed
+        if (!active && type !== 'terrain' && app.key.pressed('enter')) {
+            app.undo.keyPress(app.key.enter);
+            attempt = app.map[type][index];
+
+            // set properties for selected object if it can be selected
+            // make sure the player attempting to interact with the object is the owner of the object
+            if (!app.settings.notSelectable.hasValue(attempt.type) && attempt.player === app.game.currentPlayer().id) {
+                
+                selected[type] = attempt;
+                selected[type].category = type;
+                selected[type].ind = index;
+
+                // if the selected object is a unit, do unit stuff
+                if (selected.unit) {
+                    range = app.calculate.range(); // set range of movement
+                    app.display.range(); // highlight rang of movemet
+
+                // otherwise do building stuff
+                } else {
+                    app.display.selectionInterface(selected.building.type, 'unitSelectionIndex');
+                }
+
+                // remove the terrain info display
+                app.undo.display('hud');
+                active = true;
+                return true;
+            }
+        }
+        return false;
+    };
+
+    // check what is occupying a specific point on the game map based on type
+    var gridPoint = function (type, x, y) {
+
+        // use current cursor location if one has not been passed in
+        x = x ? x : app.settings.cursor.x;
+        y = y ? y : app.settings.cursor.y;
+
+        // get array of objects on map of specified type
+        var arr = app.map[type];
+
+        // look through array of objects and check if they are at the current or passed grid point
+        for (var p = 0; p < arr.length; p += 1) {
+
+            // if an object is found at the same grid pint return it 
+            if (arr[p].x === x && arr[p].y === y) {
+                return {
+                    ind: p,
+                    category: type,
+                    stat: true
+                };
+            }
+        }
+        return false;
+    };
+
+    return {
+        // returns info on the grid square currently hovered over
+        hovered:gridPoint,
+
+        // return the currently selected building/unit or return false if none are currently selected
+        unit: function () {return selected.unit ? selected.unit : false;},
+        building: function () {return selected.building ? selected.building : false;},
+
+        // return whether select is active or not
+        active: function (b) {return active;},
+
+        // set active status to true
+        activate: function () {active = true;},
+
+        // returns an array of grid points that can be acted on
+        range : function () {return range},
+
+        // get info on the selected hovered for movement
+        display : function (item) {hovered = item;},
+
+        // set active status to false and reset selected and range to an empty
+        deselect: function () {active = false; selected = {}; range = [];},
+
+        // on press of the exit key ( defined in app.game.settings.keyMap ) undo any active select or interface
+        exit: function () {
+            if (app.key.pressed('esc')) app.undo.all();
+            return this;
+        },
+
+        // allows selection and movement of objects on screen
+        move: function (type) {
+
+            // if theres no input then say so
+            if (!hovered && !type) {
+                throw new Error('no type or input specified, please enter a type of map element into the input of the "interact()" method or chain the "info()" method prior to the "interact()" method');
+
+                // if there is an object being hovered over, or hovered is undefined ( meaning input is possibly from type input rather then hovered )
+            } else if (hovered || hovered === undefined) {
+
+                // get the type of object being hovered over
+                if(!type) type = hovered.category;
+
+                // get the index of the object being hovered over
+                var intInd = !hovered ? undefined : hovered.ind;
+
+                // if the map element is selectable and the selected map element is a unit then facilitate interaction with that unit
+                if (element(type, intInd) && selected.unit) {
+                    move('unit', selected.unit.ind);
+                }
+            }
+        }
+    };
+}();
+},{"../game/actions.js":1,"../game/animate.js":2,"../game/calculate.js":4,"../settings/app.js":16,"../settings/game.js":17,"../tools/undo.js":24}],9:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\
     
+    app.start sets up the game with the players and other info necessary for the new game
+    
+    initiate game by getting all the players, creating objects for them and assigning player one for first turn
+
+\* ---------------------------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+app.animate = require('../game/animate.js');
+// app.game = require('../menu/game.js');
+
+module.exports = function () {
+
+    var players = app.game.players();
+    var map = app.game.map();
+    var settings = app.game.settings();
+
+    for (var p = 0; p < players.length; p += 1) {
+
+        // add each player to the players array
+        app.game.loadPlayers(
+            app.game.newPlayer(
+                players[p].fbid,
+                players[p].co, 
+                players[p].screenName, 
+                p + 1
+            )
+        );
+    }
+
+    // assign the first player as the current player
+    app.game.setCurrentPlayer(app.game.players()[0]);
+
+    // check whose turn it is
+    app.game.turn();
+
+    // set inital gold amount
+    app.game.setCurrentPlayerGold(app.calculate.income(app.game.currentPlayer()));
+
+    // begin game animations
+    app.animate(['background', 'terrain', 'buildings', 'unit', 'cursor']);
+
+    // if the current player has been assigned return true
+    if (app.game.currentPlayer()){
+        app.game.start(true);
+        return true;
+    } 
+    return false;
+};
+},{"../game/animate.js":2,"../settings/app.js":16}],10:[function(require,module,exports){
+/* ---------------------------------------------------------------------------------------------------------*\   
     add useful methods to prototypes
-   
 \* ---------------------------------------------------------------------------------------------------------*/
 
 // add first letter capitalization funcitonality
@@ -56,9 +1563,7 @@ String.prototype.uc_first = function () {
 };
 
 // simple check if value is in a flat array
-Array.prototype.hasValue = function (value) {
-    return this.indexOf(value) > -1;
-};
+Array.prototype.hasValue = function (value) {return this.indexOf(value) > -1;};
 
 // remove one arrays values from another
 Array.prototype.offsetArray = function (offsetArray) {
@@ -73,301 +1578,24 @@ Array.prototype.offsetArray = function (offsetArray) {
 };
 
 /* ---------------------------------------------------------------------------------------------------------*\
-    
-    app is a container and holds low level variables for all elements of the application 
+    socket connection handlers
 \* ---------------------------------------------------------------------------------------------------------*/
 
-app = {
+var socket = require('./tools/sockets.js');
 
-    testing: true,
-    games:[],
+/* ---------------------------------------------------------------------------------------------------------*\
+    app holds all elements of the application 
+\* ---------------------------------------------------------------------------------------------------------*/
 
-    // return an hsl string from either manual settings or object containing hsl values
-    hsl:function(h,s,l) {
-        var format = function (hue, saturation, lightness) {
-            return 'hsl('+hue+','+saturation+'%,'+lightness+'%)';
-        }
-        if (!s && s !== 0) return format(h.h, h.s, h.l);
-        return format(h,s,l);
-    },
+var app = require('./settings/app.js');
 
-    turn: function () {
-        // make note of whose turn it is
-        if ( app.game.currentPlayer().fbid === app.user.fbid ) {
-            app.usersTurn = true;
-        } else {
-            app.usersTurn = false;
-        }
-    },
-
-    // holds number of pixles to move elements on or off screen
-    offScreen: 800,
-
-    // target element to insert before
-    domInsertLocation: document.getElementById('before'),
-
-    // holds temporary shared variables, usually info on game state changes that need to be accessed globally
-    temp:{},
-
-    // holds previously selected elements for resetting to defaults
-    prev:{},
-
-    // holds default shared variables, usually info on game state changes that need to be accessed globally
-    def: {
-        category:0,
-        menuOptionsActive:false,
-        selectActive: false,
-        cursorMoved: true,
-        saturation:0,
-        scrollTime: 0,
-        lightness:50
-    },
-
-    users: [{
-        co: 'sami',
-        name: 'grant'
-    }, {
-        co: 'andy',
-        name: 'steve'
-    }],
-
-    cache: {},
-    keys: [], // holds array of key pressed events
-    maps: [], // holds maps for selection
-
-    key: {
-        pressed: function (key) {
-            if(key !== 'pressed'){
-                 var code = app.key[key];
-                 if(code) return app.keys.indexOf(code) !== -1;
-            }
-            return false;
-        },
-        esc: 27,
-        enter: 13,
-        up: 38,
-        down: 40,
-        left: 37,
-        right: 39
-    },
-
-    // create a new player object
-    player: function (id, co, name, number) {
-
-        // assign head quarters to player
-        var getHQ = function () {
-
-            // list off all buildings on map
-            var buildings = app.map.building;
-
-            for (var b = 0; b < buildings.length; b += 1) {
-
-                // if the building shares an id with the player and is an hq then it is theirs
-                if (buildings[b].type === 'hq' && buildings[b].player === number) {
-
-                    // return the building
-                    return buildings[b];
-                }
-            }
-        };
-
-        // get look st the co list and add the proper co
-        var getCO = function (player) {
-            return app.co[co](player);
-        };
-
-        // return the player object
-        return {
-            number: number,
-            // player id
-            id: id,
-            // player name
-            name: name,
-            hq: getHQ(),
-            // holds amount of special built up
-            special: 0,
-            unitsLost: 0,
-            gold: 0,
-            co: getCO(this) // chosen co
-        };
-    },
-
-    // set custom animation repo if desired
-    setAnimationRepo: function (repo) {
-        this.animationRepo = repo;
-        return this;
-    }
-};
-
-/* --------------------------------------------------------------------------------------*\
-    
-    gameMap contains all the settings for a dummy map, unit locations, terrain, buildings, etc. 
-    it holds coordinates of objects that correspond to animations in the animation repo
-    maps can be built and edited dynamically by inserting or removing objects from/into the 
-    arrays
+/* --------------------------------------------------------------------------------------*\ 
+    load dummy variables if/for testing locally 
 \* --------------------------------------------------------------------------------------*/
 
 if (app.testing){
-    gameMap = {
-        id:1,
-        creator:1,
-        name:'2p map',
-        players:2,
-        category:'two',
-        background: {
-            type: 'plain',
-            x: 20,
-            y: 20
-        },
-        dimensions: {
-            x: 20,
-            y: 20
-        },
-        plain: {
-            type: 'plain',
-            name: 'Plains',
-            def: 1
-        },
-        terrain: [{
-            x: 1,
-            y: 7,
-            type: 'tallMountain',
-            name: 'Mountain',
-            obsticle: 'mountain',
-            def: 2
-        }, {
-            x: 2,
-            y: 5,
-            type: 'tallMountain',
-            name: 'Mountain',
-            obsticle: 'mountain',
-            def: 2
-        }, {
-            x: 3,
-            y: 4,
-            type: 'tallMountain',
-            name: 'Mountain',
-            obsticle: 'mountain',
-            def: 2
-        }, {
-            x: 8,
-            y: 5,
-            type: 'tallMountain',
-            name: 'Mountain',
-            obsticle: 'mountain',
-            def: 2
-        }, {
-            x: 1,
-            y: 1,
-            type: 'tallMountain',
-            name: 'Mountain',
-            obsticle: 'mountain',
-            def: 2
-        }, {
-            x: 1,
-            y: 5,
-            type: 'tree',
-            name: 'Woods',
-            obsticle: 'wood',
-            def: 3
-        }, {
-            x: 1,
-            y: 6,
-            type: 'tree',
-            name: 'Woods',
-            obsticle: 'wood',
-            def: 3
-        }, {
-            x: 1,
-            y: 8,
-            type: 'tree',
-            name: 'Woods',
-            obsticle: 'wood',
-            def: 3
-        }, {
-            x: 3,
-            y: 5,
-            type: 'tree',
-            name: 'Woods',
-            obsticle: 'wood',
-            def: 3
-        }, {
-            x: 6,
-            y: 2,
-            type: 'tree',
-            name: 'Woods',
-            obsticle: 'wood',
-            def: 3
-        }, {
-            x: 6,
-            y: 3,
-            type: 'tree',
-            name: 'Woods',
-            obsticle: 'wood',
-            def: 3
-        }, {
-            x: 9,
-            y: 5,
-            type: 'tree',
-            name: 'Woods',
-            obsticle: 'wood',
-            def: 3
-        }, {
-            x: 9,
-            y: 6,
-            type: 'tree',
-            name: 'Woods',
-            obsticle: 'wood',
-            def: 3
-        } ],
-        buildings: [{
-            x: 0,
-            y: 5,
-            type: 'hq',
-            name: 'HQ',
-            obsticle: 'building',
-            player: 1,
-            color: 'red',
-            def: 4
-        },{
-            x: 20,
-            y: 5,
-            type: 'hq',
-            name: 'HQ',
-            obsticle: 'building',
-            player: 2,
-            color: 'blue',
-            def: 4
-        },{
-            x: 0,
-            y: 4,
-            type: 'base',
-            name: 'Base',
-            obsticle: 'building',
-            player: 1,
-            color: 'red',
-            def: 4
-        },{
-            x: 4,
-            y: 4,
-            type: 'base',
-            name: 'Base',
-            obsticle: 'building',
-            player: 1,
-            color: 'red',
-            def: 4
-        },{
-            x: 15,
-            y: 4,
-            type: 'base',
-            name: 'Base',
-            obsticle: 'building',
-            player: 2,
-            color: 'blue',
-            def: 4
-        }],
-        unit: []
-    };
+
+    gameMap = require('./objects/map.js');
 
     app.games.push({
         category: gameMap.category,
@@ -387,415 +1615,31 @@ if (app.testing){
 }
 
 /* --------------------------------------------------------------------------------------*\
-    
-    app.settings consolidates all the customizable options and rules for the game into
-    an object for easy and dynamic manipulation
+    app.settings holds application settings
 \* --------------------------------------------------------------------------------------*/
 
-app.settings = {
-
-    // messages to display in the bottom scroll bar as items are hovered over and people join games, etc..
-    scrollMessages:{
-        logout:'select to log out of the game',
-        game:'Create or continue a saved game',
-        newgame:'Set up a new game',
-        continuegame:'Resume a saved game',
-        join:'Join a new or saved game',
-        newjoin:'Find and join a new game',
-        continuejoin:'Re-Join a saved game started at an earlier time',
-        COdesign:'Customize the look of your CO',
-        mapdesign:'Create your own custom maps',
-        design:'Design maps or edit CO appearance',
-        store:'Purchase maps, CO\'s, and other game goods' 
-    },
-
-    // speed at which color swell.. fading in and out, will cycle (lower is faster)
-    colorSwellIncriment:1.5,
-    colorSwellSpeed:2,
-
-    // general swell speed
-    swellIncriment:3,
-    swellSpeed:1,
-
-    //typing speed
-    typingSpeed:2.5,
-
-    // colors of menus etc...
-    colors: {
-        design:{h:216,s:100,l:50},
-        store:{h:72, s:100, l:50},
-        game:{h:0, s:100, l:50},
-        join:{h:144, s:100, l:50},
-        logout:{h:288, s:100, l:50},
-        white:{h:360,s:0,l:100},
-        yellow:{h:72, s:100, l:50},
-        green:{h:144, s:100, l:50},
-        red:{h:0, s:100, l:50},
-        blue:{h:216,s:100,l:50}
-    },
-
-    // speed at which the screen will move to next hq at the changinf of turns
-    scrollSpeed: 50,
-
-    // types to look through when determining terrains effect on unit movement
-    obsticleTypes: ['unit', 'terrain'],
-
-    // list of the effects each obsticle has on each unit type
-    obsticleStats: {
-        mountain: {
-            infantry: 2,
-            apc:2
-        },
-        wood: {
-            infantry: 1,
-            apc:2
-        },
-        plain: {
-            infantry: 1,
-            apc:1
-        },
-        unit: {
-            infantry: 1,
-            apc:1
-        }
-    },
-
-    selectedModeHeight: 75,
-
-    selectModeMenu:[{
-            id:'logout',
-            display:'Logout',
-            type:'exit',
-        },{
-            id:'game',
-            display:'Game',
-            type:'setup',
-            options:['new', 'continue']
-        },{
-            id:'join',
-            display:'Join',
-            type:'join',
-            color:'yellow',
-            options:['new', 'continue']
-        },{
-            id:'design',
-            display:'Design',
-            type:'design',
-            options:['map', 'CO']
-
-        },{
-            id:'store',
-            display:'Store',
-            type:'store',
-    }],
-
-    categories:{
-        two:{
-            type:'1 on 1'
-        },
-        three: {
-            type:'3 Player'
-        },
-        four:{
-            type:'4 Player'
-        },
-        five:{
-            type:'5 Player'
-        },
-        six:{
-            type:'6 Player'
-        },
-        seven:{
-            type:'7 Player'
-        },
-        eight:{
-            type:'8 Player'
-        },
-        preDeployed:{
-            type:'Pre-Deployed'
-        }
-    },
-
-    capture: 20,
-
-    combinableProperties:['fuel','health','ammo'],
-
-    // terrain each unit is allowed to walk on
-    movable: {
-        foot: ['plain', 'river', 'mountain', 'wood', 'road', 'building'],
-        wheels: ['plain', 'wood', 'road', 'building'],
-        flight: ['plain', 'river', 'mountain', 'wood', 'road', 'water', 'building'],
-        boat: ['water', 'building']
-    },
-
-    options: {
-        unit: {
-            name: 'Unit'
-        },
-        intel: {
-            name: 'Intel'
-        },
-        options: {
-            name: 'Options'
-        },
-        save: {
-            name: 'Save'
-        },
-        end: {
-            name: 'End'
-        }
-    },
-
-    buildingDisplayElement: {
-        city:{
-            numberOf:0,
-            type:'city'
-        },
-        base:{
-            numberOf:0,
-            type:'base'
-        },
-        airport:{
-            numberOf:0,
-            type:'airport'
-        },
-        seaport:{
-            numberOf:0,
-            type:'seaport'
-        },
-    },
-
-    playersDisplayElement: {
-
-    },
-
-    settingsDisplayElement: {
-        fog:{
-            description:'Set ON to limit vision with fog of war.',
-            on:'ON',
-            off:'OFF'
-        },
-        weather:{
-            description:'RANDOM causes climate to change.',
-            clear:'Clear',
-            rain:'Rain',
-            snow:'Snow',
-            random:'Random'
-        },
-        funds:{
-            description:'Set funds recieved per allied base.',
-            inc:500,
-            min:1000,
-            max:9500
-        },
-        turn:{
-            description:'Set number of days to battle.',
-            off:'OFF',
-            inc:1,
-            min:5,
-            max:99
-        },
-        capt:{
-            description:'Set number of properties needed to win.',
-            off:'OFF',
-            inc:1,
-            min:7,
-            max:45
-        },
-        power:{
-            description:'Select ON to enamble CO powers.',
-            on:'ON',
-            off:'OFF'
-        },
-        visuals:{
-            description:{
-                off:'No animation.',
-                a:'Battle and capture animation.',
-                b:'Battle animation only.',
-                c:'Battle animation for players only.'
-            },
-            off:'OFF',
-            a:'Type A',
-            b:'Type B',
-            c:'Type C'
-        }
-    },
-
-    // dimensions of diplay hud
-    hudWidth: 120,
-    hudHeight: 200,
-    hudLeft: 1050,
-
-    // spacing / positioning of mode menu selection elements
-    modeMenuSpacing:20,
-
-    // displayable attributes for the building count element on map/game selection
-    buildingDisplay:['numberOf', 'canvas'],
-
-    // which attributes of objects ( unit, buildings etc ) will be displayed in hud
-    hoverInfo: ['ammo', 'health', 'name', 'fuel', 'def', 'canvas'],
-
-    // which actions can be displayed
-    actionsDisplay: ['attack', 'capture', 'wait', 'name'],
-
-    // unit info attributes for display
-    unitInfoDisplay: ['movement', 'vision', 'fuel', 'weapon1', 'weapon2', 'property', 'value'],
-
-    // which attributes of units will be displayed on unit selection/purchase/building hud
-    unitSelectionDisplay: ['name', 'cost'],
-
-    // options attributes for displ
-    optionsDisplay: ['options', 'unit', 'intel', 'save', 'end', 'name'],
-
-    // map elements that cannot be selected
-    notSelectable: ['terrain', 'hq', 'city'],
-
-    // cursor settings
-    cursor: {
-        x: 6,
-        y: 4,
-        speed: 50,
-        scroll: {
-            x: 0,
-            y: 0
-        }
-    }
-};
+app.settings = require('./settings/game.js');
 
 /* --------------------------------------------------------------------------------------*\
-    
-    app.heap is a binary heap, takes a string as an optional argument, this string is used
-    as the name of a property in a potential object to be accessed while assessing its 
-    value in relation to the other heap elements
-
+    app.heap is a binary heap 
 \* --------------------------------------------------------------------------------------*/
 
-app.heap = function (property) { 
-
-    // create the heap
-    var heap = []; 
-
-    // change any object properties associated with swap
-    // if they have been assigned to the array element
-    var heapIndex = function(index, parentIndex){
-        if (heap[index].heapIndex !== undefined) heap.heapIndex = parentIndex;
-        if (heap[parentIndex].heapIndex !== undefined) heap.heapIndex = index;
-    };
-
-    // swaps the parent index with the child, returns child's new index (parent index)
-    // subtract one from each input to compensate for the array starting at 0 rather then 1
-    var swap = function (index, parentIndex) {
-        index -= 1; parentIndex -= 1; heapIndex(index, parentIndex);
-        heap[index] = heap.splice(parentIndex, 1, heap[index])[0]; 
-        return parentIndex;
-    };
-
-    // get the value at the input index, compensate for whether there is a property being accessed or not
-    var value = function (index) {return property ? heap[index - 1][property] : heap[index - 1];};
-
-    // calculate the parent index
-    var parent = function (index) {return Math.floor(index/2)};
-
-    // calculate the indexes of the left and right
-    var left = function (i) {return i * 2;};
-    var right = function (i) {return left(i) + 1;};
-
-    // compare the values at the two supplied indexes, return the result of whether input l is greater then input r
-    var lt = function(l,r) {return value(l) < value(r);};
-
-    // if we are at the start of the array or the current nodes value is greater then its parent then return the current 
-    // index (compensate for 0), otherwise swap the parent and child then repeat from the childs new position
-    var bubble = function (index) {return index < 2 || lt(parent(index), index) ? index - 1 : bubble(swap(index, parent(index)));};
-
-    var sort = function (index) {
-        var l = left(index), r = right(index), length = heap.length;
-
-        // if there are no more childnodes, swap the value at the current index with the value at
-        // end of the array, sort the value at the current index then remove and return the 
-        // last array element (the minimum element)
-        if (length <= l) {swap(index, length); bubble(index); return heap.pop();}
-
-        // if the right node is in range and less then the left node then swap 
-        // the child with the right node, otherwise swap with the left
-        return sort(swap(index, length > r && lt(r,l) ? r : l ));
-    };
-
-    return {
-        // add a value to the heap
-        push: function (value) {heap.push(value); return bubble(heap.length);},
-
-        // remove and return the top item from the heap
-        pop: function () {return sort(1);},
-
-        // return the first value of the heap (lowest)
-        min: function () {return heap.slice(0,1)[0];},
-
-        // return the amount of elements in the heap (array)
-        size: function () {return heap.length;},
-
-        // bubble up an index
-        bubble: function (index) {return bubble(index + 1);},
-
-        // update an element in the heap, has an optional property argument used for accessing object properties
-        update: function (index, value, property) {
-            if(property){
-                heap[index][property] = value;
-            }else{
-                heap.splice(index, 1, value);
-            }
-            return bubble(index + 1);
-        }
-    };
-};
+app.heap = require('./tools/binaryHeap.js');
  
 /* ---------------------------------------------------------------------------------------------------------*\
-    
-    function that makes player chat rooms work
-    
+    handle chat interactions
 \* ---------------------------------------------------------------------------------------------------------*/
 
-// handle chat interactions
-app.chat = function () {
-    return {
-        // add message for display, input is message object containing a user name and id, or just a message
-        display: function (mo) {
+app.chat = require('./tools/chat.js');
 
-            // construct message with user name or if there is no user name just use the message
-            var message = mo.user ? mo.user + ': ' + mo.message : mo.message;
+/* ---------------------------------------------------------------------------------------------------------*\
+    handles AJAJ calls where needed
+\* ---------------------------------------------------------------------------------------------------------*/
 
-            // element that message is being appended to
-            var chat = document.getElementById('chat');
-
-            // if the message is a string then append it to the chat element
-            if(chat && typeof (message) === 'string') {
-                var chatMessage = document.createElement('li'); // create a list element to contain the message
-                chatMessage.setAttribute('class', 'message'); // set attribute for styling
-                chatMessage.innerHTML = message; // set text to message
-                chat.appendChild(chatMessage); // append the li element to the chat element
-                return message; // return the appended message
-            }
-            return false;
-        },
-
-        // send message, input is an object/element containing textual user input accessed by ".value"
-        message: function (element) {
-            var text = element.value; // user text input
-            var name = app.user.screenName ? app.user.screenName : app.user.first_name; // get user name of user sending message
-            if (name && text){ // make sure there is user input and a user name
-                var message = { message:text, user:name }; // create message object containing user name and input text
-                socket.emit('gameReadyChat', message); // transmit message to chat room
-                element.value = ''; // reset the input box to empty for future input
-                return message; // return the input message
-            }
-            return false;
-        }
-    };
-}();
+app.request = require('./tools/request.js');
 
 /* --------------------------------------------------------------------------------------------------------*\
-  
     app.game.setup controls the setting up and selection of games / game modes 
-
 \*---------------------------------------------------------------------------------------------------------*/
 
 app.game = function () {
@@ -1136,6 +1980,28 @@ app.game = function () {
         }
     };
 
+    // assign head quarters to player
+    var getHQ = function () {
+
+        // list off all buildings on map
+        var buildings = app.map.building;
+
+        for (var b = 0; b < buildings.length; b += 1) {
+
+            // if the building shares an id with the player and is an hq then it is theirs
+            if (buildings[b].type === 'hq' && buildings[b].player === number) {
+
+                // return the building
+                return buildings[b];
+            }
+        }
+    };
+
+    // get look st the co list and add the proper co
+    var getCO = function (player) {
+        return app.co[co](player);
+    };
+
     var key = settings.keyMap;
 
     return {
@@ -1189,6 +2055,25 @@ app.game = function () {
                 }
             }
             return {list:list, ind:ind};
+        },
+
+        // create a new player object
+        newPlayer: function (id, co, name, number) {
+
+            // return the player object
+            return {
+                number: number,
+                // player id
+                id: id,
+                // player name
+                name: name,
+                hq: getHQ(),
+                // holds amount of special built up
+                special: 0,
+                unitsLost: 0,
+                gold: 0,
+                co: getCO(this) // chosen co
+            };
         },
         playerReady:function(s){players[s.number - 1].ready = s.ready;},
         setPlayer:function(p){player = p;},
@@ -1843,6 +2728,15 @@ app.game = function () {
             room.category = map.category;
             socket.emit('newRoom', room);
         },
+        turn: function () {
+
+            // make note of whose turn it is
+            if ( currentPlayer.fbid === app.user.fbid ) {
+                app.usersTurn = true;
+            } else {
+                app.usersTurn = false;
+            }
+        },
 
         /* --------------------------------------------------------------------------------------------------------*\
             app.game.loop consolidates all the game logic and runs it in a loop, coordinating animation calls and 
@@ -1866,71 +2760,7 @@ app.game = function () {
 }();
 
 /* ---------------------------------------------------------------------------------------------------------*\
-    
-    function that makes AJAJ work where needed
-    
-\* ---------------------------------------------------------------------------------------------------------*/
-
-app.request = function () {
-
-    var ajaj = function (input, action, callback, url) {
-
-        if ( !url ) throw new Error('No address specified for back end services');
-
-        try{
-          // Opera 8.0+, Firefox, Chrome, Safari
-          var request = new XMLHttpRequest();
-       }catch (e){
-          // Internet Explorer Browsers
-          try{
-             var request = new ActiveXObject("Msxml2.XMLHTTP");
-          }catch (e) {
-             try{
-                var request = new ActiveXObject("Microsoft.XMLHTTP");
-             }catch (e){
-                // Something went wrong
-                alert("Your browser broke!");
-                return false;
-             }
-          }
-       }
-
-       request.onreadystatechange = function(){
-            if (request.readyState == 4 && request.status == 200)
-            {
-                if (callback){
-                    return callback(JSON.parse(request.responseText));
-                }else{
-                    // Javascript function JSON.parse to parse JSON data
-                    return JSON.parse(request.responseText);
-                }
-            }
-        }
-
-        try {
-            var ts = new Date().getTime();
-            request.open(action, url+'?ts='+ts, true);
-            request.setRequestHeader("Content-type","application/json;charset=UTF-8");
-            request.send(JSON.stringify(input));
-        }catch (e){
-            console.log(e);
-            return false;
-        }
-    }
-    return {
-        post:function (input, url, callback){
-            return ajaj(input, 'POST', callback, url);
-        },
-        get:function (input, url, callback) {
-            return ajaj(input, 'GET', callback, url + '/' + input);
-        }
-    };
-}();
-
-/* ---------------------------------------------------------------------------------------------------------*\
-    
     event listeners
-    
 \* ---------------------------------------------------------------------------------------------------------*/
 
 window.addEventListener("keydown", function (e) {
@@ -1945,1369 +2775,61 @@ window.addEventListener("keyup", function (e) {
 }, false);
 
 /* ---------------------------------------------------------------------------------------------------------*\
-    
     app.start sets up the game with the players and other info necessary for the new game
 \* ---------------------------------------------------------------------------------------------------------*/
 
-// initiate game by getting all the players, creating objects for them and assigning player one for first turn
-app.start = function () {
-
-    var players = app.game.players();
-    var map = app.game.map();
-    var settings = app.game.settings();
-
-    for (var p = 0; p < players.length; p += 1) {
-
-        // add each player to the players array
-        app.game.loadPlayers(
-            app.player(
-                players[p].fbid,
-                players[p].co, 
-                players[p].screenName, 
-                p + 1
-            )
-        );
-    }
-
-    // assign the first player as the current player
-    app.game.setCurrentPlayer(app.game.players()[0]);
-
-    // check whose turn it is
-    app.turn();
-
-    // set inital gold amount
-    app.game.setCurrentPlayerGold(app.calculate.income(app.game.currentPlayer()));
-
-    // begin game animations
-    app.animateBackground();
-    app.animateTerrain();
-    app.animateBuildings();
-    app.animateUnit();
-    app.animateCursor();
-
-    // if the current player has been assigned return true
-    if (app.game.currentPlayer()){
-        app.game.start(true);
-        return true;
-    } 
-    return false;
-};
+app.start = require('./game/start.js');
 
 /* ---------------------------------------------------------------------------------------------------------*\
-    
-    app.init creates a new canvas instance, taking the name of the target canvas id and optionally the context
-    as a second perameter, it defaults to a 2d context. init also provides methods for rendering, setting 
-    animations and returning the screen dimensions
+    app.init creates a new canvas instance
 \* ---------------------------------------------------------------------------------------------------------*/
 
-app.init = function (element, context) {
-
-    var canvas = document.getElementById(element);
-
-    // check if browser supports canvas
-    if (canvas.getContext) {
-
-        // if the context is not set, default to 2d
-        app.ctx = context === undefined || context === null ? '2d' : context;
-
-        // get the canvas context and put canvas in screen
-        var animate = canvas.getContext(app.ctx);
-
-        // get width and height
-        var sty = window.getComputedStyle(canvas);
-        var padding = parseFloat(sty.paddingLeft) + parseFloat(sty.paddingRight);
-        var screenWidth = canvas.clientWidth - padding;
-        var screenHeight = canvas.clientHeight - padding;
-        var screenClear = function () {
-            //animate.clearRect( element.positionX, element.positionY, element.width, element.height );
-            animate.clearRect(0, 0, screenWidth, screenHeight);
-        };
-
-        return {
-
-            // set the context for the animation, defaults to 2d
-            setContext: function (context) {
-                this.context = context;
-                return this;
-            },
-
-            // insert animation into canvas
-            setAnimations: function (animations) {
-                this.animations = animations;
-                return this;
-            },
-
-            // draw to canvas
-            render: function (loop, gridSquareSize) { // pass a function to loop if you want it to loop, otherwise it will render only once, or on demand
-                if (!this.animations) { // throw error if there are no animations
-                    throw new Error('No animations were specified');
-                }
-                screenClear();
-                var drawings = app.draw(animate, {
-                    width: screenWidth,
-                    height: screenHeight
-                }, gridSquareSize);
-                this.animations(drawings);
-                if (loop) window.requestAnimationFrame(loop);
-            },
-
-            // return the dimensions of the canvas screen
-            dimensions: function () {
-                return {
-                    width: screenWidth,
-                    height: screenHeight
-                };
-            }
-        };
-    } else {
-        // if canvas not supported then throw an error
-        throw new Error("browser does not support canvas element. canvas support required for animations");
-    }
-};
+app.init = require('./tools/init.js');
 
 /* ---------------------------------------------------------------------------------------------------------*\
-    
     app.build handles the creation of new units, buildings or terrain on the map
 \* ---------------------------------------------------------------------------------------------------------*/
 
-app.build = function () {
-
-    // create new unit if/after one is selected
-    var createUnit = function (building, unitType, player) {
-
-        var player = app.game.currentPlayer();
-
-        // creaate a new unit object with input
-        var newUnit = {
-            x: building.x,
-            y: building.y,
-            obsticle: 'unit',
-            player: player
-        };
-
-        // get the requested unit types information from its reposetory
-        var unit = app.buildings[building.type][unitType];
-
-        // get the cost of the selected unit type
-        var cost = unit.cost;
-
-        // subtract the cost of the unit from the current players gold if they have enough
-        if (currentPlayer.gold - cost > 0) {
-            currentPlayer.gold -= cost;
-        }
-
-        // get the properties of the requested unit type
-        var unitProperties = unit.properties;
-
-        // get the names of the properties
-        var properties = Object.keys(unitProperties);
-
-        for (var p = 0; p < properties.length; p += 1) {
-
-            // go through and add each property to the new unit object
-            newUnit[properties[p]] = unitProperties[properties[p]]; // this may cause issues if pointers to original object properties persist, probly not, but keep en eye out
-        }
-
-        // set movement to zero for newly created units
-        newUnit.movement = 0;
-
-        // return the new unit
-        return newUnit;
-    };
-
-    return {
-
-        // select and create units
-        units: function () {
-            // get the building types
-            var building = app.select.building();
-            if (building) {
-
-                // display the unit select menu
-                var unit = app.display.select('unitSelectionIndex', 'selectUnitScreen', app.effect.highlightListItem, 'ul', 7);
-
-                // if a unit has been selected then create it
-                if (unit) {
-
-                    // create and add the new unit to the map
-                    app.map.unit.push(createUnit(building, unit, app.game.currentPlayer().id));
-                    app.undo.all(); // removes the selection screen and variables created during its existance
-                    app.def.cursorMoved = true; // refreshes the hud system to detect new unit on map;
-                    window.requestAnimationFrame(app.animateUnit); // animate the changes
-                }
-            }
-            return this;
-        }
-    };
-}();
+app.build = require('./game/build.js');
 
 /* ---------------------------------------------------------------------------------------------------------*\
-    
     app.undo handles the cleanup and disposal of elements that are no longer needed or need to be removed
 \* ---------------------------------------------------------------------------------------------------------*/
 
-app.undo = function () {
-
-    // show undoes a hide of an element
-    var show = function (hiddenElement) {
-
-        // get hidden element
-        var hidden = document.getElementById(hiddenElement);
-
-        // show element
-        if (hidden) hidden.style.display = '';
-    };
-
-    return {
-
-        // remove a pressed key from the keys array
-        keyPress: function (key) {return app.keys.splice(key, 1);},
-        keys: function () {if(app.keys.length)app.keys.splice(0,app.keys.length);},
-
-        // undo the selection of map elements
-        selectElement: function () {
-            var range = app.select.range();
-            if (range) range.splice(0, range.length);
-            app.select.deselect();
-            if (app.select.building()) app.select.deselect();
-        },
-
-        hudHilight:function(){
-            app.display.reset();
-            if(app.display.index()) app.display.resetPreviousIndex();
-            if (app.options.active()) {
-                show('coStatusHud');
-                app.options.deactivate();
-            }
-        },
-
-        selectUnit:function(){
-            if (app.select.unit()) {
-                app.select.deselect();
-                window.requestAnimationFrame(app.animateUnit);
-            }
-        },
-
-        actionsSelect: function (){
-            if(app.actions.active()){
-                app.actions.unset();
-                app.actions.clear();
-                delete app.settings.target;
-                delete app.prev.actionIndex;
-                this.display('actionHud');
-                this.display('damageDisplay');
-                app.def.cursorMoved = true;
-                app.settings.hideCursor = false;
-                app.actions.deactivate();
-                window.requestAnimationFrame(app.animateCursor);
-            }
-        },
-
-        effect: function (effect) {
-            if (app.effect[effect]) {
-                app.effect[effect].splice(0, app.effect[effect].length);
-                window.requestAnimationFrame(app.animateEffects);
-            }
-            return this;
-        },
-
-        display: function (element) {
-            var remove = document.getElementById(element);
-            if (remove) remove.parentNode.removeChild(remove);
-            return this;
-        },
-
-        buildUnitScreen: function () {
-            var removeArray = ['buildUnitScreen', 'unitInfoScreen', 'optionsMenu'];
-            for (var r = 0; r < removeArray.length; r += 1) {
-                var remove = document.getElementById(removeArray[r]);
-                if (remove) remove.parentNode.removeChild(remove);
-            }
-            return this;
-        },
-
-        all: function () {
-            this.selectUnit();
-            this.selectElement();
-            this.actionsSelect();
-            this.hudHilight();
-            this.keyPress(app.key.enter);
-            this.buildUnitScreen();
-            this.effect('highlight').effect('path');
-            app.def.cursorMoved = true; // refreshes the hud system to detect new unit on map
-            return this;
-        },
-
-        tempAndPrev: function () {
-            app.temp = {};
-            app.prev = {};
-        }
-    };
-}();
+app.undo = require('./tools/undo.js');
 
 /* ----------------------------------------------------------------------------------------------------------*\
-    
     app.options handles the in game options selection, end turn, save etc.
 \* ----------------------------------------------------------------------------------------------------------*/
 
-app.options = function () {
-
-    var active = false;
-
-    // move to next player on turn change
-    var nextPlayer = function () {
-
-        var players = app.game.players();
-
-        // if the player is the last in the array return the first player
-        if (app.game.currentPlayer().id === players.length) return players[0];
-
-        // return the next player
-        return app.game.players()[app.game.currentPlayer().id];
-    };
-
-    var endTurn = function () {
-        // get the next player
-        var player = nextPlayer();
-
-        // end power if it is active
-        player.co.endPower();
-
-        // assign the next player as the current player
-        app.game.setCurrentPlayer(player);
-
-        // make note of whose turn it is
-        app.turn();
-
-        // move the screen to the next players headquarters
-        app.move.screenToHQ(player);
-
-        // refresh the movement points of the players units
-        app.move.refresh(player);
-
-        // add this turns income
-        app.game.setCurrentPlayerGold(player.gold + app.calculate.income(player));
-    };
-
-    return {
-        unit: function () {
-            alert('unit!');
-        },
-
-        intel: function () {
-            alert('intel');
-        },
-
-        options: function () {
-            alert('options');
-        },
-
-        save: function () {
-            alert('save');
-        },
-
-        // end turn
-        end: function () {
-            endTurn();
-            if(app.usersTurn) socket.emit('endTurn', 'end');
-            return this;
-        },
-        active:function(){return active;},
-        activate:function(){active = true;},
-        deactivate:function(){active = false;}
-    };
-}();
+app.options = require('./game/options.js');
 
 /* ----------------------------------------------------------------------------------------------------------*\
-    
     app.actions handles actions that a unit can take
 \* ----------------------------------------------------------------------------------------------------------*/
 
-app.actions = function () {
-    
-    var prevIndex, len, prevLen, damage, undo, key, active = false, attackableArray;
-    var options = {};
-    var index = 0;
-    var round = Math.round;
-
-    // detect any attackable units within selected units attack range
-    var attackable = function (selected) {
-
-        var attackable = [];
-
-        // get selected units position
-        var x = selected.x;
-        var y = selected.y;
-
-        // find its neighbors 
-        var neighbors = [{
-            x: x + 1,
-            y: y
-        }, {
-            x: x,
-            y: y + 1
-        }, {
-            x: x - 1,
-            y: y
-        }, {
-            x: x,
-            y: y - 1
-        }]; // to be replaced with a range algorithm
-
-        // get list of units
-        var units = app.map.unit;
-        var neighbor, unit;
-
-        // get unit types that the selected unit can attack
-        if(selected.canAttack){
-
-            var canAttack = selected.canAttack;
-
-            // get the id of the current player
-            var player = app.game.currentPlayer().id;
-
-            if (!selected.attacked){
-                for (var n = 0; n < neighbors.length; n += 1) {
-                    // each neighbor
-                    neighbor = neighbors[n];
-
-                    for (var u = 0; u < units.length; u += 1) {
-                        // each unit
-                        unit = units[u];
-                        unit.ind = u; // set for easy retrieval and editing;
-
-                        // if the selected unit can attack its neighbor and the neighbor is not the current players unit
-                        if (canAttack.hasValue(unit.transportaion) && neighbor.x === unit.x && neighbor.y === unit.y && unit.player !== player) {
-
-                            // calcualte damage percentage for each attackable unit
-                            unit.damage = app.calculate.damage(unit);
-
-                            // add the neighbor to an array of neighbors the selected unit can attack
-                            attackable.push(unit);
-                        }
-                    }
-                }
-                // if their are any units in the attackable array, then return it, otherwise return false
-                if (attackable[0]){
-                    return attackable;
-                }
-            }
-        }
-        return false;
-    };
-
-    // check if the building the selected unit has landed on can be captured or not
-    var capturable = function (selected) {
-
-        // if the selected unit can capture buildings then continue
-        if (selected.capture && !selected.captured) {
-
-            // get a list of buildings on the map
-            buildings = app.map.building;
-
-            for (var b = 0; b < buildings.length; b += 1) {
-
-                building = buildings[b]; // each building
-
-                // if the building does not already belong to the selected unit, and the unit is on the building then return it
-                if (building.player !== selected.player && building.x === selected.x && building.y === selected.y) {
-                    building.ind = b;
-                    return building;
-                }
-            }
-        }
-        // return false if the building cannot be captured by the selected unit
-        return false;
-    };
-
-    var destroy = function (ind) {app.map.unit.splice(ind, 1);};
-
-    var unsetPersistingVars = function () {
-        delete len; 
-        delete prevLen;
-        delete damage;
-        options = {};
-        index = 0;
-    };
-
-    var attack = function (attacked, damage, attacker, retaliate) {
-        if(attacked.health - damage > 0){
-            app.map.unit[attacked.ind].health = attacked.health - damage;
-            var selected = attacker ? attacker : app.select.unit();
-            app.map.unit[selected.ind].attacked = true; // show that unit has attacked this turn
-            var retaliation = retaliate ? retaliate : round(app.calculate.damage(selected, app.map.unit[attacked.ind])/10);
-            if(app.usersTurn) {
-                socket.emit('attack', { 
-                    attacker:selected,
-                    unit:attacked,
-                    damage:damage,
-                    retaliation:retaliation
-                });
-            }
-            if( selected.health - retaliation > 0 ){
-                app.map.unit[selected.ind].health = selected.health - retaliation;
-            }else{
-                app.game.destroyUnit(selected.player);
-                destroy(selected.ind);
-            }
-        }else{
-            app.game.destroyUnit(attacked.player);
-            destroy(attacked.ind);
-        }
-        if(app.usersTurn){
-            unsetPersistingVars();
-            delete app.settings.target;
-            app.undo.all();
-        }
-        window.requestAnimationFrame(app.animateUnit);
-    };
-
-    // display a target for selecting which opposing unit to attack
-    var choseAttack = function (attackable) {
-
-        attackableArray = attackableArray ? attackableArray : attackable; 
-
-        if(!key) key = app.game.settings.keyMap;
-        if(!undo) undo = app.undo.keyPress;
-        if(!len || len !== attackableArray.length){
-            len = attackableArray.length;
-            prevLen = len;
-        }
-
-        // move to the next attackableArray unit
-        if (app.key.pressed('up') || app.key.pressed('right')) { // Player holding up
-            undo(key.up);
-            undo(key.right);
-            index += 1;
-        }
-
-        // move to the previous attackableArray unit
-        if (app.key.pressed('down') || app.key.pressed('left')) { // Player holding down
-            undo(key.down);
-            undo(key.left);
-            index -= 1;
-        }
-
-        if( index !== app.prev.actionIndex ){
-            // cycle through target selectino
-            if (index < 0 && index) index = len - 1;
-            if (index === len) index = 0
-            damage = attackableArray[index].damage;
-            app.display.damage(damage);
-            app.prev.actionIndex = index;
-
-            // create target for rendering at specified coordinates
-            app.settings.target = {
-                x: attackableArray[index].x,
-                y: attackableArray[index].y
-            };
-        }
-
-        // if the target has been selected return it
-        if (app.key.pressed('enter')) {
-            undo(key.select);
-            app.def.cursorMoved = true;
-            window.requestAnimationFrame(app.animateCursor); // animate changes
-            return {unit:attackableArray[index], damage:round(damage/10)};
-        }
-        window.requestAnimationFrame(app.animateCursor); // animate changes
-    };
-
-    return {
-
-        unset:unsetPersistingVars,
-        active: function () {return active},
-        activate: function () {active = true},
-        deactivate: function () {active = false},
-        clear: function () {attackableArray = false},
-
-        // check to see if any actions can be perfomed
-        check: function (combine) {
-
-            // use selected unit
-            var selected = app.select.unit();
-
-            // find any attackable opponents 
-            var canAttack = attackable(selected);
-
-            // find any capturable buildings
-            var canCapture = capturable(selected);
-
-            // add buildings or opponenets to an object containing possible actions
-            if (canAttack) options.attack = canAttack;
-            if (canCapture) options.capture = canCapture;
-            if(combine){
-                if (combine.combine) options.combine = combine;
-                if (combine.load) options.load = combine;
-            }
-            if (canCapture || canAttack || combine) options.wait = true;
-
-            // if there are any actions that can be taken then return them
-            if (options.wait){
-                return options;
-            }
-            return false;
-        },
-
-        // capture a building
-        capture: function (capturing) {
-            if(options.capture){
-                var building = capturing ? capturing.building : options.capture;
-                var unit = capturing ? capturing.unit : app.select.unit();
-                if (app.usersTurn) socket.emit('capture', {building:building, unit:unit});
-                var capture = app.game.currentPlayer.co.capture ? app.game.currentPlayer.co.capture(unit.health) : unit.health;
-
-                // if the building has not between catpured all the way
-                if (building.capture - capture > 0) {
-
-                    // subtract the amount of capture dealt by the unit from the buildings capture level
-                    app.map.building[building.ind].capture -= capture;
-                    app.map.unit[unit.ind].captured = true;
-                    app.undo.all();
-                    return true;
-
-                // if the building is done being captured and is not a headquarters
-                } else if (building.type !== 'hq') {
-                    // assign the building to the capturing player
-                    app.map.building[building.ind].player = unit.player;
-                    app.map.building[building.ind].capture = app.settings.capture;
-                    app.map.unit[unit.ind].captured = true;
-                    app.undo.all();
-                    return true;
-                }
-
-                // otherwise assign all the buildings belonging to the owner of the captured hq to the capturing player
-                var buildings = app.map.building;
-                var defeated = buildings[building.ind].player;
-                for(var b = 0; b < buildings.length; b += 1){
-                    if( buildings[b].player === defeated ){
-                        app.map.building[b].player = unit.player;
-                    }
-                }
-
-                app.game.playerDefeated(defeated);
-                app.map.unit[unit.ind].captured = true;
-                app.undo.all();
-                alert('player '+defeated+' defeated');
-                if(app.game.players().length === 1){
-                    alert('player '+app.game.players()[0].id+' wins!');
-                }
-            }
-        },
-
-        load: function () {
-            if(options.load){
-                var load = options.load;
-                var selected = app.select.unit();
-                app.map.unit[load.ind].loaded = load.loaded.concat(app.map.unit.splice(selected.ind,1));
-                app.undo.all();
-                window.requestAnimationFrame(app.animateUnit);
-            }
-            return false;
-        },
-
-        combine: function (combine) {
-            if (options.combine){    
-                var combine = combine ? combine.combine : options.combine;
-                var selected = combine ? combine.unit : app.select.unit();
-                var props = app.settings.combinableProperties;
-
-                // emit units to be combined to other players games for syncronization
-                if (app.usersTurn) socket.emit('joinUnits', {combine:combine, unit:selected});
-
-                // combine properties of the selected unit with the target unit
-                for (var u = 0; u < props.length; u += 1){
-                    prop = props[u];
-                    max = app.units[selected.type].properties[prop];
-                    if( combine[prop] + selected[prop] < max ){
-                        app.map.unit[combine.ind][prop] += selected[prop];
-                    }else{
-                        app.map.unit[combine.ind][prop] = max;
-                    }
-                }
-
-                // remove selected unit  
-                app.map.unit.splice(selected.ind, 1);
-                app.undo.all();
-                window.requestAnimationFrame(app.animateUnit);
-            }
-            return false;
-        },
-
-        wait: function () {
-            unsetPersistingVars();
-            app.undo.all();
-            app.undo.display('actionHud');
-        },
-
-        attack: function (battle) {
-            if( options.attack || battle ){
-                if(!app.settings.hideCursor && app.actions.active()) app.settings.hideCursor = true;
-                var attacked = battle ? battle : choseAttack(options.attack);
-                if ( attacked ) {
-                    delete options;
-                    return attack(attacked.unit, attacked.damage, attacked.attacker, attacked.retaliation);
-                }
-                if (app.actions.active()) window.requestAnimationFrame(app.actions.attack);
-            }
-        }
-    };
-}();
+app.actions = require('./game/actions.js');
 
 /* ----------------------------------------------------------------------------------------------------------*\
-    
-    app.calculate handles the more intense calculations like pathfinding and the definition of movement range
+    app.calculate handles calculations like pathfinding and the definition of movement range
 \* ----------------------------------------------------------------------------------------------------------*/
 
-app.calculate = function () {
-
-    var abs = Math.abs;
-    var floor = Math.floor;
-    var random = Math.random;
-    var round = Math.round;
-
-    var numberOfBuildings = function(map){
-
-        // clear out previous numbers
-        var display = app.settings.buildingDisplayElement;
-        var types = Object.keys(display);
-        var len = types.length;
-        for(var t = 0; t < len; t += 1){
-            app.settings.buildingDisplayElement[types[t]].numberOf = 0;
-        }
-
-        // get selected maps building list
-        var buildings = map.buildings;
-        var num = buildings.length;
-
-        // add one for each building type found  to the building display list
-        for (var n = 0; n < num; n += 1){
-            var type = buildings[n].type;
-
-            if(type !== 'hq') app.settings.buildingDisplayElement[type].numberOf += 1; 
-        }
-        return app.settings.buildingDisplayElement;
-    };
-
-    var findTerrain = function (unit){
-        terrain = app.map.terrain;
-        for (var t = 0; t < terrain.length; t += 1){
-            if(terrain[t].x === unit.x && terrain[t].y === unit.y){
-                return terrain[t];
-            }
-        }
-        return false;
-    };
-
-    var rand = function(){return floor((random() * 9) + 1)};
-
-    var calcDamage = function (attacked, attacker) {
-        var r = rand();
-        var baseDamage = attacker.baseDamage[attacked.type];
-        var coAttack = app.game.currentPlayer().co.attack(attacker);
-        var coDefense = app.game.players()[attacked.player - 1].co.defense(attacked);
-        var terrainDefense = findTerrain(attacked).def;
-        terrainDefense = !terrainDefense ? 1 : terrainDefense;
-        var defenderHP = attacked.health;
-        var attackerHP = attacker.health;
-        return round((abs(baseDamage * coAttack/100 + r) * (attackerHP/10) * abs((200-(coDefense + terrainDefense * defenderHP))/100)));
-    };
-
-    var attackRange = function () {
-
-    };
-
-    // create a range of movement based on the unit allowed square movement
-    var movementCost = function (origin, x, y) {
-
-        // calculate the difference between the current cursor location and the origin, add the operation on the axis being moved on
-        return abs((origin.x + x) - origin.x) + abs((origin.y + y) - origin.y);
-    };
-
-    // calculate true offset location considering movement and position
-    var offset = function (off, orig) {
-        var ret = [];
-        var inRange = function (obj) {
-            if (abs(obj.x - orig.x) + abs(obj.y - orig.y) <= orig.movement && obj.x >= 0 && obj.y >= 0) {
-                return true;
-            }
-            return false;
-        };
-
-        // if the selected unit can move on the terrain ( obsticle ) then calculate the offset
-        if (orig.movable.hasValue(off.obsticle)) {
-            var opX = off.x < orig.x ? -1 : 1;
-            var opY = off.y < orig.y ? -1 : 1;
-            var x = (orig.x + (orig.movement * opX) - (off.cost * opX) + opX);
-            var y = (orig.y + (orig.movement * opY) - (off.cost * opY) + opY);
-            var objX = {
-                x: x,
-                y: off.y
-            };
-            var objY = {
-                x: off.x,
-                y: y
-            };
-            if (inRange(objX)) ret.push(objX);
-            if (inRange(objY)) ret.push(objY);
-        } else {
-            // otherwise add the specific location of the obsticle to the offset array 
-            ret.push({
-                x: off.x,
-                y: off.y
-            }); // check this if issues with unit offset, could be faulty method of dealing with this problem
-        }
-        return ret;
-    };
-
-    // detect if a square is an obsticle
-    var findObsticles = function (x, y) {
-
-        // loop over obsticle types
-        for (var ot = 0; ot < app.settings.obsticleTypes.length; ot += 1) {
-
-            // check if the currently examined grid square is one of the obsticle types
-            var obs = app.select.hovered(app.settings.obsticleTypes[ot], x, y);
-
-            // if it is and has a cost etc.. then return it
-            if (obs.stat === true) {
-                return app.map[obs.objectClass][obs.ind];
-            }
-        }
-    };
-    var cleanGrid = function (g) {
-        var del = ['ind', 'p', 'f', 'g', 'visited', 'closed', 'heapIndex'];
-        for (var a = 1; a < g.length; a += 1) {
-            for (var b = 0; b < del.length; b += 1) {
-                delete g[a][del[b]];
-            }
-        }
-    },
-    getNeighbors = function (c) {
-        var x = c.x;
-        var y = c.y;
-        var g, gpx, gpy;
-        var neighbors = [];
-        for (var l = 0; l < grid.length; l += 1) {
-            g = grid[l];
-            gpx = abs(g.x - x);
-            gpy = abs(g.y - y);
-
-            // if the distance from the current square is only one and 
-            if (gpx < 2 && gpy < 2 && gpx !== gpy && !g.closed) neighbors.push(g);
-        }
-
-        if (mode === undefined) {}
-        return neighbors;
-    },
-    dist = function (c) {
-        var dx1 = c.x - dest.x;
-        var dy1 = c.y - dest.y;
-        var dx2 = orig.x - dest.x;
-        var dy2 = orig.y - dest.y;
-        var cross = abs(dx1 * dy2 - dx2 * dy1);
-        var rand = Math.floor(Math.random()+1)/(1000);
-        return ((abs(c.x - dest.x) + abs(c.y - dest.y)) + (cross * rand));
-    };
-
-    var pathfinder = function (orig, dest, grid, mode) {
-        var mov = orig.movement, neighbor, neighbors, x, y, cur, start = grid[0], open = app.heap('f');
-        start.heapIndex = open.push(start);
-
-        while (open.size()) {
-
-            cur = open.pop();
-            cur.closed = true;
-
-            // if the destination has been reached, return the array of values
-            if (dest.x === cur.x && dest.y === cur.y) {
-                ret = [cur];
-                while (cur.p) {ret.push(cur.p); cur = cur.p;}
-                if (ret.length <= mov + 1) {cleanGrid(grid); return mode ? ret : mode;}
-            }
-
-            neighbors = getNeighbors(cur);
-
-            for (var i = 0; i < n.length; i += 1) {
-
-                neighbor = neighbors[i]; // current neighboring square
-                cost = cur.g + neighbor.cost;
-
-                // if the neghboring square has been inspected before then ignore it or if the cost
-                // of moving to the neighboring square is more then allowed then ignore it
-                if (neighbor.closed || cost > mov) continue;
-
-                // if the current square is in the open array and a better position then update it
-                if (neighbor.heapIndex === undefined || neighbor.g > cur.g) {
-
-                    neighbor.g = cost; // distance from start to neighboring square
-                    neighbor.h = cost + dist(neighbor, dest); // distance from neighboring to destination
-                    neighbor.f = cost + neighbor.h; // distance from start to neighboring square added to the distance from neighboring square to destination
-                    neighbor.p = cur;
-
-                    // if the neighboring square hasent been encountered add it to the open list for comparison
-                    if (neighbor.heapIndex === undefined) {
-                        neighbor.heapIndex = open.push(neighbor);
-                    }else{
-                        // otherwise sort the heap in consideration of the new score
-                        open.sort(neighbor.heapIndex);
-                    }
-                }
-            }
-        }
-        cleanGrid(grid); // clean all assigned variables from grid so they wont interfier with future path finding in a loop
-
-        // if the goal is to tell if a path can be reached or not, and it couldnt be reached
-        // return the destination as an unreachable location
-        if (mode !== undefined) return dest;
-    };
-
-    // calculate the movement costs of terrain land marks etc..
-    var evaluateOffset = function (origin, dest, grid) {
-
-        var range = [];
-
-        for (var i = 0; i < dest.length; i += 1) {
-
-            var g = grid.slice(0);
-
-            var path = pathfinder(origin, dest[i], g, 'subtract');
-
-            if (path) range.push(path);
-        }
-
-        return range;
-    };
-
-    // check which side of the screen the cursor is on
-    var checkSide = function (axis) {
-        var d = app.cursorCanvas.dimensions();
-        var m = axis === 'x' ? d.width / 64 : d.height / 64; // screen width
-        var x = app.settings.cursor.scroll[axis]; // map position relative to scroll
-        if (app.settings.cursor.x > (m / 2) + x) return true;
-        return false;
-    };
-
-    // calculate income
-    var calcIncome = function (player) {
-
-        // get the amount of income per building for current game
-        var income = app.game.settings().funds;
-        var owner, count = 0;
-        var buildings = app.map.building; // buildings list
-
-        for (var b = 0; b < buildings.length; b += 1) {
-
-            // count the number of buildings that belong to the current player
-            if (buildings[b].player === player) {
-                count += 1;
-            }
-        }
-        // return the income ( amount of buildings multiplied by income per building set for game )
-        return count * income;
-    };
-
-    return {
-
-        numberOfBuildings: numberOfBuildings,
-
-        damage: function (attacked, attacker) {
-            attacker = !attacker ? app.select.unit() : attacker;
-            return calcDamage( attacked, attacker );
-        },
-
-        // finds path
-        path: function (orig, dest, grid, mode) {
-            return pathfinder(orig, dest, grid, mode);
-        },
-
-        // returns cursor location ( left or right side of screen )
-        side: function (axis) {
-            if (checkSide(axis)) return 'right';
-            return 'left';
-        },
-
-        // calculate income
-        income: function (player) {
-            return calcIncome(player.id);
-        },
-
-        // find range of allowed movement over variable terrain
-        range: function () {
-
-            if (app.select.unit()) {
-
-                var id = 0; // id for grid point identificaion;
-                var range = [];
-                var offs = [];
-                var selected = app.select.unit();
-
-                // amount of allotted movement for unit
-                var len = selected.movement;
-
-                // loop through x and y axis range of movement
-                for (var ex = -len; ex <= len; ex += 1) {
-                    for (var wy = -len; wy <= len; wy += 1) {
-
-                        // if movement cost is less then or eual to the allotted movement then add it to the range array
-                        if (movementCost(selected, ex, wy) <= selected.movement) {
-
-                            // incremient id
-                            id += 1;
-
-                            // add origin to range of movement values
-                            var x = selected.x + ex;
-                            var y = selected.y + wy;
-
-                            // locate obsticles                                 
-                            var obsticle = findObsticles(x, y);
-
-                            if (obsticle !== undefined) {
-
-                                // get the number of offset movement from the obsticle based on unit type and obsticle type
-                                var obsticleOffset = app.settings.obsticleStats[obsticle.obsticle][app.select.unit().type];
-
-                                if (obsticleOffset !== undefined) {
-                                    if (selected.x === x && selected.y === y) {
-                                        range.unshift({
-                                            x: x,
-                                            y: y,
-                                            cost: 0,
-                                            g: 0,
-                                            f: 0,
-                                            ind: 0,
-                                            id: id,
-                                            type: 'highlight'
-                                        });
-                                    } else {
-                                        // make an array of obsticleOffset values, starting point, plus movement, and the amount of obsticleOffset beyond that movement
-                                        obsticle.cost = obsticleOffset;
-                                        obsticle.id = id;
-                                        range.push(obsticle);
-                                        offs = offs.concat(offset(obsticle, selected));
-                                    }
-                                }
-                            } else {
-                                range.push({
-                                    x: x,
-                                    y: y,
-                                    cost: 1,
-                                    id: id,
-                                    type: 'highlight'
-                                });
-                            }
-                        }
-                    }
-                }
-                return range.offsetArray(evaluateOffset(selected, offs, range));
-            }
-            return false;
-        }
-    };
-}();
+app.calculate = require('./game/calculate.js');
 
 /* ------------------------------------------------------------------------------------------------------*\
-    
     app.select handles the selection and movement of map elements
 \* ------------------------------------------------------------------------------------------------------*/
 
-app.select = function () {
-
-    var selected = {}, abs = Math.abs, active = false, range = [], hovered = false;
-
-    // moves a unit
-    var move = function (type, index) {
-
-        // if there is a selected unit and select is active and the select key has been pressed
-        if (selected.unit && active && app.key.pressed('enter')) {
-
-            app.undo.keyPress(app.key.enter);
-
-            // cursor location
-            var cursor = app.settings.cursor;
-
-            // selected unit
-            var unit = select.unit;
-
-            // check if square moving to has a unit on it
-            var landing = gridPoint('unit');
-
-            // get the unit to combine with
-            if ( landing ) var combine = app.map.unit[landing.ind];
-
-            // if the unit being landed on belongs to the current player, is the same type of unit but is not the same unit
-            if( combine && combine.player === unit.player && combine.ind !== unit.ind ){
-
-                // if is the same unit then combine units
-                if ( combine.type === unit.type ){  
-                    combine.combine = true;
-
-                // if the unit is a transport and the unit being moved into can be loaded into that transport, then show the option to load into the transport
-                }else if(combine.transport && unit.load.hasValue(unit.type) && unit.loaded.length < unit.transport.length){
-                    combine.load = true;
-                }
-                if( combine.load || combine.combine ){
-                    // get actions for the unit
-                    var actions = app.actions.check(combine);
-
-                    // if there are actions returned then display them
-                    if(actions.wait) app.display.actions(actions);
-                }
-            }else{
-                
-                // calculate how many squares were moved
-                var xmove = abs(unit.x - cursor.x);
-                var ymove = abs(unit.y - cursor.y);
-
-                // remove the amount of squares moved from the units allowed movement for the turn
-                app.map.unit[unit.ind].movement -= xmove + ymove;
-
-                // change selected units position to the cursor location
-                app.map[type][index].x = cursor.x;
-                app.map[type][index].y = cursor.y;
-                socket.emit('moveUnit', {index:index, type:type, x:cursor.x, y:cursor.y});
-
-                //animate the changes
-                window.requestAnimationFrame(app.animateUnit);
-
-                // check to see if actions can be taken
-                var actions = app.actions.check();
-            }
-            
-            // remove the range and path hilights
-            app.undo.effect('highlight').effect('path');
-
-            // if there are actions that can be taken then display the necessary options
-            if ( actions.wait ) {
-                app.display.actions(actions);
-
-            // if there are no actions then deselect the unit
-            } else {
-                app.undo.all();
-            }
-            return true;
-        }
-        return false;
-    };
-
-    var element = function (type, index) {
-        //  if the index input is undefined or false then use the current cursor location (!index will fail for 0)
-        if (index === undefined || index === false) {
-
-            var hover = gridPoint(type);
-
-            // if the selectable status is not false and the map element is defined then select it
-            if (hover) select(type, hover.ind);
-
-        } else {
-            // if there is an index supplied then use it allong with the type
-            select(type, index);
-        }
-        // if an object was selected then return true, otherwise return false
-        return selected.unit ? true : false;
-    };
-
-    var select = function (type, index) {
-
-        // if their is not a selection active and the cursor is not hovering over empty terrain, 
-        // then do the following when the select key is pressed
-        if (!active && type !== 'terrain' && app.key.pressed('enter')) {
-            app.undo.keyPress(app.key.enter);
-            attempt = app.map[type][index];
-
-            // set properties for selected object if it can be selected
-            // make sure the player attempting to interact with the object is the owner of the object
-            if (!app.settings.notSelectable.hasValue(attempt.type) && attempt.player === app.game.currentPlayer().id) {
-                
-                selected[type] = attempt;
-                selected[type].category = type;
-                selected[type].ind = index;
-
-                // if the selected object is a unit, do unit stuff
-                if (selected.unit) {
-                    range = app.calculate.range(); // set range of movement
-                    app.display.range(); // highlight rang of movemet
-
-                // otherwise do building stuff
-                } else {
-                    app.display.selectionInterface(selected.building.type, 'unitSelectionIndex');
-                }
-
-                // remove the terrain info display
-                app.undo.display('hud');
-                active = true;
-                return true;
-            }
-        }
-        return false;
-    };
-
-    // check what is occupying a specific point on the game map based on type
-    var gridPoint = function (type, x, y) {
-
-        // use current cursor location if one has not been passed in
-        x = x ? x : app.settings.cursor.x;
-        y = y ? y : app.settings.cursor.y;
-
-        // get array of objects on map of specified type
-        var arr = app.map[type];
-
-        // look through array of objects and check if they are at the current or passed grid point
-        for (var p = 0; p < arr.length; p += 1) {
-
-            // if an object is found at the same grid pint return it 
-            if (arr[p].x === x && arr[p].y === y) {
-                return {
-                    ind: p,
-                    category: type,
-                    stat: true
-                };
-            }
-        }
-        return false;
-    };
-
-    return {
-        // returns info on the grid square currently hovered over
-        hovered:gridPoint
-
-        // return the currently selected building/unit or return false if none are currently selected
-        unit: function () {return selected.unit ? selected.unit : false;},
-        building: function () {return selected.building ? selected.building : false;},
-
-        // return whether select is active or not
-        active: function (b) {return active;},
-
-        // set active status to true
-        activate: function () {active = true;},
-
-        // returns an array of grid points that can be acted on
-        range : function () {return range},
-
-        // get info on the selected hovered for movement
-        display : function (item) {hovered = item;},
-
-        // set active status to false and reset selected and range to an empty
-        deselect: function () {active = false; selected = {}; range = [];},
-
-        // on press of the exit key ( defined in app.game.settings.keyMap ) undo any active select or interface
-        exit: function () {
-            if (app.key.pressed('esc')) app.undo.all();
-            return this;
-        },
-
-        // allows selection and movement of objects on screen
-        move: function (type) {
-
-            // if theres no input then say so
-            if (!hovered && !type) {
-                throw new Error('no type or input specified, please enter a type of map element into the input of the "interact()" method or chain the "info()" method prior to the "interact()" method');
-
-                // if there is an object being hovered over, or hovered is undefined ( meaning input is possibly from type input rather then hovered )
-            } else if (hovered || hovered === undefined) {
-
-                // get the type of object being hovered over
-                if(!type) type = hovered.category;
-
-                // get the index of the object being hovered over
-                var intInd = !hovered ? undefined : hovered.ind;
-
-                // if the map element is selectable and the selected map element is a unit then facilitate interaction with that unit
-                if (element(type, intInd) && selected.unit) {
-                    move('unit', selected.unit.ind);
-                }
-            }
-        }
-    };
-}();
+app.select = require('./game/select.js');
 
 /* ------------------------------------------------------------------------------------------------------*\
-    
     app.dom is a list of functions used to assist manipulating the dom
-
 \* ------------------------------------------------------------------------------------------------------*/
 
-app.dom = function (){
-
-    return {
-        getDisplayedValue: function (id) {
-            var element = document.getElementById(id);
-            var children = element.childNodes;
-            var len = children.length;
-            for(c = 0; c < len; c += 1){
-                var child = children[c];
-                if(child.style.display !== 'none') return child.getAttribute('class');
-            }
-        },
-        // remove all children of dom element
-        removeAllChildren: function (element, keep){
-            while(element.firstChild) {
-                var clear = element.firstChild;
-                if (clear.id !== keep) {
-                    element.removeChild(clear);
-                }else{
-                    var keeper = element.firstChild;
-                    element.removeChild(clear);
-                }
-            }
-            if(keeper) element.appendChild(keeper);
-        },
-
-        // remove children of dom element
-        removeChildren: function (element, keep){
-            var remove = element.children;
-            for (var c = 0; c < remove.length; c += 1) {
-                var clear = remove[c];
-                if (clear.id !== keep) {
-                    element.removeChild(clear);
-                }
-            }
-        },
-        
-        // find each element by their tag name, get the element that matches the currently selected index and return it
-        findElementByTag: function (tag, element, index) {
-            var len = element.length;
-            for (var e = 0; e < len; e += 1) {
-                // element returns a string, so must cast the index to string for comparison
-                // if the element tag value ( index ) is equal to the currently selected index then return it
-                if (element[e].getAttribute(tag) === index.toString()) {
-                    return element[e];
-                }
-            }
-        },
-
-        getImmediateChildrenByTagName: function(element, type){
-            var elements = [];
-            if(element){
-                var children = element.childNodes;
-                var name = type.toUpperCase();
-                var len = children.length;
-                for(var i = 0; i < len; i += 1) {
-                    var child = children[i];
-                    if(child.nodeType === 1 && child.tagName === name) elements.push(child);
-                }
-            }
-            return elements;
-        },
-        show: function (show, list, display){
-            if(!display) var display = '';
-            if(show){
-                show.style.display = display;
-                show.setAttribute('default', true );
-                return show.getAttribute('class');
-            }else{
-                list[0].style.display = display;
-                list[0].setAttribute('default', true);
-                return list[0].getAttribute('class');
-            }
-        }
-    };
-}();
+app.dom = require('./tools/dom.js');
 
 /* ------------------------------------------------------------------------------------------------------*\
-    
     app.display handles all the display screens and the users interaction with them
-
 \* ------------------------------------------------------------------------------------------------------*/
 
 app.display = function () {
@@ -3837,29 +3359,21 @@ app.display = function () {
             and the last selected list item for each element if it is nolonger being scrolled through.
             it also broadcasts the descriptions of each selected element, or scrolled through list 
             items to any element of the name specified in the "text" attribute of the "elements" object
-
             the first argument "elements" is an object which contains the names of the elements being 
             selected in their various positions within the dom. they are as follows:
                     
             type: defines what page will be loaded
-
             element: name of the element that is parent to the list
             
             index: name of the index, comes after the property name i.e. (property + index)
-
             attribute: name of the tag being retrieved as a value from the selected element,
              
             text: name of the element that holds the chat and description etc, displayed text,
-
             properties: the object that defines all that will be scrolled through
-
             the second is a callback to handle what to do while scrolling and what elements to effect
-
             the third is an optional parameter that allows you to assign a display type to the currently 
             selected list item that is unhidden for display 
-
             (all list items are hidden by default and displayed as selected)
-
             it returns an object containing the current;y selected property and its value
         */
 
@@ -4020,15 +3534,12 @@ app.display = function () {
             elementExists(buildingElements.section, buildings, selector);
 
             /*var dimensions = {width:500, height:500};
-
             //display small version of map
             var canvas = createCanvas('Map', 'preview', dimensions);
             canvas.canvas.style.backgroundColor = 'white';
             var cid = canvas.canvas.getAttribute('id');
-
             // check if elements exist and replace them if they do, append them if they dont
             elementExists(cid, canvas.canvas);
-
             // draw map preview
             app.draw(canvas.context).mapPreview();*/
         }
@@ -4747,7 +4258,7 @@ app.display = function () {
             if (p) app.effect.path = app.effect.path.concat(p);
 
             // animate changes
-            window.requestAnimationFrame(app.animateEffects);
+            window.requestAnimationFrame(app.animate('effects'));
         },
 
         range: function () {
@@ -4755,15 +4266,13 @@ app.display = function () {
             app.effect.highlight = app.effect.highlight.concat(app.select.range());
 
             // animate changes
-            window.requestAnimationFrame(app.animateEffects);
+            window.requestAnimationFrame(app.animate('effects'));
         }
     };
 }();
 
 /* ------------------------------------------------------------------------------------------------------*\
-    
     app.move handles all the movement in the game, the cursor, scrolling, and moving of units etc..
-
 \* ------------------------------------------------------------------------------------------------------*/
 
 app.move = function () {
@@ -4799,10 +4308,8 @@ app.move = function () {
     };
 
     // screenRefresh the postions on the screen of all the units/terrain/buildings/etc
-    var screenRefresh = function () {
-        window.requestAnimationFrame(app.animateTerrain);
-        window.requestAnimationFrame(app.animateBuildings);
-        window.requestAnimationFrame(app.animateUnit);
+    var screenRefresh = function () { 
+        window.requestAnimationFrame(app.animate(['terrain', 'building', 'unit']));
     };
 
     var moveScreen = function (axis, x, screenDim) {
@@ -4972,7 +4479,7 @@ app.move = function () {
                     app.def.cursorMoved = true;
                     socket.emit('cursorMove', pressed);
                 };
-                window.requestAnimationFrame(app.animateCursor);
+                window.requestAnimationFrame(app.animate('cursor'));
             }
             return this;
         }
@@ -4980,9 +4487,7 @@ app.move = function () {
 }();
 
 /* --------------------------------------------------------------------------------------*\
-    
     app.modes holds functions for the selection of game modes / logout etc..
-
 \* --------------------------------------------------------------------------------------*/
 
 app.modes = function (){
@@ -5086,59 +4591,14 @@ app.modes = function (){
 }();
 
 /* --------------------------------------------------------------------------------------*\
-    
-    app.game.settings consolidates all the user customizable options for the game into
-    an object for easy and dynamic manipulation
+    app.game.settings consolidates holds settings for the game
 \* --------------------------------------------------------------------------------------*/
 
-app.scroll = function () {
-
-    var undo = app.undo.keyPress;
-    var key = app.key;
-
-    var scroll = function (neg, pos){
-        if (app.key.pressed(neg)){
-            undo(app.key[neg]);
-            return -1;
-        } else if (app.key.pressed(pos)) {
-            undo(app.key[pos]);
-            return 1;
-        }
-        return 0;
-    };
-
-    return {
-        horizontal:function (){
-            this.scroll = scroll('left','right');
-            return this;
-        },
-        verticle:function(){
-            this.scroll = scroll('up','down');
-            return this;
-        },
-        infinite: function (index, min, max) {
-            var point = index + this.scroll;
-            var def = this.scroll < 0 ? max : min;
-            return point > max || point < min ? def : point;
-        },
-        finite: function (index, min, max) {
-            if(this.scroll){
-                var point = index + this.scroll;
-                if (point <= max && point >= min) return point;
-            }
-            return false;
-        }
-    };
-}();
+app.scroll = require('./menu/scroll.js');
 
 /* --------------------------------------------------------------------------------------*\
-    
-    app.effect is holds the coordinates for effects, these are dynamic, hence the empty
-    arrays, they will fill and remove data as necessary to animate the game effects, it 
-    also holds logic for display effects
-
+    app.effect is holds the coordinates for effects
 \* --------------------------------------------------------------------------------------*/
-
 
 app.effect = function () {
 
@@ -5574,209 +5034,537 @@ app.effect = function () {
 }();
 
 /* --------------------------------------------------------------------------------------*\
-    
     app.co holds all the co's, their skills and implimentation
-
 \* --------------------------------------------------------------------------------------*/
 
-app.co = function () {
+app.co = require('./game/co.js');
 
-    var percent = function (amount) {
-        return amount / 100;
-    };
+/* --------------------------------------------------------------------------------------*\
+    app.units is a repo for the units that may be created on the map and their stats
+\* --------------------------------------------------------------------------------------*/
 
-    var addToEach = function(player, funk, property, amount, parameter1, parameter2, parameter3) {
-        if(!parameter) parameter = 100;
-        var units = app.map.unit;
-        for ( var u = 0; u < units.length; u += 1 ){
-            if( units[u].player === player.id ){
-                app.map.unit[u][property] = funk( unit[u], property, amount, parameter1, parameter2, parameter3 );
-            }
+app.units = require('./objects/units.js');
+
+/* --------------------------------------------------------------------------------------*\
+    app.buildings is a list of each building and the inits they are capable of producing
+\* --------------------------------------------------------------------------------------*/
+
+app.buildings = require('./objects/buildings.js');
+
+/* --------------------------------------------------------------------------------------------------------*\
+    app.init sets up a working canvas instance to the specified canvas dom element id, it is passed the id
+    of a canvas element that exists in the dom and takes care of initialization of that canvas element
+\*---------------------------------------------------------------------------------------------------------*/
+
+app.backgroundCanvas = app.init('background');
+app.terrainCanvas = app.init('landforms');
+app.buildingCanvas = app.init('buildings');
+app.effectsCanvas = app.init('effects');
+app.unitCanvas = app.init('units');
+app.weatherCanvas = app.init('weather');
+app.cursorCanvas = app.init('cursor');
+
+/* ----------------------------------------------------------------------------------------------------------*\
+    animation instructions
+\*-----------------------------------------------------------------------------------------------------------*/
+
+app.drawTerrain = function (draw) { draw.cache().coordinate('map', 'terrain');};
+app.drawBuilding = function (draw) { draw.coordinate('map', 'building');};
+app.drawBackground = function (draw) {draw.background('background');};
+app.drawUnit = function (draw) { draw.coordinate('map', 'unit'); };
+app.drawWeather = function (draw) {}; // weather stuff animated here
+app.drawEffects = function (draw) { 
+    draw.coordinate('effect', 'highlight'); // highlighting of movement range
+    draw.coordinate('effect', 'path'); // highlighting current path
+};
+
+app.drawCursor = function (draw) {
+    if (!app.settings.hideCursor && app.usersTurn) draw.coordinate('map', 'cursor', [app.settings.cursor]);
+    if (app.settings.target) draw.coordinate('map', 'target', [app.settings.target]);
+};
+
+/* ----------------------------------------------------------------------------------------------------------*\
+    app.animate triggers game animations
+\*-----------------------------------------------------------------------------------------------------------*/
+
+app.animate = require('./game/animate.js');
+
+/* --------------------------------------------------------------------------------------------------------*\
+    app.draw controls drawing of animations
+\*---------------------------------------------------------------------------------------------------------*/
+
+app.draw = require('./game/draw.js');
+
+/* --------------------------------------------------------------------------------------------------------*\
+    app.animations is a collection of animations used in the game
+\*---------------------------------------------------------------------------------------------------------*/
+
+app.animations = require('./objects/animations.js');
+},{"./game/actions.js":1,"./game/animate.js":2,"./game/build.js":3,"./game/calculate.js":4,"./game/co.js":5,"./game/draw.js":6,"./game/options.js":7,"./game/select.js":8,"./game/start.js":9,"./menu/scroll.js":11,"./objects/animations.js":12,"./objects/buildings.js":13,"./objects/map.js":14,"./objects/units.js":15,"./settings/app.js":16,"./settings/game.js":17,"./tools/binaryHeap.js":18,"./tools/chat.js":19,"./tools/dom.js":20,"./tools/init.js":21,"./tools/request.js":22,"./tools/sockets.js":23,"./tools/undo.js":24}],11:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    handles scrolling of menu elements etc..
+    
+\* --------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+app.undo = require('../tools/undo.js');
+
+module.exports = function () {
+
+    var undo = app.undo.keyPress;
+    var key = app.key;
+
+    var scroll = function (neg, pos){
+        if (app.key.pressed(neg)){
+            undo(app.key[neg]);
+            return -1;
+        } else if (app.key.pressed(pos)) {
+            undo(app.key[pos]);
+            return 1;
         }
-    };
-
-    var editProperty = function(unit, property, amount, parameter){
-        if( unit[property] + amount > parameter ){
-            return parameter;
-        }else{
-            return unit[property] + amount;
-        }
-    };
-
-    var filter = function (unit, property, amount, max, parameter1, parameter2){
-        if(unit[parameter1] === parameter2){
-            if(unit[property] + amount > max){
-                return max;
-            }else{
-                return unit[property] + amount;
-            }
-        }
-    };
-
-    var editRange = function (unit, property, amount){
-        if(unit.damageType === 'ranged'){
-            unit.range.hi += amount;
-            return unit.range;
-        }
-    };
-
-    var editArray = function (unit, property, amount, parameter1, parameter2){
-        var baseDamage = {};
-        var damage = Object.keys(unit[property]);
-        for(var d = 0; d < damage.length; d += 1 ){
-
-            // if there is no perameter then simply find the percentage added to all units
-            if(!parameter1){
-                var dam = unit[property][damage[d]];
-
-                // add the damage plus the percent of increase
-                baseDamage[damage[d]] *= amount;
-
-            // if there is a parameter then only add to the damage type specified in the perameter
-            }else if ( unit[parameter1] === parameter2 ){
-
-                var dam = unit[property][damage[d]];
-                baseDamage[damage[d]] *= amount
-            }
-        }
-        return baseDamage;
+        return 0;
     };
 
     return {
-
-        andy: function (player) {
-
-            var image = 'red';
-            var special = 100;
-            var powerActive = false;
-            var superPowerActive = false;
-            var damage = 100;
-
-            return {
-                image: image,
-                name:'Andy',
-                power:function(){
-                    addToEach(player, editProperty(), 'health', 2, 10);
-                },
-                superPower:function(){
-                    superPowerActive = true;
-                    addToEach(player, editProperty(),'health', 5, 10);
-                    addToEach(player, editProperty(),'movement', 1);
-                    special = 130;
-                },
-                attack:function(){
-                    return damage * percent(special);
-                },
-                defense:function(){
-                    return 100;
-                },
-                endPower:function(){
-                    if(superPowerActive){
-                        addToEach(player, editProperty(),'movement', -1);
-                        special = 100;
-                        superPowerActive = false;
-                    }
-                }
-            }
+        horizontal:function (){
+            this.scroll = scroll('left','right');
+            return this;
         },
-        max: function (player) {
-            var image = 'blue';
-            var damage = 100;
-            var special = 120;
-            var powerActive = false;
-            var superPowerActive = false;  
-
-            return {
-                image:image,
-                name:'Max',     
-                power:function(){
-                    powerActive = true;
-                    special = 140;
-                },
-                superPower:function(){
-                    powerActive = true;
-                    special = 170;
-                },
-                attack:function(unit){
-                    if( unit.damageType === 'direct' ){
-                        return damage * percent(special);
-                    }else{
-                        return damage;
-                    }
-                },
-                defense:function(){
-                    return 100;
-                },
-                endPower:function(){
-                    if(powerActive){
-                        special = 120;
-                        powerActive = false;
-                    }
-                },
-                build:function(unit){
-                    unit.range.hi -= 1;
-                    return unit;
-                }
-            }
+        verticle:function(){
+            this.scroll = scroll('up','down');
+            return this;
         },
-        sami: function (player) {
-
-            var image = 'green';
-            var damage = 100;
-            var special = 120;
-            var powerActive = false;
-            var superPowerActive = false;  
-            var capSpecial = 150;
-            var penalty = 90;
-
-            return {
-                image:image,
-                name:'Sami',
-                power: function (){
-                    powerActive = true;
-                    addToEach(player, filter(), 'movement', 1, 20, 'transportaion', 'foot');
-                    special = 170;
-                },
-                superPower: function(){
-                   superPowerActive = true;
-                    addToEach(player, filter(), 'movement', 2, 20, 'transportaion', 'foot');
-                    special = 200;
-                    capSpecial = 2000;
-                },
-                attack: function(unit){
-                    if(unit.transportaion === 'foot'){
-                        return damage * percent(special);
-                    }else if(unit.damageType === direct){
-                        return damage * percent(penalty);
-                    }
-                    return damage;
-                },
-                defense:function(){
-                    return 100;
-                },
-                endPower:function(){
-                    if(powerActive){
-                        addToEach(player, filter(), 'movement', -1, 20, 'transportaion', 'foot');
-                    }else if(superPowerActive){
-                        addToEach(player, filter(), 'movement', -2, 20, 'transportaion', 'foot');
-                    }
-                    special = 120;
-                },
-                capture: function (capture){
-                    return capture * percent(capSpecial);
-                }
-            };
+        infinite: function (index, min, max) {
+            var point = index + this.scroll;
+            var def = this.scroll < 0 ? max : min;
+            return point > max || point < min ? def : point;
+        },
+        finite: function (index, min, max) {
+            if(this.scroll){
+                var point = index + this.scroll;
+                if (point <= max && point >= min) return point;
+            }
+            return false;
         }
     };
 }();
+},{"../settings/app.js":16,"../tools/undo.js":24}],12:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------------------------*\
 
+    default object animation repo, the 'm' parameter is a method passed from 
+    app.draw that scales the coordinates of the drawings to fit any grid square size, as 
+    well as providing some functionality like random(), which generates random numbers within the specified 
+    range of numbers. 
+    'm' does not have to be used
+    default is a base of 64 ( 64 X 64 pixles ), the base is set as a perameter of initializing the 
+    app.draw();
+
+\*---------------------------------------------------------------------------------------------------------*/
+
+module.exports = function (width, height) {
+    return {
+        cursor: function (canv, m) {
+            // size of cursor corners
+            var size = 15;
+            canv.strokeStyle = "black";
+            canv.fillStyle = "#fff536";
+            canv.beginPath();
+            // bottom left
+            canv.moveTo(m.l(3), m.u(size));
+            canv.lineTo(m.l(3), m.d(3));
+            canv.lineTo(m.r(size), m.d(3));
+            canv.lineTo(m.l(3), m.u(size));
+            // bottem right
+            canv.moveTo(m.r(67), m.u(size));
+            canv.lineTo(m.r(67), m.d(3));
+            canv.lineTo(m.r(64 - size), m.d(3));
+            canv.lineTo(m.r(67), m.u(size));
+            // top right
+            canv.moveTo(m.r(67), m.u(64 - size));
+            canv.lineTo(m.r(67), m.u(67));
+            canv.lineTo(m.r(64 - size), m.u(67));
+            canv.lineTo(m.r(67), m.u(64 - size));
+            // bottem left
+            canv.moveTo(m.l(3), m.u(64 - size));
+            canv.lineTo(m.l(3), m.u(67));
+            canv.lineTo(m.r(size), m.u(67));
+            canv.lineTo(m.l(3), m.u(64 - size));
+            canv.fill();
+            canv.stroke();
+            return canv;
+        },
+        highlight: function (canv, m) {
+            canv.fillStyle = "rgba(255,255,255,0.3)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            return canv;
+        },
+        target: function (canv, m) {
+            canv.fillStyle = "rgba(0,255,0,0.3)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            return canv;
+        },
+        path: function (canv, m) {
+            canv.fillStyle = "rgba(255,0,0,0.5)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            return canv;
+        },
+        base: function (canv, m) {
+            canv.fillStyle = "rgba(0,0,200,0.9)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w - 5), m.y - 5);
+            canv.lineTo(m.r(m.w - 5), m.u(m.h + 5));
+            canv.lineTo(m.x - 5, m.u(m.h + 5));
+            canv.lineTo(m.x - 5, m.y - 5);
+            canv.fill();
+            return canv;
+        },
+        hq: function (canv, m) {
+            canv.fillStyle = "rgba(80,0,20,0.9)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w - 5), m.y - 5);
+            canv.lineTo(m.r(m.w - 5), m.u(m.h + 5));
+            canv.lineTo(m.x - 5, m.u(m.h + 5));
+            canv.lineTo(m.x - 5, m.y - 5);
+            canv.fill();
+            return canv;
+        },
+        // dimensions 
+        plain: function (canv, m) {
+            canv.fillStyle = "#d6f71b";
+            //canv.strokeStyle = "black";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            //canv.stroke();
+            canv.strokeStyle = "#f2ff00";
+            canv.beginPath();
+            for (var rand = 0; rand < width; rand += 1) {
+                var randomHeight = m.random(m.y, m.u(m.h));
+                var randomWidth = m.random(m.x, m.r(m.w));
+                canv.moveTo(randomWidth, randomHeight);
+                canv.lineTo(randomWidth + 4, randomHeight);
+            }
+            canv.stroke();
+            //canv.strokeStyle = "black";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            //canv.stroke();
+            return canv;
+        },
+        tallMountain: function (canv, m) {
+            canv.strokeStyle = "#41471d";
+            canv.fillStyle = "#ff8800";
+            canv.beginPath();
+            canv.moveTo(m.x, m.u(20));
+            canv.lineTo(m.x, m.u(30));
+            canv.lineTo(m.r(5), m.u(45));
+            canv.quadraticCurveTo(m.r(15), m.u(50), m.r(15), m.u(50));
+            canv.moveTo(m.r(10), m.u(35));
+            canv.lineTo(m.r(20), m.u(67));
+            canv.quadraticCurveTo(m.r(25), m.u(78), m.r(52), m.u(67));
+            canv.lineTo(m.r(62), m.u(34));
+            canv.quadraticCurveTo(m.r(68), m.u(20), m.r(38), m.y);
+            canv.quadraticCurveTo(m.r(22), m.y, m.x, m.u(20));
+            canv.fill();
+            canv.stroke();
+            return canv;
+        },
+        shortMountain: function (canv, m) {
+            canv.strokeStyle = "#41471d";
+            canv.fillStyle = "#ff8800";
+            canv.beginPath();
+            canv.moveTo(x, m.u(10));
+            canv.lineTo(m.r(20), m.u(m.h));
+            canv.lineTo(m.r(40), m.u(m.h));
+            canv.lineTo(m.r(m.w), m.u(10));
+            canv.quadraticCurveTo(m.r(31), m.d(9), m.r(5), m.u(10));
+            canv.quadraticCurveTo(m.r(20));
+            canv.fill();
+            canv.stroke();
+            return canv;
+        },
+        tree: function (canv, m) {
+            canv.strokeStyle = "black";
+            canv.fillStyle = "rgb(41,148,35)";
+            canv.beginPath();
+            //bottom
+            canv.moveTo(m.r(21), m.u(15));
+            canv.quadraticCurveTo(m.r(42), m.d(1), m.r(60), m.u(15));
+            canv.quadraticCurveTo(m.r(74), m.u(25), m.r(59), m.u(33));
+            canv.moveTo(m.r(21), m.u(15));
+            canv.quadraticCurveTo(m.r(16), m.u(20), m.r(29), m.u(30));
+            //middle
+            canv.moveTo(m.r(27), m.u(30));
+            canv.quadraticCurveTo(m.r(42), m.u(20), m.r(60), m.u(34));
+            canv.quadraticCurveTo(m.r(58), m.u(34), m.r(50), m.u(43));
+            //canv.quadraticCurveTo(m.r(58),m.u(38), m.r(50), m.u(43));
+            canv.moveTo(m.r(27), m.u(30));
+            canv.quadraticCurveTo(m.r(34), m.u(34), m.r(37), m.u(40));
+            //top
+            canv.moveTo(m.r(35), m.u(40));
+            canv.quadraticCurveTo(m.r(44), m.u(35), m.r(51), m.u(41));
+            canv.quadraticCurveTo(m.r(52), m.u(43), m.r(42), m.u(50));
+            canv.moveTo(m.r(35), m.u(40));
+            canv.quadraticCurveTo(m.r(40), m.u(42), m.r(42), m.u(50));
+            canv.fill();
+            canv.stroke();
+            return canv;
+        },
+        infantry: function (canv, m) {
+            canv.fillStyle = "blue";
+            canv.beginPath();
+            canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
+            canv.fill();
+            return canv;
+        },
+        apc: function (canv, m) {
+            canv.fillStyle = "orange";
+            canv.beginPath();
+            canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
+            canv.fill();
+            return canv;
+        }
+    };
+};
+},{}],13:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
-    app.units is a repo for the units that may be created on the map and their stats
+    a list of each building and the inits they are capable of producing
 
 \* --------------------------------------------------------------------------------------*/
 
-app.units = {
+app = require('../settings/app.js');
+app.units = require('../objects/units.js');
+
+module.exports = {
+    base:{
+        infantry:app.units.infantry,
+        mech:app.units.mech,
+        recon:app.units.recon,
+        apc:app.units.apc,
+        antiAir:app.units.antiAir,
+        tank:app.units.tank,
+        midTank:app.units.midTank,
+        artillery:app.units.artillery,
+        missles:app.units.missles,
+        rockets:app.units.infantry,
+        neoTank:app.units.neoTank
+    },
+    airport: {
+        tCopter:app.units.tCopter,
+        bCopter:app.units.bCopter,
+        fighter:app.units.fighter,
+        bomber:app.units.bomber
+    },
+    seaport: {
+        lander:app.units.lander,
+        cruiser:app.units.cruiser,
+        submerine:app.units.submerine,
+        bShip:app.units.bShip
+    }
+};
+},{"../objects/units.js":15,"../settings/app.js":16}],14:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    contains all the settings for a dummy map, unit locations, terrain, buildings, etc. 
+    it holds coordinates of objects that correspond to animations in the animation repo
+    maps can be built and edited dynamically by inserting or removing objects from/into the 
+    arrays
+\* --------------------------------------------------------------------------------------*/
+
+module.exports = {
+    id:1,
+    creator:1,
+    name:'2p map',
+    players:2,
+    category:'two',
+    background: {
+        type: 'plain',
+        x: 20,
+        y: 20
+    },
+    dimensions: {
+        x: 20,
+        y: 20
+    },
+    plain: {
+        type: 'plain',
+        name: 'Plains',
+        def: 1
+    },
+    terrain: [{
+        x: 1,
+        y: 7,
+        type: 'tallMountain',
+        name: 'Mountain',
+        obsticle: 'mountain',
+        def: 2
+    }, {
+        x: 2,
+        y: 5,
+        type: 'tallMountain',
+        name: 'Mountain',
+        obsticle: 'mountain',
+        def: 2
+    }, {
+        x: 3,
+        y: 4,
+        type: 'tallMountain',
+        name: 'Mountain',
+        obsticle: 'mountain',
+        def: 2
+    }, {
+        x: 8,
+        y: 5,
+        type: 'tallMountain',
+        name: 'Mountain',
+        obsticle: 'mountain',
+        def: 2
+    }, {
+        x: 1,
+        y: 1,
+        type: 'tallMountain',
+        name: 'Mountain',
+        obsticle: 'mountain',
+        def: 2
+    }, {
+        x: 1,
+        y: 5,
+        type: 'tree',
+        name: 'Woods',
+        obsticle: 'wood',
+        def: 3
+    }, {
+        x: 1,
+        y: 6,
+        type: 'tree',
+        name: 'Woods',
+        obsticle: 'wood',
+        def: 3
+    }, {
+        x: 1,
+        y: 8,
+        type: 'tree',
+        name: 'Woods',
+        obsticle: 'wood',
+        def: 3
+    }, {
+        x: 3,
+        y: 5,
+        type: 'tree',
+        name: 'Woods',
+        obsticle: 'wood',
+        def: 3
+    }, {
+        x: 6,
+        y: 2,
+        type: 'tree',
+        name: 'Woods',
+        obsticle: 'wood',
+        def: 3
+    }, {
+        x: 6,
+        y: 3,
+        type: 'tree',
+        name: 'Woods',
+        obsticle: 'wood',
+        def: 3
+    }, {
+        x: 9,
+        y: 5,
+        type: 'tree',
+        name: 'Woods',
+        obsticle: 'wood',
+        def: 3
+    }, {
+        x: 9,
+        y: 6,
+        type: 'tree',
+        name: 'Woods',
+        obsticle: 'wood',
+        def: 3
+    } ],
+    buildings: [{
+        x: 0,
+        y: 5,
+        type: 'hq',
+        name: 'HQ',
+        obsticle: 'building',
+        player: 1,
+        color: 'red',
+        def: 4
+    },{
+        x: 20,
+        y: 5,
+        type: 'hq',
+        name: 'HQ',
+        obsticle: 'building',
+        player: 2,
+        color: 'blue',
+        def: 4
+    },{
+        x: 0,
+        y: 4,
+        type: 'base',
+        name: 'Base',
+        obsticle: 'building',
+        player: 1,
+        color: 'red',
+        def: 4
+    },{
+        x: 4,
+        y: 4,
+        type: 'base',
+        name: 'Base',
+        obsticle: 'building',
+        player: 1,
+        color: 'red',
+        def: 4
+    },{
+        x: 15,
+        y: 4,
+        type: 'base',
+        name: 'Base',
+        obsticle: 'building',
+        player: 2,
+        color: 'blue',
+        def: 4
+    }],
+    unit: []
+};
+},{}],15:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    app.units is a repo for the units that may be created on the map and their stats
+    
+\* --------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+app.settings = require('../settings/game.js');
+
+module.exports = {
     infantry: {
         properties: {
             type: 'infantry',
@@ -6472,511 +6260,866 @@ app.units = {
         cost: 28000
     }
 };
+},{"../settings/app.js":16,"../settings/game.js":17}],16:[function(require,module,exports){
+/* ---------------------------------------------------------------------------------------------------------*\
+    
+    app is a container and holds variables for all elements of the application 
 
+\* ---------------------------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+
+module.exports = {
+
+    testing: true,
+    games:[],
+
+    // return an hsl string from either manual settings or object containing hsl values
+    hsl:function(h,s,l) {
+        var format = function (hue, saturation, lightness) {
+            return 'hsl('+hue+','+saturation+'%,'+lightness+'%)';
+        }
+        if (!s && s !== 0) return format(h.h, h.s, h.l);
+        return format(h,s,l);
+    },
+
+    // holds number of pixles to move elements on or off screen
+    offScreen: 800,
+
+    // target element to insert before
+    domInsertLocation: document.getElementById('before'),
+
+    // holds temporary shared variables, usually info on game state changes that need to be accessed globally
+    temp:{},
+
+    // holds previously selected elements for resetting to defaults
+    prev:{},
+
+    // holds default shared variables, usually info on game state changes that need to be accessed globally
+    def: {
+        category:0,
+        menuOptionsActive:false,
+        selectActive: false,
+        cursorMoved: true,
+        saturation:0,
+        scrollTime: 0,
+        lightness:50
+    },
+
+    users: [{
+        co: 'sami',
+        name: 'grant'
+    }, {
+        co: 'andy',
+        name: 'steve'
+    }],
+
+    cache: {},
+    keys: [], // holds array of key pressed events
+    maps: [], // holds maps for selection
+
+    key: {
+        pressed: function (key) {
+            if(key !== 'pressed'){
+                 var code = app.key[key];
+                 if(code) return app.keys.indexOf(code) !== -1;
+            }
+            return false;
+        },
+        esc: 27,
+        enter: 13,
+        up: 38,
+        down: 40,
+        left: 37,
+        right: 39
+    },
+
+    // set custom animation repo if desired
+    setAnimationRepo: function (repo) {
+        this.animationRepo = repo;
+        return this;
+    }
+};
+},{"../settings/app.js":16}],17:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
-    app.buildings is a list of each building and the inits they are capable of producing
+    settings consolidates all the customizable options and rules for the game into
+    an object for easy and dynamic manipulation
+    
+\* --------------------------------------------------------------------------------------*/
+
+module.exports = {
+    // messages to display in the bottom scroll bar as items are hovered over and people join games, etc..
+    scrollMessages:{
+        logout:'select to log out of the game',
+        game:'Create or continue a saved game',
+        newgame:'Set up a new game',
+        continuegame:'Resume a saved game',
+        join:'Join a new or saved game',
+        newjoin:'Find and join a new game',
+        continuejoin:'Re-Join a saved game started at an earlier time',
+        COdesign:'Customize the look of your CO',
+        mapdesign:'Create your own custom maps',
+        design:'Design maps or edit CO appearance',
+        store:'Purchase maps, CO\'s, and other game goods' 
+    },
+
+    // speed at which color swell.. fading in and out, will cycle (lower is faster)
+    colorSwellIncriment:1.5,
+    colorSwellSpeed:2,
+
+    // general swell speed
+    swellIncriment:3,
+    swellSpeed:1,
+
+    //typing speed
+    typingSpeed:2.5,
+
+    // colors of menus etc...
+    colors: {
+        design:{h:216,s:100,l:50},
+        store:{h:72, s:100, l:50},
+        game:{h:0, s:100, l:50},
+        join:{h:144, s:100, l:50},
+        logout:{h:288, s:100, l:50},
+        white:{h:360,s:0,l:100},
+        yellow:{h:72, s:100, l:50},
+        green:{h:144, s:100, l:50},
+        red:{h:0, s:100, l:50},
+        blue:{h:216,s:100,l:50}
+    },
+
+    // speed at which the screen will move to next hq at the changinf of turns
+    scrollSpeed: 50,
+
+    // types to look through when determining terrains effect on unit movement
+    obsticleTypes: ['unit', 'terrain'],
+
+    // list of the effects each obsticle has on each unit type
+    obsticleStats: {
+        mountain: {
+            infantry: 2,
+            apc:2
+        },
+        wood: {
+            infantry: 1,
+            apc:2
+        },
+        plain: {
+            infantry: 1,
+            apc:1
+        },
+        unit: {
+            infantry: 1,
+            apc:1
+        }
+    },
+
+    selectedModeHeight: 75,
+
+    selectModeMenu:[{
+            id:'logout',
+            display:'Logout',
+            type:'exit',
+        },{
+            id:'game',
+            display:'Game',
+            type:'setup',
+            options:['new', 'continue']
+        },{
+            id:'join',
+            display:'Join',
+            type:'join',
+            color:'yellow',
+            options:['new', 'continue']
+        },{
+            id:'design',
+            display:'Design',
+            type:'design',
+            options:['map', 'CO']
+
+        },{
+            id:'store',
+            display:'Store',
+            type:'store',
+    }],
+
+    categories:{
+        two:{
+            type:'1 on 1'
+        },
+        three: {
+            type:'3 Player'
+        },
+        four:{
+            type:'4 Player'
+        },
+        five:{
+            type:'5 Player'
+        },
+        six:{
+            type:'6 Player'
+        },
+        seven:{
+            type:'7 Player'
+        },
+        eight:{
+            type:'8 Player'
+        },
+        preDeployed:{
+            type:'Pre-Deployed'
+        }
+    },
+
+    capture: 20,
+
+    combinableProperties:['fuel','health','ammo'],
+
+    // terrain each unit is allowed to walk on
+    movable: {
+        foot: ['plain', 'river', 'mountain', 'wood', 'road', 'building'],
+        wheels: ['plain', 'wood', 'road', 'building'],
+        flight: ['plain', 'river', 'mountain', 'wood', 'road', 'water', 'building'],
+        boat: ['water', 'building']
+    },
+
+    options: {
+        unit: {
+            name: 'Unit'
+        },
+        intel: {
+            name: 'Intel'
+        },
+        options: {
+            name: 'Options'
+        },
+        save: {
+            name: 'Save'
+        },
+        end: {
+            name: 'End'
+        }
+    },
+
+    buildingDisplayElement: {
+        city:{
+            numberOf:0,
+            type:'city'
+        },
+        base:{
+            numberOf:0,
+            type:'base'
+        },
+        airport:{
+            numberOf:0,
+            type:'airport'
+        },
+        seaport:{
+            numberOf:0,
+            type:'seaport'
+        },
+    },
+
+    playersDisplayElement: {
+
+    },
+
+    settingsDisplayElement: {
+        fog:{
+            description:'Set ON to limit vision with fog of war.',
+            on:'ON',
+            off:'OFF'
+        },
+        weather:{
+            description:'RANDOM causes climate to change.',
+            clear:'Clear',
+            rain:'Rain',
+            snow:'Snow',
+            random:'Random'
+        },
+        funds:{
+            description:'Set funds recieved per allied base.',
+            inc:500,
+            min:1000,
+            max:9500
+        },
+        turn:{
+            description:'Set number of days to battle.',
+            off:'OFF',
+            inc:1,
+            min:5,
+            max:99
+        },
+        capt:{
+            description:'Set number of properties needed to win.',
+            off:'OFF',
+            inc:1,
+            min:7,
+            max:45
+        },
+        power:{
+            description:'Select ON to enamble CO powers.',
+            on:'ON',
+            off:'OFF'
+        },
+        visuals:{
+            description:{
+                off:'No animation.',
+                a:'Battle and capture animation.',
+                b:'Battle animation only.',
+                c:'Battle animation for players only.'
+            },
+            off:'OFF',
+            a:'Type A',
+            b:'Type B',
+            c:'Type C'
+        }
+    },
+
+    // dimensions of diplay hud
+    hudWidth: 120,
+    hudHeight: 200,
+    hudLeft: 1050,
+
+    // spacing / positioning of mode menu selection elements
+    modeMenuSpacing:20,
+
+    // displayable attributes for the building count element on map/game selection
+    buildingDisplay:['numberOf', 'canvas'],
+
+    // which attributes of objects ( unit, buildings etc ) will be displayed in hud
+    hoverInfo: ['ammo', 'health', 'name', 'fuel', 'def', 'canvas'],
+
+    // which actions can be displayed
+    actionsDisplay: ['attack', 'capture', 'wait', 'name'],
+
+    // unit info attributes for display
+    unitInfoDisplay: ['movement', 'vision', 'fuel', 'weapon1', 'weapon2', 'property', 'value'],
+
+    // which attributes of units will be displayed on unit selection/purchase/building hud
+    unitSelectionDisplay: ['name', 'cost'],
+
+    // options attributes for displ
+    optionsDisplay: ['options', 'unit', 'intel', 'save', 'end', 'name'],
+
+    // map elements that cannot be selected
+    notSelectable: ['terrain', 'hq', 'city'],
+
+    // cursor settings
+    cursor: {
+        x: 6,
+        y: 4,
+        speed: 50,
+        scroll: {
+            x: 0,
+            y: 0
+        }
+    }
+};
+},{}],18:[function(require,module,exports){
+/* ------------------------------------------------------------------------------------------------------*\
+    
+    takes a string as an optional argument, this string is used as the name of a property 
+    in a potential object to be accessed while assessing its value in relation to the 
+    other heap elements
+
+\* ------------------------------------------------------------------------------------------------------*/
+
+module.exports = function (property) { 
+
+    // create the heap
+    var heap = []; 
+
+    // swaps the parent index with the child, returns child's new index (parent index)
+    // subtract one from each input to compensate for the array starting at 0 rather then 1
+    var swap = function (index, parentIndex) {
+        heap[index - 1] = heap.splice(parentIndex - 1, 1, heap[index - 1])[0]; 
+        return parentIndex;
+    };
+
+    // get the value at the input index, compensate for whether there is a property being accessed or not
+    var value = function (index) {return property ? heap[index - 1][property] : heap[index - 1];};
+
+    // calculate the parent index
+    var parent = function (index) {return Math.floor(index/2)};
+
+    // calculate the indexes of the left and right
+    var left = function (i) {return i * 2;};
+    var right = function (i) {return left(i) + 1;};
+
+    // compare the values at the two supplied indexes, return the result of whether input l is greater then input r
+    var lt = function(l,r) {return value(l) < value(r);};
+
+    // if we are at the start of the array or the current nodes value is greater then its parent then return the current 
+    // index (compensate for 0), otherwise swap the parent and child then repeat from the childs new position
+    var bubble = function (index) {return index < 2 || lt(parent(index), index) ? index - 1 : bubble(swap(index, parent(index)));};
+
+    var sort = function (index) {
+        var l = left(index), r = right(index), length = heap.length;
+
+        // if there are no more childnodes, swap the value at the current index with the value at
+        // end of the array, sort the value at the current index then remove and return the 
+        // last array element (the minimum element)
+        if (length <= l) {swap(index, length); bubble(index); return heap.pop();}
+
+        // if the right node is in range and less then the left node then swap 
+        // the child with the right node, otherwise swap with the left
+        return sort(swap(index, length > r && lt(r,l) ? r : l ));
+    };
+
+    return {
+        // add a value to the heap
+        push: function (value) {heap.push(value); return bubble(heap.length);},
+
+        // remove and return the top item from the heap
+        pop: function () {return sort(1);},
+
+        // return the first value of the heap (lowest)
+        min: function () {return heap.slice(0,1)[0];},
+
+        // return the amount of elements in the heap (array)
+        size: function () {return heap.length;},
+
+        // update an element in the heap, has an optional property argument used for accessing object properties
+        update: function (index, value, property) {
+            if(property){
+                heap[index][property] = value;
+            }else{
+                heap.splice(index, 1, value);
+            }
+            return bubble(index + 1);
+        }
+    };
+};
+},{}],19:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+
+    handle user to user chat
 
 \* --------------------------------------------------------------------------------------*/
 
-app.buildings = {
-    base:{
-        infantry:app.units.infantry,
-        mech:app.units.mech,
-        recon:app.units.recon,
-        apc:app.units.apc,
-        antiAir:app.units.antiAir,
-        tank:app.units.tank,
-        midTank:app.units.midTank,
-        artillery:app.units.artillery,
-        missles:app.units.missles,
-        rockets:app.units.infantry,
-        neoTank:app.units.neoTank
+app = require('../settings/app.js');
+
+module.exports = {
+    // add message for display, input is message object containing a user name and id, or just a message
+    display: function (mo) {
+
+        // construct message with user name or if there is no user name just use the message
+        var message = mo.user ? mo.user + ': ' + mo.message : mo.message;
+
+        // element that message is being appended to
+        var chat = document.getElementById('chat');
+
+        // if the message is a string then append it to the chat element
+        if(chat && typeof (message) === 'string') {
+            var chatMessage = document.createElement('li'); // create a list element to contain the message
+            chatMessage.setAttribute('class', 'message'); // set attribute for styling
+            chatMessage.innerHTML = message; // set text to message
+            chat.appendChild(chatMessage); // append the li element to the chat element
+            return message; // return the appended message
+        }
+        return false;
     },
-    airport: {
-        tCopter:app.units.tCopter,
-        bCopter:app.units.bCopter,
-        fighter:app.units.fighter,
-        bomber:app.units.bomber
-    },
-    seaport: {
-        lander:app.units.lander,
-        cruiser:app.units.cruiser,
-        submerine:app.units.submerine,
-        bShip:app.units.bShip
+
+    // send message, input is an object/element containing textual user input accessed by ".value"
+    message: function (element) {
+        var text = element.value; // user text input
+        var name = app.user.screenName ? app.user.screenName : app.user.first_name; // get user name of user sending message
+        if (name && text){ // make sure there is user input and a user name
+            var message = { message:text, user:name }; // create message object containing user name and input text
+            socket.emit('gameReadyChat', message); // transmit message to chat room
+            element.value = ''; // reset the input box to empty for future input
+            return message; // return the input message
+        }
+        return false;
     }
 };
-
-/* --------------------------------------------------------------------------------------------------------*\
-    app.init sets up a working canvas instance to the specified canvas dom element id, it is passed the id
-    of a canvas element that exists in the dom and takes care of initialization of that canvas element
-\*---------------------------------------------------------------------------------------------------------*/
-
-app.backgroundCanvas = app.init('background');
-app.terrainCanvas = app.init('landforms');
-app.buildingCanvas = app.init('buildings');
-app.effectsCanvas = app.init('effects');
-app.unitCanvas = app.init('units');
-app.weatherCanvas = app.init('weather');
-app.cursorCanvas = app.init('cursor');
-
-/* ----------------------------------------------------------------------------------------------------------*\
-    The draw functions are passed into the setAnimations method of an initialized game canvas. 
-    In the initialization they are passed the 'draw' variable, which is a repo of objects/drawings.
-    The repo can be set with the 'setAnimationRepo' method of app.init, the default repo is app.objects
-    setting a new repo for a canvas will overwrite the app.objects repo with its replacement for that canvas 
-    ( not all canvases will be effected if you are using multiple canvases ). The methods of draw, used to 
-    access the repo are as follows: coordinate: can take specific coordinates, or you can specify a coordinate 
-    object containing an array or multiple arrays of objects with x and y coordinate properties and a type the 
-    specifies what to draw at those coordinates. for example "draw.coordinate('map', 'unit');" will look at 
-    app.map.unit where app.map.unit is an array of object coordinates with a type property. Within the coordinates,
-    while looping, the coordinate method will look at the coordinate objects type property, find a drawing in the 
-    specified or default repo by the same name, and draw the matching image at the specified coordinates. this 
-    allows multiple coordinates to be specified for a specific type of drawing, unit, terrain, whatever and also 
-    allows them to be added, removed or updated dynamically by adding or removing objects to the arrays.
-    background: background will simply fill the entire background with a specified drawing from the repo
-    cache: can be chained in the draw command and specifies that you want the objects being drawn to be cached 
-    and drawn as a whole image, rather then drawn repeatedly for each coordinate, can improve performance when
-    objects that dont need to change their appearance must be moved around allot ( scrolling for example will be
-    faster with cached terrain elements )
-\*-----------------------------------------------------------------------------------------------------------*/
-
-app.drawEffects = function (draw) {
-    draw.coordinate('effect', 'highlight'); // highlighting of movement range
-    draw.coordinate('effect', 'path'); // highlighting current path
-};
-
-app.drawWeather = function (draw) {
-    // weather stuff animated here
-};
-
-app.drawBuildings = function (draw) {
-    draw.coordinate('map', 'building');
-};
-
-app.drawUnits = function (draw) {
-    draw.coordinate('map', 'unit');
-};
-
-app.drawCursor = function (draw) {
-    if (!app.settings.hideCursor && app.usersTurn) draw.coordinate('map', 'cursor', [app.settings.cursor]);
-    if (app.settings.target) draw.coordinate('map', 'target', [app.settings.target]);
-};
-
-app.drawBackground = function (draw) {
-    draw.background('background');
-};
-
-app.drawTerrain = function (draw) {
-    draw.cache().coordinate('map', 'terrain');
-};
-
-/* --------------------------------------------------------------------------------------------------------*\
-    The animate functions insert the draw methods into the specified canvas for rendering and then make a 
-    call to the canvas to render those drawings with the render method. Calling the render method of an
-    initialized canvas object will render the animations once. If a loop is wanted ( for changing animations 
-    for example ), you may pass the parent function into the render function to be called recursively.
-\*---------------------------------------------------------------------------------------------------------*/
-
-app.animateBuildings = function () {
-    app.buildingCanvas.setAnimations(app.drawBuildings).render();
-};
-
-app.animateUnit = function () {
-    app.unitCanvas.setAnimations(app.drawUnits).render();
-};
-
-app.animateBackground = function () {
-    app.backgroundCanvas.setAnimations(app.drawBackground).render();
-};
-
-app.animateTerrain = function () {
-    app.terrainCanvas.setAnimations(app.drawTerrain).render();
-};
-
-app.animateCursor = function () {
-    app.cursorCanvas.setAnimations(app.drawCursor).render();
-};
-
-app.animateEffects = function () {
-    app.effectsCanvas.setAnimations(app.drawEffects).render();
-};
-
-/* --------------------------------------------------------------------------------------------------------*\
-    app.draw provides a set of methods for interacting with, scaling, caching, coordinating  
-    and displaying the drawings/animations provided in the app.animationRepo
-\*---------------------------------------------------------------------------------------------------------*/
-
-app.draw = function (canvas, dimensions, base) {
+},{"../settings/app.js":16}],20:[function(require,module,exports){
+/* ------------------------------------------------------------------------------------------------------*\
     
-    var w, h, width, height;
-    var temp = {}; // holds temporary persistant variables that can be passed between functions ( similar to static variables / functions )
+    list of functions used to assist manipulating the dom
 
-    // base is the amount of pixles in each grid square, used to scale canvas elements if needed
-    base = base === null || base === undefined ? 64 : base;
+\* ------------------------------------------------------------------------------------------------------*/
 
-    // set/get width and height dimensions for the game map
-    if (dimensions === null || dimensions === undefined) {
-        w = 64;
-        h = 64;
-    } else {
-        width = dimensions.width;
-        height = dimensions.height;
-        w = width / 15;
-        h = height / 10;
+module.exports = {
+
+    getDisplayedValue: function (id) {
+        var element = document.getElementById(id);
+        var children = element.childNodes;
+        var len = children.length;
+        for(c = 0; c < len; c += 1){
+            var child = children[c];
+            if(child.style.display !== 'none') return child.getAttribute('class');
+        }
+    },
+    
+    // remove all children of dom element
+    removeAllChildren: function (element, keep){
+        while(element.firstChild) {
+            var clear = element.firstChild;
+            if (clear.id !== keep) {
+                element.removeChild(clear);
+            }else{
+                var keeper = element.firstChild;
+                element.removeChild(clear);
+            }
+        }
+        if(keeper) element.appendChild(keeper);
+    },
+
+    // remove children of dom element
+    removeChildren: function (element, keep){
+        var remove = element.children;
+        for (var c = 0; c < remove.length; c += 1) {
+            var clear = remove[c];
+            if (clear.id !== keep) {
+                element.removeChild(clear);
+            }
+        }
+    },
+    
+    // find each element by their tag name, get the element that matches the currently selected index and return it
+    findElementByTag: function (tag, element, index) {
+        var len = element.length;
+        for (var e = 0; e < len; e += 1) {
+            // element returns a string, so must cast the index to string for comparison
+            // if the element tag value ( index ) is equal to the currently selected index then return it
+            if (element[e].getAttribute(tag) === index.toString()) {
+                return element[e];
+            }
+        }
+    },
+
+    getImmediateChildrenByTagName: function(element, type){
+        var elements = [];
+        if(element){
+            var children = element.childNodes;
+            var name = type.toUpperCase();
+            var len = children.length;
+            for(var i = 0; i < len; i += 1) {
+                var child = children[i];
+                if(child.nodeType === 1 && child.tagName === name) elements.push(child);
+            }
+        }
+        return elements;
+    },
+
+    show: function (show, list, display){
+        if(!display) var display = '';
+        if(show){
+            show.style.display = display;
+            show.setAttribute('default', true );
+            return show.getAttribute('class');
+        }else{
+            list[0].style.display = display;
+            list[0].setAttribute('default', true);
+            return list[0].getAttribute('class');
+        }
     }
+};
+},{}],21:[function(require,module,exports){
+/* ------------------------------------------------------------------------------------------------------------*\
+    
+    app.init creates a new canvas instance, taking the name of the target canvas id and optionally the context
+    as a second perameter, it defaults to a 2d context. init also provides methods for rendering, setting 
+    animations and returning the screen dimensions
 
-    var animationObjects = app.animationRepo(width, height);
+\* ------------------------------------------------------------------------------------------------------------*/
 
-    // creates a small canvas
-    var smallCanvas = function () {
-        var smallCanvas = document.createElement('canvas');
-        smallCanvas.width = w * 2;
-        smallCanvas.height = h * 2;
-        return smallCanvas;
-    };
+app = require('../settings/app.js');
+app.draw = require('../game/draw.js');
 
-    // caches drawings so they can be recalled without redrawing ( performance boost in certain situations )
-    var cacheDrawing = function (name) {
+module.exports = function (element, context) {
 
-        // create a canvas
-        var canvas = smallCanvas();
+	// get canvas element
+    var canvas = document.getElementById(element);
 
-        // get context  
-        var cacheCanvas = canvas.getContext(app.ctx);
+    // check if browser supports canvas
+    if (canvas.getContext) {
 
-        // set the position of the image to the center of the cached canvas                         
-        var position = setPosition((w / 2), (h / 2));
+        // if the context is not set, default to 2d
+        app.ctx = !context ? '2d' : context;
 
-        // draw image to cache to canvas
-        animationObjects[name](cacheCanvas, position);
+        // get the canvas context and put canvas in screen
+        var animate = canvas.getContext(app.ctx);
 
-        // cache the canvas with drawing on it ( drawings cached by their class name )
-        app.cache[name] = canvas;
-    };
+        // get width and height
+        var sty = window.getComputedStyle(canvas);
+        var padding = parseFloat(sty.paddingLeft) + parseFloat(sty.paddingRight);
+        var screenWidth = canvas.clientWidth - padding;
+        var screenHeight = canvas.clientHeight - padding;
 
-    // calculates the base for scaling
-    var calcBase = function (d) {
-        return d / base;
-    };
-
-    // scales items by calculating their base size multplied by 
-    var scale = function (type, value) {
-        var multiple = type === 'w' ? calcBase(w) : calcBase(h);
-        return value === null || value === undefined ? multiple : multiple * value;
-    };
-
-    // creates a friendlier interface for drawing and automatically scales drawings etc for screen size
-    var setPosition = function (x, yAxis) {
-
-        var y = yAxis + h;
+        // animate.clearRect( element.positionX, element.positionY, element.width, element.height );
+        var screenClear = function () { animate.clearRect(0, 0, screenWidth, screenHeight); };
 
         return {
-            // u = right, will move right the amonut of pixles specified
-            r: function (number) {
-                return x + scale('w', number);
+
+            // set the context for the animation, defaults to 2d
+            setContext: function (context) {
+                this.context = context;
+                return this;
             },
-            // u = left, will move left the amonut of pixles specified
-            l: function (number) {
-                return x - scale('w', number);
+
+            // insert animation into canvas
+            setAnimations: function (animations) {
+                this.animations = animations;
+                return this;
             },
-            // u = down, will move down the amonut of pixles specified
-            d: function (number) {
-                return y + scale('h', number);
+
+            // draw to canvas
+            render: function (loop, gridSquareSize) { // pass a function to loop if you want it to loop, otherwise it will render only once, or on demand
+                // throw error if there are no animations
+                if (!this.animations) throw new Error('No animations were specified');
+                screenClear();
+                var drawings = app.draw(animate, {
+                    width: screenWidth,
+                    height: screenHeight
+                }, gridSquareSize);
+                this.animations(drawings);
+                if (loop) window.requestAnimationFrame(loop);
             },
-            // u = up, will move up the amonut of pixles specified
-            u: function (number) {
-                return y - scale('h', number);
-            },
-            // x is the x axis
-            x: x,
-            // y is the y axis
-            y: y,
-            // width
-            w: w,
-            // height
-            h: h,
-            // random number generator, used for grass background texture
-            random: function (min, max) {
-                return (Math.random() * (max - min)) + min;
+
+            // return the dimensions of the canvas screen
+            dimensions: function () {
+                return {
+                    width: screenWidth,
+                    height: screenHeight
+                };
             }
         };
-    };
+    } else {
+        // if canvas not supported then throw an error
+        throw new Error("browser does not support canvas element. canvas support required for animations");
+    }
+};
+},{"../game/draw.js":6,"../settings/app.js":16}],22:[function(require,module,exports){
+/* ---------------------------------------------------------------------------------------------------------*\
+    
+    handle AJAJ calls
+    
+\* ---------------------------------------------------------------------------------------------------------*/
 
-    // offset of small canvas drawing ( since the drawing is larger then single grid square it needs to be centered )
-    var smallX = w / 2;
-    var smallY = h / 2;
+module.exports = function () {
+
+    var ajaj = function (input, action, callback, url) {
+
+        if ( !url ) throw new Error('No address specified for back end services');
+
+        try{
+          // Opera 8.0+, Firefox, Chrome, Safari
+          var request = new XMLHttpRequest();
+       }catch (e){
+          // Internet Explorer Browsers
+          try{
+             var request = new ActiveXObject("Msxml2.XMLHTTP");
+          }catch (e) {
+             try{
+                var request = new ActiveXObject("Microsoft.XMLHTTP");
+             }catch (e){
+                // Something went wrong
+                alert("Your browser broke!");
+                return false;
+             }
+          }
+       }
+
+       request.onreadystatechange = function(){
+            if (request.readyState == 4 && request.status == 200)
+            {
+                if (callback){
+                    return callback(JSON.parse(request.responseText));
+                }else{
+                    // Javascript function JSON.parse to parse JSON data
+                    return JSON.parse(request.responseText);
+                }
+            }
+        }
+
+        try {
+            var ts = new Date().getTime();
+            request.open(action, url+'?ts='+ts, true);
+            request.setRequestHeader("Content-type","application/json;charset=UTF-8");
+            request.send(JSON.stringify(input));
+        }catch (e){
+            console.log(e);
+            return false;
+        }
+    }
+    return {
+        post:function (input, url, callback){
+            return ajaj(input, 'POST', callback, url);
+        },
+        get:function (input, url, callback) {
+            return ajaj(input, 'GET', callback, url + '/' + input);
+        }
+    };
+}();
+},{}],23:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+
+    handle socket connections
+
+\* --------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+//app.game = require('../menu/game.js');
+app.chat = require('../tools/chat.js');
+//app.modes = require('../menu/modes.js');
+app.actions = require('../game/actions.js');
+app.options = require('../game/options.js');
+
+var socket = io.connect("http://127.0.0.1:8080") || io.connect("http://jswars-jswars.rhcloud.com:8000");
+
+socket.on('player', function(player){app.game.setPlayer(player);});
+socket.on('userAdded', function(message){app.chat.display(message);});
+socket.on('gameReadyMessage', function(message){app.chat.display(message);});
+socket.on('propertyChange', function(properties){app.game.changeProperties(properties);});
+socket.on('readyStateChange', function(player){app.game.playerReady(player);});
+socket.on('addPlayer', function(player){app.game.addPlayer(player);});
+socket.on('room', function(room){app.game.room(room);});
+socket.on('addRoom',function(room){app.game.addRoom(room);});
+socket.on('removeRoom', function(room){app.game.removeRoom(room);});
+socket.on('disc', function(user){
+    app.chat.display({message:'has been disconnected.', user:user.name.uc_first()});
+    app.game.removePlayer(user);
+});
+socket.on('userJoined', function(user){
+    app.game.addPlayer(user);
+    if(!user.cp) app.chat.display({message:'has joined the game.', user:user.name.uc_first()});
+});
+socket.on('userLeft', function(user){
+    app.chat.display({message:'has left the game.', user:user.name.uc_first()});
+    app.game.removePlayer(user);
+});
+socket.on('userRemoved', function (user) {
+    app.chat.display({message:'has been removed from the game.', user:user.name.uc_first()});
+    app.game.removePlayer(user);
+});
+
+socket.on('back', function(){app.modes.boot();app.game.back();});
+socket.on('cursorMove', function(move){app.keys.push(move);});
+socket.on('attack', function(attack){app.actions.attack(attack);});
+socket.on('joinUnits', function(combine){app.actions.combine(combine);});
+socket.on('capture', function(capture){app.actions.capture(capture);});
+socket.on('endTurn', function(){app.options.end();});
+socket.on('moveUnit', function(move){
+    app.map[move.type][move.index].x = move.x;
+    app.map[move.type][move.index].y = move.y;
+    window.requestAnimationFrame(app.animate('unit'));
+});
+
+module.exports = socket;
+},{"../game/actions.js":1,"../game/options.js":7,"../settings/app.js":16,"../tools/chat.js":19}],24:[function(require,module,exports){
+/* ---------------------------------------------------------------------------------------------------------*\
+    
+    handles the cleanup and disposal of elements that are no longer needed or need to be removed
+
+\* ---------------------------------------------------------------------------------------------------------*/
+app = require('../settings/app.js');
+//app.game = require('../menu/game.js');
+app.actions = require('../game/actions.js');
+app.options = require('../game/options.js');
+app.settings = require('../settings/game.js');
+app.animate = require('../game/animate.js');
+//app.effect = require('../game/effects.js');
+//app.display = require('../tools/display.js');
+
+module.exports = function () {
+
+    // show undoes a hide of an element
+    var show = function (hiddenElement) {
+
+        // get hidden element
+        var hidden = document.getElementById(hiddenElement);
+
+        // show element
+        if (hidden) hidden.style.display = '';
+    };
 
     return {
 
-        // cache all images for performant display ( one drawing to rule them all )
-        cache: function () {
-            this.cached = true;
+        // remove a pressed key from the keys array
+        keyPress: function (key) {return app.keys.splice(key, 1);},
+        keys: function () {if(app.keys.length)app.keys.splice(0,app.keys.length);},
+
+        // undo the selection of map elements
+        selectElement: function () {
+            var range = app.select.range();
+            if (range) range.splice(0, range.length);
+            app.select.deselect();
+            if (app.select.building()) app.select.deselect();
+        },
+
+        hudHilight:function(){
+            app.display.reset();
+            if(app.display.index()) app.display.resetPreviousIndex();
+            if (app.options.active()) {
+                show('coStatusHud');
+                app.options.deactivate();
+            }
+        },
+
+        selectUnit:function(){
+            if (app.select.unit()) {
+                app.select.deselect();
+                window.requestAnimationFrame(app.animate('unit'));
+            }
+        },
+
+        actionsSelect: function (){
+            if(app.actions.active()){
+                app.actions.unset();
+                app.actions.clear();
+                delete app.settings.target;
+                delete app.prev.actionIndex;
+                this.display('actionHud');
+                this.display('damageDisplay');
+                app.def.cursorMoved = true;
+                app.settings.hideCursor = false;
+                app.actions.deactivate();
+                window.requestAnimationFrame(app.animate('cursor'));
+            }
+        },
+
+        effect: function (effect) {
+            if (app.effect[effect]) {
+                app.effect[effect].splice(0, app.effect[effect].length);
+                window.requestAnimationFrame(app.animate('effects'));
+            }
             return this;
         },
 
-        // place drawings where they belong on board based on coorinates
-        coordinate: function (objectClass, object, coordinet) {
-
-            var s = {}; // holder for scroll coordinates
-            var name; // holder for the name of an object to be drawn
-            var scroll = app.settings.cursor.scroll; // scroll positoion ( map relative to display area )
-            var wid = (w * 16); // display range
-            var len = (h * 11);
-
-            // get the coordinates for objects to be drawn
-            coordinates = coordinet === undefined ? app[objectClass][object] : coordinet;
-
-            // for each coordinates
-            for (var c = 0; c < coordinates.length; c += 1) {
-
-                // var s modifys the coordinates of the drawn objects to allow scrolling behavior
-                // subtract the amount that the cursor has moved beyond the screen width from the 
-                // coordinates x and y axis, making them appear to move in the opposite directon
-                s.x = (coordinates[c].x * w) - (scroll.x * w);
-                s.y = (coordinates[c].y * h) - (scroll.y * h);
-
-                // only display coordinates that are withing the visable screen
-                if (s.x >= 0 && s.y >= 0 && s.x <= wid && s.y <= len) {
-
-                    // get the name of the object to be drawn on the screen
-                    name = objectClass === 'map' && coordinet === undefined ? coordinates[c].type : object;
-
-                    // if it is specified to be cached
-                    if (this.cached) {
-
-                        // check if it has already been cached and cache the drawing if it has not yet been cached
-                        if (app.cache[name] === undefined) cacheDrawing(name);
-
-                        // draw the cached image to the canvas at the coordinates minus 
-                        // its offset to make sure its centered in the correct position
-                        canvas.drawImage(app.cache[name], s.x - smallX, s.y - smallY);
-
-                    } else {
-
-                        // if it is not cached then draw the image normally at its specified coordinates
-                        animationObjects[name](canvas, setPosition(s.x, s.y));
-                    }
-                }
-            }
+        display: function (element) {
+            var remove = document.getElementById(element);
+            if (remove) remove.parentNode.removeChild(remove);
+            return this;
         },
 
-        // fills background
-        background: function (object) {
-            for (var x = 0; x < app.map[object].x; x += 1) {
-                for (var y = 0; y < app.map[object].y; y += 1) {
-                    animationObjects[app.map[object].type](canvas, setPosition(x * w, y * h));
-                }
+        buildUnitScreen: function () {
+            var removeArray = ['buildUnitScreen', 'unitInfoScreen', 'optionsMenu'];
+            for (var r = 0; r < removeArray.length; r += 1) {
+                var remove = document.getElementById(removeArray[r]);
+                if (remove) remove.parentNode.removeChild(remove);
             }
+            return this;
         },
 
-        hudCanvas: function (object, objectClass) {
+        all: function () {
+            this.selectUnit();
+            this.selectElement();
+            this.actionsSelect();
+            this.hudHilight();
+            this.keyPress(app.key.enter);
+            this.buildUnitScreen();
+            this.effect('highlight').effect('path');
+            app.def.cursorMoved = true; // refreshes the hud system to detect new unit on map
+            return this;
+        },
 
-            // draw a background behind terrain and building elements
-            if (objectClass !== 'unit') animationObjects.plain(canvas, setPosition(smallX, smallY));
-
-            if (app.cache[object]) { // use cached drawing if available
-                canvas.drawImage(app.cache[object], 0, 0);
-            } else {
-                animationObjects[object](canvas, setPosition(smallX, smallY));
-            }
+        tempAndPrev: function () {
+            app.temp = {};
+            app.prev = {};
         }
     };
-};
-
-/* --------------------------------------------------------------------------------------------------------*\
-    app.animationRepo is the default object repo the 'm' parameter is a method passed from 
-    app.draw that scales the coordinates of the drawings to fit any grid square size, as 
-    well as providing some functionality like random(), which generates random numbers within the specified 
-    range of numbers. 
-    'm' does not have to be used
-    default is a base of 64 ( 64 X 64 pixles ), the base is set as a perameter of initializing the 
-    app.draw();
-\*---------------------------------------------------------------------------------------------------------*/
-
-app.animationRepo = function (width, height) {
-    return {
-        cursor: function (canv, m) {
-            // size of cursor corners
-            var size = 15;
-            canv.strokeStyle = "black";
-            canv.fillStyle = "#fff536";
-            canv.beginPath();
-            // bottom left
-            canv.moveTo(m.l(3), m.u(size));
-            canv.lineTo(m.l(3), m.d(3));
-            canv.lineTo(m.r(size), m.d(3));
-            canv.lineTo(m.l(3), m.u(size));
-            // bottem right
-            canv.moveTo(m.r(67), m.u(size));
-            canv.lineTo(m.r(67), m.d(3));
-            canv.lineTo(m.r(64 - size), m.d(3));
-            canv.lineTo(m.r(67), m.u(size));
-            // top right
-            canv.moveTo(m.r(67), m.u(64 - size));
-            canv.lineTo(m.r(67), m.u(67));
-            canv.lineTo(m.r(64 - size), m.u(67));
-            canv.lineTo(m.r(67), m.u(64 - size));
-            // bottem left
-            canv.moveTo(m.l(3), m.u(64 - size));
-            canv.lineTo(m.l(3), m.u(67));
-            canv.lineTo(m.r(size), m.u(67));
-            canv.lineTo(m.l(3), m.u(64 - size));
-            canv.fill();
-            canv.stroke();
-            return canv;
-        },
-        highlight: function (canv, m) {
-            canv.fillStyle = "rgba(255,255,255,0.3)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            return canv;
-        },
-        target: function (canv, m) {
-            canv.fillStyle = "rgba(0,255,0,0.3)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            return canv;
-        },
-        path: function (canv, m) {
-            canv.fillStyle = "rgba(255,0,0,0.5)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            return canv;
-        },
-        base: function (canv, m) {
-            canv.fillStyle = "rgba(0,0,200,0.9)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w - 5), m.y - 5);
-            canv.lineTo(m.r(m.w - 5), m.u(m.h + 5));
-            canv.lineTo(m.x - 5, m.u(m.h + 5));
-            canv.lineTo(m.x - 5, m.y - 5);
-            canv.fill();
-            return canv;
-        },
-        hq: function (canv, m) {
-            canv.fillStyle = "rgba(80,0,20,0.9)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w - 5), m.y - 5);
-            canv.lineTo(m.r(m.w - 5), m.u(m.h + 5));
-            canv.lineTo(m.x - 5, m.u(m.h + 5));
-            canv.lineTo(m.x - 5, m.y - 5);
-            canv.fill();
-            return canv;
-        },
-        // dimensions 
-        plain: function (canv, m) {
-            canv.fillStyle = "#d6f71b";
-            //canv.strokeStyle = "black";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            //canv.stroke();
-            canv.strokeStyle = "#f2ff00";
-            canv.beginPath();
-            for (var rand = 0; rand < width; rand += 1) {
-                var randomHeight = m.random(m.y, m.u(m.h));
-                var randomWidth = m.random(m.x, m.r(m.w));
-                canv.moveTo(randomWidth, randomHeight);
-                canv.lineTo(randomWidth + 4, randomHeight);
-            }
-            canv.stroke();
-            //canv.strokeStyle = "black";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            //canv.stroke();
-            return canv;
-        },
-        tallMountain: function (canv, m) {
-            canv.strokeStyle = "#41471d";
-            canv.fillStyle = "#ff8800";
-            canv.beginPath();
-            canv.moveTo(m.x, m.u(20));
-            canv.lineTo(m.x, m.u(30));
-            canv.lineTo(m.r(5), m.u(45));
-            canv.quadraticCurveTo(m.r(15), m.u(50), m.r(15), m.u(50));
-            canv.moveTo(m.r(10), m.u(35));
-            canv.lineTo(m.r(20), m.u(67));
-            canv.quadraticCurveTo(m.r(25), m.u(78), m.r(52), m.u(67));
-            canv.lineTo(m.r(62), m.u(34));
-            canv.quadraticCurveTo(m.r(68), m.u(20), m.r(38), m.y);
-            canv.quadraticCurveTo(m.r(22), m.y, m.x, m.u(20));
-            canv.fill();
-            canv.stroke();
-            return canv;
-        },
-        shortMountain: function (canv, m) {
-            canv.strokeStyle = "#41471d";
-            canv.fillStyle = "#ff8800";
-            canv.beginPath();
-            canv.moveTo(x, m.u(10));
-            canv.lineTo(m.r(20), m.u(m.h));
-            canv.lineTo(m.r(40), m.u(m.h));
-            canv.lineTo(m.r(m.w), m.u(10));
-            canv.quadraticCurveTo(m.r(31), m.d(9), m.r(5), m.u(10));
-            canv.quadraticCurveTo(m.r(20));
-            canv.fill();
-            canv.stroke();
-            return canv;
-        },
-        tree: function (canv, m) {
-            canv.strokeStyle = "black";
-            canv.fillStyle = "rgb(41,148,35)";
-            canv.beginPath();
-            //bottom
-            canv.moveTo(m.r(21), m.u(15));
-            canv.quadraticCurveTo(m.r(42), m.d(1), m.r(60), m.u(15));
-            canv.quadraticCurveTo(m.r(74), m.u(25), m.r(59), m.u(33));
-            canv.moveTo(m.r(21), m.u(15));
-            canv.quadraticCurveTo(m.r(16), m.u(20), m.r(29), m.u(30));
-            //middle
-            canv.moveTo(m.r(27), m.u(30));
-            canv.quadraticCurveTo(m.r(42), m.u(20), m.r(60), m.u(34));
-            canv.quadraticCurveTo(m.r(58), m.u(34), m.r(50), m.u(43));
-            //canv.quadraticCurveTo(m.r(58),m.u(38), m.r(50), m.u(43));
-            canv.moveTo(m.r(27), m.u(30));
-            canv.quadraticCurveTo(m.r(34), m.u(34), m.r(37), m.u(40));
-            //top
-            canv.moveTo(m.r(35), m.u(40));
-            canv.quadraticCurveTo(m.r(44), m.u(35), m.r(51), m.u(41));
-            canv.quadraticCurveTo(m.r(52), m.u(43), m.r(42), m.u(50));
-            canv.moveTo(m.r(35), m.u(40));
-            canv.quadraticCurveTo(m.r(40), m.u(42), m.r(42), m.u(50));
-            canv.fill();
-            canv.stroke();
-            return canv;
-        },
-        infantry: function (canv, m) {
-            canv.fillStyle = "blue";
-            canv.beginPath();
-            canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
-            canv.fill();
-            return canv;
-        },
-        apc: function (canv, m) {
-            canv.fillStyle = "orange";
-            canv.beginPath();
-            canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
-            canv.fill();
-            return canv;
-        }
-    };
-};
+}();
+},{"../game/actions.js":1,"../game/animate.js":2,"../game/options.js":7,"../settings/app.js":16,"../settings/game.js":17}]},{},[10]);
