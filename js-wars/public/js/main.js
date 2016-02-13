@@ -1,4 +1,31 @@
 /* ---------------------------------------------------------------------------------------------------------*\   
+    all required game modules
+\* ---------------------------------------------------------------------------------------------------------*/
+
+var socket = require('./tools/sockets.js'); // socket connection handlers
+app = require('./settings/app.js'); // app holds all elements of the application 
+app.settings = require('./settings/game.js'); // app.settings holds application settings
+app.heap = require('./tools/binaryHeap.js'); // app.heap is a binary heap 
+app.chat = require('./tools/chat.js'); // handle chat interactions
+app.request = require('./tools/request.js'); //handles AJAJ calls where needed
+app.start = require('./game/start.js'); // sets up the game with the players and other info necessary for the new game
+app.init = require('./tools/init.js'); // app.init creates a new canvas instance
+app.build = require('./game/build.js'); // app.build handles the creation of new units, buildings or terrain on the map
+app.undo = require('./tools/undo.js'); // app.undo handles the cleanup of elements that are no longer needed
+app.options = require('./game/options.js'); // app.options handles the in game options selection, end turn, save etc.
+app.actions = require('./game/actions.js'); // app.actions handles actions that a unit can take
+app.calculate = require('./game/calculate.js'); //app.calculate handles calculations like pathfinding etc
+app.select = require('./game/select.js'); // app.select handles the selection and movement of map elements
+app.dom = require('./tools/dom.js'); // app.dom is a list of functions used to assist manipulating the dom
+app.scroll = require('./menu/scroll.js'); // app.game.settings consolidates holds settings for the game
+app.co = require('./game/co.js'); // app.co holds all the co's, their skills and implimentation
+app.units = require('./objects/units.js'); // app.units is a repo for the units that may be created on the map and their stats
+app.buildings = require('./objects/buildings.js'); // list of each building and the inits they are capable of producing
+app.animate = require('./game/animate.js'); // app.animate triggers game animations
+app.draw = require('./game/draw.js'); // app.draw controls drawing of animations
+app.animations = require('./objects/animations.js'); // app.animations is a collection of animations used in the game
+
+/* ---------------------------------------------------------------------------------------------------------*\   
     add useful methods to prototypes
 \* ---------------------------------------------------------------------------------------------------------*/
 
@@ -21,18 +48,6 @@ Array.prototype.offsetArray = function (offsetArray) {
     }
     return this;
 };
-
-/* ---------------------------------------------------------------------------------------------------------*\
-    socket connection handlers
-\* ---------------------------------------------------------------------------------------------------------*/
-
-var socket = require('./tools/sockets.js');
-
-/* ---------------------------------------------------------------------------------------------------------*\
-    app holds all elements of the application 
-\* ---------------------------------------------------------------------------------------------------------*/
-
-var app = require('./settings/app.js');
 
 /* --------------------------------------------------------------------------------------*\ 
     load dummy variables if/for testing locally 
@@ -59,33 +74,7 @@ if (app.testing){
     });
 }
 
-/* --------------------------------------------------------------------------------------*\
-    app.settings holds application settings
-\* --------------------------------------------------------------------------------------*/
-
-app.settings = require('./settings/game.js');
-
-/* --------------------------------------------------------------------------------------*\
-    app.heap is a binary heap 
-\* --------------------------------------------------------------------------------------*/
-
-app.heap = require('./tools/binaryHeap.js');
- 
-/* ---------------------------------------------------------------------------------------------------------*\
-    handle chat interactions
-\* ---------------------------------------------------------------------------------------------------------*/
-
-app.chat = require('./tools/chat.js');
-
-/* ---------------------------------------------------------------------------------------------------------*\
-    handles AJAJ calls where needed
-\* ---------------------------------------------------------------------------------------------------------*/
-
-app.request = require('./tools/request.js');
-
-/* --------------------------------------------------------------------------------------------------------*\
-    app.game.setup controls the setting up and selection of games / game modes 
-\*---------------------------------------------------------------------------------------------------------*/
+//controls the setting up and selection of games / game modes 
 
 app.game = function () {
 
@@ -1218,60 +1207,6 @@ window.addEventListener("keyup", function (e) {
     app.keys[e.keyCode] = false;
     app.keys.splice(0,app.keys.length);
 }, false);
-
-/* ---------------------------------------------------------------------------------------------------------*\
-    app.start sets up the game with the players and other info necessary for the new game
-\* ---------------------------------------------------------------------------------------------------------*/
-
-app.start = require('./game/start.js');
-
-/* ---------------------------------------------------------------------------------------------------------*\
-    app.init creates a new canvas instance
-\* ---------------------------------------------------------------------------------------------------------*/
-
-app.init = require('./tools/init.js');
-
-/* ---------------------------------------------------------------------------------------------------------*\
-    app.build handles the creation of new units, buildings or terrain on the map
-\* ---------------------------------------------------------------------------------------------------------*/
-
-app.build = require('./game/build.js');
-
-/* ---------------------------------------------------------------------------------------------------------*\
-    app.undo handles the cleanup and disposal of elements that are no longer needed or need to be removed
-\* ---------------------------------------------------------------------------------------------------------*/
-
-app.undo = require('./tools/undo.js');
-
-/* ----------------------------------------------------------------------------------------------------------*\
-    app.options handles the in game options selection, end turn, save etc.
-\* ----------------------------------------------------------------------------------------------------------*/
-
-app.options = require('./game/options.js');
-
-/* ----------------------------------------------------------------------------------------------------------*\
-    app.actions handles actions that a unit can take
-\* ----------------------------------------------------------------------------------------------------------*/
-
-app.actions = require('./game/actions.js');
-
-/* ----------------------------------------------------------------------------------------------------------*\
-    app.calculate handles calculations like pathfinding and the definition of movement range
-\* ----------------------------------------------------------------------------------------------------------*/
-
-app.calculate = require('./game/calculate.js');
-
-/* ------------------------------------------------------------------------------------------------------*\
-    app.select handles the selection and movement of map elements
-\* ------------------------------------------------------------------------------------------------------*/
-
-app.select = require('./game/select.js');
-
-/* ------------------------------------------------------------------------------------------------------*\
-    app.dom is a list of functions used to assist manipulating the dom
-\* ------------------------------------------------------------------------------------------------------*/
-
-app.dom = require('./tools/dom.js');
 
 /* ------------------------------------------------------------------------------------------------------*\
     app.display handles all the display screens and the users interaction with them
@@ -3036,12 +2971,6 @@ app.modes = function (){
 }();
 
 /* --------------------------------------------------------------------------------------*\
-    app.game.settings consolidates holds settings for the game
-\* --------------------------------------------------------------------------------------*/
-
-app.scroll = require('./menu/scroll.js');
-
-/* --------------------------------------------------------------------------------------*\
     app.effect is holds the coordinates for effects
 \* --------------------------------------------------------------------------------------*/
 
@@ -3478,24 +3407,6 @@ app.effect = function () {
     };
 }();
 
-/* --------------------------------------------------------------------------------------*\
-    app.co holds all the co's, their skills and implimentation
-\* --------------------------------------------------------------------------------------*/
-
-app.co = require('./game/co.js');
-
-/* --------------------------------------------------------------------------------------*\
-    app.units is a repo for the units that may be created on the map and their stats
-\* --------------------------------------------------------------------------------------*/
-
-app.units = require('./objects/units.js');
-
-/* --------------------------------------------------------------------------------------*\
-    app.buildings is a list of each building and the inits they are capable of producing
-\* --------------------------------------------------------------------------------------*/
-
-app.buildings = require('./objects/buildings.js');
-
 /* --------------------------------------------------------------------------------------------------------*\
     app.init sets up a working canvas instance to the specified canvas dom element id, it is passed the id
     of a canvas element that exists in the dom and takes care of initialization of that canvas element
@@ -3527,21 +3438,3 @@ app.drawCursor = function (draw) {
     if (!app.settings.hideCursor && app.usersTurn) draw.coordinate('map', 'cursor', [app.settings.cursor]);
     if (app.settings.target) draw.coordinate('map', 'target', [app.settings.target]);
 };
-
-/* ----------------------------------------------------------------------------------------------------------*\
-    app.animate triggers game animations
-\*-----------------------------------------------------------------------------------------------------------*/
-
-app.animate = require('./game/animate.js');
-
-/* --------------------------------------------------------------------------------------------------------*\
-    app.draw controls drawing of animations
-\*---------------------------------------------------------------------------------------------------------*/
-
-app.draw = require('./game/draw.js');
-
-/* --------------------------------------------------------------------------------------------------------*\
-    app.animations is a collection of animations used in the game
-\*---------------------------------------------------------------------------------------------------------*/
-
-app.animations = require('./objects/animations.js');
