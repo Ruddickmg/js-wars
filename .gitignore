@@ -1,8 +1,8 @@
 # node modules
-node_modules
+#inode_modules
 
 # openshift stuff
-.openshift
+#.openshift
 
 # Windows image file caches
 Thumbs.db
