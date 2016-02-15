@@ -14,10 +14,10 @@ module.exports = function () {
 
     var scroll = function (neg, pos){
         if (app.key.pressed(neg)){
-            undo(app.key[neg]);
+            app.undo.keyPress(app.key[neg]);
             return -1;
         } else if (app.key.pressed(pos)) {
-            undo(app.key[pos]);
+            app.undo.keyPress(app.key[pos]);
             return 1;
         }
         return 0;

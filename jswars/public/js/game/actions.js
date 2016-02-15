@@ -12,12 +12,12 @@ app.undo = require('../tools/undo.js');
 app.animate = require('../game/animate.js');
 app.units = require('../objects/units.js');
 app.actions = require('../game/actions.js');
-//app.display = require('../tools/display.js');
-//app.game = require('../menu/game.js');
+app.display = require('../tools/display.js');
+app.game = require('../menu/game.js');
 
 module.exports = function () {
     
-    var prevIndex, len, prevLen, damage, undo, key, active = false, attackableArray;
+    var prevIndex, len, prevLen, damage, undo, key, active = false, attackableArray, actionIndex;
     var options = {};
     var index = 0;
     var round = Math.round;
@@ -180,13 +180,13 @@ module.exports = function () {
             index -= 1;
         }
 
-        if( index !== app.prev.actionIndex ){
+        if( index !== actionIndex ){
             // cycle through target selectino
             if (index < 0 && index) index = len - 1;
             if (index === len) index = 0
             damage = attackableArray[index].damage;
             app.display.damage(damage);
-            app.prev.actionIndex = index;
+            actionIndex = index;
 
             // create target for rendering at specified coordinates
             app.settings.target = {
@@ -209,10 +209,12 @@ module.exports = function () {
 
         unset:unsetPersistingVars,
         active: function () {return active},
-        activate: function () {active = true},
-        deactivate: function () {active = false},
-        clear: function () {attackableArray = false},
-
+        activate: function () {active = true;},
+        deactivate: function () {active = false;},
+        clear: function () {
+            attackableArray = false;
+            actionIndex = false;
+        },
         // check to see if any actions can be perfomed
         check: function (combine) {
 

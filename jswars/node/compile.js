@@ -31,8 +31,11 @@ module.exports = function (root) {
             // combine the required files into an ouput file
             var bundle = function () { b.bundle().pipe(fs.createWriteStream(outFile)); };
 
+            var log = function (log) {console.log(log);};
+
             // if any required files have been edited then bundle them
             b.on('update', bundle);
+            //b.on('log', log);
 
             // bundle files
             bundle();

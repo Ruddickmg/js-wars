@@ -1,12 +1,12 @@
-# jswars
-A take on the Advance Wars game for Gameboy Avance, written in Javascript and Html (Canvas)
+# js-wars
+Work in progress, a take on the Advance Wars game for Gameboy Avance, written in Javascript, CSS and Html
 
-examples:
+Lacal:
 ========
 
-this repo is a bit behind, you can interact with the game @ http://marcusruddick.com/projects/js-wars/
+this repo is a bit behind, you can see the game functioning @ http://marcusruddick.com/projects/js-wars/
 
-and here is a link to its latest public form (under construction): www.jswars.com
+and here is a link to it with the menus (under construction): http://jswars.com/
 
 Gameplay:
 ========

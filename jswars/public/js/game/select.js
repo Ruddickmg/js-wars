@@ -10,7 +10,7 @@ app.settings = require('../settings/game.js');
 app.animate = require('../game/animate.js');
 app.actions = require('../game/actions.js');
 app.calculate = require('../game/calculate.js');
-//app.display = require('../tools/display.js');
+app.display = require('../tools/display.js');
 
 module.exports = function () {
 

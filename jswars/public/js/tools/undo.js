@@ -4,13 +4,13 @@
 
 \* ---------------------------------------------------------------------------------------------------------*/
 app = require('../settings/app.js');
-//app.game = require('../menu/game.js');
+app.game = require('../menu/game.js');
 app.actions = require('../game/actions.js');
 app.options = require('../game/options.js');
 app.settings = require('../settings/game.js');
 app.animate = require('../game/animate.js');
-//app.effect = require('../game/effects.js');
-//app.display = require('../tools/display.js');
+app.effect = require('../game/effects.js');
+app.display = require('../tools/display.js');
 
 module.exports = function () {
 
@@ -59,7 +59,6 @@ module.exports = function () {
                 app.actions.unset();
                 app.actions.clear();
                 delete app.settings.target;
-                delete app.prev.actionIndex;
                 this.display('actionHud');
                 this.display('damageDisplay');
                 app.def.cursorMoved = true;
@@ -105,6 +104,10 @@ module.exports = function () {
         },
 
         tempAndPrev: function () {
+            app.display.clear();
+            app.actions.clear();
+            //app.move.clear();
+            app.effect.clear();
             app.temp = {};
             app.prev = {};
         }

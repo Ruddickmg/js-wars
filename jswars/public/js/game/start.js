@@ -8,7 +8,7 @@
 
 app = require('../settings/app.js');
 app.animate = require('../game/animate.js');
-// app.game = require('../menu/game.js');
+app.game = require('../menu/game.js');
 
 module.exports = function () {
 

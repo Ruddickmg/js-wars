@@ -6,7 +6,7 @@
 
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
-//app.game = require('../menu/game.js');
+app.game = require('../menu/game.js');
 app.select = require('../game/select.js');
 app.heap = require('../tools/binaryHeap.js');
 

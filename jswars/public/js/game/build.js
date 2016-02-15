@@ -5,13 +5,13 @@
 \* ---------------------------------------------------------------------------------------------------------*/
 
 app = require('../settings/app.js');
-//app.game = require('../menu/game.js');
+app.game = require('../menu/game.js');
 app.buildings = require('../objects/buildings.js');
 app.animate = require('../game/animate.js');
 app.select =  require('../game/select.js');
 //app.effect = require('../game/effect.js');
 app.undo = require('../tools/undo.js');
-// app.display = require('../tools/display.js');
+app.display = require('../tools/display.js');
 
 
 module.exports = function () {

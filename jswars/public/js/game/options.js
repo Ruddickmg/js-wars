@@ -4,7 +4,7 @@
     
 \* ----------------------------------------------------------------------------------------------------------*/
 app = require('../settings/app.js');
-//app.game = require('../menu/game.js');
+app.game = require('../menu/game.js');
 
 module.exports = function () {
 

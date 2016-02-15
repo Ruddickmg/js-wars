@@ -5,9 +5,9 @@
 \* --------------------------------------------------------------------------------------*/
 
 app = require('../settings/app.js');
-//app.game = require('../menu/game.js');
+app.game = require('../menu/game.js');
 app.chat = require('../tools/chat.js');
-//app.modes = require('../menu/modes.js');
+app.modes = require('../menu/modes.js');
 app.actions = require('../game/actions.js');
 app.options = require('../game/options.js');
 
