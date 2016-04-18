@@ -1,7 +1,7 @@
 # js-wars
 Work in progress, a take on the Advance Wars game for Gameboy Avance, written in Javascript, CSS and Html
 
-Lacal:
+Local:
 ========
 
 this repo is a bit behind, you can see the game functioning @ http://marcusruddick.com/projects/js-wars/
