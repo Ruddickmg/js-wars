@@ -6,7 +6,7 @@ Lacal:
 
 this repo is a bit behind, but you can see the game functioning @ http://www.jswars.com/
 
-login with facebook test user: 
+login with facebook test users (there are two in since at least two players are required to play): 
 
 Email: testy_abhaawg_mctesterson@tfbnw.net  
 Password: testing321
