@@ -8,8 +8,8 @@ this repo is a bit behind, but you can see the game functioning @ http://www.jsw
 
 login with facebook test user: 
 
-name: Testy McTesterson
-pass: testing321
+Name: Testy McTesterson \n
+Password: testing321
 
 Gameplay:
 ========
