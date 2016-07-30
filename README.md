@@ -6,6 +6,11 @@ Lacal:
 
 this repo is a bit behind, but you can see the game functioning @ http://www.jswars.com/
 
+login with facebook test user: 
+
+name: Mary Alabiccehdbja Alisonsen
+email: cvyvxyj_alisonsen_1469901758@tfbnw.net
+
 Gameplay:
 ========
 
