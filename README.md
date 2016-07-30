@@ -11,6 +11,9 @@ login with facebook test user:
 Email: testy_abhaawg_mctesterson@tfbnw.net  
 Password: testing321
 
+Email: mrs_gyqpxjf_mctesterson@tfbnw.net  
+Password: testing321
+
 Gameplay:
 ========
 
