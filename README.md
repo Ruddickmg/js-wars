@@ -18,3 +18,5 @@ The escape key will escape out of any menu in the game and if pressed while no u
 Units are moved by selecting them, moving the cursor to the desired location within the highlighted movement range and then pressing enter again
 
 at least two players are needed to start a game, there is still some work to be done coordinating menu's etc, so game creation and joining may be buggy under certain circumstances
+
+the game is not yet animated, more units will be available as they are become animated
