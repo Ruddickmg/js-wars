@@ -8,8 +8,8 @@ this repo is a bit behind, but you can see the game functioning @ http://www.jsw
 
 login with facebook test user: 
 
-name: Mary Alabiccehdbja Alisonsen
-email: cvyvxyj_alisonsen_1469901758@tfbnw.net
+name: Testy McTesterson
+pass: testing321
 
 Gameplay:
 ========
