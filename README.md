@@ -4,7 +4,7 @@ Work in progress, a take on the Advance Wars game for Gameboy Avance, run on Nod
 Lacal:
 ========
 
-this repo is a bit behind, but you can see the game functioning @ http://jswars.com/
+this repo is a bit behind, but you can see the game functioning @ http://www.jswars.com/
 
 Gameplay:
 ========
