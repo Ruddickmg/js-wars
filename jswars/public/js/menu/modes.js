@@ -113,6 +113,7 @@ module.exports = function (){
         mapdesign:function(){
             app.map.set(app.maps.random());
             app.players.add(app.user.raw());
+            app.cursor.editing();
             return 'editor'; 
         },
         store:function(){

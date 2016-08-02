@@ -97,7 +97,8 @@ module.exports = {
         var len = children.length;
         for(c = 0; c < len; c += 1){
             var child = children[c];
-            if(child.style.display !== 'none') return child.getAttribute('class');
+            if(child.style.display !== 'none') 
+                return child.getAttribute('class');
         }
     },
     
@@ -169,6 +170,22 @@ module.exports = {
     hide: function (name) {
         var element = document.getElementById(name);
         element.hidden.style.visibility = 'hidden';
+    },
+
+    changeDefault: function (change, element) {
+        
+        var nodes = element.childNodes;
+
+        for (var i = 0; i < nodes.length; i += 1){
+
+            if (nodes[i].getAttribute('default')){
+                nodes[i].style.display = 'none';
+                nodes[i].removeAttribute('default');
+            }
+
+            if (nodes[i].getAttribute('class') === change)
+                this.show(nodes[i]);
+        }   
     },
 
     getDefault: function (element) {

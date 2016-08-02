@@ -74,11 +74,11 @@ app.key = require('../tools/keyboard.js');
 //app.user = require('../objects/user.js');
 app.game = require('../game/game.js');
 app.display = require('../tools/display.js');
-
+app.feature = require('../objects/featureHud.js');
 
 module.exports = function () {
 
-    var selected, moved, active, enter, hidden = false, position = {x:7, y:5}, key = app.key;
+    var editing, selected, moved, active, enter, hidden = false, position = {x:7, y:5}, key = app.key;
 
     var allowed = function (range) {
         if (!range) range = app.range.get();
@@ -113,7 +113,7 @@ module.exports = function () {
     };
 
     return {
-
+        editing: function () { editing = true; },
         clear: function () {selected = false, hidden = false, moved = false;},
         hide: function () { 
             hidden = true; 
@@ -192,7 +192,7 @@ module.exports = function () {
         },
         displayPosition: function () { return true; },
         copy: function () {
-            if (key.pressed(key.copy()) && !app.build.active())
+            if (editing && key.pressed(key.copy()) && !app.build.active())
                 app.feature.set((selected = app.map.top(position))); 
         },
         build: function () { 
@@ -222,7 +222,7 @@ module.exports = function () {
                     pressed = key.right();
 
                 if(pressed){
-                    app.feature.set(selected);
+                    if (editing) app.feature.set(selected);
                     if (app.user.turn()) socket.emit('cursorMove', pressed);
                     moved = true;
                     app.screen.scroll();
@@ -233,7 +233,7 @@ module.exports = function () {
         }
     };
 }();
-},{"../controller/map.js":3,"../game/animate.js":13,"../game/calculate.js":15,"../game/effects.js":17,"../game/game.js":18,"../menu/options.js":24,"../settings/app.js":46,"../tools/display.js":52,"../tools/keyboard.js":56,"../tools/undo.js":62}],3:[function(require,module,exports){
+},{"../controller/map.js":3,"../game/animate.js":13,"../game/calculate.js":15,"../game/effects.js":17,"../game/game.js":18,"../menu/options.js":24,"../objects/featureHud.js":31,"../settings/app.js":46,"../tools/display.js":52,"../tools/keyboard.js":56,"../tools/undo.js":62}],3:[function(require,module,exports){
 yapp = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
@@ -253,6 +253,7 @@ module.exports = function () {
     matrix, buildings = [], terrain = [], units = [],
     color = app.settings.playerColor, allowedUnits, allowedBuildings,
     validate = new Validator('map');
+
     var restricted = {
         sea: ['sea', 'reef', 'shoal'],
         reef: this.sea,
@@ -277,12 +278,14 @@ module.exports = function () {
             if (building && building.on(position)) on.building = building;
             if (t && t.on(position)) on.terrain = t;
         }
+
         if (!on.terrain) on.terrain = new Terrain('plain', new Position(position.x, position.y));
         return on;
     };
 
-    var getIndex = function (element) {
-        var elements, id = element.id !== undefined;
+    var detectIndex = function (element) {
+        var elements;
+
         switch (element.type()) {
             case 'unit': elements = units;
                 break;
@@ -290,8 +293,14 @@ module.exports = function () {
                 break;
             default: elements = terrain;
         }
+
+        return getIndex(element, elements);
+    };
+
+    var getIndex = function (element, elements) {
+        var id = element.id !== undefined;
         if (element) for (var i = 0; i < elements.length; i += 1)
-            if (((compare = elements[i]) && id && compare.id === element.id) || !id && compare.on(element.position()))  
+            if (((compare = elements[i]) && id && compare.id === element.id) || !id && compare.on(element.position()))
                 return i;
         return false;
     };
@@ -317,16 +326,20 @@ module.exports = function () {
     };
 
     var deleteElement = function (element) {
-        if(element.type() == 'unit'){
+
+        if (element.type() == 'unit') {
             allowedUnits += 1;
             app.map.removeUnit(element);
-        }else if(element.type() == 'building'){
+        
+        } else if (element.type() == 'building') {
             allowedBuildings += 1;
-            buildings.splice(getIndex(element), 1, matrix.remove(element));
-        } else if(isSea(element))
-            terrain.splice(getIndex(element), 1, matrix.insert(adjustOrientation(new Terrain('sea', element.position()))));
+            buildings.splice(detectIndex(element), 1, matrix.remove(element));
+        
+        } else if (isSea(element))
+            terrain.splice(detectIndex(element), 1, matrix.insert(adjustOrientation(new Terrain('sea', element.position()))));
+
         else matrix.remove(position);
-    }
+    };
 
     var facing = function (element) {
 
@@ -372,7 +385,7 @@ module.exports = function () {
             if((name = neighbor.name().toLowerCase()) === 'shoal' || element.name === 'reef' && !isSea(neighbor))
                 deleteElement(neighbor, 'sea');
             else if((adjusted = adjustOrientation(neighbor))){
-                terrain.splice(getIndex(neighbor), 1, adjusted);
+                terrain.splice(detectIndex(neighbor), 1, adjusted);
                 if(matrix.get(neighbor).type() !== 'unit')
                     matrix.insert(adjusted);
             }
@@ -393,7 +406,7 @@ module.exports = function () {
         var unit = new Unit(u.player(), new Position(p.x, p.y), u.name().toLowerCase());
         if (existing.unit && unit.canBuildOn(existing.unit.occupies())){
             allowedUnits -= 1;
-            return units.splice(getIndex(existing.unit), 1, matrix.insert(unit));
+            return units.splice(detectIndex(existing.unit), 1, matrix.insert(unit));
         } else if (existing.building && unit.canBuildOn(existing.building) || existing.terrain && unit.canBuildOn(existing.terrain)){
             allowedUnits -= 1;
             return addUnit(unit);
@@ -418,14 +431,14 @@ module.exports = function () {
         }
 
         if (existing.building)
-            buildings.splice(getIndex(existing.building), 1, building);
+            buildings.splice(detectIndex(existing.building), 1, building);
         else buildings.push(building);
 
         if (existing.terrain.type() !== 'plain') {
-            terrain.splice(getIndex(existing.terrain), 1);
+            terrain.splice(detectIndex(existing.terrain), 1);
             var i, n = neighbors(new Position(p.x,p.y));
             for (i = 0; i < n.length; i += 1)
-                terrain.splice(getIndex(n[i]), 1, adjustOrientation(n[i]));
+                terrain.splice(detectIndex(n[i]), 1, adjustOrientation(n[i]));
         }
 
         if (!existing.unit)
@@ -445,12 +458,12 @@ module.exports = function () {
         adjustSurroundings(element);
     
         if(existing.terrain.type() !== 'plain')
-            terrain.splice(getIndex(existing.terrain), 1, element);
+            terrain.splice(detectIndex(existing.terrain), 1, element);
         else terrain.push(element);
         if (existing.building)
-            buildings.splice(getIndex(existing.building), 1);
+            buildings.splice(detectIndex(existing.building), 1);
         if (existing.unit && !existing.unit.canBuildOn(element)){
-            units.splice(getIndex(existing.unit), 1);
+            units.splice(detectIndex(existing.unit), 1);
             return matrix.insert(element);
         } else if (!existing.unit) 
             return matrix.insert(element);
@@ -459,13 +472,14 @@ module.exports = function () {
 
     return {
         getNeighbors: neighbors,
+        detectIndex: detectIndex,
         getIndex: getIndex,
         occupantsOf: occupants,
         addUnit: addUnit,
         id: function () { return map.id; },
         name: function () { return map.name; },
         players: function () { return map.players; },
-        getUnit: function (unit) { return units[getIndex(unit)]; },
+        getUnit: function (unit) { return units[getIndex(unit, units)]; },
         category: function () { return map.category; },
         dimensions: function () { return map.dimensions; },
         background: function () { return background; },
@@ -501,7 +515,7 @@ module.exports = function () {
                 units.push(matrix.insert(new Unit(editor ? unit[k].player : app.players.number(unit[k].player), unit[k].position, app.unit[unit[k].type])));
         },
         moveUnit: function (unit, target) {
-            var e, current = units[getIndex(unit)];
+            var e, current = units[getIndex(unit, units)];
 
             if (current) matrix.remove(current);
             else current = unit;
@@ -514,7 +528,7 @@ module.exports = function () {
             return current;
         },
         removeUnit: function (unit){
-            var i = getIndex(unit);
+            var i = getIndex(unit, units);
             if(i !== undefined) unit = units.splice(i, 1)[0];
             if((e = matrix.get(unit)) && e.type() === 'unit' && e.id === unit.id)
                 matrix.remove(unit);
@@ -522,7 +536,7 @@ module.exports = function () {
             return unit;
         },
         attackUnit: function (unit, damage) {
-            units[getIndex(unit)].takeDamage(unit.health() - damage);
+            units[getIndex(unit, units)].takeDamage(unit.health() - damage);
             matrix.get(unit).takeDamage(unit.health() - damage);
         },
         changeOwner: function (building, player) {
@@ -606,7 +620,7 @@ Map = require('../objects/map.js')
 
 module.exports = function () {
 
-	var error, maps, keys, change, index = false, type = 'map', category,
+	var error, maps, keys, change, index, type = 'map', category,
 	validate = new Validator('maps'), categories = ['two'];
 
 	types = {
@@ -710,6 +724,7 @@ module.exports = function () {
         remove: function(room){
         	var games = types.game.items;
 	        if(category === room.category && games[room.name]){
+	        	socket.emit('removeRoom', room);
 	            delete games[room.name];
 	            keys = Object.keys(games);
 	            change = true;
@@ -748,7 +763,7 @@ module.exports = function () {
 			    buildings: map.buildings,
 			    background: map.background,
 			    units: map.units
-            }, 'maps/save', function(response){
+            }, 'maps/save', function (response) {
 				console.log(response);
             	change = true;
             });
@@ -760,6 +775,8 @@ module.exports = function () {
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
 app.dom = require('../tools/dom.js');
+app.menu = require('../menu/menu.js');
+app.keys = require('../tools/keyboard.js');
 Player = require('../objects/player.js');
 
 module.exports = function () {
@@ -775,36 +792,59 @@ module.exports = function () {
     },
 
     exists = function (player) {
-
-		var i = 0, length = players.length;
-
-        while ((p = players[i++]))
-            if(p.id() === player.id())
-                return players.splice(x,1,p)[0];
-
+        for (var id, i = 0; i < players.length; i += 1){
+            id = isNaN(player.id) ? player.id() : player.id;
+            if (players[i].id() === id)
+                return i;
+        }
         return false;
     },
 
-    addPlayer = function (player){
+    addPlayer = function (player, number) {
 
         // check if player is already in and replace if they are
         if(player && players.length <= app.map.players()){
 
             // get the attributes of the co from game and add them to player object
-            var id = 'player'+player.number+'co';
-            var value = app.dom.getDefault(document.getElementById(id));
-            if(!value && player.co) value = player.co;
+            var id = 'player'+ (number || player.number) +'co';  // <--- why doesnt the player.number property work???!!!
+            var element = document.getElementById(id);
+            var index = exists(player), value = app.dom.getDefault(element);
+            
+            if(!value && player.co)
+                value = player.co;
 
-            player.number = players.length + 1;
+            player.number = index === false ? players.length + 1 : players[index].number();
             player = new Player(player);
 
-            if(!exists(player)) players.push(player);
+            if (index !== false) players.splice(index, 1, player);
+            else players.push(player);
 
             if (value) setProperties(id, value);
-
             return true;
         }
         return false;
+    },
+
+    shiftPlayers = function (index) {
+
+        // get currently selected co
+        var selected = app.dom.getDefault(document.getElementById('player'+ app.user.player().number() +'co'));
+
+        // move each player after the removed player down one
+        for (i = index; i < players.length; i += 1)
+            players[i].setNumber(i + 1);
+
+        // generate id for new player location
+        var co = 'player'+app.user.player().number()+'co';
+
+        // move arrows to correct position
+        app.keys.press(app.keys.left());
+        app.menu.arrowsTo(co);
+
+        // change co to match players original selection
+        setProperties(co, selected);
+        app.dom.changeDefault(selected, document.getElementById(co));
+        
     };
 
 	return {
@@ -829,12 +869,12 @@ module.exports = function () {
         add: function (player) {
         	if(player.length)
         		for(var i = 0; i < player.length; i+=1)
-        			addPlayer(player[i]);
+        			addPlayer(player[i], i + 1);
         	else addPlayer(player);
         	return current = players[0];
         },
 
-        // cheack if all players are present and ready
+        // check if all players are present and ready
 		ready: function () {
             var length = app.map.players();
             for(i = 0; i < length; i += 1)
@@ -852,13 +892,9 @@ module.exports = function () {
         },
 
         reset: function () { return players.splice(0, players.length); },    
-
         current: function () { return current; },
-
         setCurrent: function (player) { current = player; },
-
         defeated: function () { return defeated; },
-
         defeat: function (player) {
             defeated.concat(players.splice(player.index(), 1));
             if(app.players.length() <= 1)
@@ -882,23 +918,31 @@ module.exports = function () {
 
         remove: function(player, cp){
 
-            var i, index = player.index(), player = app.players.get(player); 
+            // make this more complex to handle redistribution of players
+            var i, index = exists(player);
 
-            if(player){
+            if (index !== false) {
 
-                console.log(player);
+                // if there is a specified computer replacement or the game has started
+                if (cp || app.game.started())
 
-                // make this more complex to handle redistribution of players
-                for(i = index; i < players.length; i += 1)
-                    document.getElementById('player' + players[i].number() + 'co').style.borderColor = 'white';
+                    // then replace the player with the ai or undefined
+                    players.splice(index, 1, cp)
 
-                return cp ?  players.splice(index, 1, cp) : players.splice(index, 1);
+                else {
+
+                    // remove player
+                    players.splice(index, 1);
+
+                    // adjust players to make up for the disconnected player
+                    if (players.length >= index) 
+                        shiftPlayers(index);
+                }
             }
-            return false; 
         }
     };
 }();
-},{"../controller/map.js":3,"../objects/player.js":36,"../settings/app.js":46,"../tools/dom.js":53}],6:[function(require,module,exports){
+},{"../controller/map.js":3,"../menu/menu.js":22,"../objects/player.js":36,"../settings/app.js":46,"../tools/dom.js":53,"../tools/keyboard.js":56}],6:[function(require,module,exports){
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.animate = require('../game/animate.js');
@@ -2401,7 +2445,6 @@ module.exports = function () {
     };
 
     var type = function (element, sentance, index) {
-
         setTimeout(function () {
 
             if (sentance[index] && app.temp.typing === sentance) { 
@@ -2790,10 +2833,9 @@ Counter = require('../tools/counter.js');
 
 app.coStatus = new StatusHud();
 
-
 module.exports = function () {
 
-    var selected, actions, end = false, started = false, settings = require('../settings/default.js');
+    var name, selected, actions, end = false, started = false, settings = require('../settings/default.js');
 
     // used for accessing the correct building array via what type of transportation the unit uses
     var ports = { air: 'airport', foot: 'base', wheels: 'base', boat: 'seaport' };
@@ -2805,6 +2847,12 @@ module.exports = function () {
         started: function () {return started;},
         settings: function () {return settings;},
         load: function (room) { settings = room.settings; },
+        name: function (n) {
+            if (n) name = n;
+            return name;
+        },
+        
+        clear: function () { name = undefined; },
 
         set: function (setting, value) {
             settings[setting] = value;
@@ -2832,6 +2880,9 @@ module.exports = function () {
 
             // start game mechanics
             app.game.loop();
+
+            // clear selection indices
+            app.display.reset();
 
             // move the screen to the current players headquarters
             app.screen.to(hq);
@@ -3462,22 +3513,25 @@ module.exports = function () {
 
         var length = app.players.length();
 
-        for(var t = 1; t <= length; t += 1){
+        for(var n = 1; n <= length; n += 1){
 
-            var element = document.getElementById('player'+t+type);
+            var element = document.getElementById('player'+n+type);
 
-            var previous = app.players.number(t)[type.toLowerCase()];
+            var previous = app.players.number(n)[type.toLowerCase()];
+            var name = previous.name ? previous.name : previous;
 
-            if(previous){
+            if (name) {
 
                 var children = element.childNodes;
                 var childrenLength = children.length;
 
-                for(var c = 0; c < childrenLength; c += 1){
+                for (var c = 0; c < childrenLength; c += 1) {
+
                     var child = children[c];
-                    if(child.getAttribute('class') === previous){
+
+                    if (child.getAttribute('class').toLowerCase() === name.toLowerCase()){
                         child.setAttribute('default',true);
-                    }else if(child.getAttribute('default')){
+                    } else if (child.getAttribute('default')) {
                         child.removeAttribute('default');
                     }
                 }
@@ -3525,16 +3579,19 @@ module.exports = function () {
 
         if(!temp.joinCreate){
 
-            var teamsElement = temp.teamsElement = app.display.setup(playerElements, setupScreenElement);
+            var teamsElement = temp.teamsElement = app.display.setup (playerElements, setupScreenElement);
 
             playerElements.properties = app.settings.playersDisplayElement;
 
-            if (from === 'choseGame') moveElements('up', teamsElement);
+            if (from === 'choseGame') {
+                moveElements('up', teamsElement);
+                socket.emit('getPlayerStates', {category: app.map.category(), name: app.game.name()});
+            }
 
             temp.joinCreate = true;
         }
-        
-        var team = app.display.complexSelect(playerElements, function(property){
+
+        var team = app.display.complexSelect (playerElements, function (property) {
             var element = temp.selectedContainer = document.getElementById(property);
             var top = Number(element.parentNode.style.top.replace('px',''));
             var arrows = createArrows(element, top, top + 25);
@@ -3543,52 +3600,62 @@ module.exports = function () {
             return element;
         }, true);
         
-        if (team && !app.players.empty()) app.players.setProperty(team.property, team.value);
+        if (team.property && !app.players.empty()) 
+            app.players.setProperty(team.property, team.value);
 
         app.effect.swell.color(now, [temp.up, temp.down], color['white'], speed, swell);
         coBorderColor();
 
-        if (app.key.pressed(app.key.enter())) {
+        if (!team.property && team.substring(7) !== 'mode') {
+            if (app.key.pressed(app.key.enter())) {
 
-            clearTempAndPrev();
-            app.undo.tempAndPrev();
-            app.key.undo();
-            resetDefaults('co');
-            resetDefaults('mode');
-
-            var player = app.user.player();
-            player.isReady(true);
-            socket.emit('ready', player);
-
-            if(app.map.players() > 2){
-                temp.selectTeams = true;
-            }else{
-                temp.ready = true;
-                temp.selectTeams = true;
-                var upArr = document.getElementById('upArrowOutline');
-                var downArr = document.getElementById('downArrowOutline');
-                upArr.style.display = 'none';
-                downArr.style.display = 'none';
-                changeTeamElementHeight('20%');
-            }
-            return false;
-        }else{
-            return exit(false, function () {
-                var teams = document.getElementById('teams');
-                teams.removeChild(document.getElementById('upArrowOutline'));
-                teams.removeChild(document.getElementById('downArrowOutline'));
-                if (from !== 'choseGame'){
-                    moveElements('down', teams);
-                }else{
-                    setupScreenElement.removeChild(teams);
-                }
-                app.undo.tempAndPrev();
                 clearTempAndPrev();
-                app.players.reset();
-                temp.back = true;
-                nameInput = true;
-                setupScreenElement.removeChild(document.getElementById('descriptionOrChatScreen'));
-            });
+                app.undo.tempAndPrev();
+                app.key.undo();
+                resetDefaults('co');
+
+                var player = app.user.player();
+                player.isReady(true);
+                socket.emit('ready', player);
+
+                if(app.map.players() > 2){
+                    temp.selectTeams = true;
+                }else{
+                    temp.ready = true;
+                    temp.selectTeams = true;
+                    var upArr = document.getElementById('upArrowOutline');
+                    var downArr = document.getElementById('downArrowOutline');
+                    upArr.style.display = 'none';
+                    downArr.style.display = 'none';
+                    changeTeamElementHeight('20%');
+                }
+                return false;
+            }else{
+                return exit(false, function () {
+                    var name, teams = document.getElementById('teams');
+                    teams.removeChild(document.getElementById('upArrowOutline'));
+                    teams.removeChild(document.getElementById('downArrowOutline'));
+                    if (from !== 'choseGame'){
+                        moveElements('down', teams);
+                    }else{
+                        setupScreenElement.removeChild(teams);
+                    }
+                    app.undo.tempAndPrev();
+                    clearTempAndPrev();
+                    temp.back = true;
+                    nameInput = true;
+                    setupScreenElement.removeChild(document.getElementById('descriptionOrChatScreen'));
+                    if (app.players.length() < 2) {
+                        app.maps.remove(app.map.name());
+                        socket.emit('removeRoom', {
+                            category:app.map.category(), 
+                            name: app.game.name()
+                        });
+                        app.game.clear();
+                    }
+                    app.players.reset();
+                });
+            }
         }
     };
 
@@ -3650,6 +3717,7 @@ module.exports = function () {
                 temp.selectTeams = true;
                 return false;
             }
+
             app.key.undo();
             changeTeamElementHeight('30%');
             temp.joinCreate = true;
@@ -3692,19 +3760,18 @@ module.exports = function () {
 
         app.players.ready() && app.user.first() ? sButton.show() : sButton.hide();
 
-        if(ready) return app.players.all();
+        if (ready) return app.players.all();
 
-        if(app.key.pressed(app.key.enter())) 
+        if (app.key.pressed(app.key.enter())) 
             app.chat.display(app.chat.message(temp.input));
 
-        if(app.key.pressed(app.key.esc()) || boot) {
+        if (app.key.pressed(app.key.esc()) || boot) {
 
             var player = app.user.player();
             player.isReady(false);
             socket.emit('ready', player);
             resetDefaults('co');
-            resetDefaults('mode');
-
+            
             temp.chatScreen.style.height = '20%';
 
             var descOrChat = temp.descOrChat;
@@ -3725,9 +3792,9 @@ module.exports = function () {
             temp.ready = false;
             sButton.remove();
 
-            if(app.map.players() > 2){
+            if (app.map.players() > 2) {
                 temp.selectTeams = true;
-            }else{
+            } else {
                 changeTeamElementHeight('30%');
                 temp.selectTeams = false;
                 temp.joinCreate = true;
@@ -3736,6 +3803,9 @@ module.exports = function () {
     };  
 
     return {
+
+        arrowsTo: function (element) { app.display.setIndex(element); },
+
         back: function(){ boot = true; },
 
         choseMapOrGame: function (type) {
@@ -3749,15 +3819,15 @@ module.exports = function () {
                 setupScreenElement.removeChild(select);
                 setupScreenElement.removeChild(buildings);
                 setupScreenElement.removeChild(categories);
-                app.display.resetPreviousIndex();
+                app.display.resetPreviousIndex(); // reset index
                 app.key.undo();
                 maps.clear();
                 clearTempAndPrev();
                 app.undo.tempAndPrev();
             };
 
-            if(!temp.select) temp.select = app.display.mapOrGame(element, allMaps);
-            if(!temp.category) temp.category = document.getElementById('selectCategoryScreen');
+            if (!temp.select) temp.select = app.display.mapOrGame(element, allMaps);
+            if (!temp.category) temp.category = document.getElementById('selectCategoryScreen');
 
             // send a request to the server for a list of maps if one has not been returned yet
             maps.setCategory(app.effect.horizontalScroll(temp.category));
@@ -3765,7 +3835,7 @@ module.exports = function () {
             if(maps.updated()){
                 var elements = app.display.info(allMaps, ['name'], element, element.li);
                 app.display.mapOrGameSelection(element.section, elements);
-                if(maps.index() === false) app.display.resetPreviousIndex(); // reset index
+                if (!maps.index()) app.display.resetPreviousIndex(); // reset index
             }
 
              // enable selection of maps and keep track of which map is being highlighted for selection
@@ -3773,7 +3843,8 @@ module.exports = function () {
             var index = app.display.index();
 
             // display information on each map in their appropriate locations on the setup screen as they are scrolled over
-            if(index && maps.index() + 1 !== index) app.display.mapInfo(maps.byIndex(index - 1));
+            if(index && maps.index() + 1 !== index) 
+                app.display.mapInfo(maps.byIndex(index - 1));
             
             // if a map has been selected, return it for use in the game.
             if(id && (map = maps.byId(id))){
@@ -3782,6 +3853,7 @@ module.exports = function () {
                 app.map.set(map.map ? map.map : map);
 
                 if (type === 'game'){
+                    app.game.name(map.name);
                     map.players.push(app.user.raw());
                     app.players.add(map.players);
                     socket.emit('join', map);
@@ -3795,6 +3867,7 @@ module.exports = function () {
                 clearSelect(setupScreenElement);
                 return 'back';
             }
+
             return false;
         },
 
@@ -3806,11 +3879,9 @@ module.exports = function () {
 
                 settingsElement = app.display.setup(settingsElements, setupScreenElement, temp.back);
 
-                if(temp.back){
-                    moveElements('down', settingsElement, function(){ temp.swell = true; });
-                }else{
-                    moveElements('up', settingsElement, function(){ temp.swell = true; });
-                }
+                if (temp.back) moveElements('down', settingsElement, function(){ temp.swell = true; });
+                
+                else moveElements('up', settingsElement, function(){ temp.swell = true; });
 
                 temp.settings = true;
             }
@@ -3841,7 +3912,7 @@ module.exports = function () {
             }
 
             // make background swell
-            if(temp.swell) app.effect.swell.size(temp.selectedContainer, 50, 100);
+            if (temp.swell) app.effect.swell.size(temp.selectedContainer, 50, 100);
             app.effect.swell.color(new Date(), [temp.up, temp.down], color.white, speed, swell);
 
             if(app.key.pressed(app.key.enter()) || nameInput){
@@ -3989,7 +4060,7 @@ module.exports = function () {
         setupRoom: function (name) {
             var room = {};
             var map = app.map.get();
-            room.name = name;
+            room.name = app.game.name(name);
             room.settings = app.game.settings();
             room.max = app.map.players();
             room.map = map;
@@ -4046,7 +4117,7 @@ module.exports = function () {
             if(app.key.pressed()) app.key.undo();        
         },
 
-        start: function () {ready = true}
+        start: function () { ready = true; }
     };
 }();
 },{"../controller/background.js":1,"../controller/maps.js":4,"../objects/screens.js":40,"../settings/app.js":46,"../tools/keyboard.js":56,"../tools/sockets.js":60}],23:[function(require,module,exports){
@@ -4165,6 +4236,7 @@ module.exports = function (){
         mapdesign:function(){
             app.map.set(app.maps.random());
             app.players.add(app.user.raw());
+            app.cursor.editing();
             return 'editor'; 
         },
         store:function(){
@@ -5117,7 +5189,6 @@ var Player = function (user) {
     };
 };
 
-Player.prototype.ready = function () { return this._current.ready; };
 Player.prototype.color = function () { return this.number(); }; // <-------------- figure out color system at some point
 Player.prototype.number = function () { return this._current.number; };
 Player.prototype.index = function () { return app.players.indexOf(this); };
@@ -6035,9 +6106,9 @@ Unit = function (player, position, info) {
     this.id = app.increment.id();
     this.properties = info.properties;
     this.properties.cost = info.cost;
-    this.playa = player;
+    this.user = player;
 
-    this.player = function () { return this.playa;};
+    this.player = function () { return this.user;};
 
     this.position = function () { 
         var pos = this._current.position;
@@ -6270,7 +6341,7 @@ Unit.prototype.canMove = function (position) {
 
 
 Unit.prototype.get = function() { return app.map.getUnit(this); };
-Unit.prototype.index = function () { return app.map.getIndex(this); };
+Unit.prototype.index = function () { return app.map.getIndex(this, app.map.units()); };
 
 // ------------------------------ recovery --------------------------------------------------------------
 
@@ -7518,7 +7589,7 @@ module.exports = function () {
             };
         }
         touched = undefined;
-        return false;
+        return property;
     };
 
     var elementExists = function (id, element, parent){
@@ -7864,7 +7935,8 @@ module.exports = {
         var len = children.length;
         for(c = 0; c < len; c += 1){
             var child = children[c];
-            if(child.style.display !== 'none') return child.getAttribute('class');
+            if(child.style.display !== 'none') 
+                return child.getAttribute('class');
         }
     },
     
@@ -7936,6 +8008,22 @@ module.exports = {
     hide: function (name) {
         var element = document.getElementById(name);
         element.hidden.style.visibility = 'hidden';
+    },
+
+    changeDefault: function (change, element) {
+        
+        var nodes = element.childNodes;
+
+        for (var i = 0; i < nodes.length; i += 1){
+
+            if (nodes[i].getAttribute('default')){
+                nodes[i].style.display = 'none';
+                nodes[i].removeAttribute('default');
+            }
+
+            if (nodes[i].getAttribute('class') === change)
+                this.show(nodes[i]);
+        }   
     },
 
     getDefault: function (element) {
@@ -8283,75 +8371,75 @@ Unit = require('../objects/unit.js');
 var validate = new Validator('sockets');
 var socket = io.connect("http://127.0.0.1:8080") || io.connect("http://jswars-jswars.rhcloud.com:8000");
 
-socket.on('setMap', function(map){app.game.setMap(map)});
-socket.on('start', function(game){app.menu.start();});
-//socket.on('player', function(player){ app.players.add(player); });
-socket.on('userAdded', function(message){app.chat.display(message);});
-socket.on('gameReadyMessage', function(message){app.chat.display(message);});
-socket.on('propertyChange', function(properties){app.players.changeProperty(properties);});
-socket.on('readyStateChange', function(player){app.players.get(new Player(player)).isReady(player.ready);});
-socket.on('addPlayer', function(player){app.players.add(player);});
-socket.on('addRoom',function(room){ app.maps.add(room); });
-socket.on('removeRoom', function(room){
-    console.log('remove!!');
-    app.maps.remove(room);
+socket.on('setMap', function (map) {app.game.setMap(map)});
+socket.on('start', function (game) {app.menu.start();});
+//socket.on('player', function (player) { app.players.add(player); });
+socket.on('userAdded', function (message) {app.chat.display(message);});
+socket.on('gameReadyMessage', function (message) {app.chat.display(message);});
+socket.on('propertyChange', function (properties) {app.players.changeProperty(properties);});
+socket.on('readyStateChange', function (player) {
+    app.players.get(new Player(player)).isReady(player.ready);
 });
 
-socket.on('disc', function(user){
+socket.on('addPlayer', function (player) {app.players.add(player);});
+socket.on('addRoom',function (room) { app.maps.add(room); });
+socket.on('removeRoom', function  (room) { app.maps.remove(room); });
+
+socket.on('disc', function (user) {
     app.chat.display({message:'has been disconnected.', user:user.name.uc_first()});
-    app.players.remove(new Player(user));
+    app.players.remove(user);
 });
 
-socket.on('userJoined', function(user) {
-    app.players.add(user);
-    if(!user.cp) app.chat.display({message:'has joined the game.', user:user.name.uc_first()});
-});
-
-socket.on('joinedGame', function(joined){
-    app.background.set(joined.background);
-    app.game.load(joined);
-});
-
-socket.on('userLeft', function(user){
+socket.on('userLeft', function (user) {
     app.chat.display({message: 'has left the game.', user: user.name.uc_first()});
-    app.players.remove(new Player(user));
+    app.players.remove(user);
 });
 
-socket.on('userRemoved', function (user) {
+socket.on('userRemoved', function  (user) {
     app.chat.display({message:'has been removed from the game.', user:user.name.uc_first()});
     app.players.remove(user);
 });
 
-socket.on('back', function(){
+socket.on('userJoined', function (user) {
+    app.players.add(user);
+    if(!user.cp) app.chat.display({message:'has joined the game.', user:user.name.uc_first()});
+});
+
+socket.on('joinedGame', function (joined) {
+    app.background.set(joined.background);
+    app.game.load(joined);
+});
+
+socket.on('back', function () {
     app.modes.boot();
     app.menu.back();
 });
 
-socket.on('cursorMove', function(move){
+socket.on('cursorMove', function (move) {
     app.key.press(move);
     app.cursor.move(true);
 });
 
-socket.on('background', function(type){ app.background.set(type); });
+socket.on('background', function (type) { app.background.set(type); });
 
-socket.on('endTurn', function(id){    
-    if(validate.turn({id: function (){return id;}}))
+socket.on('endTurn', function (id) {    
+    if(validate.turn({id: function  () {return id;}}))
         app.options.end();
 });
 
-socket.on('addUnit', function(unit){
+socket.on('addUnit', function (unit) {
     var u = unit._current;
-    var player = app.players.get({id:function(){return u.player._current.id;}});
+    var player = app.players.get({id:function () {return u.player._current.id;}});
     var unit = new Unit(player, u.position, app.units[u.name.toLowerCase()]);
     if(validate.build(unit))
-        if(player.canPurchase(unit.cost())){
+        if(player.canPurchase(unit.cost())) {
             player.purchase(unit.cost());          
             app.map.addUnit(unit);
         }
 });
 
-socket.on('attack', function(action){
-    if(validate.attack(action)){
+socket.on('attack', function (action) {
+    if(validate.attack(action)) {
         var attacker = app.map.getUnit(action.attacker), 
         attacked = app.map.getUnit(action.attacked);
         attacker.attack(attacked, action.damage);
@@ -8360,32 +8448,34 @@ socket.on('attack', function(action){
     }
 });
 
-socket.on('joinUnits', function(action){
-    if(validate.combine(action)){
+socket.on('joinUnits', function (action) {
+    if(validate.combine(action)) {
         var unit = app.map.getUnit(action.unit);
         var selected = app.map.getUnit(action.selected);
         selected.join(unit);
     }
 });
 
-socket.on('moveUnit', function(move){ 
+socket.on('moveUnit', function (move) {
     var unit = app.map.getUnit(move);
     var target = move.position;
     if(validate.move(unit, target))
         unit.move(target, move.moved);
 });
 
-socket.on('loadUnit', function(load){
+socket.on('loadUnit', function (load) {
     var passanger = app.map.getUnit({id:load.passanger});
     var transport = app.map.getUnit({id:load.transport});
     if(validate.load(transport, passanger))
         passanger.load(transport);
 });
 
-socket.on('unload', function(transport){ 
+socket.on('unload', function (transport) { 
     var unit = app.map.getUnit(transport);
     unit.drop(transport, transport.index); 
 });
+
+socket.on('updatePlayerStates', function (players) { app.players.add(players); });
 
 module.exports = socket;
 },{"../controller/background.js":1,"../controller/cursor.js":2,"../controller/map.js":3,"../controller/maps.js":4,"../controller/players.js":5,"../definitions/units.js":11,"../game/game.js":18,"../menu/modes.js":23,"../menu/options.js":24,"../objects/player.js":36,"../objects/unit.js":44,"../settings/app.js":46,"../tools/chat.js":50,"../tools/keyboard.js":56,"../tools/validator.js":63}],61:[function(require,module,exports){

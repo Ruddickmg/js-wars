@@ -374,7 +374,7 @@ module.exports = function () {
             };
         }
         touched = undefined;
-        return false;
+        return property;
     };
 
     var elementExists = function (id, element, parent){

@@ -9,11 +9,11 @@ app.key = require('../tools/keyboard.js');
 //app.user = require('../objects/user.js');
 app.game = require('../game/game.js');
 app.display = require('../tools/display.js');
-
+app.feature = require('../objects/featureHud.js');
 
 module.exports = function () {
 
-    var selected, moved, active, enter, hidden = false, position = {x:7, y:5}, key = app.key;
+    var editing, selected, moved, active, enter, hidden = false, position = {x:7, y:5}, key = app.key;
 
     var allowed = function (range) {
         if (!range) range = app.range.get();
@@ -48,7 +48,7 @@ module.exports = function () {
     };
 
     return {
-
+        editing: function () { editing = true; },
         clear: function () {selected = false, hidden = false, moved = false;},
         hide: function () { 
             hidden = true; 
@@ -127,7 +127,7 @@ module.exports = function () {
         },
         displayPosition: function () { return true; },
         copy: function () {
-            if (key.pressed(key.copy()) && !app.build.active())
+            if (editing && key.pressed(key.copy()) && !app.build.active())
                 app.feature.set((selected = app.map.top(position))); 
         },
         build: function () { 
@@ -157,7 +157,7 @@ module.exports = function () {
                     pressed = key.right();
 
                 if(pressed){
-                    app.feature.set(selected);
+                    if (editing) app.feature.set(selected);
                     if (app.user.turn()) socket.emit('cursorMove', pressed);
                     moved = true;
                     app.screen.scroll();

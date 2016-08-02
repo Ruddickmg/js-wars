@@ -23,10 +23,9 @@ Counter = require('../tools/counter.js');
 
 app.coStatus = new StatusHud();
 
-
 module.exports = function () {
 
-    var selected, actions, end = false, started = false, settings = require('../settings/default.js');
+    var name, selected, actions, end = false, started = false, settings = require('../settings/default.js');
 
     // used for accessing the correct building array via what type of transportation the unit uses
     var ports = { air: 'airport', foot: 'base', wheels: 'base', boat: 'seaport' };
@@ -38,6 +37,12 @@ module.exports = function () {
         started: function () {return started;},
         settings: function () {return settings;},
         load: function (room) { settings = room.settings; },
+        name: function (n) {
+            if (n) name = n;
+            return name;
+        },
+        
+        clear: function () { name = undefined; },
 
         set: function (setting, value) {
             settings[setting] = value;
@@ -65,6 +70,9 @@ module.exports = function () {
 
             // start game mechanics
             app.game.loop();
+
+            // clear selection indices
+            app.display.reset();
 
             // move the screen to the current players headquarters
             app.screen.to(hq);

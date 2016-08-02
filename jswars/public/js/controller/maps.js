@@ -8,7 +8,7 @@ Map = require('../objects/map.js')
 
 module.exports = function () {
 
-	var error, maps, keys, change, index = false, type = 'map', category,
+	var error, maps, keys, change, index, type = 'map', category,
 	validate = new Validator('maps'), categories = ['two'];
 
 	types = {
@@ -112,6 +112,7 @@ module.exports = function () {
         remove: function(room){
         	var games = types.game.items;
 	        if(category === room.category && games[room.name]){
+	        	socket.emit('removeRoom', room);
 	            delete games[room.name];
 	            keys = Object.keys(games);
 	            change = true;
@@ -150,7 +151,7 @@ module.exports = function () {
 			    buildings: map.buildings,
 			    background: map.background,
 			    units: map.units
-            }, 'maps/save', function(response){
+            }, 'maps/save', function (response) {
 				console.log(response);
             	change = true;
             });

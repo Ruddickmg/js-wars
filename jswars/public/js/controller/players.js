@@ -1,6 +1,8 @@
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
 app.dom = require('../tools/dom.js');
+app.menu = require('../menu/menu.js');
+app.keys = require('../tools/keyboard.js');
 Player = require('../objects/player.js');
 
 module.exports = function () {
@@ -16,36 +18,59 @@ module.exports = function () {
     },
 
     exists = function (player) {
-
-		var i = 0, length = players.length;
-
-        while ((p = players[i++]))
-            if(p.id() === player.id())
-                return players.splice(x,1,p)[0];
-
+        for (var id, i = 0; i < players.length; i += 1){
+            id = isNaN(player.id) ? player.id() : player.id;
+            if (players[i].id() === id)
+                return i;
+        }
         return false;
     },
 
-    addPlayer = function (player){
+    addPlayer = function (player, number) {
 
         // check if player is already in and replace if they are
         if(player && players.length <= app.map.players()){
 
             // get the attributes of the co from game and add them to player object
-            var id = 'player'+player.number+'co';
-            var value = app.dom.getDefault(document.getElementById(id));
-            if(!value && player.co) value = player.co;
+            var id = 'player'+ (number || player.number) +'co';  // <--- why doesnt the player.number property work???!!!
+            var element = document.getElementById(id);
+            var index = exists(player), value = app.dom.getDefault(element);
+            
+            if(!value && player.co)
+                value = player.co;
 
-            player.number = players.length + 1;
+            player.number = index === false ? players.length + 1 : players[index].number();
             player = new Player(player);
 
-            if(!exists(player)) players.push(player);
+            if (index !== false) players.splice(index, 1, player);
+            else players.push(player);
 
             if (value) setProperties(id, value);
-
             return true;
         }
         return false;
+    },
+
+    shiftPlayers = function (index) {
+
+        // get currently selected co
+        var selected = app.dom.getDefault(document.getElementById('player'+ app.user.player().number() +'co'));
+
+        // move each player after the removed player down one
+        for (i = index; i < players.length; i += 1)
+            players[i].setNumber(i + 1);
+
+        // generate id for new player location
+        var co = 'player'+app.user.player().number()+'co';
+
+        // move arrows to correct position
+        app.keys.press(app.keys.left());
+        app.menu.arrowsTo(co);
+
+        // change co to match players original selection
+        setProperties(co, selected);
+        app.dom.changeDefault(selected, document.getElementById(co));
+        
     };
 
 	return {
@@ -70,12 +95,12 @@ module.exports = function () {
         add: function (player) {
         	if(player.length)
         		for(var i = 0; i < player.length; i+=1)
-        			addPlayer(player[i]);
+        			addPlayer(player[i], i + 1);
         	else addPlayer(player);
         	return current = players[0];
         },
 
-        // cheack if all players are present and ready
+        // check if all players are present and ready
 		ready: function () {
             var length = app.map.players();
             for(i = 0; i < length; i += 1)
@@ -93,13 +118,9 @@ module.exports = function () {
         },
 
         reset: function () { return players.splice(0, players.length); },    
-
         current: function () { return current; },
-
         setCurrent: function (player) { current = player; },
-
         defeated: function () { return defeated; },
-
         defeat: function (player) {
             defeated.concat(players.splice(player.index(), 1));
             if(app.players.length() <= 1)
@@ -123,19 +144,27 @@ module.exports = function () {
 
         remove: function(player, cp){
 
-            var i, index = player.index(), player = app.players.get(player); 
+            // make this more complex to handle redistribution of players
+            var i, index = exists(player);
 
-            if(player){
+            if (index !== false) {
 
-                console.log(player);
+                // if there is a specified computer replacement or the game has started
+                if (cp || app.game.started())
 
-                // make this more complex to handle redistribution of players
-                for(i = index; i < players.length; i += 1)
-                    document.getElementById('player' + players[i].number() + 'co').style.borderColor = 'white';
+                    // then replace the player with the ai or undefined
+                    players.splice(index, 1, cp)
 
-                return cp ?  players.splice(index, 1, cp) : players.splice(index, 1);
+                else {
+
+                    // remove player
+                    players.splice(index, 1);
+
+                    // adjust players to make up for the disconnected player
+                    if (players.length >= index) 
+                        shiftPlayers(index);
+                }
             }
-            return false; 
         }
     };
 }();

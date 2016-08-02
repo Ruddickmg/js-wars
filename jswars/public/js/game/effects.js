@@ -49,7 +49,6 @@ module.exports = function () {
     };
 
     var type = function (element, sentance, index) {
-
         setTimeout(function () {
 
             if (sentance[index] && app.temp.typing === sentance) { 

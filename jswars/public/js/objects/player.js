@@ -24,7 +24,6 @@ var Player = function (user) {
     };
 };
 
-Player.prototype.ready = function () { return this._current.ready; };
 Player.prototype.color = function () { return this.number(); }; // <-------------- figure out color system at some point
 Player.prototype.number = function () { return this._current.number; };
 Player.prototype.index = function () { return app.players.indexOf(this); };

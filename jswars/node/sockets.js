@@ -9,22 +9,27 @@ module.exports = function () {
 
     var clients = {}; // holds sockets
     var rooms = {
-        lobby: new Room(0),
-        disconnected: new Room()
+        lobby: new Room(0, 'lobby'),
+        disconnected: new Room (undefined, 'disconnected')
     };
     var roomId = 2;
     var usedId = [];
 
     // fix this 
     var recycleId = function () {
-        var id = roomId += 1
+        var id = roomId += 1;
         var val = usedId[usedId.length - 1];
-        while (id < val){
+        while (id < val) {
             var len = usedId.length - 1;
             delete usedId[len];
             val = usedId[len - 1];
         }
         return roomId;
+    };
+
+    var removeRoom = function (room) {
+        var cat = rooms[room.category];
+        if(cat[room.name]) delete cat[room.name];
     };
     
     return { 
@@ -61,17 +66,15 @@ module.exports = function () {
             };
 
             socket.on('boot', function (room) {
-
-                var name = socket.room.name;
-                if(room.player){
-                    socket.room.players.splice(room.player.number, 1, room.cp);
+                var room = socket.room;
+                if (room.player) {
+                    room.remove(room.player);
                     socket.broadcast.to(room.player.socketId).emit('back', true);
-                    socket.broadcast.to(name).emit('userRemoved', room.cp);
+                    socket.broadcast.to(room.name).emit('userRemoved', room.cp);
                 }else{
                     socket.room.players.splice(room.cp.number - 1, 1);
                     socket.broadcast.to(name).emit('userRemoved', room.cp);
                 }
-
             });
 
             socket.on('ready', function (player) {
@@ -80,8 +83,13 @@ module.exports = function () {
                     .emit('readyStateChange', socket.player);
             });
 
+            socket.on('getPlayerStates', function (game) { 
+                socket.emit('updatePlayerStates', rooms[game.category][game.name].players);
+            });
+            
             socket.on('setUserProperties', function (p) {
-                socket.room.players[p.index][p.property] = p.value;
+                var players = socket.room.players;
+                if (players.length) players[p.index][p.property] = p.value;
                 socket.broadcast.to(socket.room.name).emit('propertyChange', p);
             });
 
@@ -97,11 +105,16 @@ module.exports = function () {
             socket.on('start', function(game){ socket.broadcast.to(socket.room.name).emit('start', game); });
             socket.on('capture', function(capture){ socket.broadcast.to(socket.room.name).emit('capture', capture);});
             socket.on('endTurn', function(end){socket.broadcast.to(socket.room.name).emit('endTurn', end);});
+            socket.on('removeRoom', function (room) {
+                room = rooms[room.category][room.name];
+                if(room && room.remove(socket))
+                    removeRoom(room); 
+            });
 
             socket.on('join', function(room){
-                var joined = socket.joinRoom(rooms[room.category][room.name]);
+                socket.joinRoom(rooms[room.category][room.name]);
                 socket.emit('joinedGame', room);
-                socket.broadcast.to(socket.room.name).emit('userJoined', socket.player);
+                socket.broadcast.to(room.name).emit('userJoined', socket.player);
             });
 
             socket.on('background', function (type) { 
@@ -113,17 +126,23 @@ module.exports = function () {
 
             // create new game rooms
             socket.on('newRoom', function (game) {
-                var id = usedId[0] ? usedId.shift() : recycleId();
+
+                var room, id = usedId[0] ? usedId.shift() : recycleId();
+
                 if(!rooms[game.category]) rooms[game.category] = {};
-                socket.broadcast.to('lobby').emit('addRoom', socket.joinRoom((
-                    rooms[game.category][game.name] = new Room(id, game)
-                )));
+                if(!rooms[game.category][game.name]){
+
+                    room = rooms[game.category][game.name] = new Room(id, game);
+                    socket.joinRoom(room);
+                    socket.broadcast.to('lobby').emit('addRoom', room);
+
+                } else socket.emit('roomExists', game);
             });
 
-            socket.on('exit', function (boot) {
+            socket.on ('exit', function (boot) {
                 socket.broadcast.to(socket.room.name)
                     .emit(boot ? 'userRemoved' : 'userLeft', socket.player);
-                socket.joinRoom(rooms.lobby);
+                socket.room.remove(socket);
             });
 
             // add user to players
@@ -134,18 +153,30 @@ module.exports = function () {
             });
 
             socket.on('disconnect', function () {
-                if(socket.room) {
-                    socket.broadcast.to(socket.room.name)
-                        .emit('disc', socket.player);
-                    if(socket.player && socket.room.name && socket.room.category){
+
+                var room = socket.room
+
+                if (room) {
+
+                    socket.leave(room.name);
+
+                    if (socket.player) {
+
+                        socket.broadcast.to(room.name)
+                            .emit('disc', socket.player);
+
                         socket.player.previousRoom = { 
-                            name: socket.room.name, 
-                            category: socket.room.category, 
+                            name: room.name, 
+                            category: room.category, 
                             timeOfDisconnect: new Date()
                         };
+
+                        socket.player.clear();
                         rooms.disconnected[socket.player.id] = socket.player;
                     }
-                    socket.room.remove(socket);
+
+                    if (room.remove(socket) && room.name !== 'lobby' && room.name !== 'disconnected')
+                        removeRoom(room);
                 }
             });
         }

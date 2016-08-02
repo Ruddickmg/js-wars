@@ -45,9 +45,9 @@ Unit = function (player, position, info) {
     this.id = app.increment.id();
     this.properties = info.properties;
     this.properties.cost = info.cost;
-    this.playa = player;
+    this.user = player;
 
-    this.player = function () { return this.playa;};
+    this.player = function () { return this.user;};
 
     this.position = function () { 
         var pos = this._current.position;
@@ -280,7 +280,7 @@ Unit.prototype.canMove = function (position) {
 
 
 Unit.prototype.get = function() { return app.map.getUnit(this); };
-Unit.prototype.index = function () { return app.map.getIndex(this); };
+Unit.prototype.index = function () { return app.map.getIndex(this, app.map.units()); };
 
 // ------------------------------ recovery --------------------------------------------------------------
 

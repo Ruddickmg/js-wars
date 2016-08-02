@@ -41,7 +41,7 @@ application.use(express.static(__dirname + '/public'));
 var minutes = function (minutes) { return 60000 * minutes; };
 
 // set up instance of socket io with server
-var io = require('socket.io') (server);
+var io = require ('socket.io') (server);
 
 // get code for socket communication
 var socket = require('./node/sockets.js');
@@ -62,11 +62,9 @@ application.use(bp.json());
 application.get('/', function (req, res) {res.sendFile(__dirname + '/index.html');});
 application.get('/maps/type/:category', function (req, res){backend(res).get_maps(req.params.category, res);});
 application.get('/maps/select/:id', function (req, res){backend(res).get_map(req.params.id, res);});
-application.post('/maps/save', function(req, res){backend(res).save_map(req.body, res);});
-application.get('/games/:category', function (req, res){
-    var games = socket.rooms(req.params.category);
-    var response = games ? games : [];
-    res.json(response);
+application.post('/maps/save', function (req, res){backend(res).save_map(req.body, res);});
+application.get ('/games/:category', function (req, res) {
+    res.json(socket.rooms(req.params.category) || []);
     res.end();
 });
 

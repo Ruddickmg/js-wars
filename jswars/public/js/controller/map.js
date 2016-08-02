@@ -17,6 +17,7 @@ module.exports = function () {
     matrix, buildings = [], terrain = [], units = [],
     color = app.settings.playerColor, allowedUnits, allowedBuildings,
     validate = new Validator('map');
+
     var restricted = {
         sea: ['sea', 'reef', 'shoal'],
         reef: this.sea,
@@ -41,12 +42,14 @@ module.exports = function () {
             if (building && building.on(position)) on.building = building;
             if (t && t.on(position)) on.terrain = t;
         }
+
         if (!on.terrain) on.terrain = new Terrain('plain', new Position(position.x, position.y));
         return on;
     };
 
-    var getIndex = function (element) {
-        var elements, id = element.id !== undefined;
+    var detectIndex = function (element) {
+        var elements;
+
         switch (element.type()) {
             case 'unit': elements = units;
                 break;
@@ -54,8 +57,14 @@ module.exports = function () {
                 break;
             default: elements = terrain;
         }
+
+        return getIndex(element, elements);
+    };
+
+    var getIndex = function (element, elements) {
+        var id = element.id !== undefined;
         if (element) for (var i = 0; i < elements.length; i += 1)
-            if (((compare = elements[i]) && id && compare.id === element.id) || !id && compare.on(element.position()))  
+            if (((compare = elements[i]) && id && compare.id === element.id) || !id && compare.on(element.position()))
                 return i;
         return false;
     };
@@ -81,16 +90,20 @@ module.exports = function () {
     };
 
     var deleteElement = function (element) {
-        if(element.type() == 'unit'){
+
+        if (element.type() == 'unit') {
             allowedUnits += 1;
             app.map.removeUnit(element);
-        }else if(element.type() == 'building'){
+        
+        } else if (element.type() == 'building') {
             allowedBuildings += 1;
-            buildings.splice(getIndex(element), 1, matrix.remove(element));
-        } else if(isSea(element))
-            terrain.splice(getIndex(element), 1, matrix.insert(adjustOrientation(new Terrain('sea', element.position()))));
+            buildings.splice(detectIndex(element), 1, matrix.remove(element));
+        
+        } else if (isSea(element))
+            terrain.splice(detectIndex(element), 1, matrix.insert(adjustOrientation(new Terrain('sea', element.position()))));
+
         else matrix.remove(position);
-    }
+    };
 
     var facing = function (element) {
 
@@ -136,7 +149,7 @@ module.exports = function () {
             if((name = neighbor.name().toLowerCase()) === 'shoal' || element.name === 'reef' && !isSea(neighbor))
                 deleteElement(neighbor, 'sea');
             else if((adjusted = adjustOrientation(neighbor))){
-                terrain.splice(getIndex(neighbor), 1, adjusted);
+                terrain.splice(detectIndex(neighbor), 1, adjusted);
                 if(matrix.get(neighbor).type() !== 'unit')
                     matrix.insert(adjusted);
             }
@@ -157,7 +170,7 @@ module.exports = function () {
         var unit = new Unit(u.player(), new Position(p.x, p.y), u.name().toLowerCase());
         if (existing.unit && unit.canBuildOn(existing.unit.occupies())){
             allowedUnits -= 1;
-            return units.splice(getIndex(existing.unit), 1, matrix.insert(unit));
+            return units.splice(detectIndex(existing.unit), 1, matrix.insert(unit));
         } else if (existing.building && unit.canBuildOn(existing.building) || existing.terrain && unit.canBuildOn(existing.terrain)){
             allowedUnits -= 1;
             return addUnit(unit);
@@ -182,14 +195,14 @@ module.exports = function () {
         }
 
         if (existing.building)
-            buildings.splice(getIndex(existing.building), 1, building);
+            buildings.splice(detectIndex(existing.building), 1, building);
         else buildings.push(building);
 
         if (existing.terrain.type() !== 'plain') {
-            terrain.splice(getIndex(existing.terrain), 1);
+            terrain.splice(detectIndex(existing.terrain), 1);
             var i, n = neighbors(new Position(p.x,p.y));
             for (i = 0; i < n.length; i += 1)
-                terrain.splice(getIndex(n[i]), 1, adjustOrientation(n[i]));
+                terrain.splice(detectIndex(n[i]), 1, adjustOrientation(n[i]));
         }
 
         if (!existing.unit)
@@ -209,12 +222,12 @@ module.exports = function () {
         adjustSurroundings(element);
     
         if(existing.terrain.type() !== 'plain')
-            terrain.splice(getIndex(existing.terrain), 1, element);
+            terrain.splice(detectIndex(existing.terrain), 1, element);
         else terrain.push(element);
         if (existing.building)
-            buildings.splice(getIndex(existing.building), 1);
+            buildings.splice(detectIndex(existing.building), 1);
         if (existing.unit && !existing.unit.canBuildOn(element)){
-            units.splice(getIndex(existing.unit), 1);
+            units.splice(detectIndex(existing.unit), 1);
             return matrix.insert(element);
         } else if (!existing.unit) 
             return matrix.insert(element);
@@ -223,13 +236,14 @@ module.exports = function () {
 
     return {
         getNeighbors: neighbors,
+        detectIndex: detectIndex,
         getIndex: getIndex,
         occupantsOf: occupants,
         addUnit: addUnit,
         id: function () { return map.id; },
         name: function () { return map.name; },
         players: function () { return map.players; },
-        getUnit: function (unit) { return units[getIndex(unit)]; },
+        getUnit: function (unit) { return units[getIndex(unit, units)]; },
         category: function () { return map.category; },
         dimensions: function () { return map.dimensions; },
         background: function () { return background; },
@@ -265,7 +279,7 @@ module.exports = function () {
                 units.push(matrix.insert(new Unit(editor ? unit[k].player : app.players.number(unit[k].player), unit[k].position, app.unit[unit[k].type])));
         },
         moveUnit: function (unit, target) {
-            var e, current = units[getIndex(unit)];
+            var e, current = units[getIndex(unit, units)];
 
             if (current) matrix.remove(current);
             else current = unit;
@@ -278,7 +292,7 @@ module.exports = function () {
             return current;
         },
         removeUnit: function (unit){
-            var i = getIndex(unit);
+            var i = getIndex(unit, units);
             if(i !== undefined) unit = units.splice(i, 1)[0];
             if((e = matrix.get(unit)) && e.type() === 'unit' && e.id === unit.id)
                 matrix.remove(unit);
@@ -286,7 +300,7 @@ module.exports = function () {
             return unit;
         },
         attackUnit: function (unit, damage) {
-            units[getIndex(unit)].takeDamage(unit.health() - damage);
+            units[getIndex(unit, units)].takeDamage(unit.health() - damage);
             matrix.get(unit).takeDamage(unit.health() - damage);
         },
         changeOwner: function (building, player) {

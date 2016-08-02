@@ -256,22 +256,25 @@ module.exports = function () {
 
         var length = app.players.length();
 
-        for(var t = 1; t <= length; t += 1){
+        for(var n = 1; n <= length; n += 1){
 
-            var element = document.getElementById('player'+t+type);
+            var element = document.getElementById('player'+n+type);
 
-            var previous = app.players.number(t)[type.toLowerCase()];
+            var previous = app.players.number(n)[type.toLowerCase()];
+            var name = previous.name ? previous.name : previous;
 
-            if(previous){
+            if (name) {
 
                 var children = element.childNodes;
                 var childrenLength = children.length;
 
-                for(var c = 0; c < childrenLength; c += 1){
+                for (var c = 0; c < childrenLength; c += 1) {
+
                     var child = children[c];
-                    if(child.getAttribute('class') === previous){
+
+                    if (child.getAttribute('class').toLowerCase() === name.toLowerCase()){
                         child.setAttribute('default',true);
-                    }else if(child.getAttribute('default')){
+                    } else if (child.getAttribute('default')) {
                         child.removeAttribute('default');
                     }
                 }
@@ -319,16 +322,19 @@ module.exports = function () {
 
         if(!temp.joinCreate){
 
-            var teamsElement = temp.teamsElement = app.display.setup(playerElements, setupScreenElement);
+            var teamsElement = temp.teamsElement = app.display.setup (playerElements, setupScreenElement);
 
             playerElements.properties = app.settings.playersDisplayElement;
 
-            if (from === 'choseGame') moveElements('up', teamsElement);
+            if (from === 'choseGame') {
+                moveElements('up', teamsElement);
+                socket.emit('getPlayerStates', {category: app.map.category(), name: app.game.name()});
+            }
 
             temp.joinCreate = true;
         }
-        
-        var team = app.display.complexSelect(playerElements, function(property){
+
+        var team = app.display.complexSelect (playerElements, function (property) {
             var element = temp.selectedContainer = document.getElementById(property);
             var top = Number(element.parentNode.style.top.replace('px',''));
             var arrows = createArrows(element, top, top + 25);
@@ -337,52 +343,62 @@ module.exports = function () {
             return element;
         }, true);
         
-        if (team && !app.players.empty()) app.players.setProperty(team.property, team.value);
+        if (team.property && !app.players.empty()) 
+            app.players.setProperty(team.property, team.value);
 
         app.effect.swell.color(now, [temp.up, temp.down], color['white'], speed, swell);
         coBorderColor();
 
-        if (app.key.pressed(app.key.enter())) {
+        if (!team.property && team.substring(7) !== 'mode') {
+            if (app.key.pressed(app.key.enter())) {
 
-            clearTempAndPrev();
-            app.undo.tempAndPrev();
-            app.key.undo();
-            resetDefaults('co');
-            resetDefaults('mode');
-
-            var player = app.user.player();
-            player.isReady(true);
-            socket.emit('ready', player);
-
-            if(app.map.players() > 2){
-                temp.selectTeams = true;
-            }else{
-                temp.ready = true;
-                temp.selectTeams = true;
-                var upArr = document.getElementById('upArrowOutline');
-                var downArr = document.getElementById('downArrowOutline');
-                upArr.style.display = 'none';
-                downArr.style.display = 'none';
-                changeTeamElementHeight('20%');
-            }
-            return false;
-        }else{
-            return exit(false, function () {
-                var teams = document.getElementById('teams');
-                teams.removeChild(document.getElementById('upArrowOutline'));
-                teams.removeChild(document.getElementById('downArrowOutline'));
-                if (from !== 'choseGame'){
-                    moveElements('down', teams);
-                }else{
-                    setupScreenElement.removeChild(teams);
-                }
-                app.undo.tempAndPrev();
                 clearTempAndPrev();
-                app.players.reset();
-                temp.back = true;
-                nameInput = true;
-                setupScreenElement.removeChild(document.getElementById('descriptionOrChatScreen'));
-            });
+                app.undo.tempAndPrev();
+                app.key.undo();
+                resetDefaults('co');
+
+                var player = app.user.player();
+                player.isReady(true);
+                socket.emit('ready', player);
+
+                if(app.map.players() > 2){
+                    temp.selectTeams = true;
+                }else{
+                    temp.ready = true;
+                    temp.selectTeams = true;
+                    var upArr = document.getElementById('upArrowOutline');
+                    var downArr = document.getElementById('downArrowOutline');
+                    upArr.style.display = 'none';
+                    downArr.style.display = 'none';
+                    changeTeamElementHeight('20%');
+                }
+                return false;
+            }else{
+                return exit(false, function () {
+                    var name, teams = document.getElementById('teams');
+                    teams.removeChild(document.getElementById('upArrowOutline'));
+                    teams.removeChild(document.getElementById('downArrowOutline'));
+                    if (from !== 'choseGame'){
+                        moveElements('down', teams);
+                    }else{
+                        setupScreenElement.removeChild(teams);
+                    }
+                    app.undo.tempAndPrev();
+                    clearTempAndPrev();
+                    temp.back = true;
+                    nameInput = true;
+                    setupScreenElement.removeChild(document.getElementById('descriptionOrChatScreen'));
+                    if (app.players.length() < 2) {
+                        app.maps.remove(app.map.name());
+                        socket.emit('removeRoom', {
+                            category:app.map.category(), 
+                            name: app.game.name()
+                        });
+                        app.game.clear();
+                    }
+                    app.players.reset();
+                });
+            }
         }
     };
 
@@ -444,6 +460,7 @@ module.exports = function () {
                 temp.selectTeams = true;
                 return false;
             }
+
             app.key.undo();
             changeTeamElementHeight('30%');
             temp.joinCreate = true;
@@ -486,19 +503,18 @@ module.exports = function () {
 
         app.players.ready() && app.user.first() ? sButton.show() : sButton.hide();
 
-        if(ready) return app.players.all();
+        if (ready) return app.players.all();
 
-        if(app.key.pressed(app.key.enter())) 
+        if (app.key.pressed(app.key.enter())) 
             app.chat.display(app.chat.message(temp.input));
 
-        if(app.key.pressed(app.key.esc()) || boot) {
+        if (app.key.pressed(app.key.esc()) || boot) {
 
             var player = app.user.player();
             player.isReady(false);
             socket.emit('ready', player);
             resetDefaults('co');
-            resetDefaults('mode');
-
+            
             temp.chatScreen.style.height = '20%';
 
             var descOrChat = temp.descOrChat;
@@ -519,9 +535,9 @@ module.exports = function () {
             temp.ready = false;
             sButton.remove();
 
-            if(app.map.players() > 2){
+            if (app.map.players() > 2) {
                 temp.selectTeams = true;
-            }else{
+            } else {
                 changeTeamElementHeight('30%');
                 temp.selectTeams = false;
                 temp.joinCreate = true;
@@ -530,6 +546,9 @@ module.exports = function () {
     };  
 
     return {
+
+        arrowsTo: function (element) { app.display.setIndex(element); },
+
         back: function(){ boot = true; },
 
         choseMapOrGame: function (type) {
@@ -543,15 +562,15 @@ module.exports = function () {
                 setupScreenElement.removeChild(select);
                 setupScreenElement.removeChild(buildings);
                 setupScreenElement.removeChild(categories);
-                app.display.resetPreviousIndex();
+                app.display.resetPreviousIndex(); // reset index
                 app.key.undo();
                 maps.clear();
                 clearTempAndPrev();
                 app.undo.tempAndPrev();
             };
 
-            if(!temp.select) temp.select = app.display.mapOrGame(element, allMaps);
-            if(!temp.category) temp.category = document.getElementById('selectCategoryScreen');
+            if (!temp.select) temp.select = app.display.mapOrGame(element, allMaps);
+            if (!temp.category) temp.category = document.getElementById('selectCategoryScreen');
 
             // send a request to the server for a list of maps if one has not been returned yet
             maps.setCategory(app.effect.horizontalScroll(temp.category));
@@ -559,7 +578,7 @@ module.exports = function () {
             if(maps.updated()){
                 var elements = app.display.info(allMaps, ['name'], element, element.li);
                 app.display.mapOrGameSelection(element.section, elements);
-                if(maps.index() === false) app.display.resetPreviousIndex(); // reset index
+                if (!maps.index()) app.display.resetPreviousIndex(); // reset index
             }
 
              // enable selection of maps and keep track of which map is being highlighted for selection
@@ -567,7 +586,8 @@ module.exports = function () {
             var index = app.display.index();
 
             // display information on each map in their appropriate locations on the setup screen as they are scrolled over
-            if(index && maps.index() + 1 !== index) app.display.mapInfo(maps.byIndex(index - 1));
+            if(index && maps.index() + 1 !== index) 
+                app.display.mapInfo(maps.byIndex(index - 1));
             
             // if a map has been selected, return it for use in the game.
             if(id && (map = maps.byId(id))){
@@ -576,6 +596,7 @@ module.exports = function () {
                 app.map.set(map.map ? map.map : map);
 
                 if (type === 'game'){
+                    app.game.name(map.name);
                     map.players.push(app.user.raw());
                     app.players.add(map.players);
                     socket.emit('join', map);
@@ -589,6 +610,7 @@ module.exports = function () {
                 clearSelect(setupScreenElement);
                 return 'back';
             }
+
             return false;
         },
 
@@ -600,11 +622,9 @@ module.exports = function () {
 
                 settingsElement = app.display.setup(settingsElements, setupScreenElement, temp.back);
 
-                if(temp.back){
-                    moveElements('down', settingsElement, function(){ temp.swell = true; });
-                }else{
-                    moveElements('up', settingsElement, function(){ temp.swell = true; });
-                }
+                if (temp.back) moveElements('down', settingsElement, function(){ temp.swell = true; });
+                
+                else moveElements('up', settingsElement, function(){ temp.swell = true; });
 
                 temp.settings = true;
             }
@@ -635,7 +655,7 @@ module.exports = function () {
             }
 
             // make background swell
-            if(temp.swell) app.effect.swell.size(temp.selectedContainer, 50, 100);
+            if (temp.swell) app.effect.swell.size(temp.selectedContainer, 50, 100);
             app.effect.swell.color(new Date(), [temp.up, temp.down], color.white, speed, swell);
 
             if(app.key.pressed(app.key.enter()) || nameInput){
@@ -783,7 +803,7 @@ module.exports = function () {
         setupRoom: function (name) {
             var room = {};
             var map = app.map.get();
-            room.name = name;
+            room.name = app.game.name(name);
             room.settings = app.game.settings();
             room.max = app.map.players();
             room.map = map;
@@ -840,6 +860,6 @@ module.exports = function () {
             if(app.key.pressed()) app.key.undo();        
         },
 
-        start: function () {ready = true}
+        start: function () { ready = true; }
     };
 }();
