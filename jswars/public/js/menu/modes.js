@@ -1,126 +1,142 @@
 /* --------------------------------------------------------------------------------------*\
-
-    holds functions for the selection of game modes / logout etc.. <--- can be redone better
+    
+    Modes.js controls game mode selection 
 
 \* --------------------------------------------------------------------------------------*/
 
-app = require('../settings/app.js');
-app.menu = require('../menu/menu.js');
-app.maps = require('../controller/maps.js');
-app.user = require('../objects/user.js');
-app.settings = require('../settings/game.js');
-app.request = require('../tools/request.js');
-app.key = require('../tools/keyboard.js');
-app.testMap = require('../objects/testMap.js');
-app.editor = require('../game/mapEditor.js');
+ModesElement = require('../menu/elements/modesElement.js');
+ScrollText = require('../effects/scrollText.js');
+Menu = require('../objects/menu.js');
+List = require('../menu/elements/list.js');
+Ulist = require('../menu/elements/ul.js');
+Fader = require('../effects/fade.js');
 
-module.exports = function (){
+Modes = Object.create(Menu);
+Modes.positions = ['twoAbove','oneAbove','selected','oneBelow','twoBelow'];
+Modes.messages = {
+    logout:'select to log out of the game',
+    game:'Create or continue a saved game',
+    newgame:'Set up a new game',
+    continuegame:'Resume a saved game',
+    join:'Join a new or saved game',
+    newjoin:'Find and join a new game',
+    continuejoin:'Re-Join a saved game started at an earlier time',
+    COdesign:'Customize the look of your CO',
+    mapdesign:'Create your own custom maps',
+    design:'Design maps or edit CO appearance',
+    store:'Purchase maps, CO\'s, and other game goods' 
+};
+Modes.setList = function (elements) {this.l = elements;};
+Modes.list = function () {return this.l;};
+Modes.setElement =function (element) {this.e = element;};
+Modes.element = function () {return this.e; };
+Modes.setHeight = function (height) {this.h = height;};
+Modes.height = function () {return this.h;};
+Modes.properties = function () { return app.settings.selectModeMenu; };
+Modes.message = function (id) {return this.messages[id];};
+Modes.insert = function (screen) {document.body.insertBefore(screen, app.domInsertLocation);};
+Modes.remove = function () {
+    app.dom.removeChildren(this.screen(), 'title');
+    app.footer.remove();
+    this.deactivate();
+    this.fader.stop();
+    return this;
+};
+Modes.init = function () {
+    this.activate();
+    this.display();
+};
+Modes.select = function () {
+    if (!this.active()) this.init();
+    var options = this.options();
+    return options && options.active() ? this.selectOption() : this.selectMode();
+};
+Modes.options = function () {return this.mode().options;};
+Modes.mode = function () {return this.list().current();};
+Modes.option = function () {return this.options().current();};
+Modes.setMode = function (name) { this.mode = name; };
+Modes.selectMode = function () {
 
-    var sent;
-    var game = {};
-    var boot = false, active = false;
-    var exitSetupScreen = function () {
-        var ss = document.getElementById('setupScreen');
-        if (ss) ss.parentNode.removeChild(ss);                
-    };
+    if (app.key.pressed(['up','down'])) {
+        this.mode().deselect();
+        this.fader.changeElement(
+            app.select.verticle(this.list()).current().select().background()
+        ).setColor(this.mode().color.get());
+        app.footer.scroll(this.message(this.mode().id()));
+        this.rotate();
+    }
+
+    var options = this.options();
+
+    if (!options && app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter()))
+        return this.remove().mode().id();
+
+    if (options && app.key.pressed(app.key.right()) && app.key.undo(app.key.right())) {
+        options.activate();
+        this.fader.changeElement(this.option());
+        app.footer.scroll(this.message(this.option().id));
+    }
+};
+Modes.selectOption = function () {
+    if (app.key.pressed(['up','down'])) {
+        this.fader.changeElement(
+            app.select.verticle(this.options()).current());
+        app.footer.scroll(this.message(this.option().id));
+    }
+
+    if (app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter()))
+        return this.remove().option().id;
     
-    return {
-        boot:function(){boot = true},
-        logout: function (){
-            alert('log out!');
-            /*  
-            // log user out of facebook
-            FB.logout(function(response) {
-              console.log(response);
-            });
-            */
-        },
-        newgame:function(setupScreen){
+    if (app.key.pressed(app.key.left()) && app.key.undo(app.key.left())) {
+        this.fader.changeElement(this.mode().background());
+        app.footer.scroll(this.message(this.mode().id()));
+        this.options().deactivate();
+    }
+};
 
-            // handle map selection
-            if (!game.map){
-                game.map = app.menu.choseMapOrGame('map');
-                //console.log(game.map);
-                if(game.map === 'back'){
-                    delete game.map;
-                    return 'back';
-                }
-            }
+// rotation stuff
+Modes.getPosition = function (index) { return this.positions[this.list().wrap(index)] || 'hidden'; };
+Modes.getElement = function (index) { 
+    var list = this.list();
+    return list.elements()[list.wrap(index)];
+};
+Modes.setPosition = function (element, index) {this.getElement(element).setPosition(this.getPosition(index));};
+Modes.rotate = function () {
+    for (var index = 0, ind = this.mode().index(), i = ind - 2; i <= ind + 2; i += 1)
+        this.setPosition(i, index++);
+};
 
-            // handle settings selection
-            if (game.map && !game.settings){
-                game.settings = app.menu.choseSettings(setupScreen);
-                if (game.settings === 'back') {
-                    delete game.settings;
-                    delete game.map;
-                }
-            }
+// initialize screen
+Modes.display = function () { 
 
-            // handle co position and selection as well as joining the game
-            if (game.map && game.settings && !game.players){
-                game.players = app.menu.join(setupScreen);
-                if(game.players === 'back'){
-                    app.display.resetPreviousIndex();
-                    socket.emit('exit', boot);
-                    delete game.players;
-                    delete game.settings;
-                    boot = false;
-                }
-            }
+    this.setHeight(app.settings.selectedModeHeight);
+    var screen = this.createScreen('setupScreen');
+    var properties = this.properties(), items = [];
+    this.createTitle('Select*Mode');
 
-            if (game.map && game.settings && game.players){
-                socket.emit('start', game);
-                return game;
-            }
+    // create list of selectable modes
+    var menu = document.createElement('ul');
+    menu.setAttribute('id', 'selectModeMenu');
 
-            return false;
-        },
-        continuegame:function(){
-            alert('continue an old game is under construction. try new game or join new');
-        },
-        newjoin:function(){
-            // handle game selection
-            if (!game.room){
-                game.room = app.menu.choseMapOrGame('game');
-                if(game.room === 'back'){
-                    delete game.room;
-                    return 'back';
-                }
-            }
+    // create footer for game info and chat
+    var footer = app.footer.scrolling();
 
-            if(game.room && !game.players){
-                game.players = app.menu.join('choseGame');
-                if(game.players === 'back'){
-                    app.display.resetPreviousIndex();
-                    socket.emit('exit');
-                    delete game.room;
-                    delete game.players;
-                }
-            }
+    for (var i = 0, len = properties.length; i < len; i += 1) {
+        var item = new ModesElement(properties[i], i);
+        menu.appendChild(item.element());
+        items.push(item);
+    }
 
-            if(game.room && game.players){
-                if(app.user.player() === app.players.first()) 
-                    socket.emit('start', game);
-                return game;
-            }
-        },
-        continuejoin:function(){
-            alert('continue join is under construction, try new game or join new');
-        },
-        COdesign:function(){
-            alert('design a co is under construction. try new game or join new');
-        },
-        mapdesign:function(){
-            app.map.set(app.maps.random());
-            app.players.add(app.user.raw());
-            app.cursor.editing();
-            return 'editor'; 
-        },
-        store:function(){
-            alert('go to the game store is under construction. try new game or join new');
-        },
-        active: function(){return active;},
-        activate: function(){active = true;},
-        deactivate: function(){active = false;},
-    };
-}();
+    // add select menu to select mode screen
+    screen.appendChild(menu);
+    screen.appendChild(footer);
+    this.setList(new List(items));
+    this.setElement(new UList(menu));
+    var mode = this.mode();
+    this.rotate(this.list().indexOf(mode));
+    this.insert(screen);
+    this.fader = (new Fader(mode.select().background(), mode.color.get())).start();
+    app.footer.scroll(this.message(this.mode().id()));
+    return screen;
+};
+module.exports = Modes;

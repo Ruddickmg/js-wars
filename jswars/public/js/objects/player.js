@@ -23,11 +23,17 @@ var Player = function (user) {
         number:user.number
     };
 };
-
+Player.prototype.setCo = function (co) {this.co = co;};
+Player.prototype.setProperty = function (property, value) {
+    this[property] = (property === 'co') ? app.co[value](this) : value;
+    if (app.user.number() === this.number())
+        socket.emit('setUserProperties', {property: property, value: value, player:this});
+};
+Player.prototype.property = function (property) {return this[property];};
 Player.prototype.color = function () { return this.number(); }; // <-------------- figure out color system at some point
 Player.prototype.number = function () { return this._current.number; };
 Player.prototype.index = function () { return app.players.indexOf(this); };
-Player.prototype.setNumber = function (number) { this._current.number = number; };
+Player.prototype.setNumber = function (number) { this._current.number = number; return this; };
 Player.prototype.endTurn = function () {
 
     // update score
@@ -56,6 +62,9 @@ Player.prototype.endTurn = function () {
 
     // assign the next player as the current player
     app.players.setCurrent(player);
+
+    // if the player is ai then send the games current state 
+    if (player.isCompuer) socket.emit('aiTurn', {map:app.map.get(), player:player});
 };
 
 Player.prototype.recover = function () {
@@ -73,15 +82,21 @@ Player.prototype.recover = function () {
     return true;
 };
 
-Player.prototype.isReady = function (state) { this._current.ready = state; };
+Player.prototype.isReady = function (state) { 
+    this._current.ready = state; 
+    app.players.checkReady();
+};
+
 Player.prototype.ready = function () { return this._current.ready; };
 Player.prototype.income = function () {
 
     // get the amount of income per building for current game
-    var  i = 0,  
+    var  i = 0; 
+
+    console.log(app.game.settings());
 
     // money allotted per building
-    income = 0, funds = app.game.settings().funds,
+    var income = 0, funds = app.game.settings().funds,
 
     // list of buildings
     building, buildings = app.map.buildings();
@@ -103,8 +118,9 @@ Player.prototype.collectIncome = function () {
     return gold;
 };
 
-Player.prototype.defeat = function (player, captured) {
+Player.prototype.defeat = function (player, capturing) {
 
+    if (app.user.owns(this)) { socket.emit('defeat', {defeated: player, conqueror: this, capturing: capturing});};
     this.score.conquer();
     player.score.defeat();
     app.players.defeat(player);
@@ -118,7 +134,7 @@ Player.prototype.defeat = function (player, captured) {
             this.score.capture();
             if(building.name().toLowerCase() === 'hq')
                 app.map.takeHQ(building);
-            building.changeOwner(captured);
+            building.changeOwner(capturing ? this : capturing);
         }
 
     app.animate('building');
@@ -132,7 +148,7 @@ Player.prototype.gold = function () { return this._current.gold; };
 Player.prototype.canPurchase = function (cost) { return this.gold() - cost >= 0; };
 Player.prototype.purchase = function (cost) {
     this.score.expenses(cost);
-    return this.setGold(this.gold() - cost); 
+    return this.setGold(this.gold() - cost);
 };
 Player.prototype.setGold = function (gold) { return gold >= 0 ? (this._current.gold = gold) + 1 : false; };
 Player.prototype.owns = function (object) { return object.player && this.get() === object.player(); };
@@ -144,6 +160,9 @@ Player.prototype.units = function () {
     return false;
 };
 
+Player.prototype.confirm = function () { this._current.confirmation = true; };
+Player.prototype.confirmed = function () { return this._current.confirmation; };
+Player.prototype.unconfirm = function () { delete this._current.confirmation; };
 Player.prototype.hq = function () {
 
     // list off all buildings on map
@@ -153,5 +172,4 @@ Player.prototype.hq = function () {
         if (building.name().toLowerCase() === 'hq' && this.owns(building))
             return building;
 };
-
 module.exports = Player;

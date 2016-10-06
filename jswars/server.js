@@ -43,13 +43,13 @@ var minutes = function (minutes) { return 60000 * minutes; };
 // set up instance of socket io with server
 var io = require ('socket.io') (server);
 
-// get code for socket communication
-var socket = require('./node/sockets.js');
+// get controller for socket communication and initialize it
+var sockets = require('./node/sockets.js') (io);
 
-var flush = new cron('0 */20 * * * *', function() {socket.flush(minutes(15));}, null, false, 'America/Los_Angeles');
+var flush = new cron('0 */20 * * * *', function() {sockets.flush(minutes(15));}, null, false, 'America/Los_Angeles');
 
 // anytime someone connects to the server pass the watch method as the callback function for the socket handler
-io.on('connection', socket.watch);
+io.on('connection', sockets.watch);
 
 flush.start();
 
@@ -63,8 +63,12 @@ application.get('/', function (req, res) {res.sendFile(__dirname + '/index.html'
 application.get('/maps/type/:category', function (req, res){backend(res).get_maps(req.params.category, res);});
 application.get('/maps/select/:id', function (req, res){backend(res).get_map(req.params.id, res);});
 application.post('/maps/save', function (req, res){backend(res).save_map(req.body, res);});
-application.get ('/games/:category', function (req, res) {
-    res.json(socket.rooms(req.params.category) || []);
+application.get ('/games/open/:category', function (req, res) {
+    res.json(sockets.open(req.params.category) || []);
+    res.end();
+});
+application.get ('/games/running/:category', function (req, res) {
+    res.json(sockets.running(req.params.category) || []);
     res.end();
 });
 

@@ -1,4 +1,4 @@
-yapp = require('../settings/app.js');
+app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
 app.units = require('../definitions/units.js');
@@ -15,8 +15,8 @@ module.exports = function () {
 
     var error, focused, longestLength, map = {},
     matrix, buildings = [], terrain = [], units = [],
-    color = app.settings.playerColor, allowedUnits, allowedBuildings,
-    validate = new Validator('map');
+    color = app.settings.playerColor, allowedUnits, allowedBuildings;
+    //validate = new Validator('map');
 
     var restricted = {
         sea: ['sea', 'reef', 'shoal'],
@@ -37,7 +37,7 @@ module.exports = function () {
             
             building = buildings[i], unit = units[i], t = terrain[i];
             
-            // if an object is found at the same grid pint return it 
+            // if an object is found at the same grid point return it 
             if (unit && unit.on(position)) on.unit = unit;
             if (building && building.on(position)) on.building = building;
             if (t && t.on(position)) on.terrain = t;
@@ -49,7 +49,6 @@ module.exports = function () {
 
     var detectIndex = function (element) {
         var elements;
-
         switch (element.type()) {
             case 'unit': elements = units;
                 break;
@@ -57,7 +56,6 @@ module.exports = function () {
                 break;
             default: elements = terrain;
         }
-
         return getIndex(element, elements);
     };
 
@@ -80,7 +78,6 @@ module.exports = function () {
             neighbor = matrix.position(positions[i]);
             if (neighbor) neighbors.push(neighbor);
         }
-
         return neighbors;
     };
 
@@ -171,7 +168,7 @@ module.exports = function () {
         if (existing.unit && unit.canBuildOn(existing.unit.occupies())){
             allowedUnits -= 1;
             return units.splice(detectIndex(existing.unit), 1, matrix.insert(unit));
-        } else if (existing.building && unit.canBuildOn(existing.building) || existing.terrain && unit.canBuildOn(existing.terrain)){
+        } else if (existing.building && unit.canBuildOn(existing.building) || existing.terrain && unit.canBuildOn(existing.terrain)) {
             allowedUnits -= 1;
             return addUnit(unit);
         } 
@@ -224,6 +221,7 @@ module.exports = function () {
         if(existing.terrain.type() !== 'plain')
             terrain.splice(detectIndex(existing.terrain), 1, element);
         else terrain.push(element);
+        
         if (existing.building)
             buildings.splice(detectIndex(existing.building), 1);
         if (existing.unit && !existing.unit.canBuildOn(element)){
@@ -364,12 +362,15 @@ module.exports = function () {
             }
         },
         surplus: function () { return { building: allowedBuildings, unit: allowedUnits }; },
-        
-        displaySurplus: function () {
-
-        },
-        displayPlayers: function (){
-
+        displaySurplus: function (){},
+        displayPlayers: function (){},
+        raw: function (player) {
+            return {
+                player: player,
+                buildings: buildings.map(function (building) {return building.properties();}),
+                units: units.map(function (unit) {return unit.properties();}),
+                background: background
+            };
         }
     };
 }();

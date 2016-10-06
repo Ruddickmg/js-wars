@@ -14,7 +14,7 @@ Building = require('../objects/building.js');
 
 Defaults = function (properties) {
     this.properties = {
-        ammo: properties.ammo,
+        ammo:properties.ammo,
         fuel:properties.fuel,
         movement:properties.movement,
         vision:properties.vision,
@@ -373,7 +373,7 @@ Unit.prototype.capture = function (building) {
             building.changeOwner(player);
             building.restore();
 
-        } else player.defeat(building.player(), player);
+        } else player.defeat(building.player(), true);
 
         this.deselect();
         this.captured = true;
@@ -478,6 +478,7 @@ Unit.prototype.move = function (position, moved) {
     this.refresh();
 };
 
+Unit.prototype.properties = function () {return this._current;};
 Unit.prototype.action = function () { return this._current.action; };
 Unit.prototype.setAction = function (action) { this._current.action = action; };
 Unit.prototype.actions = function (position) {
@@ -522,7 +523,7 @@ Unit.prototype.evaluate = function (position) {
             this.deselect();
 
         } else if ((actions = this.actions(position))
-        && (type = app.display.select('actionSelectionIndex', 'actions', app.effect.highlightListItem, 'ul'))){
+        && (type = app.display.verticle().select('actionSelectionIndex', 'actions', app.effect.highlightListItem, 'ul'))){
 
             if ((unload = (action = type.action) === 'drop') || action === 'attack') {
                 if (unload) this.unloading = type.id;

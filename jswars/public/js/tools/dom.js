@@ -17,7 +17,7 @@ module.exports = {
         // set width, height and id attributes
         canvas.setAttribute('width', dimensions.width);
         canvas.setAttribute('height', dimensions.height);
-        canvas.setAttribute('id', type || on + id + 'Canvas');
+        canvas.setAttribute('id', type || id + 'Canvas');
 
         // return canvas info for further use
         return {
@@ -28,26 +28,29 @@ module.exports = {
         };
     },
 
-    createList: function (object, id, displayedAttributes, canvasId) {
-        
-        if (canvasId && displayedAttributes !== '*' && displayedAttributes.hasValue('canvas')) {
-            // create canvas and add it to the object
-            var canvas = this.createCanvas(canvasId, object, {width:128, height:128});
-            object.canvas = canvas.canvas;
-        }
+    createCanvasLi: function (id, object, dimensions) {
+        var li = this.createElement('li', false, 'canvas');
+        li.appendChild(this.createCanvas(id, object, dimensions || {width:128, height:128}).canvas);
+        return li;
+    },
+
+    createElement: function (tag, id, clas) {
+        var element = document.createElement(tag);
+        if (clas) element.setAttribute('class', clas);
+        if (id) element.setAttribute('id', id);
+        return element;
+    },
+
+    createList: function (object, id, displayedAttributes) {
 
         // get a list of property names
-        var properties = Object.keys(object);
+        var properties = Object.keys (object);
+        var ul = this.createElement ('ul', id);
 
-        // create an unordered list and give it the specified id
-        var ul = document.createElement('ul');
-        ul.setAttribute("id", id);
         if (object.id) ul.setAttribute('itemNumber', object.id);
 
-        var ind = 0;
-
         // go through each property and create a list element for it, then add it to the ul;
-        for (var i = 0; i < properties.length; i += 1) {
+        for (var ind = 0, i = 0; i < properties.length; i += 1) {
 
             // properties
             var props = properties[i];
@@ -59,36 +62,25 @@ module.exports = {
 
                 var property = typeof object[props] === 'function' ? object[props]() : object[props];
        
-                if(property === undefined)
-                    continue;
+                if (property === undefined) continue;
 
                 // create list element and give it a class defining its value
-                var li = document.createElement('li');
-                li.setAttribute('class', props);
+                var li = this.createElement('li', false, props);
+
                 if (object.index) li.setAttribute( id + 'Index', ind);
-                if(object.hide) li.style.display = 'none';
-                
-                // if the list element is a canvas then append it to the list element
-                if (props === 'canvas') li.appendChild(property);
+                if (object.hide) li.style.display = 'none';
 
-                    // if the list is an object, then create another list with that object and append it to the li element
-                else if( typeof (property) === 'object') {
-                    var list = app.dom.createList(property, props, displayedAttributes);
-                    li.appendChild(list.ul);
+                // if the list is an object, then create another list with that object and append it to the li element
+                if (typeof (property) === 'object') li.appendChild(this.createList(property, props, displayedAttributes));
 
-                    // if the list element is text, add it to the innerHTML of the li element
-                } else li.innerHTML = property;
+                // if the list element is text, add it to the innerHTML of the li element
+                else li.innerHTML = property;
 
                 // append the li to the ul
                 ul.appendChild(li);
             }
         }
-        
-        // return the ul and canvas info
-        return {
-            ul: ul,
-            canvas: canvas
-        };
+        return ul;
     },
 
     getDisplayedValue: function (id) {
@@ -113,7 +105,7 @@ module.exports = {
                 element.removeChild(clear);
             }
         }
-        if(keeper) element.appendChild(keeper);
+        if (keeper) element.appendChild(keeper);
     },
 
     // remove children of dom element
@@ -197,5 +189,10 @@ module.exports = {
                         return child.getAttribute('class');
         }
         return false;
+    },
+    length: function (children, min) {
+        var i = min;
+        while (children[i]) i += 1;
+        return i + 1;
     }
 };

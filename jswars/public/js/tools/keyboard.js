@@ -1,3 +1,6 @@
+app.optionsMenu = require('../menu/options/optionsMenu.js');
+app.game = require('../game/game.js');
+
 module.exports = function () {
 
     var pressed = [], up = [],
@@ -17,20 +20,33 @@ module.exports = function () {
 
     key = function (k) { return isNaN(k) ? keys[k] : k; },
     undo = function (array) { return array.splice(0, array.length); };
+    press = function (k) { 
+        //app.game.update();
+        return pressing(k) ? true : pressed.push(key(k));
+    },
+    pressing = function (k) { return k ? pressed.indexOf(key(k)) > -1 : pressed.length; };
 
     window.addEventListener("keydown", function (e) {
-        if(!app.game.started() || app.user.turn() || e.keyCode === app.key.esc() || app.options.active())
-            pressed.push(e.keyCode);
+        if(!app.game.started() || app.user.turn() || e.keyCode === app.key.esc() || app.optionsMenu.active() || app.confirm.active())
+            press(e.keyCode);
     }, false);
 
     window.addEventListener("keyup", function (e) { 
         up.push(e.keyCode);
         undo(pressed);
+        //app.game.update();
     }, false);
 
     return {
-        press: function (k) { return this.pressed(k) ? true : pressed.push(key(k));},
-        pressed: function (k) { return k ? pressed.indexOf(key(k)) > -1 : pressed.length; },
+        press:press,
+        pressed:function (k) {
+            if (k && k.isArray()) {
+                var i = k.length;
+                while (i--)
+                    if (pressing([k[i]]))
+                        return true;
+            } else return pressing(k);
+        },
         keyUp: function (k) { return k ? up.indexOf(key(k)) > -1 : up.length; },
         undo: function (k) { return k ? pressed.splice(pressed.indexOf(key(k)), 1) : undo(pressed); },
         undoKeyUp: function (k) {return k ? up.splice(up.indexOf(key(k)), 1) : undo(up); },

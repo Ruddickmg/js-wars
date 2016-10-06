@@ -12,6 +12,8 @@ Heap = function (property) {
     this.property = property;
 
 };
+// make a max heap instead of a min heap;
+Heap.prototype.setToMax = function () {this.max = true; return this;};
 
 // swaps the parent index with the child, returns child's new index (parent index)
 // subtract one from each input to compensate for the array starting at 0 rather then 1
@@ -20,22 +22,24 @@ Heap.prototype.swap = function (index, parentIndex) {
     return parentIndex;
 };
 
-    // get the value at the input index, compensate for whether there is a property being accessed or not
+// get the value at the input index, compensate for whether there is a property being accessed or not
 Heap.prototype.value = function (index) { return this.property ? this.heap[index - 1][this.property] : this.heap[index - 1];};
 
-    // calculate the parent index
+// calculate the parent index
 Heap.prototype.parent = function (index) {return Math.floor(index/2)};
 
-    // calculate the indexes of the left and right
+// calculate the indexes of the left and right
 Heap.prototype.left = function (i) {return i * 2;};
 Heap.prototype.right = function (i) {return this.left(i) + 1;};
 
-    // compare the values at the two supplied indexes, return the result of whether input l is greater then input r
+// compare the values at the two supplied indexes, return the result of whether input l is greater then input r
 Heap.prototype.lt = function(l,r) {return this.value(l) < this.value(r);};
+Heap.prototype.gt = function(l,r) {return this.value(l) > this.value(r);};
+Heap.prototype.equality = function (l,r) {return this.max ? this.gt(l,r) : this.lt(l,r);};
 
-    // if we are at the start of the array or the current nodes value is greater then its parent then return the current 
-    // index (compensate for 0), otherwise swap the parent and child then repeat from the childs new position
-Heap.prototype.bubble = function (index) {return index < 2 || this.lt(this.parent(index), index) ? index - 1 : this.bubble(this.swap(index, this.parent(index)));};
+// if we are at the start of the array or the current nodes value is greater then its parent then return the current 
+// index (compensate for 0), otherwise swap the parent and child then repeat from the childs new position
+Heap.prototype.bubble = function (index) {return index < 2 || this.equality(this.parent(index), index) ? index - 1 : this.bubble(this.swap(index, this.parent(index)));};
 
 Heap.prototype.sort = function (index) {
 
@@ -52,7 +56,7 @@ Heap.prototype.sort = function (index) {
 
     // if the right node is in range and less then the left node then swap 
     // the child with the right node, otherwise swap with the left
-    return this.sort(this.swap(index, length > r && this.lt(r,l) ? r : l ));
+    return this.sort(this.swap(index, length > r && this.equality(r,l) ? r : l ));
 };
 
 // add a value to the heap

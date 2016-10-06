@@ -30,6 +30,5 @@ module.exports = function () {
 		new element('base', 4, 9, 1),
 		new element('base', 16, 9, 2)
 	];
-
 	return new map(null, 'test map #1', 2, {x:20, y:20}, terrain, buildings, []);
 }

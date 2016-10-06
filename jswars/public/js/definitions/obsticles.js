@@ -1,3 +1,9 @@
+/* ---------------------------------------------------------------------- *\
+    
+    Obsticles.js holds the each possible object for the map 
+
+\* ---------------------------------------------------------------------- */
+
 var obsticle = require('../objects/obsticle.js');
 
 module.exports = {

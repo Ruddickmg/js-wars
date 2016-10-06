@@ -13,8 +13,8 @@ module.exports = function () {
     var undo = app.key.undo, 
     direction, then = new Date(),
 
-    scroll = function (neg, pos){
-        if (app.key.pressed(neg) || neg == direction){
+    scroll = function (neg, pos) {
+        if (app.key.pressed(neg) || neg == direction) {
             direction = false;
             app.key.undo(app.key[neg]());
             return -1;
@@ -27,11 +27,11 @@ module.exports = function () {
     };
 
     return {
-        horizontal:function (){
+        horizontal: function () {
             this.scroll = scroll('left','right');
             return this;
         },
-        verticle:function(){
+        verticle: function() {
             this.scroll = scroll('up','down');
             return this;
         },
@@ -41,9 +41,10 @@ module.exports = function () {
             return point > max || point < min ? def : point;
         },
         finite: function (index, min, max) {
-            if(this.scroll){
+            if(this.scroll !== undefined){
                 var point = index + this.scroll;
-                if (point <= max && point >= min) return point;
+                if (point <= max && point >= min) 
+                    return point;
             }
             return false;
         },

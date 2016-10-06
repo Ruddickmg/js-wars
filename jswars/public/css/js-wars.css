@@ -22,6 +22,14 @@ h1, h2, h3, h4, p, blockquote, figure, ol, ul {
     padding: 0;
 }
 
+h1, h2, h3, h4, blockquote, figure, ol, ul {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   -ms-user-select: none;
+   user-select: none;
+}
+
 
 /* Body *\
  \*----*/
@@ -81,6 +89,12 @@ h1 {
 
 #background {
     background: rgb(43,43,43);
+}
+
+#gameScreen {
+    z-index: 11;
+    width: 960px;
+    height:640px;
 }
 
 .gameScreen {
@@ -223,7 +237,7 @@ h1 {
     overflow: hidden;
 }
 
-#selectModeMenu{
+#selectModeMenu {
     text-transform: uppercase;
     background: transparent;
     overflow: hidden;
@@ -859,7 +873,7 @@ li[pos=twoBelow] {
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-.stable{
+.stable {
     text-align: center;
     z-index: 2;
 }
@@ -923,8 +937,8 @@ li[pos=twoBelow] {
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-#descriptionOrChatScreen{
-    z-index: -1;
+#descriptionOrChatScreen {
+    z-index: 11;
     width:97.5%;
     height:20%;
     left:.5%;
@@ -1150,6 +1164,11 @@ li[pos=twoBelow] {
 
 #chat {
     display: none;
+    -moz-user-select: -moz-text;
+   -khtml-user-select: text;
+   -webkit-user-select: text;
+   -ms-user-select: text;
+   user-select: text;
 }
 
 .button {
@@ -1181,4 +1200,10 @@ li[pos=twoBelow] {
     left:15%;
     width:30%;
     height:15%;
+}
+
+#yes, #no { display: inline; };
+#yesText, #noText {
+    font-size: 40px;
+    color: black;
 }

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------------------------------------------*\
     
-    handles calculations like pathfinding and the definition of movement range
+    Calculate.js handles calculations like pathfinding and the definition of movement range
 
 \* ----------------------------------------------------------------------------------------------------------*/
 
@@ -34,26 +34,22 @@ module.exports = function () {
 
         distance: function (a, b) { return abs(a.x - b.x) + abs(a.y - b.y); },
 
-        numberOfBuildings: function(map){
-
-            // clear out previous numbers
-            var display = app.settings.buildingDisplayElement;
-            var types = Object.keys(display);
-            var len = types.length;
-            for(var t = 0; t < len; t += 1)
-                app.settings.buildingDisplayElement[types[t]].numberOf = 0;
+        numberOfBuildings: function(map) {
 
             // get selected maps building list
-            var buildings = map.buildings;
-            var type, n, num = buildings.length;
+            var type, all = map.buildings, buildings = {};
+
+            if (!all) return false;
 
             // add one for each building type found  to the building display list
-            for (n = 0; n < num; n += 1){
-                type = buildings[n].type;
-                if(type !== 'hq') app.settings.buildingDisplayElement[type].numberOf += 1; 
+            for (var n = 0; n < all.length; n += 1) {
+                type = all[n].type;
+                if (type !== 'hq') {
+                    if (isNaN(buildings[type])) buildings[type] = 1;
+                    else buildings[type] += 1; 
+                }
             }
-
-            return app.settings.buildingDisplayElement;
+            return buildings;
         },
 
         longestLength: function (arrays) {

@@ -18,7 +18,7 @@ Building = function (type, position, index, player) {
     this.def = type.toLowerCase() === 'hq' ? 4 : 3;
 
 	Terrain.call(this, type, position);
-    this.pos = new Position(position.x, position.y);
+    this.pos = new Position (position.x, position.y);
 	this.units = function () { return app.buildings[type]; };
 	this.canBuild = function (object) { return Object.keys(this.units()).indexOf(type) > -1; };
     this.canHeal = function (object) { return this.healing.indexOf(object.transportation()) > -1; };
@@ -33,6 +33,16 @@ Building = function (type, position, index, player) {
     };
 };
 
+Building.prototype.properties = function () { 
+    var current = this._current;
+    return {
+        name: current.name,
+        player: current.player.number(),
+        position: current.position,
+        health: current.health,
+        index: current.index
+    }; 
+};
 Building.prototype.name = function (){ return this._current.name; };
 Building.prototype.defaults = { health: function () { return 20; } };
 Building.prototype.on = function (object) {
@@ -80,13 +90,16 @@ Building.prototype.owns = function (object) {
 };
 
 Building.prototype.select = function () {
-    app.display.selectionInterface(this.name().toLowerCase(), 'unitSelectionIndex');
+    app.display.info(app.buildings[this.name().toLowerCase()], ['name', 'cost'], {
+        section: 'buildUnitScreen',
+        div: 'selectUnitScreen'
+    });
     return true;
 };
 
 Building.prototype.evaluate = function () {
     if(!app.cursor.hidden) app.cursor.hide();
-    var unit = app.display.select('unitSelectionIndex', 'selectUnitScreen', app.effect.highlightListItem, 'ul', 7).id;
+    var unit = app.display.verticle().select(document.getElementById('selectUnitScreen'), app.effect.highlightListItem, 7).id;
     if (unit) return this.build(unit);
 };
 

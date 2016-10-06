@@ -1,6 +1,6 @@
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
-app.options = require('../menu/options.js');
+app.optionsMenu = require('../menu/options/optionsMenu.js');
 app.calculate = require('../game/calculate.js');
 app.effect = require('../game/effects.js');
 app.undo = require('../tools/undo.js');
@@ -13,7 +13,7 @@ app.feature = require('../objects/featureHud.js');
 
 module.exports = function () {
 
-    var editing, selected, moved, active, enter, hidden = false, position = {x:7, y:5}, key = app.key;
+    var editing, selected, deleting, moved, active, enter, hidden, position = {x:7, y:5};
 
     var allowed = function (range) {
         if (!range) range = app.range.get();
@@ -63,8 +63,7 @@ module.exports = function () {
 
         // returns cursor location ( left or right side of screen )
         side: function (axis) {
-            if (checkSide(axis))
-                return axis === 'x' ? 'right' : 'bottom';
+            if (checkSide(axis)) return axis === 'x' ? 'right' : 'bottom';
             return axis === 'x' ? 'left' : 'top';
         },
         setSelected: function (s) { selected = s; },
@@ -79,15 +78,17 @@ module.exports = function () {
         selected: function () { return selected; },
         select: function (element) {
 
+            if (hidden || deleting) return false;
+
             // set selection
             if (element) return selected = element;
 
             // if its the users turn and theyve pressed enter
-            if ((key.pressed(key.enter()) || key.pressed(key.range()) || key.keyUp(key.range())) && app.user.turn() && !app.target.active()) {
+            if ((app.key.pressed(app.key.enter()) || app.key.pressed(app.key.range()) || app.key.keyUp(app.key.range())) && app.user.turn() && !app.target.active()) {
 
                 var a, hovered = app.map.top(position);
 
-                if (!active && key.pressed(key.enter()) && key.undo(key.enter())) {
+                if (!active && app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter())) {
 
                     // if something was selected
                     if (selected && allowed() && (hovered.type() !== 'unit' || selected.canCombine(hovered) || hovered === selected)){
@@ -99,7 +100,7 @@ module.exports = function () {
                             return selected = false;
 
                     // if there is nothing selected
-                    } else if (!selected && !app.options.active() && app.user.owns(hovered)){
+                    } else if (!selected && !app.optionsMenu.active() && app.user.owns(hovered)){
                         
                         selected = hovered;
 
@@ -111,11 +112,11 @@ module.exports = function () {
                         else selected = false;
                     }
 
-                } else if (!selected && (hovered.type() === 'unit' || key.keyUp(key.range()))) {
+                } else if (!selected && (hovered.type() === 'unit' || app.key.keyUp(app.key.range()))) {
                     if (!active) active = hovered;
-                    if (hovered === active)
+                    if (hovered === active && active.showAttackRange) {
                         active = active.showAttackRange();
-                    else {
+                    } else {
                         active = active.displayingRange = false;
                         app.attackRange.clear();
                         app.effect.refresh(); 
@@ -127,34 +128,47 @@ module.exports = function () {
         },
         displayPosition: function () { return true; },
         copy: function () {
-            if (editing && key.pressed(key.copy()) && !app.build.active())
+            if (editing && app.key.pressed(app.key.copy()) && !app.build.active())
                 app.feature.set((selected = app.map.top(position))); 
         },
         build: function () { 
-            if (key.pressed(key.enter()) && !app.build.active() && app.map.build(selected, position))
+            if (app.key.pressed(app.key.enter()) && !app.build.active() && app.map.build(selected, position))
                 app.animate(['unit', 'building', 'terrain']);
+        },
+        selectMode: function () { deleting = false; },
+        deleteMode: function () { deleting = true; },
+        deleting: function () { return deleting; },
+        deleteUnit: function () { 
+            if (app.key.pressed(app.key.enter())) {
+                app.key.undo(app.key.enter());
+                var hovered = app.map.top(position);
+                if (hovered.type() === 'unit') {
+                    app.map.removeUnit(hovered);
+                    socket.emit('delete', hovered);
+                }
+            }
         },
         move: function (emitted) {
 
             moved = false;
 
-            if ((!selected || selected.type() !== 'building' ||  app.editor.active()) && !app.options.active() && !hidden && app.user.turn() || emitted) {
+            if ((!selected || selected.type() !== 'building' ||  app.editor.active()) && !app.optionsMenu.active() && !hidden && app.user.turn() || emitted) {
 
                 var d = app.map.dimensions(), pressed;
 
-                if (key.pressed(key.up()) && canMove('y', 0, -1)) 
-                    pressed = key.up();
+                if (app.key.pressed(app.key.up()) && canMove('y', 0, -1)) 
+                    pressed = app.key.up();
 
-                if (key.pressed(key.down()) && canMove('y', d.y, 1)) 
-                    pressed = key.down();
+                if (app.key.pressed(app.key.down()) && canMove('y', d.y, 1)) 
+                    pressed = app.key.down();
 
                 // player holding left
-                if (key.pressed(key.left()) && canMove('x', 0, -1)) 
-                    pressed = key.left();
+                if (app.key.pressed(app.key.left()) && canMove('x', 0, -1)) 
+                    pressed = app.key.left();
 
                 // Player holding right
-                if (key.pressed(key.right()) && canMove('x', d.x, 1))
-                    pressed = key.right();
+                if (app.key.pressed(app.key.right()) && canMove('x', d.x, 1))
+                    pressed = app.key.right();
 
                 if(pressed){
                     if (editing) app.feature.set(selected);

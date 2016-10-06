@@ -6,11 +6,11 @@ Hud = function (elements) {
 
 Hud.prototype.clear = function () { while (this.element.firstChild) this.element.removeChild(this.element.firstChild); };
 Hud.prototype.hidden = function () { return this.element.style.display === 'none';};
-Hud.prototype.show = function () { 
+Hud.prototype.show = function () {
     this.element.style.display = null;
     this.setElements(app.cursor.hovered());
 };
-Hud.prototype.hide = function () { this.element.style.display = 'none';};
+Hud.prototype.hide = function () { this.element.style.display = 'none'; };
 Hud.prototype.resize = function (canvas) {
     var screenWidth = app.screen.width();
     var width = app.settings.hudWidth * this.number;
@@ -25,13 +25,20 @@ Hud.prototype.resize = function (canvas) {
 };
 
 Hud.prototype.addElement = function (element, type, attributes) {
-    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo, 'hud');
-    this.resize(list.canvas.canvas);
-    app.draw(list.canvas.context).hudCanvas(element.draw(), element.class());
-    this.element.appendChild(list.ul);
+
+    var c = app.dom.createCanvas('hud', element, {width:128, height:128});
+    var canvas = app.dom.createElement('li', false, 'canvas');
+    canvas.appendChild(c.canvas);
+
+    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo);
+    list.appendChild(canvas);
+    this.resize(canvas);
+    app.draw(c.context).hudCanvas(element.draw(), element.class());
+    this.element.appendChild(list);
+
     if(type === 'unit') 
         this.number += 1;
-    return list.ul;
+    return list;
 };
 
 

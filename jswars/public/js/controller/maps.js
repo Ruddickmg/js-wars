@@ -1,3 +1,9 @@
+/* --------------------------------------------------------------------------------------*\
+    
+    Maps.js controls the saving and retrieving of maps
+
+\* --------------------------------------------------------------------------------------*/
+
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.request = require('../tools/request.js');
@@ -8,10 +14,11 @@ Map = require('../objects/map.js')
 
 module.exports = function () {
 
-	var error, maps, keys, change, index, type = 'map', category,
-	validate = new Validator('maps'), categories = ['two'];
+	var error, maps, keys, change, index, type = 'map', category;
+	//validate = new Validator('maps'), 
+	var categories = ['two'];
 
-	types = {
+	var types = {
 		map:{
 			url:'maps/type',
 			items:[],
@@ -23,7 +30,7 @@ module.exports = function () {
 	        }
 		},
 		game:{
-			url:'games',
+			url:'games/open',
 			items:[],
 			elements: {
 	            section: 'gameSelectScreen',
@@ -32,20 +39,20 @@ module.exports = function () {
 	            type:'game',
 	            index:'Index',
 	            attribute:'class',
-	            url:'games',
+	            url:'games/open',
 	            properties: app.settings.categories
 	        }
         }
 	},
 
-	byCategory = function (cat) {
-		if(cat && cat !== category){
+	byCategory = function (cat, callback) {
+		if (cat && cat !== category) {
 			maps = [], keys = [], category = cat;
 	        app.request.get(category, types[type].url, function (response) {
-
-	            if (response && !response.error){
+	            if (response && !response.error) {
 	            	maps = types[type].items = response;
 	            	keys = Object.keys(response);
+	            	if (callback) callback (maps);
 	            }
 	           	change = true;
 	        });
@@ -57,25 +64,42 @@ module.exports = function () {
     	if(map) 
 	    	return map.map ? map :
 	    	new Map(
-	    		map.id, 
-	    		map.name, 
-	    		map.players, 
-	    		map.dimensions, 
+	    		map.id,
+	    		map.name,
+	    		map.players,
+	    		map.dimensions,
 	    		map.terrain,
-	    		map.buildings, 
+	    		map.buildings,
 	    		map.units
 	    	);
-	    else
-	    	return {};
+	    else return {};
     },
+
+    byIndex = function (ind) {
+		index = ind;
+		var m = sub(format(maps[keys[ind]]));
+		return m.map ? m.map : m;
+	},
     
     sub = function (map) { return maps.length ? map : {}; };
+
+    var elementExists = function (id, element, parent){
+        var exists = document.getElementById(id);
+        if(exists){
+            parent.replaceChild(element, exists);
+        }else{
+            parent.appendChild(element);
+        }
+    };
+
+    var buildingElements = {section:'buildingsDisplay', div:'numberOfBuildings'}
 
     byCategory(categories[0]);
 
 	return {
+		byIndex:byIndex,
 		type: function (t) {
-			if(type !== t){
+			if (type !== t) {
 				type = t;
 				category = false;
 				byCategory('two');
@@ -92,14 +116,7 @@ module.exports = function () {
 	            	return format(maps[map]);
 	        return false;
     	},
-    	byIndex: function (ind) {
-    		index = ind;
-    		var m = sub(format(maps[keys[ind]]));
-    		return m.map ? m.map : m;
-    	},
-    	first: function () {
-    		return sub(maps[keys[0]]);
-    	},
+    	first: function () { return sub(maps[keys[0]]); },
     	add:function(room){
             if (category === room.category) {
             	var games = types.game.items;
@@ -111,8 +128,7 @@ module.exports = function () {
         },
         remove: function(room){
         	var games = types.game.items;
-	        if(category === room.category && games[room.name]){
-	        	socket.emit('removeRoom', room);
+	        if (category === room.category && games[room.name]) {
 	            delete games[room.name];
 	            keys = Object.keys(games);
 	            change = true;
@@ -121,29 +137,28 @@ module.exports = function () {
 	        return false;
         },
         updated: function () { 
-        	if(change){
+        	if (change) {
         		change = false;
         		return true; 
         	}
         },
         random: function () {
-        	console.log('---- random!!! ====');
-        	byCategory(categories[app.calculate.random(categories.length - 1)]);
-        	console.log(maps);
-        	console.log('random map index: ' + app.calculate.random(maps.length - 1));
-        	return maps[app.calculate.random(maps.length - 1)];
+        	byCategory('two' || categories[app.calculate.random(categories.length - 1)], function (maps) {
+        		app.map.set([app.calculate.random(maps.length - 1)]);
+        	});
         },
         index: function () {return index;},
+        info: function () { return app.calculate.numberOfBuildings(byIndex(index || 0));},
         clear: function () {maps = [], category = undefined, index = undefined;},
         screen: function () { return types[type].elements; },
-        save: function (map) {
+        save: function (map, name) {
 
-        	if((error = validate.defined (app.user.email(), 'email') || (error = validate.map(map))))
-        		throw error;
+        	// if((error = validate.defined (app.user.email(), 'email') || (error = validate.map(map))))
+        	// 	throw error;
 
             app.request.post({
 			    creator: app.user.email(),
-			    name: map.name,
+			    name: name || map.name,
 			    players: map.players,
 			    category: map.category,
 			    dimensions: map.dimensions,
@@ -157,5 +172,5 @@ module.exports = function () {
             });
         }
         //getbyid: function (id) { app.request.get(id, 'maps/select', function (response) { app.map.set(response); }); },
-	}
+	};
 }();

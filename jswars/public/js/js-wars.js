@@ -1,4 +1,10 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Background.js controls the weather
+
+\* --------------------------------------------------------------------------------------*/
+
 app.calcualte = require('../game/calculate.js');
 Terrain = require('../objects/terrain.js');
 
@@ -62,10 +68,84 @@ module.exports = {
 		}
 	}
 };
-},{"../game/calculate.js":15,"../objects/terrain.js":42}],2:[function(require,module,exports){
+},{"../game/calculate.js":22,"../objects/terrain.js":74}],2:[function(require,module,exports){
+app.maps = require ('../controller/maps.js');
+app.effect = require('../game/effects.js');
+app.click = require('../tools/click.js');
+app.touch = require('../tools/touch.js');
+app.type = require('../effects/typing.js');
+
+module.exports = {
+
+	active: function () { return this.a; },
+	activate: function () { this.a = true; },
+	deactivate: function () {this.a = false;},
+	save: function (player) { 
+		this.sender = player;
+		this.display(player.name().uc_first() + ' wants to save the game and continue later, is that ok? '); 
+	},
+	evaluate: function () {
+		var answer = app.input.response();
+		if (answer) {
+			app.input.remove();
+			this.a = false;
+			socket.emit('confirmationResponse', {answer:(answer === 'yes'), to:this.sender.id()});
+		}
+	},
+
+	display: function (message, inactive) {
+
+		console.log('displaying..');
+
+		var text = app.footer.display(), description = app.input.descriptions();
+		app.game.screen().appendChild(text.parentNode);
+		app.input.activate();
+		app.type.letters(description, message, function (element) {
+			var yes = document.createElement('span'); 
+			var no = document.createElement('span');
+			yes.innerHTML = ' Yes ';
+			no.innerHTML = ' No ';
+			yes.setAttribute('id','yes');
+			no.setAttribute('id','no');
+			app.touch(yes).element();
+			app.click(no).element();
+			description.appendChild(yes);
+			description.appendChild(no);
+			if (!inactive) app.confirm.activate();
+		});
+	},
+
+	player: function (answer, player) {
+		var i, message, players = app.players.other(), waiting = [];
+
+		if (answer) {
+			player.confirm();
+			message = player.name().uc_first() + ' agrees to continue later. ';
+		} else return this.no(player);
+
+		for (i = 0; i < players.length; i += 1)
+			if (!players[i].confirmed())
+				waiting.push(players[i]);
+		
+		app.input.message(message);
+		return waiting.length ? this.waiting(waiting, message) : this.yes();                                   
+	},
+
+	yes: function () { 
+		alert('Save the game!!: '+app.input.value()); 
+		app.game.end(true);
+	},
+	no: function (player) { 
+		app.input.message(player.name().uc_first() + 'wants to finish the game.');
+		app.players.unconfirm(); 
+		app.save.recieved();
+	},
+	waiting: function (players) { app.input.message('Waiting for a response from ' + app.players.names(players)); }
+};
+},{"../controller/maps.js":5,"../effects/typing.js":19,"../game/effects.js":24,"../tools/click.js":83,"../tools/touch.js":95}],3:[function(require,module,exports){
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
-app.options = require('../menu/options.js');
+app.optionsMenu = require('../menu/options/optionsMenu.js');
 app.calculate = require('../game/calculate.js');
 app.effect = require('../game/effects.js');
 app.undo = require('../tools/undo.js');
@@ -78,7 +158,7 @@ app.feature = require('../objects/featureHud.js');
 
 module.exports = function () {
 
-    var editing, selected, moved, active, enter, hidden = false, position = {x:7, y:5}, key = app.key;
+    var editing, selected, deleting, moved, active, enter, hidden, position = {x:7, y:5};
 
     var allowed = function (range) {
         if (!range) range = app.range.get();
@@ -128,8 +208,7 @@ module.exports = function () {
 
         // returns cursor location ( left or right side of screen )
         side: function (axis) {
-            if (checkSide(axis))
-                return axis === 'x' ? 'right' : 'bottom';
+            if (checkSide(axis)) return axis === 'x' ? 'right' : 'bottom';
             return axis === 'x' ? 'left' : 'top';
         },
         setSelected: function (s) { selected = s; },
@@ -144,15 +223,17 @@ module.exports = function () {
         selected: function () { return selected; },
         select: function (element) {
 
+            if (hidden || deleting) return false;
+
             // set selection
             if (element) return selected = element;
 
             // if its the users turn and theyve pressed enter
-            if ((key.pressed(key.enter()) || key.pressed(key.range()) || key.keyUp(key.range())) && app.user.turn() && !app.target.active()) {
+            if ((app.key.pressed(app.key.enter()) || app.key.pressed(app.key.range()) || app.key.keyUp(app.key.range())) && app.user.turn() && !app.target.active()) {
 
                 var a, hovered = app.map.top(position);
 
-                if (!active && key.pressed(key.enter()) && key.undo(key.enter())) {
+                if (!active && app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter())) {
 
                     // if something was selected
                     if (selected && allowed() && (hovered.type() !== 'unit' || selected.canCombine(hovered) || hovered === selected)){
@@ -164,7 +245,7 @@ module.exports = function () {
                             return selected = false;
 
                     // if there is nothing selected
-                    } else if (!selected && !app.options.active() && app.user.owns(hovered)){
+                    } else if (!selected && !app.optionsMenu.active() && app.user.owns(hovered)){
                         
                         selected = hovered;
 
@@ -176,11 +257,11 @@ module.exports = function () {
                         else selected = false;
                     }
 
-                } else if (!selected && (hovered.type() === 'unit' || key.keyUp(key.range()))) {
+                } else if (!selected && (hovered.type() === 'unit' || app.key.keyUp(app.key.range()))) {
                     if (!active) active = hovered;
-                    if (hovered === active)
+                    if (hovered === active && active.showAttackRange) {
                         active = active.showAttackRange();
-                    else {
+                    } else {
                         active = active.displayingRange = false;
                         app.attackRange.clear();
                         app.effect.refresh(); 
@@ -192,34 +273,47 @@ module.exports = function () {
         },
         displayPosition: function () { return true; },
         copy: function () {
-            if (editing && key.pressed(key.copy()) && !app.build.active())
+            if (editing && app.key.pressed(app.key.copy()) && !app.build.active())
                 app.feature.set((selected = app.map.top(position))); 
         },
         build: function () { 
-            if (key.pressed(key.enter()) && !app.build.active() && app.map.build(selected, position))
+            if (app.key.pressed(app.key.enter()) && !app.build.active() && app.map.build(selected, position))
                 app.animate(['unit', 'building', 'terrain']);
+        },
+        selectMode: function () { deleting = false; },
+        deleteMode: function () { deleting = true; },
+        deleting: function () { return deleting; },
+        deleteUnit: function () { 
+            if (app.key.pressed(app.key.enter())) {
+                app.key.undo(app.key.enter());
+                var hovered = app.map.top(position);
+                if (hovered.type() === 'unit') {
+                    app.map.removeUnit(hovered);
+                    socket.emit('delete', hovered);
+                }
+            }
         },
         move: function (emitted) {
 
             moved = false;
 
-            if ((!selected || selected.type() !== 'building' ||  app.editor.active()) && !app.options.active() && !hidden && app.user.turn() || emitted) {
+            if ((!selected || selected.type() !== 'building' ||  app.editor.active()) && !app.optionsMenu.active() && !hidden && app.user.turn() || emitted) {
 
                 var d = app.map.dimensions(), pressed;
 
-                if (key.pressed(key.up()) && canMove('y', 0, -1)) 
-                    pressed = key.up();
+                if (app.key.pressed(app.key.up()) && canMove('y', 0, -1)) 
+                    pressed = app.key.up();
 
-                if (key.pressed(key.down()) && canMove('y', d.y, 1)) 
-                    pressed = key.down();
+                if (app.key.pressed(app.key.down()) && canMove('y', d.y, 1)) 
+                    pressed = app.key.down();
 
                 // player holding left
-                if (key.pressed(key.left()) && canMove('x', 0, -1)) 
-                    pressed = key.left();
+                if (app.key.pressed(app.key.left()) && canMove('x', 0, -1)) 
+                    pressed = app.key.left();
 
                 // Player holding right
-                if (key.pressed(key.right()) && canMove('x', d.x, 1))
-                    pressed = key.right();
+                if (app.key.pressed(app.key.right()) && canMove('x', d.x, 1))
+                    pressed = app.key.right();
 
                 if(pressed){
                     if (editing) app.feature.set(selected);
@@ -233,8 +327,8 @@ module.exports = function () {
         }
     };
 }();
-},{"../controller/map.js":3,"../game/animate.js":13,"../game/calculate.js":15,"../game/effects.js":17,"../game/game.js":18,"../menu/options.js":24,"../objects/featureHud.js":31,"../settings/app.js":46,"../tools/display.js":52,"../tools/keyboard.js":56,"../tools/undo.js":62}],3:[function(require,module,exports){
-yapp = require('../settings/app.js');
+},{"../controller/map.js":4,"../game/animate.js":20,"../game/calculate.js":22,"../game/effects.js":24,"../game/game.js":25,"../menu/options/optionsMenu.js":46,"../objects/featureHud.js":60,"../settings/app.js":78,"../tools/display.js":85,"../tools/keyboard.js":90,"../tools/undo.js":96}],4:[function(require,module,exports){
+app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
 app.units = require('../definitions/units.js');
@@ -251,8 +345,8 @@ module.exports = function () {
 
     var error, focused, longestLength, map = {},
     matrix, buildings = [], terrain = [], units = [],
-    color = app.settings.playerColor, allowedUnits, allowedBuildings,
-    validate = new Validator('map');
+    color = app.settings.playerColor, allowedUnits, allowedBuildings;
+    //validate = new Validator('map');
 
     var restricted = {
         sea: ['sea', 'reef', 'shoal'],
@@ -273,7 +367,7 @@ module.exports = function () {
             
             building = buildings[i], unit = units[i], t = terrain[i];
             
-            // if an object is found at the same grid pint return it 
+            // if an object is found at the same grid point return it 
             if (unit && unit.on(position)) on.unit = unit;
             if (building && building.on(position)) on.building = building;
             if (t && t.on(position)) on.terrain = t;
@@ -285,7 +379,6 @@ module.exports = function () {
 
     var detectIndex = function (element) {
         var elements;
-
         switch (element.type()) {
             case 'unit': elements = units;
                 break;
@@ -293,7 +386,6 @@ module.exports = function () {
                 break;
             default: elements = terrain;
         }
-
         return getIndex(element, elements);
     };
 
@@ -316,7 +408,6 @@ module.exports = function () {
             neighbor = matrix.position(positions[i]);
             if (neighbor) neighbors.push(neighbor);
         }
-
         return neighbors;
     };
 
@@ -407,7 +498,7 @@ module.exports = function () {
         if (existing.unit && unit.canBuildOn(existing.unit.occupies())){
             allowedUnits -= 1;
             return units.splice(detectIndex(existing.unit), 1, matrix.insert(unit));
-        } else if (existing.building && unit.canBuildOn(existing.building) || existing.terrain && unit.canBuildOn(existing.terrain)){
+        } else if (existing.building && unit.canBuildOn(existing.building) || existing.terrain && unit.canBuildOn(existing.terrain)) {
             allowedUnits -= 1;
             return addUnit(unit);
         } 
@@ -460,6 +551,7 @@ module.exports = function () {
         if(existing.terrain.type() !== 'plain')
             terrain.splice(detectIndex(existing.terrain), 1, element);
         else terrain.push(element);
+        
         if (existing.building)
             buildings.splice(detectIndex(existing.building), 1);
         if (existing.unit && !existing.unit.canBuildOn(element)){
@@ -600,16 +692,25 @@ module.exports = function () {
             }
         },
         surplus: function () { return { building: allowedBuildings, unit: allowedUnits }; },
-        
-        displaySurplus: function () {
-
-        },
-        displayPlayers: function (){
-
+        displaySurplus: function (){},
+        displayPlayers: function (){},
+        raw: function (player) {
+            return {
+                player: player,
+                buildings: buildings.map(function (building) {return building.properties();}),
+                units: units.map(function (unit) {return unit.properties();}),
+                background: background
+            };
         }
     };
 }();
-},{"../controller/players.js":5,"../definitions/units.js":11,"../game/animate.js":13,"../objects/building.js":28,"../objects/position.js":37,"../objects/terrain.js":42,"../objects/unit.js":44,"../settings/app.js":46,"../settings/game.js":48,"../tools/matrix.js":57,"../tools/validator.js":63}],4:[function(require,module,exports){
+},{"../controller/players.js":7,"../definitions/units.js":13,"../game/animate.js":20,"../objects/building.js":56,"../objects/position.js":69,"../objects/terrain.js":74,"../objects/unit.js":76,"../settings/app.js":78,"../settings/game.js":80,"../tools/matrix.js":91,"../tools/validator.js":97}],5:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Maps.js controls the saving and retrieving of maps
+
+\* --------------------------------------------------------------------------------------*/
+
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.request = require('../tools/request.js');
@@ -620,10 +721,11 @@ Map = require('../objects/map.js')
 
 module.exports = function () {
 
-	var error, maps, keys, change, index, type = 'map', category,
-	validate = new Validator('maps'), categories = ['two'];
+	var error, maps, keys, change, index, type = 'map', category;
+	//validate = new Validator('maps'), 
+	var categories = ['two'];
 
-	types = {
+	var types = {
 		map:{
 			url:'maps/type',
 			items:[],
@@ -635,7 +737,7 @@ module.exports = function () {
 	        }
 		},
 		game:{
-			url:'games',
+			url:'games/open',
 			items:[],
 			elements: {
 	            section: 'gameSelectScreen',
@@ -644,20 +746,20 @@ module.exports = function () {
 	            type:'game',
 	            index:'Index',
 	            attribute:'class',
-	            url:'games',
+	            url:'games/open',
 	            properties: app.settings.categories
 	        }
         }
 	},
 
-	byCategory = function (cat) {
-		if(cat && cat !== category){
+	byCategory = function (cat, callback) {
+		if (cat && cat !== category) {
 			maps = [], keys = [], category = cat;
 	        app.request.get(category, types[type].url, function (response) {
-
-	            if (response && !response.error){
+	            if (response && !response.error) {
 	            	maps = types[type].items = response;
 	            	keys = Object.keys(response);
+	            	if (callback) callback (maps);
 	            }
 	           	change = true;
 	        });
@@ -669,25 +771,42 @@ module.exports = function () {
     	if(map) 
 	    	return map.map ? map :
 	    	new Map(
-	    		map.id, 
-	    		map.name, 
-	    		map.players, 
-	    		map.dimensions, 
+	    		map.id,
+	    		map.name,
+	    		map.players,
+	    		map.dimensions,
 	    		map.terrain,
-	    		map.buildings, 
+	    		map.buildings,
 	    		map.units
 	    	);
-	    else
-	    	return {};
+	    else return {};
     },
+
+    byIndex = function (ind) {
+		index = ind;
+		var m = sub(format(maps[keys[ind]]));
+		return m.map ? m.map : m;
+	},
     
     sub = function (map) { return maps.length ? map : {}; };
+
+    var elementExists = function (id, element, parent){
+        var exists = document.getElementById(id);
+        if(exists){
+            parent.replaceChild(element, exists);
+        }else{
+            parent.appendChild(element);
+        }
+    };
+
+    var buildingElements = {section:'buildingsDisplay', div:'numberOfBuildings'}
 
     byCategory(categories[0]);
 
 	return {
+		byIndex:byIndex,
 		type: function (t) {
-			if(type !== t){
+			if (type !== t) {
 				type = t;
 				category = false;
 				byCategory('two');
@@ -704,14 +823,7 @@ module.exports = function () {
 	            	return format(maps[map]);
 	        return false;
     	},
-    	byIndex: function (ind) {
-    		index = ind;
-    		var m = sub(format(maps[keys[ind]]));
-    		return m.map ? m.map : m;
-    	},
-    	first: function () {
-    		return sub(maps[keys[0]]);
-    	},
+    	first: function () { return sub(maps[keys[0]]); },
     	add:function(room){
             if (category === room.category) {
             	var games = types.game.items;
@@ -723,8 +835,7 @@ module.exports = function () {
         },
         remove: function(room){
         	var games = types.game.items;
-	        if(category === room.category && games[room.name]){
-	        	socket.emit('removeRoom', room);
+	        if (category === room.category && games[room.name]) {
 	            delete games[room.name];
 	            keys = Object.keys(games);
 	            change = true;
@@ -733,29 +844,28 @@ module.exports = function () {
 	        return false;
         },
         updated: function () { 
-        	if(change){
+        	if (change) {
         		change = false;
         		return true; 
         	}
         },
         random: function () {
-        	console.log('---- random!!! ====');
-        	byCategory(categories[app.calculate.random(categories.length - 1)]);
-        	console.log(maps);
-        	console.log('random map index: ' + app.calculate.random(maps.length - 1));
-        	return maps[app.calculate.random(maps.length - 1)];
+        	byCategory('two' || categories[app.calculate.random(categories.length - 1)], function (maps) {
+        		app.map.set([app.calculate.random(maps.length - 1)]);
+        	});
         },
         index: function () {return index;},
+        info: function () { return app.calculate.numberOfBuildings(byIndex(index || 0));},
         clear: function () {maps = [], category = undefined, index = undefined;},
         screen: function () { return types[type].elements; },
-        save: function (map) {
+        save: function (map, name) {
 
-        	if((error = validate.defined (app.user.email(), 'email') || (error = validate.map(map))))
-        		throw error;
+        	// if((error = validate.defined (app.user.email(), 'email') || (error = validate.map(map))))
+        	// 	throw error;
 
             app.request.post({
 			    creator: app.user.email(),
-			    name: map.name,
+			    name: name || map.name,
 			    players: map.players,
 			    category: map.category,
 			    dimensions: map.dimensions,
@@ -769,180 +879,257 @@ module.exports = function () {
             });
         }
         //getbyid: function (id) { app.request.get(id, 'maps/select', function (response) { app.map.set(response); }); },
-	}
+	};
 }();
-},{"../game/game.js":18,"../objects/map.js":33,"../settings/app.js":46,"../settings/game.js":48,"../tools/request.js":58,"../tools/validator.js":63}],5:[function(require,module,exports){
+},{"../game/game.js":25,"../objects/map.js":64,"../settings/app.js":78,"../settings/game.js":80,"../tools/request.js":92,"../tools/validator.js":97}],6:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+
+    holds functions for the selection of game modes / logout etc.. <--- can be redone better
+
+\* --------------------------------------------------------------------------------------*/
+
 app = require('../settings/app.js');
-app.map = require('../controller/map.js');
-app.dom = require('../tools/dom.js');
-app.menu = require('../menu/menu.js');
-app.keys = require('../tools/keyboard.js');
-Player = require('../objects/player.js');
+app.maps = require('../controller/maps.js');
+app.user = require('../objects/user.js');
+app.settings = require('../settings/game.js');
+app.key = require('../tools/keyboard.js');
+app.testMap = require('../objects/testMap.js');
+app.editor = require('../game/mapEditor.js');
+app.join = require('../menu/join.js');
+Settings = require('../menu/settings.js');
+Teams = require('../menu/teams.js');
+Modes = require('../menu/modes.js');
 
 module.exports = function () {
 
-	var current, players = [], defeated = [],
+    var sent, boot, active, game = {};
+    var exitSetupScreen = function () {
+        var ss = document.getElementById('setupScreen');
+        if (ss) ss.parentNode.removeChild(ss);                
+    };
+    
+    return {
+        boot: function () {boot = true},
+        mode: function () {return Modes.select();},
+        newgame: function () {
+
+            // handle map selection
+            if (!app.game.map()) {
+                if (app.join.back()) return 'back';
+                else app.game.setMap(app.join.map());
+            }
+
+            // handle settings selection
+            if (app.game.map() && !app.game.settings()) {
+                if (Settings.back()) app.game.removeMap().removeSettings();
+                else app.game.setSettings(Settings.withArrows().select());
+            }
+
+            // handle co position and selection as well as joining the game
+            if (app.game.map() && app.game.settings() && !app.game.players()) {
+                if (Teams.back()) app.game.removeSettings();
+                else app.game.setPlayers(Teams.withArrows().select());
+            }
+
+            if (app.game.map() && app.game.settings() && app.game.players()) {
+                socket.emit('start', true);
+                return true;
+            }
+        },
+        continuegame:function () {alert('continue an old game is under construction. try new game or join new');},
+        newjoin:function () {
+
+            // handle game selection
+            if (!app.game.map()) {
+                if (app.join.back()) return 'back';
+                else app.game.setMap(app.join.game());
+            }
+
+            if (app.game.map() && !app.game.started()) {
+                if (Teams.back()) app.game.removeMap().removePlayers();
+                else app.game.setPlayers(Teams.withArrows().select());
+            }
+
+            if (app.game.map() && app.game.started()) { // going to have to change to make up for first player start
+                if (app.user.player() === app.players.first())
+                    socket.emit ('start', true);
+                return true;
+            }
+        },
+        continuejoin: function () {alert('continue join is under construction, try new game or join new');},
+        COdesign: function () {alert('design a co is under construction. try new game or join new');},
+        mapdesign: function () {
+            if (!game.map) {
+                game.map = app.join.map();
+                if (game.map) {
+                    if (game.map === 'back') {
+                        delete game.map;
+                        return 'back';
+                    }
+                    app.players.add(app.user.raw());
+                    app.cursor.editing();
+                    return 'editor';
+                }
+            }
+        },
+        store: function () { alert('go to the game store is under construction. try new game or join new'); },
+        joined: function () {return joined;},
+        active: function () {return active;},
+        activate: function () {active = true;},
+        deactivate: function() {active = false;}
+    };
+}();
+},{"../controller/maps.js":5,"../game/mapEditor.js":26,"../menu/join.js":40,"../menu/modes.js":42,"../menu/settings.js":49,"../menu/teams.js":50,"../objects/testMap.js":75,"../objects/user.js":77,"../settings/app.js":78,"../settings/game.js":80,"../tools/keyboard.js":90}],7:[function(require,module,exports){
+app = require('../settings/app.js');
+app.map = require('../controller/map.js');
+app.dom = require('../tools/dom.js');
+app.key = require('../tools/keyboard.js');
+Player = require('../objects/player.js');
+AiPlayer = require('../objects/aiPlayer.js');
+Teams = require('../menu/teams.js');
+
+module.exports = function () {
+
+	var current, players = [], defeated = [], elements = [], ready,
 	
 	setProperties = function (property, value, index) {
-        var setting = property.substring(7).toLowerCase();
-        var index = index !== undefined ? index : property.getNumber() - 1;
-        if (players[index]) players[index][setting] = setting === 'co' ? app.co[value](players[index]) : value;
-        if (app.user.player() && app.user.number() === index + 1)
-            socket.emit('setUserProperties', {property:setting, value: value, index:index});
+        var i = isNaN(index) ? property.getNumber() - 1 : index;
+        if (players[i]) players[i].setProperty(property, value);
     },
 
     exists = function (player) {
-        for (var id, i = 0; i < players.length; i += 1){
-            id = isNaN(player.id) ? player.id() : player.id;
-            if (players[i].id() === id)
-                return i;
-        }
-        return false;
+        var id = player._current ? player._current.id : typeof (player.id) === 'function' ? player.id() : player.id;
+        return players.findIndex(function (player) {return player.id() === id;});
     },
 
     addPlayer = function (player, number) {
-
         // check if player is already in and replace if they are
-        if(player && players.length <= app.map.players()){
+        if (players.length <= app.map.players()) {
 
-            // get the attributes of the co from game and add them to player object
-            var id = 'player'+ (number || player.number) +'co';  // <--- why doesnt the player.number property work???!!!
-            var element = document.getElementById(id);
-            var index = exists(player), value = app.dom.getDefault(element);
-            
-            if(!value && player.co)
-                value = player.co;
+            if (!player.isComputer) player = new Player(player);
 
-            player.number = index === false ? players.length + 1 : players[index].number();
-            player = new Player(player);
+            var number, index = exists(player);
 
-            if (index !== false) players.splice(index, 1, player);
-            else players.push(player);
+            if (!isNaN(index)) {
+                 players.splice(index, 1, player);
+                 number = players[index].number();
+            } else players.push(player);
 
-            if (value) setProperties(id, value);
+            player.setNumber(number || (number = players.length));
+
+            var element = Teams.playerElement(number);
+            var value = element && !player.co ? element.co().value() : player.co;
+            if (value) player.setCo(value);
             return true;
         }
         return false;
     },
 
     shiftPlayers = function (index) {
+        var playerNumber = app.user.number();
+        players.slice(index).forEach(function(player, index){
+            var number = index + 1;
+            player.setNumber(number);
+            Teams.playerElement(number).co().changeCurrent(player.co.name.toLowerCase());
+        });
+        if (index < playerNumber) Teams.arrows.setPosition(Teams.playerElement(app.user.number()).co());
+    },
 
-        // get currently selected co
-        var selected = app.dom.getDefault(document.getElementById('player'+ app.user.player().number() +'co'));
+    replacePlayer = function (player) {
+        var index = exists(player);
+        if (!isNaN(index)) {
+            socket.emit('boot', players[index]);
+            players[index] = new AiPlayer(index + 1);
+        }
+    },
 
-        // move each player after the removed player down one
-        for (i = index; i < players.length; i += 1)
-            players[i].setNumber(i + 1);
-
-        // generate id for new player location
-        var co = 'player'+app.user.player().number()+'co';
-
-        // move arrows to correct position
-        app.keys.press(app.keys.left());
-        app.menu.arrowsTo(co);
-
-        // change co to match players original selection
-        setProperties(co, selected);
-        app.dom.changeDefault(selected, document.getElementById(co));
-        
+    allReady = function () {
+        var length = app.map.players();
+        for(i = 0; i < length; i += 1)
+            if (!players[i] || !players[i].ready()) 
+                return false;
+        return true;
     };
 
 	return {
-
 		setProperty:setProperties,
-		changeProperty: function(p){
-            var children = document.getElementById('player' + (p.index + 1) + p.property).childNodes;
-            var length = children.length;
+		changeProperty: function (p) { 
+            var player = players[exists(p.player)];
+            var property = p.property;
+            var value = p.value;
 
-            for(var i = 0; i < length; i += 1){
-                var equal = children[i].getAttribute('class') === p.value;
-                children[i].style.display = equal ? 'block' : 'none';
-            }
-            setProperties(p.property, p.value, p.index);
+            Teams.playerElement(player.number())[property]()
+                .changeCurrent(value);
+
+            player.setProperty(property, value);
         },
+        setElements: function (e) {elements = e;},
+        addElement: function (e) {elements.push(e);},
+        element: function (number) {return elements[number - 1]},
         empty: function () { return !players.length; },
         first: function () { return players[0]; },
         last: function () { return players[players.length - 1]; },
        	next: function () { return current === this.last() ? this.first() : players[current.number()]; },
+        other: function () { return players.filter(function (player) {player.id() !== app.user.id();});},
         all: function () { return players.concat(defeated); },
         length: function () { return players.length; },
         add: function (player) {
-        	if(player.length)
-        		for(var i = 0; i < player.length; i+=1)
-        			addPlayer(player[i], i + 1);
+        	if (player.length) player.forEach(function (p, i) {addPlayer(p, i + 1);});
         	else addPlayer(player);
         	return current = players[0];
         },
 
         // check if all players are present and ready
-		ready: function () {
-            var length = app.map.players();
-            for(i = 0; i < length; i += 1)
-            	if (!players[i] || !players[i].ready()) 
-                    return false;
-            return true;
-        },
-
+		ready: function () { return ready; },
+        checkReady:function(){ ready = allReady(); },
         get: function (object) {
-        	var i, all = players.concat(defeated);
-        	for(i = 0; i < all.length; i += 1)
-        		if(all[i] && object.id() == all[i].id())
-        			return all[i];
-        	return false;
+            var id = typeof(object.id) === 'function' ? object.id() : object.id;
+        	return this.all().find(function (player) {return player && id == player.id();});
         },
-
-        reset: function () { return players.splice(0, players.length); },    
+        reset: function () { players = []; return this;},    
         current: function () { return current; },
         setCurrent: function (player) { current = player; },
         defeated: function () { return defeated; },
         defeat: function (player) {
             defeated.concat(players.splice(player.index(), 1));
-            if(app.players.length() <= 1)
-                return app.game.end();
+            if(app.players.length() <= 1) return app.game.end();
             alert('player '+player.number()+' defeated');
         },
-
         indexOf: function (object) {
             for (var i = 0; i < players.length; i += 1)
                 if(players[i].id() === object.id())
                     return i;
             return false;
         },
-
         number: function (number) {
-            for (var i = 0; i < players.length; i += 1)
-                if(players[i].number() == number)
-                    return players[i];
-            return false;
+            if (app.game.started()) return players.find(function (player){return player.number() == number;});
+            return (player = players[number - 1]) ? player : false;
         },
+        names: function (players) {
+            return players.reduce(function (prev, player, i, players) {
+                var p = prev ? prev : '', len = players.length, name = player.name();
+                var transition = (i + 1 < len ? (i + 2 < len ? ', ' : ' and ') : '');
+                return p + name + transition;
+            });
+        },
+        unconfirm: function () {players.map(function(element){element.unconfirm();});},
+        replace: replacePlayer,
+        remove: function (player) {
 
-        remove: function(player, cp){
+            var index, removed;
+            if (app.game.started() && !player.isComputer) replacePlayer(player);
+            else if (!isNaN((index = exists(player)))) {
 
-            // make this more complex to handle redistribution of players
-            var i, index = exists(player);
+                if((removed = players.splice(index, 1)[0]).isComputer && app.user.first())
+                    socket.emit('removeAiPlayer', removed);
 
-            if (index !== false) {
-
-                // if there is a specified computer replacement or the game has started
-                if (cp || app.game.started())
-
-                    // then replace the player with the ai or undefined
-                    players.splice(index, 1, cp)
-
-                else {
-
-                    // remove player
-                    players.splice(index, 1);
-
-                    // adjust players to make up for the disconnected player
-                    if (players.length >= index) 
-                        shiftPlayers(index);
-                }
+                if (players.length >= index + 1)
+                    shiftPlayers(index);
             }
         }
     };
 }();
-},{"../controller/map.js":3,"../menu/menu.js":22,"../objects/player.js":36,"../settings/app.js":46,"../tools/dom.js":53,"../tools/keyboard.js":56}],6:[function(require,module,exports){
+},{"../controller/map.js":4,"../menu/teams.js":50,"../objects/aiPlayer.js":51,"../objects/player.js":68,"../settings/app.js":78,"../tools/dom.js":86,"../tools/keyboard.js":90}],8:[function(require,module,exports){
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.animate = require('../game/animate.js');
@@ -959,6 +1146,7 @@ module.exports = function () {
     var screenRefresh = function () { app.animate(['terrain', 'cursor', 'building', 'unit', 'effects']); };
 
     var move = function (distance, view, limit, sign, axis) {
+
         setTimeout(function () { // set delay time
             if (distance > -1 && view * sign + sign < limit){ 
                 view += sign; // <--- keep track of screen edge as it moves
@@ -1003,6 +1191,8 @@ module.exports = function () {
 	    // move screen to target position
         to: function (coordinates) {
 
+        	console.log(coordinates);
+
        		app.cursor.setPosition(coordinates);
 
 	        var mapDimensions = app.map.dimensions();
@@ -1012,6 +1202,8 @@ module.exports = function () {
 			for (var i = 0; i < 2; i += 1) {
 
 				a = axis[i], target = coordinates[a];
+
+				console.log(a);
 
 		        // beginning of screen view
 		        beginning = position[a];
@@ -1041,7 +1233,7 @@ module.exports = function () {
 	    }
     };
 }();
-},{"../controller/cursor.js":2,"../controller/map.js":3,"../game/animate.js":13,"../settings/app.js":46,"../settings/game.js":48}],7:[function(require,module,exports){
+},{"../controller/cursor.js":3,"../controller/map.js":4,"../game/animate.js":20,"../settings/app.js":78,"../settings/game.js":80}],9:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     a list of each building and the inits they are capable of producing
@@ -1078,7 +1270,13 @@ module.exports = {
         bShip:app.units.bShip
     }
 };
-},{"../definitions/units.js":11,"../settings/app.js":46}],8:[function(require,module,exports){
+},{"../definitions/units.js":13,"../settings/app.js":78}],10:[function(require,module,exports){
+/* ---------------------------------------------------------------------- *\
+    
+    Obsticles.js holds the each possible object for the map 
+
+\* ---------------------------------------------------------------------- */
+
 var obsticle = require('../objects/obsticle.js');
 
 module.exports = {
@@ -1089,16 +1287,21 @@ module.exports = {
     snow: new obsticle('snow', 1),
     unit: new obsticle('unit', 0)
 };
-},{"../objects/obsticle.js":35}],9:[function(require,module,exports){
+},{"../objects/obsticle.js":67}],11:[function(require,module,exports){
+/* ---------------------------------------------------------------------- *\
+    
+    Properties.js holds the properties of each map object
+
+\* ---------------------------------------------------------------------- */
+
 app.property = require('../objects/property.js');
 app.obsticles = require('../definitions/obsticles.js');
 Validator = require('../tools/validator.js');
 
 module.exports = function () {
-
-	var error, validate = new Validator('properties');
-	if((error = validate.hasElements(app.obsticles, ['wood','building','plain','mountain', 'unit'])))
-		throw error;
+	// var error, validate = new Validator('properties');
+	// if((error = validate.hasElements(app.obsticles, ['wood','building','plain','mountain', 'unit'])))
+	// 	throw error;
 
     this.tallMountain = new app.property('Mountain', app.obsticles.mountain);
     this.tree = new app.property('Woods', app.obsticles.wood);
@@ -1108,7 +1311,13 @@ module.exports = function () {
     this.unit = new app.property('Unit', app.obsticles.unit);
     this.snow = new app.property('Snow', app.obsticles.snow);
 };
-},{"../definitions/obsticles.js":8,"../objects/property.js":38,"../tools/validator.js":63}],10:[function(require,module,exports){
+},{"../definitions/obsticles.js":10,"../objects/property.js":70,"../tools/validator.js":97}],12:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Score.js calculates the game score
+
+\* --------------------------------------------------------------------------------------*/
+
 ScoreElement = require('../objects/scoreElement.js');
 Score = function (turn) {
 
@@ -1189,7 +1398,7 @@ Score.prototype.calculate = function () {
 };
 
 module.exports = Score;
-},{"../objects/scoreElement.js":39}],11:[function(require,module,exports){
+},{"../objects/scoreElement.js":71}],13:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     app.units is a repo for the units that may be created on the map and their stats
@@ -1907,7 +2116,94 @@ module.exports = {
         cost: 28000
     }
 };
-},{"../settings/app.js":46,"../settings/game.js":48}],12:[function(require,module,exports){
+},{"../settings/app.js":78,"../settings/game.js":80}],14:[function(require,module,exports){
+module.exports = function (x, y, size) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+};
+},{}],15:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Fader.js creates an object that controls color fading
+
+\* --------------------------------------------------------------------------------------*/
+
+Fader = function (element, color, speed) {
+	this.setElement(element);
+	if (color) this.setColor(color);
+	this.setSpeed(speed || 10);
+	this.setIncriment(app.settings.colorSwellIncriment);
+	this.setTime(new Date());
+};
+Fader.prototype.element = function () {return this.e;};
+Fader.prototype.colors = app.settings.colors;
+Fader.prototype.setElement = function (element) {
+	this.e = element;
+	return this;
+};
+Fader.prototype.setDefault = function (color) {this.d = color;};
+Fader.prototype.setColor = function (color) {
+	this.setDefault(color);
+	this.color = new Hsl(color);
+	return this;
+};
+Fader.prototype.setSpeed = function (speed) {this.s = speed;};
+Fader.prototype.setTime = function (time) {this.t = time;};
+Fader.prototype.time = function () {return this.t;};
+Fader.prototype.setLightness = function (lightness) {this.color.lightness = lightness;};
+Fader.prototype.element = function () {return this.e;};
+Fader.prototype.speed = function () {return this.s;};
+Fader.prototype.fading = function () {return this.f;};
+Fader.prototype.setIncriment = function (incriment) { this.i = incriment; };
+Fader.prototype.incriment = function () {return this.i;};
+Fader.prototype.stop = function () {
+	this.f = false;
+	clearTimeout(this.fada);
+	this.clear();
+	return this;
+};
+Fader.prototype.clear = function () {this.callback ? this.callback(null, this.element()) : this.setBorderColor(null);};
+Fader.prototype.toWhite = function () {this.setBorderColor(new Hsl(this.colors.white).format());};
+Fader.prototype.toSolid = function () {this.setBorderColor(this.setColor(this.defaultColor()).color.format());};
+Fader.prototype.defaultColor = function () {return this.d; };
+Fader.prototype.lightness = function () {return this.color.lightness;};
+Fader.prototype.increase = function () {this.setLightness(this.lightness() + this.incriment());};
+Fader.prototype.decrease = function () {this.setLightness(this.lightness() - this.incriment());};
+Fader.prototype.start = function (callback) {
+	this.f = true;
+	this.fade(callback);
+	return this;
+};
+Fader.prototype.changeElement = function (element) {return this.stop().setElement(element).start();};
+Fader.prototype.previous = function () {return this.p;};
+Fader.prototype.setPrevious = function (previous) {this.p = previous;};
+Fader.prototype.setBorderColor = function (color) {this.element().style.borderColor = color;};
+Fader.prototype.fade = function (callback) {
+	this.callback = callback;
+	var scope = this;
+	this.fada = setTimeout(function () {
+        var prev = scope.previous();
+		var lightness = scope.lightness();
+        var color = scope.color;
+        var inc = scope.incriment();
+        scope.setPrevious(lightness);
+        callback ? callback(color.format(), scope.element()) : scope.setBorderColor(color.format());
+        if (lightness + inc <= 100 + inc && prev < lightness || lightness - inc < 50) 
+        	scope.increase();
+        else if (lightness - inc >= scope.defaultColor().l && prev > lightness || lightness + inc > 50) 
+        	scope.decrease();
+		return scope.fading() ? scope.fade(callback) : scope.clear();
+	}, scope.speed());
+};
+module.exports = Fader;
+},{}],16:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Path.js controls pathfinding
+
+\* --------------------------------------------------------------------------------------*/
+
 Position = require('../objects/position.js');
 Heap = require('../tools/binaryHeap.js');
 
@@ -2026,7 +2322,203 @@ Path.prototype.find = function (unit, target) {
 Path.prototype.show = function (effect) { app.animate('effects'); };
 
 module.exports = Path;
-},{"../objects/position.js":37,"../tools/binaryHeap.js":49}],13:[function(require,module,exports){
+},{"../objects/position.js":69,"../tools/binaryHeap.js":81}],17:[function(require,module,exports){
+/* ------------------------------------------------------------------------------------------------------*\
+   
+   ScrollText.js handles scrolling of text accross the screen, requires the id of the containing element, which must be 
+   three elements, one a span, inside something else, inside something else. it also requires a message 
+   to be displayed
+   
+\* ------------------------------------------------------------------------------------------------------*/
+
+module.exports = function () {
+
+    var position;
+
+    var scrollText = function(container, message, footer, text, scroll){
+
+        // if this is our first time through initialize all variables
+        if(!text){
+            text = document.getElementById(container);
+            if(!text) return false;
+            text.innerHTML = message;
+            if(!position) position = -text.offsetWidth;
+            scroll = text.parentNode;
+            footer = scroll.parentNode;
+            if(!scroll || !footer) throw new Error('something up with the textual scroll, no parents.. needs parents');
+        }
+        
+        // if the element is no longer visable then stop
+        if(!text.offsetParent){ 
+            position = false; 
+            return false 
+        }
+
+        // if the text has been changed then stop
+        if(text.innerHTML !== message) return false;
+        
+        // compare the postion of the text to its containor
+        if(position !== undefined){
+
+            // if we are less then the container width then move right
+            if(position <= footer.offsetWidth ){
+                scroll.style.left = position + 'px';
+                position += 1;
+            }else{
+
+                // otherwise reset the position to the left
+                position = -text.offsetWidth * 4;
+            }
+        }
+        setTimeout(function(){ scrollText(container, message, footer, text, scroll);}, 10);
+    };
+    return scrollText;
+}();
+},{}],18:[function(require,module,exports){
+app.settings = require('../settings/game.js');
+Origin = require('../effects/elements/origin.js');
+Sweller = function (element, min, max, speed) {
+    this.setElement(element);
+    this.setMin(min);
+    this.setMax(max);
+    this.setIncriment(app.settings.swellIncriment);
+    this.setSpeed(speed || 2);
+};
+
+Sweller.prototype.setMin = function (min) {this.min = min;};
+Sweller.prototype.setMax = function (max) {this.max = max;};
+Sweller.prototype.swell = function (callback) {
+    var scope = this;
+    var size = this.size();
+    var inc = this.incriment();
+    var prev = this.previous();
+
+    if (this.swelling()) {
+        if (size + inc <= this.max && prev < size || size - inc < this.min)
+            this.setPrevious(size).increase();
+
+        else if(size - inc >= this.min && prev > size || size + inc > this.min)
+            this.setPrevious(size).decrease();
+
+        callback ? callback(this.element(), this.size(), this.position()) : this.resize();
+        this.sweller = setTimeout(function() {scope.swell(callback);}, 15);
+    } else this.clear();
+};
+Sweller.prototype.swelling = function () {return this.a;};
+Sweller.prototype.start = function (callback) {
+    this.a = true;
+    this.init();
+    this.swell(callback);
+    return this;
+};
+Sweller.prototype.stop = function () {
+    this.a = false;
+    this.clear();
+    return this;
+};
+Sweller.prototype.clear = function () {
+    if (!this.origin) 
+        throw new Error('origin has not been set');
+    clearTimeout(this.sweller);
+    this.setLeft(this.origin.x);
+    this.setTop(this.origin.y);
+    this.setSize(this.origin.size);
+    this.resize();
+};
+Sweller.prototype.centerElement = function (center) {
+    this.setLeft(this.left() + center);
+    this.setTop(this.top() + center);
+};
+Sweller.prototype.setLeft = function (position) {this.l = position;};
+Sweller.prototype.left = function () {return this.l;};
+Sweller.prototype.setTop = function (position) {this.t = position; return this;};
+Sweller.prototype.top = function () {return this.t;};
+Sweller.prototype.center = function () {return this.incriment() / 2;};
+Sweller.prototype.incriment = function () {return this.i;};
+Sweller.prototype.setIncriment = function (incriment) {this.i = incriment;};
+Sweller.prototype.setSize = function (size) {this.s = size; return this;};
+Sweller.prototype.resize = function () {
+    var size = this.size();
+    this.element().style.width = size + 'px';
+    this.element().style.height = size + 'px';
+    this.element().style.top = this.top() + 'px';
+    this.element().style.left = this.left() + 'px';
+    return this;
+};
+Sweller.prototype.size = function () {return this.s;};
+Sweller.prototype.incSize = function (incriment) {this.setSize(this.size() + incriment);};
+Sweller.prototype.increase = function () {
+    this.incSize(this.incriment());
+    this.centerElement(-this.center());
+    return this;
+};
+Sweller.prototype.decrease = function () {
+    this.incSize(-this.incriment());
+    this.centerElement(this.center());
+    return this;
+};
+Sweller.prototype.position = function () {return {x:this.left(), y:this.top()};};
+Sweller.prototype.setPrevious = function (p) {this.p = p; return this;};
+Sweller.prototype.previous = function () {return this.p;};
+Sweller.prototype.setElement = function (element) {
+    this.e = element;
+    return this;
+};
+Sweller.prototype.init = function () {
+    var element = this.element();
+    var size = element.offsetWidth;
+    var left = Number(element.style.left.replace('px','')); 
+    var top = Number(element.style.top.replace('px',''));
+    this.setSize(size);
+    this.setLeft(left);
+    this.setTop(top);
+    this.origin = new Origin(left, top, 80);
+};
+Sweller.prototype.setSpeed = function (speed) {this.s = speed;};
+Sweller.prototype.speed = function () {return this.s; };
+Sweller.prototype.element = function () {return this.e;};
+module.exports = Sweller;
+},{"../effects/elements/origin.js":14,"../settings/game.js":80}],19:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Typing.js controls typing effect in game menus
+
+\* --------------------------------------------------------------------------------------*/
+
+ module.exports = {
+    defaults: function () { return this.speed = app.settings.typingSpeed * 10; },
+    speed: app.settings.typingSpeed * 10,
+    isPrev: function (sentance) { return this.text === sentance; },
+    letters: function (element, sentance, followup) {
+        if(!this.isPrev(sentance)) {
+            this.text = sentance;
+            element.innerHTML = '';
+            return this.type(element, sentance, 0, followup);
+        }
+        return false;
+    },
+    type: function (element, sentance, index, followup) {
+        var scope = this;
+        this.typer = setTimeout(function () {
+            if (sentance[index] && scope.isPrev(sentance)) { 
+                element.innerHTML += sentance[index];
+                index += 1;
+                scope.type(element, sentance, index, followup);
+            } else {
+                if (followup) followup(element);
+                if (scope.isPrev(sentance)) 
+                    scope.reset();
+                return false;
+            }
+        }, this.speed);
+    },
+    reset: function () { 
+        clearTimeout(this.typer);
+        delete this.text; 
+    },
+    setSpeed: function (speed) { this.speed = speed * 10; }
+};
+},{}],20:[function(require,module,exports){
 /* ----------------------------------------------------------------------------------------------------------*\
 
     The animate functions insert the draw methods into the specified canvas for rendering and then make a 
@@ -2046,7 +2538,7 @@ module.exports = function (objectName, hide) {
             app[objectName[i] + 'Canvas'].setAnimations(app['draw' + objectName[i].uc_first()]).render(hide);
     });
 };
-},{"../settings/app.js":46}],14:[function(require,module,exports){
+},{"../settings/app.js":78}],21:[function(require,module,exports){
 
 // ------------------------------------------ settings -----------------------------------------------------------------
 
@@ -2068,9 +2560,8 @@ app.increment = require('../tools/increment.js');
 // -------------------------------------------- menu --------------------------------------------------------------------
 
 app.login = require('../menu/login.js'); // login control
-app.menu = require('../menu/menu.js'); // game setup menu
 app.modes = require('../menu/modes.js'); // app.modes holds functions for the selection of game modes / logout etc..
-app.options = require('../menu/options.js'); // app.options handles the in game options selection, end turn, save etc.
+app.optionsMenu = require('../menu/options/optionsMenu.js'); // app.options handles the in game options selection, end turn, save etc.
 app.scroll = require('../menu/scroll.js'); // app.game.settings consolidates holds settings for the game
 
 // ----------------------------------------- definitions ----------------------------------------------------------------
@@ -2109,10 +2600,10 @@ app.cursor = require('../controller/cursor.js');
 app.screen = require('../controller/screen.js');
 
 module.exports = app;
-},{"../controller/cursor.js":2,"../controller/map.js":3,"../controller/maps.js":4,"../controller/players.js":5,"../controller/screen.js":6,"../definitions/buildings.js":7,"../definitions/obsticles.js":8,"../definitions/properties.js":9,"../definitions/units.js":11,"../game/animate.js":13,"../game/calculate.js":15,"../game/draw.js":16,"../game/effects.js":17,"../game/game.js":18,"../menu/login.js":21,"../menu/menu.js":22,"../menu/modes.js":23,"../menu/options.js":24,"../menu/scroll.js":25,"../objects/animations.js":26,"../objects/co.js":29,"../objects/hud.js":32,"../objects/obsticle.js":35,"../objects/property.js":38,"../objects/screens.js":40,"../objects/target.js":41,"../objects/user.js":45,"../settings/app.js":46,"../settings/game.js":48,"../tools/chat.js":50,"../tools/display.js":52,"../tools/dom.js":53,"../tools/increment.js":54,"../tools/init.js":55,"../tools/keyboard.js":56,"../tools/request.js":58,"../tools/touch.js":61,"../tools/undo.js":62}],15:[function(require,module,exports){
+},{"../controller/cursor.js":3,"../controller/map.js":4,"../controller/maps.js":5,"../controller/players.js":7,"../controller/screen.js":8,"../definitions/buildings.js":9,"../definitions/obsticles.js":10,"../definitions/properties.js":11,"../definitions/units.js":13,"../game/animate.js":20,"../game/calculate.js":22,"../game/draw.js":23,"../game/effects.js":24,"../game/game.js":25,"../menu/login.js":41,"../menu/modes.js":42,"../menu/options/optionsMenu.js":46,"../menu/scroll.js":48,"../objects/animations.js":52,"../objects/co.js":58,"../objects/hud.js":62,"../objects/obsticle.js":67,"../objects/property.js":70,"../objects/screens.js":72,"../objects/target.js":73,"../objects/user.js":77,"../settings/app.js":78,"../settings/game.js":80,"../tools/chat.js":82,"../tools/display.js":85,"../tools/dom.js":86,"../tools/increment.js":88,"../tools/init.js":89,"../tools/keyboard.js":90,"../tools/request.js":92,"../tools/touch.js":95,"../tools/undo.js":96}],22:[function(require,module,exports){
 /* ----------------------------------------------------------------------------------------------------------*\
     
-    handles calculations like pathfinding and the definition of movement range
+    Calculate.js handles calculations like pathfinding and the definition of movement range
 
 \* ----------------------------------------------------------------------------------------------------------*/
 
@@ -2146,26 +2637,22 @@ module.exports = function () {
 
         distance: function (a, b) { return abs(a.x - b.x) + abs(a.y - b.y); },
 
-        numberOfBuildings: function(map){
-
-            // clear out previous numbers
-            var display = app.settings.buildingDisplayElement;
-            var types = Object.keys(display);
-            var len = types.length;
-            for(var t = 0; t < len; t += 1)
-                app.settings.buildingDisplayElement[types[t]].numberOf = 0;
+        numberOfBuildings: function(map) {
 
             // get selected maps building list
-            var buildings = map.buildings;
-            var type, n, num = buildings.length;
+            var type, all = map.buildings, buildings = {};
+
+            if (!all) return false;
 
             // add one for each building type found  to the building display list
-            for (n = 0; n < num; n += 1){
-                type = buildings[n].type;
-                if(type !== 'hq') app.settings.buildingDisplayElement[type].numberOf += 1; 
+            for (var n = 0; n < all.length; n += 1) {
+                type = all[n].type;
+                if (type !== 'hq') {
+                    if (isNaN(buildings[type])) buildings[type] = 1;
+                    else buildings[type] += 1; 
+                }
             }
-
-            return app.settings.buildingDisplayElement;
+            return buildings;
         },
 
         longestLength: function (arrays) {
@@ -2199,7 +2686,7 @@ module.exports = function () {
         random: function(range) { return Math.floor(Math.random() * range); }
     };
 }();
-},{"../controller/map.js":3,"../controller/screen.js":6,"../settings/app.js":46,"../settings/game.js":48}],16:[function(require,module,exports){
+},{"../controller/map.js":4,"../controller/screen.js":8,"../settings/app.js":78,"../settings/game.js":80}],23:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------------------------*\
 
     app.draw provides a set of methods for interacting with, scaling, caching, coordinating  
@@ -2393,75 +2880,50 @@ module.exports = function (canvas, dimensions, base) {
         }
     };
 };
-},{"../controller/background.js":1,"../controller/map.js":3,"../controller/screen.js":6,"../game/effects.js":17,"../objects/animations.js":26,"../settings/app.js":46,"../settings/game.js":48}],17:[function(require,module,exports){
+},{"../controller/background.js":1,"../controller/map.js":4,"../controller/screen.js":8,"../game/effects.js":24,"../objects/animations.js":52,"../settings/app.js":78,"../settings/game.js":80}],24:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
 
-    app.effect is holds the coordinates for effects
+    Effect.js holds the coordinates for effects
 
 \* --------------------------------------------------------------------------------------*/
 
 app = require('../settings/app.js');
-app.touch = require('../tools/touch.js');
 Path = require('../effects/path.js');
+app.confirm = require('../controller/confirmation.js');
 app.path = new Path();
 app.range = new Path();
 app.attackRange = new Path();
 
 module.exports = function () {
 
-    var key, undo, block, 
-    prev = {}, temp = {}, 
-    positions = ['oneAbove','twoAbove','oneBelow','twoBelow'];
-
+    var key, undo, block, prev = {}, temp = {};
     var highlight = app.range;
     var path = app.path;
     var attackRange = app.attackRange;
     var refresh = function () {app.animate('effects');};
-    var findElementsByClass = function (element, className){
+    var findElementsByClass = function (element, className) {
         for (var i = 0, elements = []; i < element.childNodes.length; i += 1)
             if (element.childNodes[i].className === className)
                 elements.push(element.childNodes[i]);
         return elements;
     };
 
-    var fade = function (element, id) {
-        app.temp.swell = element;
-        app.temp.swellingColor = app.settings.colors[id];
-    };
-
-    var stopFading = function (){delete app.temp.swell;};
-
-    var highlightListItem = function (selectedElement, tag, index, previous, elements) {
+    var highlightListItem = function (selectedElement, index, previous, elements) {
 
         // apply highlighting 
         selectedElement.style.backgroundColor = 'tan';
 
         // display info on the currently hovered over element
-        if (id === 'selectUnitScreen') unitInfo(selected, selectedElement.id); /// selected unnacounted for
+        if (selectedElement.id === 'selectUnitScreen') unitInfo (selected, selectedElement.id); /// selected unnacounted for
 
         // if there is then remove its highlighting
         if (previous) previous.style.backgroundColor = '';
         return true;
     };
 
-    var type = function (element, sentance, index) {
-        setTimeout(function () {
-
-            if (sentance[index] && app.temp.typing === sentance) { 
-                element.innerHTML += sentance[index];
-                index += 1;
-                type(element, sentance, index);
-            }else{
-                return false;
-            }
-        }, app.settings.typingSpeed * 10);
-    };
-
     return {
 
         highlightListItem:highlightListItem,
-        fade:fade,
-        stopFading:stopFading,
         refresh:refresh,
 
         undo: {
@@ -2477,388 +2939,148 @@ module.exports = function () {
         setPath: function (path) {path.set(path);},
         setAttackRange: function (range) {attackRange.set(range);},
         clear: function () {temp = {};prev = {};},
-        arrow: function (type, x, y, size) {
-
-            var arrow = document.getElementById(type + 'ArrowOutline');
-            var background = document.getElementById(type + 'ArrowBackground');
-            var top = arrow.style.top = y + 'px';
-            var left = arrow.style.left = x + 'px';
-
-            if(size){
-                var border = size / 4;
-                background.style.left = border - size + 'px'; 
-                if(type === 'up'){
-                    arrow.style.borderLeftWidth = size + 'px';
-                    arrow.style.borderRightWidth = size + 'px';
-                    arrow.style.borderTopWidth = size + 'px';
-                    background.style.borderLeftWidth = size - border + 'px';
-                    background.style.borderRightWidth = size - border + 'px';
-                    background.style.borderTopWidth = size - border + 'px';
-                }else if(type === 'down'){
-                    arrow.style.borderLeftWidth = size + 'px';
-                    arrow.style.borderRightWidth = size + 'px';
-                    arrow.style.borderBottomWidth = size + 'px';
-                    background.style.borderLeftWidth = size - border + 'px';
-                    background.style.borderRightWidth = size - border + 'px';
-                    background.style.borderBottomWidth = size -2 + 'px';
-                }else if(type === 'left'){
-                    arrow.style.borderLeftWidth = size + 'px';
-                    arrow.style.borderBottomWidth = size + 'px';
-                    arrow.style.borderTopWidth = size + 'px';
-                    background.style.borderLeftWidth = size - border + 'px';
-                    background.style.borderBottomWidth = size - border + 'px';
-                    background.style.borderTopWidth = size - border + 'px';
-                }else if(type === 'right'){
-                    arrow.style.borderBottomWidth = size + 'px';
-                    arrow.style.borderRightWidth = size + 'px';
-                    arrow.style.borderTopWidth = size + 'px';
-                    background.style.borderBottomWidth = size - border + 'px';
-                    background.style.borderRightWidth = size - border + 'px';
-                    background.style.borderTopWidth = size - border + 'px';
-                }
+        hideOffScreenElements: function (elements, index, min, max) {
+            var hide = index - max;
+            if (hide >= min){
+                if (index > max)
+                    for (var h = 0; h < hide; h += 1)
+                        elements[h].style.display = 'none';
+                else if (index < elements.length - max)
+                    elements[index].style.display = '';
             }
-
-            return {
-                outline: arrow,
-                background: background
-            };
-        },
-
-        horizontalScroll:function (parent) {
-
-            var previous = prev.category;
-
-            if(previous !== undefined) previous.style.display = 'none';
-
-            var categories = parent.children;
-            var len = categories.length - 1;
-
-            var category = app.def.category = app.scroll.horizontal().infinite(app.def.category, 0 , len);
-
-            // get the elements to the left and right of the selected category and position them as such
-            var neg = category - 1;
-            var pos = category + 1;
-            var left = categories[ neg < 0 ? len : neg ];
-            var right = categories[ pos < len ? pos : 0 ];
-
-            // get the category for display
-            var show = categories[category];
-
-            // display selected
-            show.style.display = '';
-            show.setAttribute('pos', 'center');
-
-            //position left and right
-            left.setAttribute('pos', 'left');
-            right.setAttribute('pos', 'right');
-
-            if(previous === undefined || show.id !== previous.id){
-                prev.category = show;
-                return show.id;
-            }
-            return false;
-        },
-
-        setupMenuMovement:function (selectedElement, tag, index, previous, elements){
-
-            // if the item being hovered over has changed, remove the effects of being hovered over
-            if(previous){
-                stopFading();
-                var background = findElementsByClass(previous, 'modeBackground')[0] || false;
-                if(background){
-                    background.style.height = '';
-                    background.style.borderColor = '';
-                }else{
-                    previous.style.height = '';
-                    previous.style.borderColor = '';
-                }
-                if(!app.modes.active()){
-                    if(prev.textBackground){
-                        var tbg = prev.textBackground;
-                        tbg.style.transform = '';
-                        tbg.style.backgroundColor = 'white';
-                    }
-                    if(prev.text) prev.text.style.letterSpacing = '';
-                    block = findElementsByClass(previous, 'block')[0] || false;
-                    if(block) block.style.display = '';
-                    var prevOptions = findElementsByClass(previous, 'modeOptions')[0] || false;
-                    if(prevOptions) prevOptions.style.opacity = 0;
-                }
-            }
-
-            app.display.through();
-
-            if(!app.modes.active()){
-
-                var elements = findElementsByClass(selectedElement.parentNode, 'modeItem');
-                var menu = findElementsByClass(selectedElement, 'modeOptions')[0] || false;
-                var length = elements.length;
-
-                // calculate the positions of the surrounding elements by index
-                var pos = {oneAbove: index - 1 < 1 ? length : index - 1};
-                pos.twoAbove = pos.oneAbove - 1 < 1 ? length : pos.oneAbove - 1; 
-                pos.oneBelow = index + 1 > length ? 1 : index + 1; 
-                pos.twoBelow = pos.oneBelow + 1 > length ? 1 : pos.oneBelow + 1;
-
-                // assign position values for each positon
-                for( var p = 0; p < positions.length; p += 1){
-                    var position = positions[p];
-                    var posIndex = pos[position];
-                    var element = app.dom.findElementByTag(tag, elements, posIndex);
-                    element.setAttribute('pos', position);
-                }
-
-                selectedElement.setAttribute('pos', 'selected');
-                app.touch(selectedElement).scroll();
-
-                // get the h1 text element of the selected mode and its background span
-                var text = findElementsByClass(selectedElement, 'text')[0] || false;
-                var background = selectedElement.getElementsByTagName('span')[0] || false;
-
-                if(text && background){
-                    // save the background and text for resetting on new selection
-                    prev.textBackground = background;
-                    prev.text = text;
-
-                    //  get the length of the id (same as inner html);
-                    var letters = selectedElement.id.length;
-
-                    // get the width of the text and the width of its parent
-                    var parentWidth = selectedElement.clientWidth;
-                    var bgWidth = background.offsetWidth;
-
-                    // devide the text width by the width of the parent element and divide it by 4 to split between letter spacing and stretching
-                    var diff = (bgWidth / parentWidth ) / 4;
-                    var transform = diff + 1; // find the amount of stretch to fill the parent
-                    var spacing = (diff * bgWidth) / letters; // find the amount of spacing between letters to fill the parent
-
-                    // set spacing
-                    text.style.letterSpacing = spacing + 'px';
-
-                    // stretch letters
-                    //background.style.transform = 'scale('+transform+',1)';
-
-                    // remove background
-                    background.style.backgroundColor = 'transparent';
-                };
-                
-                // hide the background bar
-                block = findElementsByClass(selectedElement, 'block')[0] || false;
-                if (block) block.style.display = 'none';
-            }
-
-            if(selectedElement.getAttribute('class') === 'modeOption'){
-                id = selectedElement.parentNode.parentNode.id;
-            }else{
-                id = selectedElement.id;
-            }
-
-            // get border of background div            
-            var border = findElementsByClass(selectedElement, 'modeBackground')[0] || false;
-            var element = selectedElement;
-            
-            // fade the selected element from color to white
-            if (border) element = border;
-
-            fade(element, id || 'game');
-
-            // toggle sub menu selections
-            if (menu || app.modes.active()){
-                app.display.menuItemOptions(menu);
-                if(menu){
-                    app.def.menuOptionsActive = true;
-                    return false; // tells select that it is not selectable since it has further options
-                }else if(!app.modes.active()){
-                    app.def.menuOptionsActive = false;
-                }
-            }
-            return true;
-        },
-
-        swell: {
-            color: function (now, element, color, inc, callback, id) { 
-
-                if(app.temp.swell || element){
-
-                    // note that color swell is active
-                    if(!app.temp.colorSwellActive) app.temp.colorSwellActive = true;
-
-                    if(id && !app.prev[id]) app.prev[id] = {};
-                    var time = app.prev[id] ? app.prev[id].swellTime : app.prev.swellTime;
-
-                    if(!time || now - time > app.settings.colorSwellSpeed){
-                        
-                        var inc = inc ? inc : app.settings.colorSwellIncriment;
-                        var element = element ? element : app.temp.swell;
-                        var prev = app.prev[id] ? app.prev[id].lightness : app.prev.lightness;
-
-                        if(id){
-                            if(!app.temp[id]) app.temp[id] = {lightness:app.def.lightness};
-                            app.prev[id].swellTime = now;
-                        }else{
-                            app.prev.swellTime = now;
-                            if(!app.temp.lightness) app.temp.lightness = app.def.lightness;
-                        }
-
-                        var lightness = app.temp[id] ? app.temp[id].lightness : app.temp.lightness;
-                        var color = color ? color : app.temp.swellingColor;
-
-                        if(callback) {
-                            callback(app.hsl(color.h, color.s, lightness), element);
-                        }else{
-                            element.style.borderColor = app.hsl(color.h, color.s, lightness);
-                        }
-
-                        if( lightness + inc <= 100 + inc && prev < lightness || lightness - inc < 50){
-                            if(app.temp[id] && app.prev[id]){
-                                app.temp[id].lightness += inc;
-                                app.prev[id].lightness = lightness;
-                            }else{
-                                app.temp.lightness += inc;
-                                app.prev.lightness = lightness;
-                            }
-                        }else if(lightness - inc >= color.l && prev > lightness || lightness + inc > 50){ 
-                            if(app.temp[id] && app.prev[id]){
-                                app.temp[id].lightness -= inc;
-                                app.prev[id].lightness = lightness;
-                            }else{
-                                app.temp.lightness -= inc;
-                                app.prev.lightness = lightness;
-                            }
-                        };
-                    }
-                // if there is no app.temp.swell, but colorswell is active then delete every
-                }else if(app.temp.colorSwellActive){
-                    //delete app.temp.lightness;
-                    delete app.temp.colorSwellActive;
-                    delete app.temp.swellingColor;
-                }
-            },
-            size: function (element, min, max) {
-
-                if(app.prev.swellElement && app.prev.swellElement.id !== element.id){
-
-                    app.prev.swellElement.style.width = '';
-                    app.prev.swellElement.style.height = '';
-                    app.prev.swellElement.style.left = app.prev.left + 'px';
-                    app.prev.swellElement.style.top = app.prev.top + 'px';
-
-                    delete app.prev.left;
-                    delete app.prev.top;
-                    delete app.temp.size;
-                    delete app.temp.left;
-                    delete app.temp.top;
-                }
-
-                if(!app.settings.swellIncriment && inc) app.settings.swellIncriment = inc;
-                if(!app.settings.swellSpeed && swellSpeed) app.settings.swellSpeed = swellSpeed;
-                if(!app.temp.size) app.temp.size = element.offsetWidth;
-                if(!app.temp.left) app.temp.left = app.prev.left = Number(element.style.left.replace('px',''));
-                if(!app.temp.top) app.temp.top = app.prev.top = Number(element.style.top.replace('px',''));
- 
-                var size = app.temp.size;
-                var now = new Date();
-                var time = app.prev.sizeSwellTime;
-                var inc = app.settings.swellIncriment;
-                var swellSpeed = app.settings.swellSpeed;
-                var prev = app.prev.size;
-
-                if(!time || now - time > swellSpeed){
-
-                    app.prev.sizeSwellTime = now;
-
-                    app.prev.swellElement = element;
-
-                    var center = inc / 2;
-
-                    if( size + inc <= max && prev < size || size - inc < min){
-                        app.temp.size += inc;
-                        app.temp.left -= center;
-                        app.temp.top -= center;
-                        app.prev.size = size;
-                    }else if(size - inc >= min && prev > size || size + inc > min){ 
-                        app.temp.size -= inc;
-                        app.temp.left += center;
-                        app.temp.top += center;
-                        app.prev.size = size;
-                    };
-
-                    var newSize = app.temp.size + 'px';
-                    var newLeft = app.temp.left + 'px';
-                    var newTop = app.temp.top + 'px';
-
-                    element.style.width = newSize;
-                    element.style.height = newSize;
-                    element.style.left = newLeft;
-                    element.style.top = newTop;
-                };
-            }
-        },
-
-        typeLetters: function (element, sentance) {
-            var prevDesc = app.prev.description;
-            if(!prevDesc || prevDesc !== sentance){
-                app.prev.description = sentance;
-                element.innerHTML = '';
-                app.temp.typing = sentance;
-                return type(element, sentance, 0);
-            }
-            return false;
         }
     };
 }();
-},{"../effects/path.js":12,"../settings/app.js":46,"../tools/touch.js":61}],18:[function(require,module,exports){
+},{"../controller/confirmation.js":2,"../effects/path.js":16,"../settings/app.js":78}],25:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
    
-    controls the setting up and selection of games / game modes 
+    Game.js controls the setting up and selection of games / game modes 
    
 \* ------------------------------------------------------------------------------------------------------*/
 
+StatusHud = require('../objects/coStatusHud.js');
+Score = require('../definitions/score.js');
+Counter = require('../tools/counter.js');
+Exit = require('../menu/options/exit.js');
+Hud = require('../objects/hud.js');
+
 app = require('../settings/app.js');
-app.animate = require('../game/animate.js')
+app.menu = require('../controller/menu.js');
+app.animate = require('../game/animate.js');
 app.effect = require('../game/effects.js');
 app.display = require('../tools/display.js');
 app.undo = require('../tools/undo.js');
 app.key = require('../tools/keyboard.js');
 app.target = require('../objects/target.js');
-app.hud = require('../objects/hud.js');
 app.user = require('../objects/user.js');
 app.players = require('../controller/players.js');
 app.cursor = require('../controller/cursor.js');
 app.background = require('../controller/background.js');
-
-StatusHud = require('../objects/coStatusHud.js');
-Score = require('../definitions/score.js');
-Counter = require('../tools/counter.js');
+app.optionsMenu = require('../menu/options/optionsMenu.js');
+app.confirm = require('../controller/confirmation.js');
+app.exit = new Exit();
+app.yield = new Exit(function(){
+    app.game.end();
+    var player = app.user.player();
+    socket.emit('defeat', {defeated:player, conqueror:player, capturing:false});
+});
 
 app.coStatus = new StatusHud();
 
 module.exports = function () {
 
-    var name, selected, actions, end = false, started = false, settings = require('../settings/default.js');
+    var game, mode, name, joined, selected, actions, end = false, started = false, settings, 
+    players, map, menus = ['optionsMenu', 'options', 'intel', 'save', 'exit', 'yield'];
 
     // used for accessing the correct building array via what type of transportation the unit uses
-    var ports = { air: 'airport', foot: 'base', wheels: 'base', boat: 'seaport' };
+    var ports = { 
+        air: 'airport', 
+        foot: 'base', 
+        wheels: 'base', 
+        boat: 'seaport' 
+    };
 
     var tick = new Counter(1000);
 
+    var removeScreen = function () {
+        var screen = document.getElementById('setupScreen');
+        screen.parentNode.removeChild(screen);
+    };
+
     return {
         tick:tick.reached,
+        joined: function () {return joined;},
         started: function () {return started;},
         settings: function () {return settings;},
-        load: function (room) { settings = room.settings; },
-        name: function (n) {
-            if (n) name = n;
-            return name;
+        map: function () {return map;},
+        removeMap: function () {
+            map = undefined;
+            return this;
         },
-        
+        removeSettings: function () {
+            settings = undefined;
+            return this;
+        },
+        removePlayers: function () {
+            players = undefined;
+            return this;
+        },
+        players: function () {return players;},
+        load: function (room) { 
+            console.log(room);
+            app.background.set(room.map.background);
+            console.log(map);
+            settings = room.settings;
+            console.log(settings);
+            app.players.add(room.players);
+            players = app.players.all();
+            console.log(app.game.players);
+        },
+        name: function () { return name; },
+        category: function () {return map.category;},
+        room: function () {return {name:name, category:map.category};},
+        screen: function () { return gameScreen; },
         clear: function () { name = undefined; },
-
-        set: function (setting, value) {
-            settings[setting] = value;
-            return settings[setting];
+        setSettings: function (s) {settings = s;},
+        setPlayers: function (p) {players = p;},
+        setMap: function (m) {return map = m;},
+        logout: function () {
+            // handle logout
+            alert('logout!!');
         },
+        create: function (n) {
+            var room = {};
+            room.map = app.map.get();
+            room.name = name = n;
+            room.settings = settings;
+            room.max = app.map.players();
+            room.category = app.map.category();
+            socket.emit('newRoom', room);
+        },
+        setup: function (setupScreen){
 
+            // select game mode
+            if(app.user.id() && !mode) 
+                mode = app.menu.mode();
+
+            // if a game has been set 
+            if (game) {               
+                removeScreen();
+                return game === 'editor' && app.editor.start() || started ? true : app.game.reset();
+
+            // set up the game based on what mode is being selected
+            } else if (mode) mode === 'logout' ? app.game.logout() : game = app.menu[mode]();
+
+            // loop
+            window.requestAnimationFrame(app.game.setup);
+            if(app.key.pressed()) app.key.undo();        
+        },
+        reset: function () {
+            game = mode = false;
+            app.display.clear();
+            app.screens.modeMenu();
+            this.setup();
+        },
         start: function (game) {
 
             if (app.players.length() !== app.map.players()) 
@@ -2876,7 +3098,7 @@ module.exports = function () {
             player.score.income(player.income());
 
             // setup game huds
-            app.hud = new app.hud(app.map.occupantsOf(hq));
+            app.hud = new Hud(app.map.occupantsOf(hq));
 
             // start game mechanics
             app.game.loop();
@@ -2894,11 +3116,6 @@ module.exports = function () {
             return started = true;
         },
 
-        end: function () { 
-            alert('player ' + app.players.first().number() + ' wins!  with a score of ' + app.players.first().score.calculate() + '!');
-            end = true; 
-        },
-
         /* --------------------------------------------------------------------------------------------------------*\
             
             app.game.loop consolidates all the game logic and runs it in a loop, coordinating animation calls and 
@@ -2906,73 +3123,94 @@ module.exports = function () {
 
         \* ---------------------------------------------------------------------------------------------------------*/
 
+        update: function () { return app.game.started() ? app.game.loop() : app.game.setup(); },
         loop: function () {
 
-            var h;
+            var confirmation, options;
 
             // incriment frame counter
             tick.incriment();
 
-            // move cursor
-            app.cursor.move();
+            if ((confirmation = app.confirm.active())) app.confirm.evaluate();
+            if (app.cursor.deleting()) 
+                app.cursor.deleteUnit();
 
             // if target is active, enabel target selection
-            if(app.target.active()) 
+            if (app.target.active()) 
                 app.target.chose(app.cursor.selected());
 
             // listen for options activation and selection
-            if(app.options.active() && app.options.evaluate())
-                app.undo.all(); 
+            options = app.optionsMenu.coordinate(menus);
+
+            // move cursor
+            if (!options && !confirmation) app.cursor.move();
 
             // handle selection of objects
-            if((selected = app.cursor.selected()) && selected.evaluate(app.cursor.position()))
+            if ((selected = app.cursor.selected()) && selected.evaluate(app.cursor.position()))
                 app.undo.all();
 
             // display co status hud
-            else if (!app.options.active()){
+            else if (!app.optionsMenu.active()) {
                 app.coStatus.display(app.players.current(), app.cursor.side('x'));
                 app.map.focus();
             }
 
-            // controls cursor and screen movement/selection
-            if(!app.options.active())
+            // controls cursor selection
+            if (!options && !confirmation)
                 app.cursor.select();
 
             // control map info hud
-            if(!app.cursor.selected()){
-                if(app.user.turn()) {
-                    if (app.hud.hidden() && !app.map.focused()) 
+            if (!app.cursor.selected()) {
+                if (app.user.turn()) {
+                    if (app.hud.hidden() && !app.map.focused() && !app.input.active())
                         app.hud.show();
                     if (app.cursor.moved()) 
                         app.hud.setElements(app.cursor.hovered());
-                }else if(!app.hud.hidden())
+                } else if (!app.hud.hidden())
                     app.hud.hide();
             }
 
-            //app.effect.swell.color(); // listen for fading colors in and out on selection
-
             // exit menus when esc key is pressed
-            if(app.key.pressed(app.key.esc()))
-                if(!app.options.active() && !selected){
-                    app.options.display();
+            if (app.key.pressed(app.key.esc())){
+                if (app.cursor.deleting()) { 
+                    app.cursor.selectMode();
+                } else if(!app.optionsMenu.active() && !options && !selected && !confirmation){
+                    app.optionsMenu.display();
                     app.coStatus.hide();
-                } else app.undo.all();
+                } else {
+                    app.optionsMenu.deactivate(menus);
+                    app.hud.show();
+                    app.coStatus.show();
+                    app.undo.all();
+                }
+            }
 
-            // undo any lingering key presses <---- not really necessary
             app.key.undo();
             app.key.undoKeyUp();
             tick.reset(); // reset counter if necessary
             if (end) return true;
             else window.requestAnimationFrame(app.game.loop);
+        },
+        end: function (saved) { 
+            if (!saved) alert('player ' + app.players.first().number() + ' wins!  with a score of ' + app.players.first().score.calculate() + '!');
+            else alert('ending game');
+            end = true; 
         }
     };
 }();
-},{"../controller/background.js":1,"../controller/cursor.js":2,"../controller/players.js":5,"../definitions/score.js":10,"../game/animate.js":13,"../game/effects.js":17,"../objects/coStatusHud.js":30,"../objects/hud.js":32,"../objects/target.js":41,"../objects/user.js":45,"../settings/app.js":46,"../settings/default.js":47,"../tools/counter.js":51,"../tools/display.js":52,"../tools/keyboard.js":56,"../tools/undo.js":62}],19:[function(require,module,exports){
+},{"../controller/background.js":1,"../controller/confirmation.js":2,"../controller/cursor.js":3,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/score.js":12,"../game/animate.js":20,"../game/effects.js":24,"../menu/options/exit.js":43,"../menu/options/optionsMenu.js":46,"../objects/coStatusHud.js":59,"../objects/hud.js":62,"../objects/target.js":73,"../objects/user.js":77,"../settings/app.js":78,"../tools/counter.js":84,"../tools/display.js":85,"../tools/keyboard.js":90,"../tools/undo.js":96}],26:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    MapEditor.js controls map creation
+
+\* --------------------------------------------------------------------------------------*/
+
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
 app.units = require('../definitions/units.js');
 app.animate = require('../game/animate.js');
+app.optionsMenu = require('../menu/options/optionsMenu.js');
 
 Validator = require('../tools/validator.js');
 Matrix = require('../tools/matrix.js');
@@ -3044,8 +3282,8 @@ module.exports = function () {
 
             // exit menus when esc key is pressed
             if(app.key.pressed(app.key.esc()))
-                if(!app.options.active())
-                    app.options.display();
+                if(!app.optionsMenu.active())
+                    app.optionsMenu.display();
                 else app.undo.all();
 
             app.key.undo();
@@ -3060,7 +3298,7 @@ module.exports = function () {
         }
 	};
 }();
-},{"../controller/players.js":5,"../definitions/units.js":11,"../game/animate.js":13,"../objects/build.js":27,"../objects/building.js":28,"../objects/featureHud.js":31,"../objects/position.js":37,"../objects/terrain.js":42,"../objects/unit.js":44,"../settings/app.js":46,"../settings/game.js":48,"../tools/counter.js":51,"../tools/matrix.js":57,"../tools/validator.js":63}],20:[function(require,module,exports){
+},{"../controller/players.js":7,"../definitions/units.js":13,"../game/animate.js":20,"../menu/options/optionsMenu.js":46,"../objects/build.js":55,"../objects/building.js":56,"../objects/featureHud.js":60,"../objects/position.js":69,"../objects/terrain.js":74,"../objects/unit.js":76,"../settings/app.js":78,"../settings/game.js":80,"../tools/counter.js":84,"../tools/matrix.js":91,"../tools/validator.js":97}],27:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\   
     app
 \* ---------------------------------------------------------------------------------------------------------*/
@@ -3072,6 +3310,7 @@ app = require("./game/app.js");
 \* ---------------------------------------------------------------------------------------------------------*/
 
 // add first letter capitalization funcitonality
+Object.prototype.isArray = function () { return this.constructor === Array };
 String.prototype.uc_first = function () { return this.charAt(0).toUpperCase() + this.slice(1); };
 String.prototype.getNumber = function () { return this.substring(6,7); };
 Array.prototype.hasValue = function (value) { return this.indexOf(value) > -1; };
@@ -3084,6 +3323,33 @@ Array.prototype.offsetArray = function (offsetArray) {
                 this.splice(n, 1);
     return this;
 };
+
+Array.prototype.map = function (callback) {
+    var mapped = [], i = this.length;
+    while (i--) mapped[i] = callback(this[i], i, this);
+    return mapped;
+};
+
+Array.prototype.filter = function (callback) {
+    var filtered = [], len = this.length;
+    for (var i = 0; i < len; i += 1) 
+        if (callback(this[i], i, this)) 
+            filtered.push(this[i]);
+    return filtered;
+};
+
+Array.prototype.reduce = function (callback, initial) {
+    var current, prev = initial || this[0];
+    for (var i = initial ? 1 : 0, length = this.length; i < length; ++i)
+        prev = callback(prev, this[i], i, this);
+    return prev;
+};
+
+Array.prototype.findIndex = function (callback) {
+    var i = this.length;
+    while (i--) if (callback(this[i], i, this)) return i;
+};
+Array.prototype.find = function (callback) { return this[this.findIndex(callback)];};
 
 /* --------------------------------------------------------------------------------------*\ 
     load dummy variables if/for testing locally 
@@ -3152,1138 +3418,1224 @@ app.drawCursor = function (draw) {
     if (app.target.active()) 
         draw.coordinate('map', app.target.cursor(), [app.target.position()]);
 };
-},{"./game/app.js":14,"./objects/map.js":33}],21:[function(require,module,exports){
-socket = require('../tools/sockets.js');
-app.screens = require('../objects/screens.js');
-app.display = require('../tools/display.js');
-app.menu = require('../menu/menu.js');
-app.user = require('../objects/user.js');
-
-module.exports = function () {
-
-	var loginScreen;
-
-	// Here we run a very simple test of the Graph API after login is
-	// successful.  See statusChangeCallback() for when this call is made.
-	var testAPI = function () {FB.api('/me', function(response) { return loginToSetup(response, 'facebook');});};
-
-	// allow login through fb ---- fb sdk
-	// This is called with the results from from FB.getLoginStatus().
-	var statusChangeCallback = function (response) {
-
-	    // if connected then return response
-	    if (response.status === 'connected') {
-	        return testAPI();
-	    } else {
-	    	loginScreen.style.display = null;
-	    	if (response.status === 'not_authorized') {
-	    		document.getElementById('status').innerHTML = 'Log in to play JS-WARS!';
-	   		} else {
-	        	document.getElementById('status').innerHTML = 'Please log in';
-	        }
-	    }
-	};
-
-	// format is where the login is coming from, allowing different actions for different login sources
-	var loginToSetup = function (user, format){
-
-	    if(user && user.id) {
-
-	       	app.user = new app.user(user);
-
-	        socket.emit('addUser', user);
-
-	        if(!app.testing) loginScreen.parentNode.removeChild(loginScreen);
-	        
-	        // display the game selection menu
-	        app.screens.modeMenu();
-
-	        app.menu.setup();
-	        
-	        return true;
-	    }
-	};
-
-	return function () {
-
-	    if(!app.testing) {
-
-	    	window.fbAsyncInit = function() {
-
-	            FB.init({
-	                appId     : '1481194978837888',
-	                oauth     : true,
-	                cookie    : true,  // enable cookies to allow the server to access 
-	                xfbml     : true,  // parse social plugins on this page
-	                version   : 'v2.3' // use version 2.2
-	            });
-
-	            FB.getLoginStatus(function(response) {
-	                statusChangeCallback(response);
-	            });
-	        };
-
-	        // // Load the SDK asynchronously
-	        (function(d, s, id) {
-
-	            var js, fjs = d.getElementsByTagName(s)[0];
-
-	            if (d.getElementById(id)) return;
-	            js = d.createElement(s); js.id = id;
-	            js.src = "//connect.facebook.net/en_US/sdk.js";
-	            fjs.parentNode.insertBefore(js, fjs);
-	        }(document, 'script', 'facebook-jssdk'));
-
-	        loginScreen = app.screens.login();
-	        document.body.insertBefore(loginScreen, app.domInsertLocation);
-
-	        // hide the login screen, only show if someone has logged in
-	        loginScreen.style.display = 'none';
-
-	    }else{
-	        loginToSetup({
-	            email: "testUser@test.com",
-	            first_name: "Testy",
-	            gender: "male",
-	            id: "10152784238931286",
-	            last_name: "McTesterson",
-	            link: "https://www.facebook.com/app_scoped_user_id/10156284235761286/",
-	            locale: "en_US",
-	            name: "Testy McTesterson"
-	        });
-	    }
-	};
-}();
-},{"../menu/menu.js":22,"../objects/screens.js":40,"../objects/user.js":45,"../tools/display.js":52,"../tools/sockets.js":60}],22:[function(require,module,exports){
-app = require('../settings/app.js');
-socket = require('../tools/sockets.js');
-app.key = require('../tools/keyboard.js');
-app.maps = require('../controller/maps.js'); 
-app.screens = require('../objects/screens.js');
-app.background = require("../controller/background.js");
-
-module.exports = function () {
-
-    var temp = {}, prev = {}, now = new Date(), mode, game, nameInput, setupScreenElement, roomChange, speed = 1.5, boot = false, gameName = false,
-    color = app.settings.colors, playerColor = app.settings.playerColor, ready = false;
-
-    // holds parameters necessary for selection and manipulation of displayed settings elements
-    var settingsElements = {
-
-        // optional parameter defines what display type will be displayed when revealing an element
-        display:'inline-block',
-
-        // type defines what page will be loaded
-        type:'rules',
-
-        // name of the element that is parent to the list
-        element:'Settings',
-
-        // name of the index, comes after the property name: property + index
-        index:'SettingsIndex',
-
-        // holds the name of the tag being retrieved as a value from the selected element
-        attribute:'class',
-
-        // holds the name of the element used for chat and description etc, displayed text
-        text:'descriptions',
-
-        // holds the object that defines all that will be scrolled through
-        properties:app.settings.settingsDisplayElement
-    }
-
-    // holds parameters necessary for selection and manipulation of displayed teams elements
-    var playerElements = {
-
-        // type defines what page will be loaded
-        type:'teams',
-
-        // name of the element that is parent to the list
-        element:'',
-
-        // name of the index, comes after the property name: property + index
-        index:'Index',
-
-        // holds the name of the tag being retrieved as a value from the selected element
-        attribute:'class',
-
-        // holds the name of the element used for chat and description etc, displayed text
-        text:'descriptions',
-    };
-
-    var teamElements = {
-
-        display:'',
-
-        // name of the element that is parent to the list
-        element:'',
-
-        // name of the index, comes after the property name: property + index
-        index:'Index',
-
-        // holds the name of the tag being retrieved as a value from the selected element
-        attribute:'class',
-
-        // holds the name of the element used for chat and description etc, displayed text
-        text:'descriptions',
-
-        properties:{}
-    };
-
-    var exit = function (value, callback, exit) {
-        if (app.key.pressed(app.key.enter()) || app.key.pressed(app.key.esc()) || boot){
-            if(callback) callback();
-            if(app.key.pressed(app.key.esc()) || boot){
-                app.key.undo();
-                if(boot) boot = false;
-                return exit ? exit : 'back';
-            }
-            app.key.undo();
-            return value;
-        }
-        return false;
-    };
-
-    var swell = function (color, element) {
-
-        var direction = function (id) {
-            var dir = {
-                up:'Bottom',
-                down:'Top',
-                left:'Left',
-                right:'Right'
-            };
-            return 'border' + dir[id] + 'Color';
-        };
-
-        var id, i, len = element.length;
-
-        if(len){
-            for(i = 0; i < len; i += 1){
-                id = element[i].id.replace('ArrowBackground','');
-                element[i].style[direction(id)] = color;
-            }
-        }else{
-            id = element.id.replace('ArrowBackground','');
-            element.style[direction(id)] = color;
-        }
-    };
-
-    var moveElements = function (direction, element, callback, neg, index) {
-
-        if(!callback) callback = false;
-        var elements = element.childNodes;
-        var length = elements.length;
-        var delay = 5;
-        var timeout = delay * 100;
-
-        if(!index && index !== 0){
-            if(neg === true){
-                index = length - 1;
-            }else{
-                index = 0;
-            }
-        }
-
-        if(neg === true || neg === -1){
-            neg = -1;
-        }else{
-            neg = 1;
-        }
-
-        if(neg === 1 && length > index || neg === -1 && index >= 0){
-            var offScreen = Number(app.offScreen);
-            setTimeout(function(){ 
-                var elem = elements[index];
-                elem.style.transition = 'top .'+delay+'s ease';
-                setTimeout(function(){elem.style.transition = null}, timeout);
-                var position = Number(elem.style.top.replace('px',''));
-                if(position){
-                    if(direction === 'up'){
-                        var target = position - offScreen;
-                    }else if(direction === 'down'){
-                        var target = position + offScreen;
-                    }else{
-                        return false;
-                    }
-                    elem.style.top = target + 'px';
-                }
-                index += neg;
-                moveElements(direction, element, callback, neg, index);
-            }, 30);
-        }else if(callback){
-            setTimeout(callback(element), 1000);
-        }
-    };
-
-    var changeTeamElementHeight = function (height, len) {
-        if(!len) var len = app.map.players();
-        var screenHeight = setupScreenElement.offsetHeight;
-        var h = Number(height.replace('%','')) / 100;
-        var newHeight = h * screenHeight;
-        for (var p = 1; p <= len; p += 1){
-            var element = document.getElementById('player' + p);
-            element.style.top = newHeight + 'px';
-        }
-    };
-
-    var changeSelectTeamHeight = function (height) {
-        var len = app.players.length();
-        for(var t = 1; t <= len; t += 1){
-            var element = document.getElementById('player'+t+'Team');
-            element.style.top = height + 'px';
-        }
-    };
-
-    var createArrows = function (element, top, bottom, size) {
-
-        if (!size) size = 30;
-
-        var offset = 192;
-
-        var left = Number(element.parentNode.style.left.replace('px',''));
-
-        var height = element.offsetHeight;
-        var width = (element.offsetWidth - (size * 1.25)) / 2;
-
-        var x = element.style.left ? Number(element.style.left.replace('px','')) + left + width : left + width;
-        var y = setupScreenElement.offsetHeight * .3 - 10;
-
-        var up =  y - 15 - offset + top;
-        var down = y - offset + height + bottom;
-
-        return {
-            up: app.effect.arrow('up', x, y - 15 - offset + top, size).background,
-            down: app.effect.arrow('down', x, y - offset + height + bottom, size).background
-        };
-    };
-
-    var coBorderColor = function (resetColor) {
-
-        now = new Date();
-
-        // max allowed players in the game
-        var potential = app.map.players();
-
-        // move through the spaces and check the status of the players, change their border color
-        // to indicate whether they are ready to go or not
-        for(var number = 1; number <= potential; number += 1){
-
-            var ind = number - 1;
-
-            // if there is not player element create an array to store it
-            if(!temp.playerElement) temp.playerElement = [];
-
-            // get the player element if we havent already
-            if(!temp.playerElement[ind]) temp.playerElement[ind] = document.getElementById('player'+number+'co');
-
-            // loa the player element
-            var playerElement = temp.playerElement[ind];
-
-            // check the mode, if it is cp then it should display a solid border color
-            var mode = document.getElementById('player'+number+'mode')
-                .getElementsByClassName('Cp')[0].style.display;
-
-            if(number > app.players.length() && mode){
-
-                // if the  space is not occupied then make the background white
-                playerElement.style.borderColor = app.hsl(color['white']);
-
-            }else if(!mode || app.players.number(number).ready() && playerElement){
-
-                // if the player is ready or set to computer then make the border color solid
-                playerElement.style.borderColor = app.hsl(playerColor[number]);
-
-            }else if(playerElement){
-
-                // if the player is not ready yet, but present then fade the color in and out
-                app.effect.swell.color(now, playerElement, playerColor[number], speed - .5, false, playerElement.id.replace('co','swell'));
-            }
-        }
-    };
-
-    var clearTempAndPrev = function () {
-        temp = {};
-        prev = {};
-        app.display.clearOld();
-        app.display.resetPreviousIndex();
-    };
-
-    var resetDefaults = function (type) {
-
-        var length = app.players.length();
-
-        for(var n = 1; n <= length; n += 1){
-
-            var element = document.getElementById('player'+n+type);
-
-            var previous = app.players.number(n)[type.toLowerCase()];
-            var name = previous.name ? previous.name : previous;
-
-            if (name) {
-
-                var children = element.childNodes;
-                var childrenLength = children.length;
-
-                for (var c = 0; c < childrenLength; c += 1) {
-
-                    var child = children[c];
-
-                    if (child.getAttribute('class').toLowerCase() === name.toLowerCase()){
-                        child.setAttribute('default',true);
-                    } else if (child.getAttribute('default')) {
-                        child.removeAttribute('default');
-                    }
-                }
-            }
-        }
-    };
-
-    var moveElements = function (direction, element, callback, neg, index) {
-
-        if(!callback) callback = false;
-        var elements = element.childNodes;
-        var length = elements.length;
-        var delay = 5;
-        var timeout = delay * 100;
-
-        if(!index && index !== 0) index = neg === true ? length - 1 : 0;
-        neg = neg === true || neg === -1 ? -1 : 1;
-
-        if(neg === 1 && length > index || neg === -1 && index >= 0){
-            var offScreen = Number(app.offScreen);
-            setTimeout(function(){ 
-                var elem = elements[index];
-                elem.style.transition = 'top .'+delay+'s ease';
-                setTimeout(function(){elem.style.transition = null}, timeout);
-                var position = Number(elem.style.top.replace('px',''));
-                if(position){
-                    if(direction === 'up'){
-                        var target = position - offScreen;
-                    }else if(direction === 'down'){
-                        var target = position + offScreen;
-                    }else{
-                        return false;
-                    }
-                    elem.style.top = target + 'px';
-                }
-                index += neg;
-                moveElements(direction, element, callback, neg, index);
-            }, 30);
-        }else if(callback){
-            setTimeout(callback(element), 1000);
-        }
-    };
-
-    var choseCo = function (from) {
-
-        if(!temp.joinCreate){
-
-            var teamsElement = temp.teamsElement = app.display.setup (playerElements, setupScreenElement);
-
-            playerElements.properties = app.settings.playersDisplayElement;
-
-            if (from === 'choseGame') {
-                moveElements('up', teamsElement);
-                socket.emit('getPlayerStates', {category: app.map.category(), name: app.game.name()});
-            }
-
-            temp.joinCreate = true;
-        }
-
-        var team = app.display.complexSelect (playerElements, function (property) {
-            var element = temp.selectedContainer = document.getElementById(property);
-            var top = Number(element.parentNode.style.top.replace('px',''));
-            var arrows = createArrows(element, top, top + 25);
-            temp.up = arrows.up;
-            temp.down = arrows.down;
-            return element;
-        }, true);
-        
-        if (team.property && !app.players.empty()) 
-            app.players.setProperty(team.property, team.value);
-
-        app.effect.swell.color(now, [temp.up, temp.down], color['white'], speed, swell);
-        coBorderColor();
-
-        if (!team.property && team.substring(7) !== 'mode') {
-            if (app.key.pressed(app.key.enter())) {
-
-                clearTempAndPrev();
-                app.undo.tempAndPrev();
-                app.key.undo();
-                resetDefaults('co');
-
-                var player = app.user.player();
-                player.isReady(true);
-                socket.emit('ready', player);
-
-                if(app.map.players() > 2){
-                    temp.selectTeams = true;
-                }else{
-                    temp.ready = true;
-                    temp.selectTeams = true;
-                    var upArr = document.getElementById('upArrowOutline');
-                    var downArr = document.getElementById('downArrowOutline');
-                    upArr.style.display = 'none';
-                    downArr.style.display = 'none';
-                    changeTeamElementHeight('20%');
-                }
-                return false;
-            }else{
-                return exit(false, function () {
-                    var name, teams = document.getElementById('teams');
-                    teams.removeChild(document.getElementById('upArrowOutline'));
-                    teams.removeChild(document.getElementById('downArrowOutline'));
-                    if (from !== 'choseGame'){
-                        moveElements('down', teams);
-                    }else{
-                        setupScreenElement.removeChild(teams);
-                    }
-                    app.undo.tempAndPrev();
-                    clearTempAndPrev();
-                    temp.back = true;
-                    nameInput = true;
-                    setupScreenElement.removeChild(document.getElementById('descriptionOrChatScreen'));
-                    if (app.players.length() < 2) {
-                        app.maps.remove(app.map.name());
-                        socket.emit('removeRoom', {
-                            category:app.map.category(), 
-                            name: app.game.name()
-                        });
-                        app.game.clear();
-                    }
-                    app.players.reset();
-                });
-            }
-        }
-    };
-
-    var choseTeam = function (from) {
-
-        if(!temp.selectingTeams){
-
-            teamElements.properties = app.settings.teamsDisplayElement;
-
-            var element = document.getElementById('player1Team');
-            var num = prev.top = Number(element.style.top.replace('px',''));
-            var top = num / 4;
-
-            changeSelectTeamHeight(top + (top / 6));
-
-            temp.selectingTeams = true;
-            changeTeamElementHeight('20%');    
-        }
-
-        var team = app.display.complexSelect(teamElements, function (property) {
-
-            var element = document.getElementById(property);
-
-            var tops = prev.top / 5;
-            var top = tops + (tops / 6);
-            top *= 2.02;
-
-            var arrows = createArrows(element, top + 5, top);
-
-            temp.up = arrows.up;
-            temp.down = arrows.down;
-
-            return element;
-
-        }, true);
-
-        if (team && !app.players.empty()) 
-            app.players.setProperty(team.property, team.value);
-
-        app.effect.swell.color(now, [temp.up, temp.down], color['white'], speed, swell);
-        coBorderColor();
-
-        if (app.key.pressed(app.key.esc()) || app.key.pressed(app.key.enter()) || boot){
-
-            var top = prev.top;
-            changeSelectTeamHeight(top);
-            resetDefaults('Team');
-            app.undo.tempAndPrev();
-            clearTempAndPrev();
-
-            if(app.key.pressed(app.key.enter())){
-                var upArr = document.getElementById('upArrowOutline');
-                var downArr = document.getElementById('downArrowOutline');
-                upArr.style.top = top + 'px';
-                downArr.style.top = top + 'px';
-                upArr.style.display = 'none';
-                downArr.style.display = 'none';
-                temp.ready = true;
-                temp.selectTeams = true;
-                return false;
-            }
-
-            app.key.undo();
-            changeTeamElementHeight('30%');
-            temp.joinCreate = true;
-        }
-    };
-
-    var playerReady = function (from) {
-
-        if(!temp.readyScreenChanged){
-
-            temp.sButton = app.screens.startButton('setupScreen');
-
-            var bb = 5;
-            var chatScreen = temp.chatScreen = document.getElementById('descriptionOrChatScreen');
-            chatScreen.style.height = chatScreen.offsetHeight * 1.8 + 'px';
-
-            var chat = temp.descOrChat = document.getElementById('descriptionOrChat');
-            chat.style.height = '77%';
-            chat.style.borderBottomWidth = bb + 'px';
-
-            var description = document.getElementById('descriptions');
-            description.innerHTML = '';
-
-            var mockForm = temp.MForm = document.getElementById('chatForm');
-            mockForm.style.display = 'block';
-            mockForm.style.height = '15%';
-            mockForm.style.borderBottomWidth = bb + 'px';
-            temp.readyScreenChanged = true;
-
-            var c = temp.chat = document.getElementById('chat');
-            c.style.display = 'block';
-
-            temp.input = document.getElementById('chatInput');
-            temp.input.focus();
-        }
-
-        coBorderColor();
-
-        var sButton = temp.sButton;
-
-        app.players.ready() && app.user.first() ? sButton.show() : sButton.hide();
-
-        if (ready) return app.players.all();
-
-        if (app.key.pressed(app.key.enter())) 
-            app.chat.display(app.chat.message(temp.input));
-
-        if (app.key.pressed(app.key.esc()) || boot) {
-
-            var player = app.user.player();
-            player.isReady(false);
-            socket.emit('ready', player);
-            resetDefaults('co');
-            
-            temp.chatScreen.style.height = '20%';
-
-            var descOrChat = temp.descOrChat;
-            descOrChat.style.height = '83%';
-            descOrChat.style.borderBottomWidth = '12px';
-
-            temp.chat.style.display = 'none';
-
-            var MForm = temp.MForm;
-            MForm.style.height = '0px';
-            MForm.style.display = 'none';
-
-            app.key.undo();
-            var upArr = document.getElementById('upArrowOutline');
-            var downArr = document.getElementById('downArrowOutline');
-            upArr.style.display = '';
-            downArr.style.display = '';
-            temp.ready = false;
-            sButton.remove();
-
-            if (app.map.players() > 2) {
-                temp.selectTeams = true;
-            } else {
-                changeTeamElementHeight('30%');
-                temp.selectTeams = false;
-                temp.joinCreate = true;
-            }
-        }
-    };  
-
-    return {
-
-        arrowsTo: function (element) { app.display.setIndex(element); },
-
-        back: function(){ boot = true; },
-
-        choseMapOrGame: function (type) {
-
-            var map, maps = app.maps, element = maps.type(type).screen(), allMaps = maps.all();
-
-            var clearSelect = function (setupScreenElement) { 
-                var select = document.getElementById(element.section);
-                var buildings = document.getElementById('buildingsDisplay');
-                var categories = document.getElementById('categorySelectScreen');
-                setupScreenElement.removeChild(select);
-                setupScreenElement.removeChild(buildings);
-                setupScreenElement.removeChild(categories);
-                app.display.resetPreviousIndex(); // reset index
-                app.key.undo();
-                maps.clear();
-                clearTempAndPrev();
-                app.undo.tempAndPrev();
-            };
-
-            if (!temp.select) temp.select = app.display.mapOrGame(element, allMaps);
-            if (!temp.category) temp.category = document.getElementById('selectCategoryScreen');
-
-            // send a request to the server for a list of maps if one has not been returned yet
-            maps.setCategory(app.effect.horizontalScroll(temp.category));
-
-            if(maps.updated()){
-                var elements = app.display.info(allMaps, ['name'], element, element.li);
-                app.display.mapOrGameSelection(element.section, elements);
-                if (!maps.index()) app.display.resetPreviousIndex(); // reset index
-            }
-
-             // enable selection of maps and keep track of which map is being highlighted for selection
-            var id = app.display.select(element.li, element.div, app.effect.highlightListItem, 'ul', 5).id;
-            var index = app.display.index();
-
-            // display information on each map in their appropriate locations on the setup screen as they are scrolled over
-            if(index && maps.index() + 1 !== index) 
-                app.display.mapInfo(maps.byIndex(index - 1));
-            
-            // if a map has been selected, return it for use in the game.
-            if(id && (map = maps.byId(id))){
-
-                map.category = maps.category();
-                app.map.set(map.map ? map.map : map);
-
-                if (type === 'game'){
-                    app.game.name(map.name);
-                    map.players.push(app.user.raw());
-                    app.players.add(map.players);
-                    socket.emit('join', map);
-                }
-                
-                clearSelect(setupScreenElement);
-                return true;
-            }
-
-            if (app.key.pressed(app.key.esc())) {
-                clearSelect(setupScreenElement);
-                return 'back';
-            }
-
-            return false;
-        },
-
-        choseSettings: function () {
-
-            if(!temp.settings){
-
-                temp.swell = false;
-
-                settingsElement = app.display.setup(settingsElements, setupScreenElement, temp.back);
-
-                if (temp.back) moveElements('down', settingsElement, function(){ temp.swell = true; });
-                
-                else moveElements('up', settingsElement, function(){ temp.swell = true; });
-
-                temp.settings = true;
-            }
-
-            if( !nameInput || temp.back ){
-
-                delete temp.back;
-
-                // handle selection of the elements on display
-                var selected = app.display.complexSelect(settingsElements, function(property) {
-
-                    var seperation = 85;
-                    var position = 30;
-
-                    // get the background of the currently selected element for swelling
-                    var setting = temp.selectedContainer = document.getElementById(property + 'Background');
-
-                    var y = Number(setting.style.top.replace('px','')) + position;
-                    var x = Number(setting.style.left.replace('px','')) + position;
-
-                    temp.up = app.effect.arrow('up', x, y - seperation).background;
-                    temp.down = app.effect.arrow('down', x, y + seperation).background;
-
-                    return document.getElementById(property + 'Settings');
-                });
-
-                if( selected ) app.game.set(selected.property, selected.value);
-            }
-
-            // make background swell
-            if (temp.swell) app.effect.swell.size(temp.selectedContainer, 50, 100);
-            app.effect.swell.color(new Date(), [temp.up, temp.down], color.white, speed, swell);
-
-            if(app.key.pressed(app.key.enter()) || nameInput){
-
-                if(typeof(nameInput) !== "object"){
-                    app.key.undo();
-                    nameInput = app.display.gameNameInput();
-                    app.effect.typeLetters(nameInput.description, 'Enter name for game room.');
-                }
-                
-                if(app.key.pressed(app.key.enter())){
-
-                    var weather, name = nameInput.name.value;
-
-                    if(!name){
-                        app.effect.typeLetters(nameInput.description, 'A name must be entered for the game.');
-
-                    }else if(name.length < 3){
-                        app.effect.typeLetters(nameInput.description, 'Name must be at least three letters long.');
-
-                    }else{
-                        app.players.add(app.user.raw());
-                        app.menu.setupRoom(name);
-
-                        if((weather = app.game.settings().weather)){
-                            app.background.set(weather);
-                            socket.emit('background', weather);
-                        }
-
-                        app.key.undo();
-
-                        var settingsElem = document.getElementById('settings');
-                        settingsElem.removeChild(nameInput.upArrow);
-                        settingsElem.removeChild(nameInput.downArrow);
-
-                        clearTempAndPrev();
-                        app.undo.tempAndPrev();
-
-                        app.display.clearOld();
-
-                        moveElements('up', settingsElem, function(settings){
-                            setupScreenElement.removeChild(settings);
-                            moveElements('up', temp.teamsElement);
-                        }, true);
-
-                        setupScreenElement.removeChild(document.getElementById('descriptionOrChatScreen'));
-
-                        return settings;
-                    }
-                }else if(app.key.pressed(app.key.esc())){
-                    app.key.undo(app.key.esc());
-                    nameInput.description.style.paddingTop = null;
-                    nameInput.description.style.paddingBottom = null;
-                    nameInput.input.style.display = null;
-                    nameInput.input.style.height = null;
-                    nameInput.downArrow.style.display = '';
-                    nameInput.upArrow.style.display = '';
-                    nameInput = false;
-                    app.display.clearOld();
-                }
-            }else{
-                return exit( settings, function () {
-                    app.display.clearOld();
-                    app.display.reset();
-                    app.display.resetPreviousIndex();
-                    clearTempAndPrev();
-                    app.undo.tempAndPrev();
-                    setupScreenElement.removeChild(document.getElementById('settings'));
-                    setupScreenElement.removeChild(document.getElementById('descriptionOrChatScreen'));
-                });
-            }
-        },
-
-        coSelection: function (properties, prevList, prevSelection){
-
-            // initialize a list to load properties the current user can edit
-            var list = [];
-
-            // detect which player so that they can only edit their respective charector settings
-            var number = app.user.number();
-
-            // get the keys to the properties that can be edited by the user (co selection, teams etc)
-            var keys = Object.keys(properties);
-
-            // number of properties
-            var keysLength = keys.length;
-
-            var getValue = app.dom.getDisplayedValue;
-
-            // if there are previous items 
-            if (prevSelection !== undefined) var ind = prevList[prevSelection];
-
-            for(var k = 0; k < keysLength; k += 1){
-
-                var key = keys[k];
-                var mode = getValue(key);
-                var pNumber = key.getNumber();
-
-                if(key.indexOf('mode') > -1 && number === 1){
-                    if(pNumber != 1){
-                        var i = pNumber - 1;
-                        var p = app.user.player();
-                        if(mode === 'Cp'){
-                            var property = 'player'+pNumber+'co';
-                            if(p && !p.cp){
-                                var value = getValue(property);
-                                var cp = aiPlayer(number, p);
-                                socket.emit('boot', {player:p, cp:cp});
-                                app.players.remove(i, cp);
-                                app.players.setProperty(property, value);
-                            }
-                            list.push(property);
-                        }else if(p && p.cp){
-                            socket.emit('boot', {player:false, cp:p});
-                            app.players.remove(i);
-                        }
-                    }
-                    list.push(key);
-                }else if(key.indexOf('Team') > -1 && (number == pNumber || mode === 'Cp' && number == 1) || key.indexOf(number+'co') > -1){
-                    list.push(key);
-                }
-            }
-            return {list:list, ind:ind};
-        },
-
-        login: function () { 
-
-            // if login is successful go to game setup, otherwise the user has declined
-            var paramsLocation=window.location.toString().indexOf('?');
-            var params="";
-            if (paramsLocation>=0)
-            params=window.location.toString().slice(paramsLocation);
-
-            top.location = 'https://graph.facebook.com/oauth/authorize?client_id=1481194978837888&scope=public_profile&email&redirect_uri=http://localhost/'+params;
-        },
-
-        join: function (from){
-            if(!temp.selectTeams)
-                return choseCo(from);
-            else if(temp.ready)
-                return playerReady(from);
-            else return choseTeam(from);
-        },
-
-        setupRoom: function (name) {
-            var room = {};
-            var map = app.map.get();
-            room.name = app.game.name(name);
-            room.settings = app.game.settings();
-            room.max = app.map.players();
-            room.map = map;
-            room.category = map.category;
-            socket.emit('newRoom', room);
-        },
-
-        setup: function (setupScreen){
-
-            // select game mode
-            if(app.user.id() && !mode){
-
-                mode = app.display.select('modeItemIndex', 'selectModeMenu', app.effect.setupMenuMovement, 'li', 5, 'infinite').id;
-
-                if(mode){
-                    setupScreenElement = document.getElementById('setupScreen');
-                    app.dom.removeChildren(setupScreenElement, 'title');
-                    var footer = document.getElementById('footer');
-                    footer.style.display = 'none';
-                }
-            }
-
-            // set up the game based on what mode is being selected
-            if(mode && !game){
-                if(mode === 'logout') return app.modes[mode]();
-                //if(mode === 'mapdesign') return app.modes[mode]();
-                game = app.modes[mode](setupScreenElement);
-            }
-
-            // listen for fading colors in and out on selection
-            app.effect.swell.color(Date.now());
-
-            // if a game has been set 
-            if (game) {
-
-                // remove the setup screen
-                setupScreenElement.parentNode.removeChild(setupScreenElement);                
-
-                // start game adds players, player info, settings, game type, mode, maps etc to be used in game, then 
-                // starts the game loop if it the game was successfully set up
-                if(game === 'editor' && app.editor.start() || app.game.start(game))
-                    return true;
-
-                // if the game cannot be started then reset
-                game = mode = false;
-                app.display.clear();
-                app.screens.modeMenu();
-            }
-
-            // if the game hasnt been started then keep looping the setup menu
-            window.requestAnimationFrame(app.menu.setup);
-
-            // remove key presses on each iteration
-            if(app.key.pressed()) app.key.undo();        
-        },
-
-        start: function () { ready = true; }
-    };
-}();
-},{"../controller/background.js":1,"../controller/maps.js":4,"../objects/screens.js":40,"../settings/app.js":46,"../tools/keyboard.js":56,"../tools/sockets.js":60}],23:[function(require,module,exports){
+},{"./game/app.js":21,"./objects/map.js":64}],28:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
-
-    holds functions for the selection of game modes / logout etc.. <--- can be redone better
+    
+    CoElement.js defines the element that holds co selection information
 
 \* --------------------------------------------------------------------------------------*/
 
-app = require('../settings/app.js');
-app.menu = require('../menu/menu.js');
-app.maps = require('../controller/maps.js');
-app.user = require('../objects/user.js');
-app.settings = require('../settings/game.js');
-app.request = require('../tools/request.js');
-app.key = require('../tools/keyboard.js');
-app.testMap = require('../objects/testMap.js');
-app.editor = require('../game/mapEditor.js');
-
-module.exports = function (){
-
-    var sent;
-    var game = {};
-    var boot = false, active = false;
-    var exitSetupScreen = function () {
-        var ss = document.getElementById('setupScreen');
-        if (ss) ss.parentNode.removeChild(ss);                
-    };
+Element = require('../../menu/elements/element.js');
+CoElement = function (number, init) {
+	this.setType('co');
+	this.setNumber(number);
+	this.setColor(app.settings.playerColor[number]);
+	var list = Object.keys(app.co);
+	var allowed = {index:true, hide:true};
+	for (var name, i = 0, len = list.length; i < len; i += 1) {
+        var name = list[i], co = app.co[name];
+        this.addProperty(name, { name:co.name, image:co.image });
+        allowed[name] = name;
+    }
+    this.setElement(app.dom.createList(allowed, this.id(), list));
+    this.setClass('coList');
+    this.setCurrent(init);
+    this.setDescription('Chose a CO.');
+    this.setBorder(this.element().clientLeft);
+    this.fader = new Fader(this.element(), this.color.get());
+	app.touch(this.element()).element().scroll().doubleTap().esc();
+	app.click(this.element()).element().scroll().doubleClick().esc();
+};
+CoElement.prototype = Object.create(Element);
+CoElement.prototype.constructor = CoElement;
+CoElement.prototype.getStyle = function (parameter) {
+    return Number(this.element().parentNode.style[parameter].replace('px',''));
+};
+module.exports = CoElement;
+},{"../../menu/elements/element.js":29}],29:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
     
-    return {
-        boot:function(){boot = true},
-        logout: function (){
-            alert('log out!');
-            /*  
-            // log user out of facebook
-            FB.logout(function(response) {
-              console.log(response);
-            });
-            */
-        },
-        newgame:function(setupScreen){
+    Element.js defines a generic menu element with methods common to all game menus
 
-            // handle map selection
-            if (!game.map){
-                game.map = app.menu.choseMapOrGame('map');
-                //console.log(game.map);
-                if(game.map === 'back'){
-                    delete game.map;
-                    return 'back';
-                }
-            }
+\* --------------------------------------------------------------------------------------*/
 
-            // handle settings selection
-            if (game.map && !game.settings){
-                game.settings = app.menu.choseSettings(setupScreen);
-                if (game.settings === 'back') {
-                    delete game.settings;
-                    delete game.map;
-                }
-            }
+UList = require('../../menu/elements/ul.js');
+Element = Object.create(UList.prototype);
+Element.p = {};
+Element.isComputer = function () {return this.value() === 'cp';};
+Element.addProperty = function (index, value){ this.p[index] = value; };
+Element.properties = function () {return this.p;};
+Element.property = function (index) {return this.p[index];};
+Element.setDescription = function (description) {this.d = description;};
+Element.description = function () {return this.descriptions() ? this.d[this.indexOf(this.current())] : this.d;};
+Element.descriptions = function () {return !(typeof(this.d) === "string");};
+Element.element = function () { return this.e; };
+Element.setType = function (type) {this.t = type; return this;};
+Element.setHeight = function (height) {this.element().style.height = height + 'px';};
+Element.setTop = function (top) {this.element().style.top = top + 'px';};
+Element.setWidth = function (width) { return this.e.style.width = width + 'px'; };
+Element.setColor = function (color) { this.color = new Hsl(color); };
+Element.type = function(){ return this.t; };
+Element.index = function () { return this.number() - 1; };
+Element.add = function (element) { this.element().appendChild(element);};
+Element.id = function () {return 'player' + this.number() + this.type();};
+Element.setNumber = function (number) {this.n = number;};
+Element.number = function () {return this.n};
+Element.getStyle = function (parameter) {return Number(this.element().style[parameter].replace('px',''));};
+Element.position = function () {return {x:this.left(), y:this.top()};};
+Element.dimensions = function () {return {x:this.width(), y:this.height()};};
+Element.top = function () {return this.getStyle('top');};
+Element.left = function () {return this.getStyle('left');};
+Element.width = function () {return this.getStyle('height') || this.element().offsetHeight;};
+Element.height = function () {return this.getStyle('width') || this.element().offsetWidth;};
+Element.setBorder = function (border) {this.b = border; return this};
+Element.border = function () {return this.b; };
+module.exports = Element;
+},{"../../menu/elements/ul.js":39}],30:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    List.js creates an interface for iterating over a list of dom elements
 
-            // handle co position and selection as well as joining the game
-            if (game.map && game.settings && !game.players){
-                game.players = app.menu.join(setupScreen);
-                if(game.players === 'back'){
-                    app.display.resetPreviousIndex();
-                    socket.emit('exit', boot);
-                    delete game.players;
-                    delete game.settings;
-                    boot = false;
-                }
-            }
+\* --------------------------------------------------------------------------------------*/
 
-            if (game.map && game.settings && game.players){
-                socket.emit('start', game);
-                return game;
-            }
+List = function (elements, init) {
+    this.setElements(elements || []);
+    this.setCurrent(init);
+};
+List.prototype.setIndex = function (index) {
+    this.i = index && index > 0 ? index : 0;
+    return this;
+};
+List.prototype.setCurrent = function (property) {return this.setIndex(property ? this.indexOf(property) : 0);};
+List.prototype.reset = function () {return this.setIndex(0);},
+List.prototype.index = function () { return this.i; },
+List.prototype.wrap = function (number) {
+    var elements = this.limited || this.elements(), length = elements.length;
+    return !number ? 0 : number >= length ? number - length : number < 0 ? length + number : number;
+};
+List.prototype.move = function (index) { return this.setIndex(this.wrap(index)); };
+List.prototype.next = function () { return this.move(this.i + 1); };
+List.prototype.prev = function () { return this.move(this.i - 1); };
+List.prototype.indexOf = function (property) { return this.find(function (element, index) { if (property === element) return index; }); };
+List.prototype.add = function (element) {this.elements().push(element);};
+List.prototype.find = function (callback) {
+    var elements = this.limited || this.elements();
+    for (var i = 0, len = elements.length; i < len; i += 1)
+        if (callback(elements[i], i))
+            return i;
+};
+List.prototype.elements = function () { return this.li; };
+List.prototype.setElements = function (elements) {this.li = elements; return this;};
+List.prototype.current = function () {
+    var limit = this.limited, index = this.i;
+    return limit ? limit[index < limit.length ? index : 0] : this.getElement(index);
+};
+List.prototype.getElement = function (index) {return this.elements()[index];};
+List.prototype.limit = function (callback) {
+    var elements = this.elements(), current = this.current();
+    this.limited = elements.filter(callback);
+    this.setIndex(this.limited.indexOf(current));
+    return this;
+};
+module.exports = List;
+},{}],31:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    ModeElement.js defines the element used for option selection on the mode menu
 
-            return false;
-        },
-        continuegame:function(){
-            alert('continue an old game is under construction. try new game or join new');
-        },
-        newjoin:function(){
-            // handle game selection
-            if (!game.room){
-                game.room = app.menu.choseMapOrGame('game');
-                if(game.room === 'back'){
-                    delete game.room;
-                    return 'back';
-                }
-            }
+\* --------------------------------------------------------------------------------------*/
 
-            if(game.room && !game.players){
-                game.players = app.menu.join('choseGame');
-                if(game.players === 'back'){
-                    app.display.resetPreviousIndex();
-                    socket.emit('exit');
-                    delete game.room;
-                    delete game.players;
-                }
-            }
+ModeElement = function (c, id) {
+    this.createElement().setClass(c).setId(id);
+   	this.setName(c);
+};
+ModeElement.prototype.setName = function (name) { this.c = name };
+ModeElement.prototype.setClass = function (c) { 
+    this.element().setAttribute('class', c);
+    return this;
+};
+ModeElement.prototype.element = function () {return this.e;};
+ModeElement.prototype.setIndex = function (index) { this.element().setAttribute(this.name()+'Index', index); };
+ModeElement.prototype.setId = function (id) { this.element().setAttribute('id',id); };
+ModeElement.prototype.setHeight = function (height) { this.element().style.height = height; };
+ModeElement.prototype.setColor = function (color) { this.element().style.color = color; };
+ModeElement.prototype.createElement = function () {
+	this.e = document.createElement('li');
+	return this;
+};
+ModeElement.prototype.add = function (element) {
+	this.element().appendChild(element);
+	return this;
+};
+ModeElement.prototype.clearHeight = function () {this.current().style.height = '';};
+module.exports = ModeElement;
+},{}],32:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    ModesElement.js defines the element that is used in game mode selection
 
-            if(game.room && game.players){
-                if(app.user.player() === app.players.first()) 
-                    socket.emit('start', game);
-                return game;
-            }
-        },
-        continuejoin:function(){
-            alert('continue join is under construction, try new game or join new');
-        },
-        COdesign:function(){
-            alert('design a co is under construction. try new game or join new');
-        },
-        mapdesign:function(){
-            app.map.set(app.maps.random());
-            app.players.add(app.user.raw());
-            app.cursor.editing();
-            return 'editor'; 
-        },
-        store:function(){
-            alert('go to the game store is under construction. try new game or join new');
-        },
-        active: function(){return active;},
-        activate: function(){active = true;},
-        deactivate: function(){active = false;},
+\* --------------------------------------------------------------------------------------*/
+
+UList = require('../../menu/elements/ul.js');
+TextElement = require('../../menu/elements/textElement.js');
+ModeElement = require('../../menu/elements/modeElement.js');
+Hsl = require('../../tools/hsl.js');
+OptionElement = require('../../menu/elements/optionElement.js');
+
+ModesElement = function (element, index) {
+
+    var background, text, outline, li, id = element.id;
+    this.setOutline((outline = this.createOutline('block')));
+    this.setBackground((background = this.createBackground('modeBackground')));
+    this.setText(new TextElement(id));
+    this.setElement((li = new ModeElement('modeItem', id)));
+    this.setIndex(index);
+    var text = this.text.element();
+    this.setColor(new Hsl(app.settings.colors[id]));
+    li.add(background).add(outline).add(text).setColor(this.color.format());
+
+    app.touch(text).changeMode().doubleTap();
+    app.touch(background).changeMode().doubleTap();
+    app.touch(li.element()).scroll();
+
+    app.click(text).changeMode().doubleClick();
+    app.click(background).changeMode().doubleClick();
+    app.click(li.element()).scroll();
+
+    if (element.options) {
+        var options = (new OptionElement('modeOptions')).hide();
+        for (var i = 0, len = element.options.length; i < length; i += 1) {
+            options.add((option = this.createOption(element.options[i], element.id, i)));
+            app.touch(option).modeOptions().doubleTap();
+            app.click(option).modeOptions().doubleClick();
+        }
+        li.add(options.element());
+        this.options = options;
+    }
+};
+ModesElement.prototype.background = function () {return this.b;};
+ModesElement.prototype.element = function () {return this.e.element();};
+ModesElement.prototype.object = function () {return this.e;};
+ModesElement.prototype.setBackground = function (background) {this.b = background;};
+ModesElement.prototype.setText = function (text) {this.text = text;};
+ModesElement.prototype.setElement = function (element) {this.e = element;};
+ModesElement.prototype.setOptions = function (options) {this.options = options;};
+ModesElement.prototype.setPosition = function (position) {
+    this.element().setAttribute('pos', position);
+    this.p = position;
+};
+ModesElement.prototype.position = function () {return this.p;};
+ModesElement.prototype.setOutline = function (outline) { this.o = outline; };
+ModesElement.prototype.outline = function () {return this.o;};
+ModesElement.prototype.setColor = function (color) {
+    this.outline().style.backgroundColor = color.format();
+    this.color = color;
+    this.text.setColor(color);
+};
+ModesElement.prototype.createBackground = function (c) {
+    var background = document.createElement('div');
+    background.setAttribute('class', c);
+    return background;
+};
+ModesElement.prototype.createOutline = function (c) {
+    var outline = document.createElement('div');
+    outline.setAttribute('class', c);
+    return outline;
+};
+ModesElement.prototype.createOption = function (option, id, index) {
+    var element = document.createElement('li');
+    element.setAttribute('class', 'modeOption');
+    element.setAttribute('modeOptionIndex', index + 1);
+    element.setAttribute('id', option + id);
+    element.innerHTML = option;
+    return element;
+};
+ModesElement.prototype.id = function () {return this.element().id;};
+ModesElement.prototype.outlineDisplay = function (type) {this.outline().style.display = type;};
+ModesElement.prototype.hideOutline = function () {this.outlineDisplay('none');};
+ModesElement.prototype.showOutline = function () {this.outlineDisplay(null);};
+ModesElement.prototype.setIndex = function (index) {this.i = index;};
+ModesElement.prototype.index = function (){return this.i;};
+ModesElement.prototype.select = function () {
+    if (this.options) this.options.show();
+    this.text.select();
+    this.hideOutline();
+    return this;
+};
+ModesElement.prototype.deselect = function () {
+    if (this.options) this.options.hide();
+    this.text.deselect();
+    this.showOutline();
+    return this;
+};
+module.exports = ModesElement;
+},{"../../menu/elements/modeElement.js":31,"../../menu/elements/optionElement.js":33,"../../menu/elements/textElement.js":38,"../../menu/elements/ul.js":39,"../../tools/hsl.js":87}],33:[function(require,module,exports){
+UList = require('../../menu/elements/ul.js');
+OptionElement = function (c) {
+    this.setElement(document.createElement('ul'));
+    this.setIndex(0);
+    this.setClass(c);
+};
+OptionElement.prototype = Object.create(UList.prototype);
+OptionElement.prototype.constructor = OptionElement;
+OptionElement.prototype.setOpacity = function (opacity) {
+    this.element().style.opacity = opacity;
+    return this;
+};
+OptionElement.prototype.show = function () {return this.setOpacity(1);};
+OptionElement.prototype.hide = function () {return this.setOpacity(0);};
+OptionElement.prototype.active = function () {return this.a;};
+OptionElement.prototype.activate = function () {this.a = true;};
+OptionElement.prototype.deactivate = function () {
+	this.setIndex(0)
+	this.a = false;
+};
+module.exports = OptionElement;
+},{"../../menu/elements/ul.js":39}],34:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    PlayerElement.js creates an element and interface for interacting with co selection
+
+\* --------------------------------------------------------------------------------------*/
+
+Element = require('../../menu/elements/element.js');
+PlayerElement = function (number, size, height) {
+	var screen = document.getElementById('setupScreen');
+	var width = screen.offsetWidth;
+	var sections = width / app.map.players();
+    this.setNumber(number);
+    this.setElement(document.createElement('section'));
+    this.setId('player' + number);
+    this.setClass('players');
+    this.setWidth(size);
+    this.setHeight(size);
+    this.setLeft(((sections * this.index()) + ((sections - size) / 2)));
+    this.setTop(height);
+};
+PlayerElement.prototype = Object.create(Element);
+PlayerElement.prototype.list = function () {return this.element().childNodes;};
+PlayerElement.prototype.setMode = function  (mode) {this.m = mode}; 
+PlayerElement.prototype.mode = function () { return this.m; };
+PlayerElement.prototype.setCo = function (co) {this.c = co;};
+PlayerElement.prototype.co = function () {return this.c;};
+PlayerElement.prototype.setTeam = function (team) {this.t = team;};
+PlayerElement.prototype.team = function () {return this.t;};
+PlayerElement.prototype.fade = function () {return this.co().fader.start(); };
+PlayerElement.prototype.fading = function () { return this.co().fader.fading(); };
+PlayerElement.prototype.stopFading = function () {return this.co().fader.stop();};
+PlayerElement.prototype.toSolid = function () {return this.co().fader.stop().toSolid();};
+PlayerElement.prototype.toWhite = function () {return this.co().fader.stop().toWhite();};
+PlayerElement.prototype.show = function () {
+    this.co().show();
+    this.mode().show();
+};
+PlayerElement.prototype.constructor = PlayerElement;
+module.exports = PlayerElement;
+},{"../../menu/elements/element.js":29}],35:[function(require,module,exports){
+Element = require('../../menu/elements/element.js');
+PlayerNumber = function (number, size, init) {
+	var fontSize = size / 4, properties = {
+        index: true,
+        hide: true,
     };
-}();
-},{"../controller/maps.js":4,"../game/mapEditor.js":19,"../menu/menu.js":22,"../objects/testMap.js":43,"../objects/user.js":45,"../settings/app.js":46,"../settings/game.js":48,"../tools/keyboard.js":56,"../tools/request.js":58}],24:[function(require,module,exports){
+    this.name = number+'p';
+    properties[this.name] = this.name;
+    properties.Cp = 'Cp';
+	this.setNumber(number);
+    this.setType('mode');
+	this.setElement(app.dom.createList(properties, this.id(), [this.name, 'Cp']));
+	this.setClass('playerMode');
+	this.sizeFont(fontSize);
+	this.setLeft(size - (fontSize / 2));
+	this.setCurrent(init);
+	this.setDescription('Chose Player or Computer.');
+	app.touch(this.element()).element().scroll();
+	app.click(this.element()).element().scroll();
+};
+PlayerNumber.prototype = Object.create(Element);
+PlayerNumber.prototype.constructor = PlayerNumber;
+PlayerNumber.prototype.getStyle = function (parameter) {
+	var parent = Number(this.element().parentNode.style[parameter].replace('px',''));
+	var element = Number(this.element().style[parameter].replace('px',''));
+	return parameter === 'top' || parameter === 'left' ? parent + element : element;
+};
+module.exports = PlayerNumber;
+},{"../../menu/elements/element.js":29}],36:[function(require,module,exports){
+Element = require('../../menu/elements/element.js');
+SettingElement = function (property, parameters) {
+    var def, list = app.dom.createList(this.rule(property), property + 'Settings', this.allowed);
+    this.setType(property);
+    this.createOutline(list);
+    this.createBackground();
+    this.setElements(list.childNodes);
+    this.setHeading(property);
+    (def = this.settings[property].def) ? this.setDefault(def) : this.setIndex(0);
+    app.touch(this.background()).element().scroll(list);
+    app.click(this.background()).element().scroll(list);
+    this.show();
+};
+SettingElement.prototype = Object.create(Element);
+SettingElement.prototype.constructor = SettingElement;
+SettingElement.prototype.setDefault = function (def) {
+    this.setIndex(this.find (function (element) {return element.className === def.toLowerCase();}));
+};
+SettingElement.prototype.createBackground = function () {
+    var background = document.createElement('div');
+    background.setAttribute('id', this.type() + 'Background');
+    background.setAttribute('class', 'rules');
+    return this.b = background;
+};
+SettingElement.prototype.createOutline = function (list) {
+    var outline = document.createElement('div');
+    outline.setAttribute('id', this.type() + 'Container');
+    outline.setAttribute('class', 'stable');
+    outline.appendChild(this.createHeading());
+    outline.appendChild(list);
+    return this.setElement(outline);
+};
+SettingElement.prototype.createHeading = function () { 
+    this.heading = document.createElement('h1'); 
+    return this.heading;
+};
+SettingElement.prototype.setHeading = function (text) { return this.heading.innerHTML = text; };
+SettingElement.prototype.indexOf = function (property) {
+    var elements = this.elements();
+    for (var i = 0, len = elements.length; i < len; i += 1)
+        if (property === elements[i])
+            return i;
+};
+SettingElement.prototype.setHeight = function (top) {
+    this.h = top;
+    this.background().style.top = top + 'px';
+    this.outline().style.top = top + 'px';
+};
+SettingElement.prototype.setLeft = function (left) {
+    this.l = left;
+    this.background().style.left = left + 'px';
+    this.outline().style.left = left + 'px';
+};
+SettingElement.prototype.setPosition = function (left, top) {
+    this.setHeight(top);
+    this.setLeft(left);
+};
+SettingElement.prototype.allowed = ['on', 'off', 'num', 'clear', 'rain', 'snow', 'random', 'a', 'b', 'c'];
+SettingElement.prototype.addNumbers = function (object, inc, min, max) {
+    for (var n = min; n <= max; n += inc)
+        object[n] = n;
+    return object;
+};
+SettingElement.prototype.outline = function () {return this.e;}; 
+SettingElement.prototype.background = function () {return this.b;}
+SettingElement.prototype.rule = function (property) {
+    var rule = this.settings[property];
+    rule.hide = true;
+    rule.index = true;
+    if (rule.description) this.setDescription(rule.description);
+    return rule.inc ? this.addNumbers(rule, rule.inc, rule.min, rule.max): rule;
+};
+SettingElement.prototype.rules = app.settings.settingsDisplayElement;
+SettingElement.prototype.settings = {
+    fog:{
+        description:'Set ON to limit vision with fog of war.',
+        on:'ON',
+        off:'OFF'
+    },
+    weather:{
+        description:'RANDOM causes climate to change.',
+        clear:'Clear',
+        rain:'Rain',
+        snow:'Snow',
+        random:'Random'
+    },
+    funds:{
+        description:'Set funds recieved per allied base.',
+        inc:500,
+        min:1000,
+        max:9500
+    },
+    turn:{
+        description:'Set number of days to battle.',
+        off:'OFF',
+        def:'OFF',
+        inc:1,
+        min:5,
+        max:99
+    },
+    capt:{
+        description:'Set number of properties needed to win.',
+        off:'OFF',
+        def:'OFF',
+        inc:1,
+        min:7,
+        max:45
+    },
+    power:{
+        description:'Select ON to enamble CO powers.',
+        on:'ON',
+        off:'OFF'
+    },
+    visuals:{
+        description:[
+            'No animation.',
+            'Battle and capture animation.',
+            'Battle animation only.',
+            'Battle animation for players only.'
+        ],
+        off:'OFF',
+        a:'Type A',
+        b:'Type B',
+        c:'Type C'
+    }
+};
+module.exports = SettingElement;
+},{"../../menu/elements/element.js":29}],37:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    TeamElement.js defines the element that is used in team selection
+
+\* --------------------------------------------------------------------------------------*/
+
+Element = require('../../menu/elements/element.js');
+TeamElement = function (number, size) {
+
+    this.teams = ['a','b','c','d', 'e', 'f', 'g', 'h'].slice(0, app.map.players());
+    var properties = {
+        ind: true,
+        hide: true
+    };
+    for (var t, i = 0; i < this.teams.length; i += 1)
+        properties[(t = this.teams[i])] = t.toUpperCase() + 'Team';
+
+    //this.id = function () {return 'player'+this.number+'Team'; };
+    this.setNumber(number);
+    this.setElement(app.dom.createList(this.p, this.id(), this.teams));
+    this.setClass('team');
+    this.setHeight(size * 4); // may be setTop
+    this.setWidth(size);
+    this.setDescription('Set alliances by selecting the same team.');
+    app.touch(this.element()).element().scroll().doubleTap();
+    app.click(this.element()).element().scroll().doubleClick();        
+};
+TeamElement.prototype = Object.create(Element);
+TeamElement.prototype.constructor = TeamElement;
+module.exports = TeamElement;
+},{"../../menu/elements/element.js":29}],38:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    TextElement.js controls the text element on the mode screen
+
+\* --------------------------------------------------------------------------------------*/
+
+TextElement = function (text) {
+	this.createBackground('textBackground').setText(text);
+	this.createElement('text').add(this.background());
+};
+TextElement.prototype.createBackground = function (c) {
+	var span = document.createElement('span');
+    span.setAttribute('class', c);
+    this.setBackground(span);
+    return this;
+};
+TextElement.prototype.setBackground = function (background) {this.b = background;};
+TextElement.prototype.background = function () {return this.b;};
+TextElement.prototype.setText = function(text) {
+    this.t = text;
+    this.background().innerHTML = text;
+};
+TextElement.prototype.text = function () {return this.t;};
+TextElement.prototype.length = function () {return this.t.length;};
+TextElement.prototype.width = function () {return this.element().clientWidth;};
+TextElement.prototype.backgroundWidth = function () {return this.background().offsetWidth;};
+TextElement.prototype.setElement = function (element) {this.e = element;};
+TextElement.prototype.setColor = function (color) {
+    this.element().style.borderColor = typeof(color) === "string" ? color : color.format();
+    this.color = color;
+};
+TextElement.prototype.setClass = function (c) {this.element().setAttribute('class',c);};
+TextElement.prototype.add = function (element){this.element().appendChild(element);};
+TextElement.prototype.createElement = function (c) {
+	var text = document.createElement('h1');
+    this.setElement(text);
+    this.setClass(c);
+    return this;
+};
+TextElement.prototype.element = function () {return this.e;};
+TextElement.prototype.setSpacing = function (spacing) {this.element().style.letterSpacing = spacing ? spacing + 'px' : null;};
+TextElement.prototype.setBackgroundColor = function (color) {this.background().style.backgroundColor = color;};
+TextElement.prototype.hideBackground = function () {this.setBackgroundColor('transparent');};
+TextElement.prototype.showBackground = function () {this.setBackgroundColor(null);};
+TextElement.prototype.setTransform = function (transform) {this.background().style.transform = transform;};
+TextElement.prototype.select = function () {
+
+    var letters = this.length();
+    var parentWidth = this.width();
+    var bgWidth = this.backgroundWidth();
+
+    // devide the text width by the width of the parent element and divide it by 4 to split between letter spacing and stretching
+    var diff = (bgWidth / parentWidth ) / 4;
+    
+    // find the amount of spacing between letters to fill the parent
+    var spacing = (diff * bgWidth) / letters;
+    
+    this.setTransform(diff + 1); // find the amount of stretch to fill the parent
+    this.setSpacing(spacing);
+    this.hideBackground();
+};
+TextElement.prototype.deselect = function () {
+    this.setTransform(null);
+    this.setSpacing(null);
+    this.setBackgroundColor('white');
+};
+module.exports = TextElement;
+},{}],39:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Ul.js creates an interface for iterating over ul list items
+    
+\* --------------------------------------------------------------------------------------*/
+
+List = require('../../menu/elements/list.js');
+Ul = function (ul, init) {
+    this.setElement(ul = ul || document.createElement('ul'));
+    this.setCurrent(init);
+};
+Ul.prototype = Object.create(List.prototype);
+Ul.prototype.changeCurrent = function (value) {return this.hide().setCurrent(value).show();};
+Ul.prototype.element = function () { return this.e; };
+Ul.prototype.setElement = function (element) {
+    this.e = element;
+    this.setElements(element.childNodes);
+};
+Ul.prototype.hideAll = function () {
+    var elements = this.elements(), i = elements.length;
+    while (i--) elements[i].style.display = 'none';
+    return this;
+};
+Ul.prototype.display = function (display) {
+    this.current().style.display = display || null;
+    return this;
+};
+Ul.prototype.indexOf = function (property) {
+	var scope = this;
+    return this.find(function (element, index) {
+        return property && property.toString() === element.className;
+    });
+};
+Ul.prototype.setLeft = function (left) {this.element().style.left = left + 'px';};
+Ul.prototype.setBackgroundColor = function (color) {if (this.current()) this.current().style.backgroundColor = color || null;};
+Ul.prototype.highlight = function () {this.setBackgroundColor('tan'); return this;};
+Ul.prototype.deHighlight = function () {this.setBackgroundColor(null); return this;};
+Ul.prototype.show = function (property, display) {
+    if (property) this.hide().setCurrent(property);
+    this.display(display || 'block');
+    return this;
+};
+Ul.prototype.hide = function () {return this.display('none');};
+Ul.prototype.value = function () {return this.current().innerHTML.toLowerCase(); };
+Ul.prototype.setId = function (id) {this.element().setAttribute('id', id);};
+Ul.prototype.id = function (element) {return element ? element.id : this.current() ? this.current().id : false; };
+Ul.prototype.class = function (element) {return element ? element.className : this.current().className;};
+Ul.prototype.setClass = function (c) { this.element().setAttribute('class', c); };
+Ul.prototype.sizeFont = function (s) { this.element() }; 
+Ul.prototype.add = function (element) { this.element().appendChild(element); };
+Ul.prototype.prepHorizontal = function () {
+    for  (var index = 0, ind = this.index(), i = ind - 1; i < ind + 1; i +=1)
+        this.getElement(this.wrap(i)).setAttribute('pos', ['left','center','right'][index++]);
+};
+Ul.prototype.constructor = Ul;
+module.exports = Ul;
+},{"../../menu/elements/list.js":30}],40:[function(require,module,exports){
+Menu = require('../objects/menu.js');
+BuildingsDisplay = require('../objects/buildingsDisplay.js');
+Ulist = require('../menu/elements/ul.js');
+app.select = require('../tools/selection.js');
+
+Join = Object.create(Menu);
+Join.map = function () { 
+    this.h = true;
+    return this.chose('map'); 
+};
+Join.game = function () { 
+    this.h = false;
+    return this.chose('game'); 
+};
+Join.host = function () { return this.h; };
+Join.update = function (type) {
+    var elements = app.display.info(app.maps.all(), ['name'], this.element);
+    var replace = document.getElementById(this.element.section);
+    replace.parentNode.replaceChild(elements, replace);
+    this.buildings.set(app.maps.info());
+    this.maps.setElement(elements.firstChild);
+    this.maps.highlight();
+};
+Join.chose = function (type) {
+    var map;
+    if (!this.active()) this.init(type);
+    if (app.key.pressed(['left','right']) && app.key.undo()) this.selectCategory();
+    if (app.maps.updated()) this.update(type);
+    if (app.key.pressed(['up','down']) && app.key.undo()) {
+        // needs testing
+        var haha = app.select.verticle(this.maps.deHighlight()).highlight().current();
+        console.log(haha);
+        this.buildings.set(haha);
+    }
+    if (app.key.pressed(app.key.enter()) && (map = app.maps.byId(this.maps.id())) || app.key.pressed(app.key.esc())) {
+        app.key.undo();
+        this.remove();
+        return map ? this.setup(map) : this.goBack();
+    }
+};
+Join.selectCategory = function () {
+    var categories = this.categories.hide();
+    app.select.horizontal(categories).show().prepHorizontal();
+    app.maps.setCategory(categories.id());
+    this.buildings.set(this.maps.current());
+};
+Join.add = function (map) {
+    app.game.name(map.name);
+    map.players.push(app.user.raw());
+    app.players.add(map.players);
+    socket.emit('join', map);
+};
+Join.setup = function (map) {
+    app.map.set(map.map ? map.map : map);
+    if (!this.host()) this.add(map);
+    return map;
+};
+Join.init = function (type) {
+    this.activate();
+    this.element = app.maps.type(type).screen();
+    this.display(type);
+};
+Join.display = function (type) {
+
+    var screen = this.createScreen('setupScreen');
+    this.createTitle('Select*'+type);
+
+    var categories, maps = app.display.info(app.maps.all(), ['name'], this.element, function (list) {
+        var element = list.childNodes[0];
+        app.touch(element).mapOrGame().doubleTap();
+        app.click(element).mapOrGame().doubleClick();
+    });
+
+    this.category = categories = app.display.info(app.settings.categories, '*', {
+        section: 'categorySelectScreen',
+        div:'selectCategoryScreen'
+    });
+    
+    this.maps = (new UList(maps.firstChild)).highlight();
+    this.buildings = new BuildingsDisplay();
+    this.categories = (new UList(categories.firstChild)).hideAll().show();
+
+    // handle touch events for swiping through categories
+    app.touch(categories).swipe();
+    app.click(categories).swipe();
+
+    // add elements to the screen
+    screen.appendChild(this.buildings.element());
+    screen.appendChild(maps);
+    screen.appendChild(categories);
+    
+    app.maps.setCategory(this.categories.id());
+
+    //return the modified screen element
+    return screen;
+};
+Join.remove = function () {
+    this.deactivate();
+    var select = document.getElementById(this.element.section);
+    var buildings = document.getElementById('buildingsDisplay');
+    var categories = document.getElementById('categorySelectScreen');
+    var screen = this.screen();
+    screen.removeChild(select);
+    screen.removeChild(buildings);
+    screen.removeChild(categories);
+    app.key.undo();
+    app.maps.clear();
+    app.undo.tempAndPrev();
+    this.clear();
+};
+module.exports = Join;
+},{"../menu/elements/ul.js":39,"../objects/buildingsDisplay.js":57,"../objects/menu.js":66,"../tools/selection.js":93}],41:[function(require,module,exports){
+socket = require('../tools/sockets.js');
+app.game = require('../game/game.js');
+app.screens = require('../objects/screens.js');
+app.display = require('../tools/display.js');
+app.user = require('../objects/user.js');
+app.input = require('../objects/input.js');
+Menu = require('../objects/menu.js');
+
+Login = Object.create(Menu);
+Login.testAPI = function () {
+	var scope = this;
+	FB.api('/me', function(response) { 
+		return scope.loginToSetup(response, 'facebook');
+	});
+};
+
+// allow login through fb ---- fb sdk
+// This is called with the results from from FB.getLoginStatus().
+Login.statusChangeCallback = function (response) {
+    if (response.status === 'connected') return this.testAPI();
+    else {
+    	this.loginScreen.style.display = null;
+    	if (response.status === 'not_authorized') document.getElementById('status').innerHTML = 'Log in to play JS-WARS!';
+   		else document.getElementById('status').innerHTML = 'Please log in';
+    }
+};
+
+// format is where the login is coming from, allowing different actions for different login sources
+Login.loginToSetup = function (user, format) {
+    if(user && user.id) {
+       	app.user = new app.user(user);
+        socket.emit('addUser', user);
+        if(!app.testing) this.loginScreen.parentNode.removeChild(this.loginScreen);
+        app.game.setup();
+        return true;
+    }
+};
+
+Login.setup = function () {
+
+    // create login screen
+    var loginScreen = this.createScreen('login');
+
+    // login form
+    loginForm = document.createElement('section');
+    loginForm.setAttribute('id', 'loginForm');
+    var form = app.input.form('loginText', loginForm,'Guest name input.');
+    loginForm.appendChild(form);
+
+    // create button for fb login
+    var fbButton = document.createElement('button');
+    fbButton.setAttribute('scope', 'public_profile, email');
+    fbButton.setAttribute('onClick', 'app.login.send();');
+    fbButton.setAttribute('onLogin', 'app.login.verify();');
+    fbButton.setAttribute('id', 'fbButton');
+
+    // create a holder for the login status
+    var fbStatus = document.createElement('div');
+    fbStatus.setAttribute('id', 'status');
+
+    loginForm.appendChild(fbButton);
+
+    loginScreen.appendChild(loginForm);
+    loginScreen.appendChild(fbStatus);
+
+    return loginScreen;
+};
+
+Login.send = function () {
+    // if login is successful go to game setup, otherwise the user has declined
+    var paramsLocation=window.location.toString().indexOf('?');
+    var params="";
+    if (paramsLocation>=0)
+    params=window.location.toString().slice(paramsLocation);
+    top.location = 'https://graph.facebook.com/oauth/authorize?client_id=1481194978837888&scope=public_profile&email&redirect_uri=http://localhost/'+params;
+};
+Login.verify = function () {
+	var scope = this;
+	FB.getLoginStatus(function(response) {
+		scope.statusChangeCallback(response);
+	});
+};
+Login.display = function () {
+
+    if(!app.testing) {
+    	var scope = this;
+    	window.fbAsyncInit = function() {
+            FB.init({
+                appId     : '1481194978837888',
+                oauth     : true,
+                cookie    : true,  // enable cookies to allow the server to access 
+                xfbml     : true,  // parse social plugins on this page
+                version   : 'v2.3' // use version 2.2
+            });
+            FB.getLoginStatus(function(response) {scope.statusChangeCallback(response);});
+        };
+
+        (function(d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = "//connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+
+        this.loginScreen = this.setup();
+        document.body.appendChild(this.loginScreen, app.domInsertLocation);
+
+        // hide the login screen, only show if someone has logged in
+        this.loginScreen.style.display = 'none';
+
+    } else {
+        this.loginToSetup({
+            email: "testUser@test.com",
+            first_name: "Testy",
+            gender: "male",
+            id: "10152784238931286",
+            last_name: "McTesterson",
+            link: "https://www.facebook.com/app_scoped_user_id/10156284235761286/",
+            locale: "en_US",
+            name: "Testy McTesterson"
+        });
+    }
+};
+module.exports = Login;
+},{"../game/game.js":25,"../objects/input.js":63,"../objects/menu.js":66,"../objects/screens.js":72,"../objects/user.js":77,"../tools/display.js":85,"../tools/sockets.js":94}],42:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Modes.js controls game mode selection 
+
+\* --------------------------------------------------------------------------------------*/
+
+ModesElement = require('../menu/elements/modesElement.js');
+ScrollText = require('../effects/scrollText.js');
+Menu = require('../objects/menu.js');
+List = require('../menu/elements/list.js');
+Ulist = require('../menu/elements/ul.js');
+Fader = require('../effects/fade.js');
+
+Modes = Object.create(Menu);
+Modes.positions = ['twoAbove','oneAbove','selected','oneBelow','twoBelow'];
+Modes.messages = {
+    logout:'select to log out of the game',
+    game:'Create or continue a saved game',
+    newgame:'Set up a new game',
+    continuegame:'Resume a saved game',
+    join:'Join a new or saved game',
+    newjoin:'Find and join a new game',
+    continuejoin:'Re-Join a saved game started at an earlier time',
+    COdesign:'Customize the look of your CO',
+    mapdesign:'Create your own custom maps',
+    design:'Design maps or edit CO appearance',
+    store:'Purchase maps, CO\'s, and other game goods' 
+};
+Modes.setList = function (elements) {this.l = elements;};
+Modes.list = function () {return this.l;};
+Modes.setElement =function (element) {this.e = element;};
+Modes.element = function () {return this.e; };
+Modes.setHeight = function (height) {this.h = height;};
+Modes.height = function () {return this.h;};
+Modes.properties = function () { return app.settings.selectModeMenu; };
+Modes.message = function (id) {return this.messages[id];};
+Modes.insert = function (screen) {document.body.insertBefore(screen, app.domInsertLocation);};
+Modes.remove = function () {
+    app.dom.removeChildren(this.screen(), 'title');
+    app.footer.remove();
+    this.deactivate();
+    this.fader.stop();
+    return this;
+};
+Modes.init = function () {
+    this.activate();
+    this.display();
+};
+Modes.select = function () {
+    if (!this.active()) this.init();
+    var options = this.options();
+    return options && options.active() ? this.selectOption() : this.selectMode();
+};
+Modes.options = function () {return this.mode().options;};
+Modes.mode = function () {return this.list().current();};
+Modes.option = function () {return this.options().current();};
+Modes.setMode = function (name) { this.mode = name; };
+Modes.selectMode = function () {
+
+    if (app.key.pressed(['up','down'])) {
+        this.mode().deselect();
+        this.fader.changeElement(
+            app.select.verticle(this.list()).current().select().background()
+        ).setColor(this.mode().color.get());
+        app.footer.scroll(this.message(this.mode().id()));
+        this.rotate();
+    }
+
+    var options = this.options();
+
+    if (!options && app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter()))
+        return this.remove().mode().id();
+
+    if (options && app.key.pressed(app.key.right()) && app.key.undo(app.key.right())) {
+        options.activate();
+        this.fader.changeElement(this.option());
+        app.footer.scroll(this.message(this.option().id));
+    }
+};
+Modes.selectOption = function () {
+    if (app.key.pressed(['up','down'])) {
+        this.fader.changeElement(
+            app.select.verticle(this.options()).current());
+        app.footer.scroll(this.message(this.option().id));
+    }
+
+    if (app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter()))
+        return this.remove().option().id;
+    
+    if (app.key.pressed(app.key.left()) && app.key.undo(app.key.left())) {
+        this.fader.changeElement(this.mode().background());
+        app.footer.scroll(this.message(this.mode().id()));
+        this.options().deactivate();
+    }
+};
+
+// rotation stuff
+Modes.getPosition = function (index) { return this.positions[this.list().wrap(index)] || 'hidden'; };
+Modes.getElement = function (index) { 
+    var list = this.list();
+    return list.elements()[list.wrap(index)];
+};
+Modes.setPosition = function (element, index) {this.getElement(element).setPosition(this.getPosition(index));};
+Modes.rotate = function () {
+    for (var index = 0, ind = this.mode().index(), i = ind - 2; i <= ind + 2; i += 1)
+        this.setPosition(i, index++);
+};
+
+// initialize screen
+Modes.display = function () { 
+
+    this.setHeight(app.settings.selectedModeHeight);
+    var screen = this.createScreen('setupScreen');
+    var properties = this.properties(), items = [];
+    this.createTitle('Select*Mode');
+
+    // create list of selectable modes
+    var menu = document.createElement('ul');
+    menu.setAttribute('id', 'selectModeMenu');
+
+    // create footer for game info and chat
+    var footer = app.footer.scrolling();
+
+    for (var i = 0, len = properties.length; i < len; i += 1) {
+        var item = new ModesElement(properties[i], i);
+        menu.appendChild(item.element());
+        items.push(item);
+    }
+
+    // add select menu to select mode screen
+    screen.appendChild(menu);
+    screen.appendChild(footer);
+    this.setList(new List(items));
+    this.setElement(new UList(menu));
+    var mode = this.mode();
+    this.rotate(this.list().indexOf(mode));
+    this.insert(screen);
+    this.fader = (new Fader(mode.select().background(), mode.color.get())).start();
+    app.footer.scroll(this.message(this.mode().id()));
+    return screen;
+};
+module.exports = Modes;
+},{"../effects/fade.js":15,"../effects/scrollText.js":17,"../menu/elements/list.js":30,"../menu/elements/modesElement.js":32,"../menu/elements/ul.js":39,"../objects/menu.js":66}],43:[function(require,module,exports){
+Exit = function (callback) {
+	this.leave = callback || function () {
+		this.game.end(); 
+		this.a = false;
+		socket.emit('exit', false);
+	};
+};
+
+Exit.prototype.prompt = function (message) { 
+	app.undo.all();
+    app.hud.hide();
+    app.coStatus.hide();
+    app.cursor.hide();
+	this.a = true;
+	app.confirm.display(message, true); 
+};
+
+Exit.prototype.evaluate = function () {
+	var answer = app.input.response();
+	if (answer) {
+		this.a = false;
+		app.input.remove();
+		if (answer === 'yes')
+			return this.leave();
+	}
+};
+
+Exit.prototype.active = function () { return this.a };
+Exit.prototype.deactivate = function () {this.a = false;};
+
+module.exports = Exit;
+},{}],44:[function(require,module,exports){
+// intel
+
+module.exports = {
+    status: function () {
+
+    },
+    unit: function () {
+
+    },
+    rules: function () {
+        // show settings and teams menus (non editable)
+    },
+    display: function () {
+
+    },
+    active: function () {
+    	return false;
+    },
+    deactivate: function () {
+        this.a = false;
+    }
+};
+},{}],45:[function(require,module,exports){
+app.settings = require('../../settings/game.js');
+
+module.exports = {
+    
+    del: function () {
+        app.optionsMenu.remove();
+        app.undo.all();
+        app.hud.show();
+        app.coStatus.show();
+        app.cursor.deleteMode(); 
+    },
+
+    yield: function () { app.yield.prompt('Are you sure you want to yeild? '); },
+    exit: function () { app.exit.prompt('Are you sure you want to exit? '); },
+
+    // fugure out how to activate scroll through on hover, then use that to coordinate selection
+    // for music and visuals
+
+    music: function () {        
+        app.optionsMenu.remove();
+        alert('no music yet');
+    },
+    visual: function () {
+        app.optionsMenu.remove();
+        alert('no visuals yet');
+        var description = {
+            A: 'View battle and capture animations.',
+            B: 'Only view battle animations.',
+            C: 'Only view player battle animations'
+        }
+    },
+
+    // --------------------------------------------------------------
+    
+    evaluate: function () {
+        var option, type = app.display.verticle().select(app.optionsMenu.list(), app.effect.highlightListItem).id
+        if (type) {
+            this.a = false;
+            app.options[type]();
+        }
+    },
+
+    display: function () {
+        app.optionsMenu.remove();
+        app.display.info(
+            {
+                del: { name: 'Delete' },
+                yield: { name: 'Yield' },
+                music: { name: 'Music' },
+                visual: { name: 'Visual'},
+                exit: { name: 'Leave' }
+            },
+            ['del', 'yield', 'music', 'visual', 'exit', 'name'],
+            { section: 'optionsMenu', div: 'optionSelect' }
+        );
+        this.a = true;
+    },
+
+    active: function () { return this.a; },
+    deactivate: function () {this.a = false; },
+};
+},{"../../settings/game.js":80}],46:[function(require,module,exports){
 /* ----------------------------------------------------------------------------------------------------------*\
     
     app.options handles the in game options selection, end turn, save etc.
     
 \* ----------------------------------------------------------------------------------------------------------*/
-app = require('../settings/app.js');
-app.game = require('../game/game.js');
-app.players = require('../controller/players.js');
-socket = require('../tools/sockets.js');
+
+app = require('../../settings/app.js');
+app.game = require('../../game/game.js');
+app.players = require('../../controller/players.js');
+app.key = require('../../tools/keyboard.js');
+socket = require('../../tools/sockets.js');
+app.intel = require('./intel.js');
+app.options = require('./options.js');
+app.save = require('./save.js');
+
+// Element = require('../elements/element.js');
+
+// OptionsMenu = Object.create(Element);
+// OptionsMenu.co = function () { app.undo.all(); };
+// OptionsMenu.intel = function () { app.intel.display(); };
+// OptionsMenu.options = function () { app.options.display(); };
+// OptionsMenu.save = function () { 
+//     app.undo.all();
+//     app.save.display(); 
+// };
+
+// // end turn
+// OptionsMenu.end = function () {
+//     var player = app.players.current();
+//     player.endTurn();
+//     if (app.user.player() === player) {
+//         app.undo.all();
+//         app.animate(['cursor']);
+//         socket.emit('endTurn', player.id());
+//     }
+//     return this;
+// };
+// OptionsMenu.display = function () {
+//     app.key.undo(app.key.esc());
+//     active = true;
+//     app.display.info(app.settings.optionsMenu, app.settings.optionsMenuDisplay, { section: 'optionsMenu', div: 'optionSelect' });
+//     return this;
+// };
+// OptionsMenu.evaluate = function() { 
+//     if (app.key.pressed(['up', 'down'])) Select.verticle(this.list());
+//     if (app.key.pressed(app.key.enter())) {
+//         this.deactivate();
+//         app.optionsMenu[Select.getVerticle()]();
+//     }
+// };
+// OptionsMenu.coordinate = function (options) {
+//     for (var i = 0; i < options.length; i += 1){
+//         if (app[options[i]].active()) {
+//             app[options[i]].evaluate();
+//             return true;
+//         }
+//     }
+// };
+// OptionsMenu.active = function()   { return active; };
+// OptionsMenu.activate = function() { active = true; };
+// OptionsMenu.deactivate = function(all){
+//     if (all) for (var i = 0; i < all.length; i += 1)
+//         app[all[i]].deactivate();
+//     active = false;
+// };
+// OptionsMenu.remove =function(){
+//     var menu = this.screen();
+//     menu.parentNode.removeChild(menu);
+//     app.display.clear();
+// };
+// OptionsMenu.screen = function () { return document.getElementById('optionsMenu'); };
+// OptionsMenu.list = function () { return document.getElementById('optionSelect'); };
+
 
 module.exports = function () {
 
     var active = false;
 
     return {
-        unit: function () {
-            alert('unit!');
-        },
 
-        intel: function () {
-            alert('intel');
-        },
-
-        options: function () {
-            alert('options');
-        },
-
-        save: function () {
-            alert('save');
+        co: function () { app.undo.all(); },
+        intel: function () { app.intel.display(); },
+        options: function () { app.options.display(); },
+        save: function () { 
+            app.undo.all();
+            app.save.display(); 
         },
 
         // end turn
         end: function () {
             var player = app.players.current();
             player.endTurn();
-            if(app.user.player() === player){
+            if (app.user.player() === player) {
                 app.undo.all();
                 app.animate(['cursor']);
                 socket.emit('endTurn', player.id());
@@ -4293,20 +4645,84 @@ module.exports = function () {
         display: function () {
             app.key.undo(app.key.esc());
             active = true;
-            app.display.info(app.settings.options, app.settings.optionsDisplay, 
-                { section: 'optionsMenu', div: 'optionSelect' }, 'optionSelectionIndex', true);
+            app.display.info(app.settings.optionsMenu, app.settings.optionsMenuDisplay, { section: 'optionsMenu', div: 'optionSelect' });
             return this;
         },
-        evaluate: function(){ 
-            if((type = app.display.select('optionSelectionIndex', 'optionSelect', app.effect.highlightListItem, 'ul').id))
-                return app.options[type]();
+        evaluate: function() { 
+            if (app.key.pressed(['up', 'down'])) Select.verticle(this.list());
+            if (app.key.pressed(app.key.enter())) {
+                this.deactivate();
+                app.optionsMenu[Select.getVerticle()]();
+            }
         },
-        active:function(){return active;},
-        activate:function(){active = true;},
-        deactivate:function(){active = false;}
+        coordinate: function (options) {
+            for (var i = 0; i < options.length; i += 1){
+                if (app[options[i]].active()) {
+                    app[options[i]].evaluate();
+                    return true;
+                }
+            }
+        },
+        active:function()   { return active; },
+        activate:function() { active = true; },
+        deactivate:function(all){
+            if (all) for (var i = 0; i < all.length; i += 1)
+                app[all[i]].deactivate();
+            active = false;
+        },
+
+        remove:function(){
+            var menu = this.screen();
+            menu.parentNode.removeChild(menu);
+            app.display.clear();
+        },
+        screen: function () { return document.getElementById('optionsMenu'); },
+        list: function () { return document.getElementById('optionSelect'); }
     };
 }();
-},{"../controller/players.js":5,"../game/game.js":18,"../settings/app.js":46,"../tools/sockets.js":60}],25:[function(require,module,exports){
+},{"../../controller/players.js":7,"../../game/game.js":25,"../../settings/app.js":78,"../../tools/keyboard.js":90,"../../tools/sockets.js":94,"./intel.js":44,"./options.js":45,"./save.js":47}],47:[function(require,module,exports){
+// save
+app.key = require('../../tools/keyboard.js');
+app.cursor = require('../../controller/cursor.js');
+app.input = require('../../objects/input.js');
+app.undo = require('../../tools/undo.js');
+app.confirm = require('../../controller/confirmation.js');
+
+module.exports = {
+    display: function () {  
+        current = 'save';
+        app.hud.hide();
+        app.coStatus.hide();
+        app.cursor.hide();
+        app.input.name(app.game.screen(), 'Enter name for save game.');
+        this.a = true;
+    },
+    evaluate: function () {
+    	if (!this.sent() && app.key.pressed(app.key.enter())) {
+            if(app.input.entry()){
+                this.s = true;
+                socket.emit('confirmSave', app.user.player());
+                app.input.removeInput();
+                app.confirm.waiting(app.players.other());
+            }
+    	} else if (app.key.pressed(app.key.esc())) 
+            this.remove();
+    },
+    active: function () { return this.a; },
+    sent: function () { return this.s; },
+    recieved: function () { this.s = false; },
+    remove: function () {
+        app.input.remove();
+        app.hud.show();
+        app.coStatus.show();
+        app.cursor.show();
+        app.undo.all();
+        this.a = false;
+        this.s = false;
+    },
+    deactivate: function () {this.a = false;}
+};
+},{"../../controller/confirmation.js":2,"../../controller/cursor.js":3,"../../objects/input.js":63,"../../tools/keyboard.js":90,"../../tools/undo.js":96}],48:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     handles scrolling of menu elements etc..
@@ -4322,8 +4738,8 @@ module.exports = function () {
     var undo = app.key.undo, 
     direction, then = new Date(),
 
-    scroll = function (neg, pos){
-        if (app.key.pressed(neg) || neg == direction){
+    scroll = function (neg, pos) {
+        if (app.key.pressed(neg) || neg == direction) {
             direction = false;
             app.key.undo(app.key[neg]());
             return -1;
@@ -4336,11 +4752,11 @@ module.exports = function () {
     };
 
     return {
-        horizontal:function (){
+        horizontal: function () {
             this.scroll = scroll('left','right');
             return this;
         },
-        verticle:function(){
+        verticle: function() {
             this.scroll = scroll('up','down');
             return this;
         },
@@ -4350,9 +4766,10 @@ module.exports = function () {
             return point > max || point < min ? def : point;
         },
         finite: function (index, min, max) {
-            if(this.scroll){
+            if(this.scroll !== undefined){
                 var point = index + this.scroll;
-                if (point <= max && point >= min) return point;
+                if (point <= max && point >= min) 
+                    return point;
             }
             return false;
         },
@@ -4370,7 +4787,527 @@ module.exports = function () {
         }
     };
 }();
-},{"../settings/app.js":46,"../tools/keyboard.js":56,"../tools/undo.js":62}],26:[function(require,module,exports){
+},{"../settings/app.js":78,"../tools/keyboard.js":90,"../tools/undo.js":96}],49:[function(require,module,exports){
+Menu = require('../objects/menu.js');
+Arrows = require('../objects/arrows.js');
+Teams = require('../menu/teams.js');
+Select = require('../tools/selection.js');
+SettingElement = require('../menu/elements/settingElement.js');
+DefaultSettings = require('../settings/default.js');
+Sweller = require('../effects/swell.js');
+
+Settings = Object.create(Menu);
+Settings.parameters = new DefaultSettings();
+Settings.swelling = false;
+Settings.properties = [];
+Settings.elements = [];
+Settings.rules = {
+
+    // optional parameter defines what display type will be displayed when revealing an element
+    display:'inline-block',
+
+    // type defines what page will be loaded
+    type:'rules',
+
+    // name of the element that is parent to the list
+    element:'Settings',
+
+    // name of the index, comes after the property name: property + index
+    index:'SettingsIndex',
+
+    // holds the name of the tag being retrieved as a value from the selected element
+    attribute:'class',
+
+    // holds the name of the element used for chat and description etc, displayed text
+    text:'descriptions',
+
+    // holds the object that defines all that will be scrolled through
+    properties: app.settings.settingsDisplayElement
+};
+Settings.init = function () {
+    var scope = this;
+    this.now = new Date();
+    this.element = this.display();
+    this.activate();
+    if (this.arrows) app.input.back() ? 
+        this.fall(function () {scope.sweller.start();}) : 
+        this.rise(function () {scope.sweller.start();});
+    else this.sweller.start();
+    Select.setHorizontal(this.elements);
+};
+Settings.selected = function () { return this.elements.current(); };
+Settings.select = function (selected) {
+
+    if (!this.active()) this.init();
+
+    if (!app.input.active() || app.input.back()) {
+
+        if (app.key.pressed(['left','right'])){
+            selected = Select.setHorizontal(Select.horizontal(this.elements)).getHorizontal();
+            this.sweller.stop().setElement(selected.background()).start();
+            if (this.arrows) this.arrows.setPosition(selected);
+        }
+        if(app.key.pressed(['up','down'])) 
+            selected = Select.setVerticle(Select.verticle(Select.getHorizontal().hide()))
+                .getHorizontal().show();
+        
+        if (selected) this.set(selected.type(), selected.value());
+    }
+    
+    if(app.key.pressed(app.key.enter()) && this.arrows || app.input.active()) 
+        return this.input();
+    else return this.exit(this, function (scope) { 
+        scope.m = false;
+        scope.goBack();
+        scope.remove();
+    });
+};
+
+Settings.set = function (setting, value) { return this.parameters[setting] = value; };
+Settings.input = function () {
+
+    if (!app.input.active() || app.input.back()) {
+        app.input.undoBack();
+        app.input.name(this.screen());
+        if (this.arrows) this.arrows.hide();
+        app.key.undo();
+    }
+    
+    if (app.key.pressed(app.key.enter())) {
+        var weather, name = app.input.value(), scope = this;
+        if (name) {
+            app.players.add(app.user.raw());
+            app.game.setSettings(this.parameters);
+            app.game.create(name);
+
+            if ((weather = this.parameters.weather)) {
+                app.background.set(weather);
+                socket.emit('background', weather);
+            }
+            this.remove();
+            this.rise(function(){scope.element.parentNode.removeChild(scope.element);}, 5);
+            return this.parameters;
+        }
+    } else if(app.key.pressed(app.key.esc())) {
+        app.key.undo(app.key.esc());
+        app.input.clear();
+        this.arrows.show();
+        app.display.clearOld();
+    }
+};
+
+Settings.remove = function () {
+    app.footer.remove();
+    if (this.arrows)
+        this.arrows.remove();
+    this.deactivate();
+    this.swelling = false;
+    delete this.elements;
+    Select.clear();
+    app.display.reset();
+    app.undo.tempAndPrev();
+    this.clear();
+    if (app.key.pressed(app.key.esc()))
+        this.screen().removeChild(this.element);
+    app.key.undo();
+};
+
+Settings.display = function () {
+    
+    var screen = this.createScreen('setupScreen');
+    var keys = Object.keys(app.settings.settingsDisplayElement);
+    var offScreen = Number(app.offScreen);
+    var elements = [];
+    this.createTitle('rules');
+
+    var element = document.createElement('section');
+    element.setAttribute('id', 'settings');
+
+    var width = screen.offsetWidth;
+    var height = screen.offsetHeight;
+    var left = width * .05;
+    var middle = height * .5;
+    var top = this.arrows ? (app.input.back() ? middle - offScreen : middle + offScreen) : middle;
+
+    var footer = app.footer.display(screen, this.rules);
+    var nameInput = app.input.form('name', footer, 'Enter name here.');
+
+    footer.appendChild(nameInput);
+    screen.appendChild(footer.parentNode);
+
+    for (var setting, i = 0, len = keys.length; i < len; i += 1) {
+
+        setting = new SettingElement(keys[i], this.parameters);
+        setting.setPosition(left, top);
+
+        left += .13 * width;
+        top -= .06 * height;
+
+        element.appendChild(setting.outline());
+        element.appendChild(setting.background());
+        elements.push(setting);
+    }
+    this.parameters = app.game.settings() || new DefaultSettings();
+    this.sweller = new Sweller(elements[0].background(), 50, 100);
+    this.elements = new List(elements);
+    screen.appendChild(element);
+    if (this.arrows) this.arrows.insert(element).setSpace(40)
+        .setPosition(this.elements.current()).fade();
+    return element;
+};
+module.exports = Settings;
+},{"../effects/swell.js":18,"../menu/elements/settingElement.js":36,"../menu/teams.js":50,"../objects/arrows.js":54,"../objects/menu.js":66,"../settings/default.js":79,"../tools/selection.js":93}],50:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Teams.js controls co and team selection
+
+\* --------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+socket = require('../tools/sockets.js');
+app.key = require('../tools/keyboard.js');
+app.maps = require('../controller/maps.js'); 
+app.screens = require('../objects/screens.js');
+app.dom = require('../tools/dom.js');
+app.background = require("../controller/background.js");
+app.footer = require('../objects/footer.js');
+app.arrows = require('../objects/arrows');
+
+Menu = require ('../objects/menu.js');
+Settings = require('../menu/settings.js');
+Select = require('../tools/selection.js');
+PlayerNumber = require('../menu/elements/playerNumber.js');
+CoElement = require('../menu/elements/coElement.js');
+PlayerElement = require('../menu/elements/playerElement.js');
+TeamElement = require('../menu/elements/teamElement.js');
+AiPlayer = require('../objects/aiPlayer.js');
+
+Teams = Object.create(Menu);
+Teams.speed = 1.5;
+Teams.players = [];
+Teams.aiNumber = 0;
+Teams.select = function () {
+    if (!this.active()) this.init();
+    this.coBorderColor();
+    if (this.selectingCo()) this.choseCo();
+    else if (this.selectingTeam()) this.choseTeam();
+    else return this.playerReady();
+};
+Teams.view = function () {
+    if (!this.active()) this.init();
+    this.coBorderColor();
+    if (app.key.pressed(app.key.esc())) 
+        return this.remove();
+};
+Teams.init = function () {
+    var scope = this;
+    this.display();
+    this.activate();
+    app.players.all().map(function (player, index) {
+        var element = scope.playerElement(index + 1);
+        player.setProperty('mode', element.mode().value());
+        player.setProperty('co', element.co().value());
+    });
+    if (this.arrows) this.rise();
+    this.toCo();
+};
+Teams.selectableTeams = function (team) {
+    var number = app.user.number(), element = this.playerElement(number);
+    return number === team.number() || number === 1 && element.mode().isComputer(); // maybe scope issues?
+};
+Teams.selectable = function (element, index, elements) {
+    var mode = elements[index + 1], player = app.user.number(), number = element.number();
+    return element.type() === 'co' ? player === number || player === 1 && mode.isComputer() : player === 1;
+};
+Teams.top = function () { return Number(this.screen().style.top.replace('px','')); };
+Teams.selectingCo = function () { return this.mode === 'co';};
+Teams.selectingTeam = function () { return this.mode === 'team';};
+Teams.ready = function () { return this.mode === 'ready';};
+Teams.booted = function () { return this.bt; };
+Teams.boot = function () {
+    this.goBack();
+    this.remove();
+};
+Teams.remove = function () {
+
+    delete this.mode;
+    delete this.playerElements;
+    this.deactivate();
+    if (this.arrows) this.arrows.remove();
+    var name, screen = this.screen(), 
+    teams = this.element;
+
+    if (!app.game.joined()) 
+        this.fall(function(){screen.removeChild(teams);});
+    else screen.removeChild(teams);
+
+    app.undo.tempAndPrev();
+    this.clear();
+
+    app.input.goBack();
+    app.footer.remove();
+
+    if (app.players.length() < 2) {
+        app.maps.remove(app.map.name());
+        socket.emit('removeRoom', {
+            category:app.map.category(), 
+            name: app.game.name()
+        });
+        app.game.clear();
+    }
+    if (!app.game.started()) app.players.reset();
+};
+Teams.fromCo = function () {
+    this.clear();
+    app.undo.tempAndPrev();
+    app.key.undo();
+    this.setMode(this.selectTeams() ? 'team' :'ready');
+    return this;
+};
+Teams.selectTeams = function () { return app.map.players() > 2 };
+Teams.fromReady = function () {
+    var player = app.user.player();
+    player.isReady(false);
+    socket.emit('ready', player);
+    if (this.arrows) this.arrows.hide();
+    app.chat.remove();
+    app.key.undo();
+    this.button.remove();
+    return this;
+};
+Teams.fromTeam = function () {
+    this.teamsHeight(this.top());
+    app.undo.tempAndPrev();
+    this.clear();
+    return this;
+};
+Teams.toCo = function (from) {
+    if (app.game.joined()) {
+        this.moveElements('up', this.element);
+        socket.emit('getPlayerStates', {
+            category: app.map.category(), 
+            name: app.game.name()
+        });
+    }
+    if (this.mode) this.playersHeight('30%');
+    if (this.arrows) this.arrows.setPosition(this.elements.current()).show();
+    this.setMode('co');
+    this.sel = true;
+};
+Teams.setMode = function (mode) {this.mode = mode;};
+Teams.toTeam = function () {
+    this.teamsHeight((this.top() * 7) / 24);
+    this.playersHeight('20%');
+    if (this.arrows) this.arrows.setPosition(this.teams.current());
+    this.setMode('team');
+};
+Teams.toReady = function () {
+    var top, player = app.user.player();
+    player.isReady(true);
+    this.setMode('ready');
+    socket.emit('ready', player);
+    this.playersHeight('20%');
+    if (this.arrows) this.arrows.setPosition(this.elements.current()).hide();
+    this.button = app.screens.startButton('setupScreen');
+    app.chat.display();
+};
+Teams.choseCo = function () {
+
+    var player, element, wasComputer, scope = this;
+
+    if (app.key.pressed(['left','right'])) {
+        element = Select.setHorizontal(Select.horizontal(this.elements.limit(this.selectable))).getHorizontal();
+        this.selected = element.type();
+        if (this.arrows) this.arrows.setPosition(element);
+    }
+
+    if (app.key.pressed(['up','down'])) {
+        wasComputer = Select.getHorizontal().isComputer();
+        element = Select.setVerticle(Select.verticle(Select.getHorizontal().hide())).getVerticle().show();
+
+        if (element.isComputer()) {
+            if(!wasComputer) this.addAiPlayer(element.number());
+        } else if (wasComputer) this.removeAiPlayer(element.number());
+    }
+    
+    if (element && (player = app.players.number(element.number())))
+        player.setProperty(element.type(), element.value());
+
+    if (app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter()))
+        this.selectTeams() ? this.fromCo().toTeam() : this.fromCo().toReady();
+    else if (app.key.pressed(app.key.esc())) return this.exit(this, function (scope) {
+        scope.goBack();
+        scope.remove();
+    });
+};
+
+// figure this out!!!!
+Teams.choseTeam = function () {
+    if (app.key.pressed(['left', 'right'])) {
+        var team = Select.horizontal(this.teams).limit(this.selectableTeams);
+        if (this.arrows) this.arrows.setPosition(team.element());
+    }
+    if (app.key.pressed(['up','down'])) 
+        var team = Select.verticle(Select.getHorizontal());
+        
+    if (team) app.players.number(team.number()).setProperty(team.property(), team.value());
+
+    if (app.key.pressed(app.key.esc()) || app.key.pressed(app.key.enter()) || this.booted()) {
+        if(app.key.pressed(app.key.enter()))
+            return this.fromTeam().toReady();
+        this.fromTeam().toCo();
+        app.key.undo();
+    }
+};
+
+Teams.playerReady = function (from) {
+    app.players.ready() && app.user.first() ? this.button.show() : this.button.hide();
+
+    if (app.game.started()) {
+        this.remove();
+        return app.players.all();
+    }
+
+    if (app.key.pressed(app.key.enter())) 
+        app.chat.post(app.chat.send(app.chat.input()));
+
+    if (app.key.pressed(app.key.esc()))
+        this.selectTeams() ? this.fromReady().toTeam() : this.fromReady().toCo();
+};
+
+Teams.coBorderColor = function () {
+
+    // move through the spaces and check the status of the players, change their border color
+    // to indicate whether they are ready to go or not
+    for (var number = 1, len = app.map.players(); number <= len; number += 1) {
+
+        // get the player element
+        var element = this.playerElement(number);
+
+        // get player
+        var player = app.players.number(number);
+
+        // check the mode, if it is cp then it should display a solid border color
+        var mode = element.mode();
+        
+        // if the  space is not occupied then make the background white
+        if (!player && !mode.isComputer()) element.toWhite();
+        
+        // if the player is ready or set to computer then make the border color solid
+        else if (mode.isComputer() || player.ready()) element.toSolid();
+            
+        // if the player is not ready yet, but present then fade the color in and out
+        else if (player && !element.fading()) element.fade();
+    }
+};
+Teams.playerElement = function (number) {if (this.playerElements) return this.playerElements.getElement(number - 1);};
+Teams.teamElement = function (number) {return this.teams[number - 1];};
+Teams.playersHeight = function (height, len) {
+    var height = this.screenHeight() * this.percentage(height);
+    for (var n = 1, len = app.map.players(); n <= len; n += 1)
+        this.playerElement(n).setTop(height);
+};
+Teams.teamsHeight = function (height) {
+    for (var n = 1, len = app.map.players(); n <= len; n += 1)
+        this.teamElement(n).setTop(height);
+};
+Teams.addAiPlayer = function (number) {
+    var player = app.players.number(number), n = (this.aiNumber += 1);
+    player = player ? app.players.replace(player, n) : app.players.add(new AiPlayer(n));
+};
+Teams.removeAiPlayer = function (number) {
+    app.players.remove(app.players.number(number));
+    this.selected = Select.setHorizontal(this.elements.limit(this.selectable)).getHorizontal().type();
+};
+Teams.display = function () {
+
+    var screen = this.createScreen('setupScreen');
+    var elements = [], players = [], size = 200;
+
+    var element = document.createElement('article');
+    element.setAttribute('id','teams');
+
+    var footer = app.footer.display(screen).parentNode
+    screen.appendChild(footer);
+    this.createTitle('Teams');
+
+    var chatScreen = document.getElementById('descriptionOrChatScreen');
+    var chat = app.input.form('chat', chatScreen, 'type here to chat with other players');
+    chatScreen.appendChild(chat);
+
+    var height = (screen.offsetHeight * .3) + (this.arrows ? app.offScreen : 0);
+
+    for (var co, player, playerElement, mode, number = 1, nop = app.map.players(); number <= nop; number += 1) {
+
+        playerElement = new PlayerElement(number, size, height);
+        player = app.players.number(number);
+
+        elements.push((co = new CoElement(number, player ? player.property('co') : 0)).setBorder(5));
+        elements.push((mode = new PlayerNumber(number, size, player ? player.property('mode') : 0)).setBorder(5));
+
+        this.players[co.id()] = co.properties();
+        this.players[mode.id()] = mode.properties();
+
+        if (player) {
+            player.setNumber(number);
+            player.setProperty(co.type(), co.value());
+            player.setProperty(mode.type(), mode.value());
+        }
+        playerElement.setMode(mode);
+        playerElement.setCo(co);
+
+        playerElement.add(mode.element());
+        playerElement.add(co.element());
+
+        if (this.selectTeams()) {
+            var team = new TeamElement(number, size);
+            if (player) player.setProperty(team.type(), team.value());
+            playerElement.add(team.element());
+            teams.push(team);
+        }
+        element.appendChild(playerElement.element());
+        players.push(playerElement);
+        playerElement.show();
+    }
+    this.playerElements = new List(players);
+
+    this.elements = new List(elements);
+    this.elements.limit(this.selectable);
+    if (this.selectTeams()) this.teams = new List(teams).limit(this.selectableTeams);
+    if (this.arrows) this.arrows.setSize(30).setSpace(10).insert(element).setPosition(this.elements.current()).fade();
+    
+    this.selected = this.elements.current().type();
+    Select.setHorizontal(this.elements);
+    screen.appendChild(element);
+    return this.element = element;
+};
+module.exports = Teams;
+},{"../controller/background.js":1,"../controller/maps.js":5,"../menu/elements/coElement.js":28,"../menu/elements/playerElement.js":34,"../menu/elements/playerNumber.js":35,"../menu/elements/teamElement.js":37,"../menu/settings.js":49,"../objects/aiPlayer.js":51,"../objects/arrows":54,"../objects/footer.js":61,"../objects/menu.js":66,"../objects/screens.js":72,"../settings/app.js":78,"../tools/dom.js":86,"../tools/keyboard.js":90,"../tools/selection.js":93,"../tools/sockets.js":94}],51:[function(require,module,exports){
+Player = require('../objects/player.js');
+Score = require('../definitions/score.js');
+AiPlayer = function (number) {
+	this._current = {
+        id: 'AI#'+number,
+        gold: 0,
+        special: 0,
+        ready: true,
+        number:number
+    };
+	this.name = function () { return 'HAL #'+ this.number();};
+    this.fullName = function () { return 'Mr. Robot'; };
+    this.lastName = function () { return 'Robot'; };
+    this.id = function () { return this._current.id; };
+    this.socketId = function () { return 'IAmSocketless'; };
+    this.score = new Score(true);
+    this.co = null;
+    this.isComputer = true;
+    if (app.user.first()) socket.emit('addAiPlayer', this);
+};
+AiPlayer.prototype = Object.create(Player.prototype);
+AiPlayer.prototype.constructor = AiPlayer;
+AiPlayer.prototype.setNumber = function (number) {this._current.number = number;};
+module.exports = AiPlayer;
+},{"../definitions/score.js":12,"../objects/player.js":68}],52:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------------------------*\
 
     default object animation repo, the 'm' parameter is a method passed from 
@@ -4607,7 +5544,155 @@ module.exports = function (width, height) {
         }
     };
 };
-},{}],27:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
+Arrow = function (d) {
+    this.direction = d;
+    this.arrowBackground = document.createElement('div');
+    this.arrowBackground.setAttribute('id', d + 'ArrowBackground');
+    this.arrowBackground.setAttribute('class', d + 'Arrow');
+
+    this.arrowOutline = document.createElement('div');
+    this.arrowOutline.setAttribute('id', d +'ArrowOutline');
+    this.arrowOutline.setAttribute('class', d + 'Arrow');
+    this.arrowOutline.appendChild(this.arrowBackground);
+
+    var existing = document.getElementById(this.arrowOutline.id);
+    if (existing) existing.parentNode.replaceChild(this.arrowOutline, existing);
+};
+Arrow.prototype.width = function () {return this.w;};
+Arrow.prototype.setWidth = function (width) {this.w = width;};
+Arrow.prototype.side = {
+    up:'Bottom',
+    down:'Top',
+    left:'Right',
+    right:'Left'
+};
+Arrow.prototype.setColor = function (color) {this.background().style['border'+this.side[this.direction]+'Color'] = color;};
+Arrow.prototype.outline = function () { return this.arrowOutline; };
+Arrow.prototype.background = function () { return this.arrowBackground; };
+Arrow.prototype.height = function (height) { this.outline().style.top = height + 'px'; };
+Arrow.prototype.setLeft = function (left) { this.outline().style.left = left + 'px';};
+Arrow.prototype.setTop = function (top) {this.outline().style.top = top + 'px';};
+Arrow.prototype.setPosition = function (x, y) { 
+    this.setLeft(x); 
+    this.setTop(y); 
+};
+Arrow.prototype.remove = function () {
+    var outline = this.outline();
+    outline.parentNode.removeChild(outline);
+};
+Arrow.prototype.setSize = function (size) {
+    var border = size / 4, arrow = this.outline(), background = this.background(), type = this.direction;
+    this.setWidth(size);
+    background.style.left = border - size + 'px'; 
+    if(type === 'up'){
+        arrow.style.borderLeftWidth = size + 'px';
+        arrow.style.borderRightWidth = size + 'px';
+        arrow.style.borderTopWidth = size + 'px';
+        background.style.borderLeftWidth = size - border + 'px';
+        background.style.borderRightWidth = size - border + 'px';
+        background.style.borderTopWidth = size - border + 'px';
+    }else if(type === 'down'){
+        arrow.style.borderLeftWidth = size + 'px';
+        arrow.style.borderRightWidth = size + 'px';
+        arrow.style.borderBottomWidth = size + 'px';
+        background.style.borderLeftWidth = size - border + 'px';
+        background.style.borderRightWidth = size - border + 'px';
+        background.style.borderBottomWidth = size - 2 + 'px';
+    }else if(type === 'left'){
+        arrow.style.borderLeftWidth = size + 'px';
+        arrow.style.borderBottomWidth = size + 'px';
+        arrow.style.borderTopWidth = size + 'px';
+        background.style.borderLeftWidth = size - border + 'px';
+        background.style.borderBottomWidth = size - border + 'px';
+        background.style.borderTopWidth = size - border + 'px';
+    }else if(type === 'right'){
+        arrow.style.borderBottomWidth = size + 'px';
+        arrow.style.borderRightWidth = size + 'px';
+        arrow.style.borderTopWidth = size + 'px';
+        background.style.borderBottomWidth = size - border + 'px';
+        background.style.borderRightWidth = size - border + 'px';
+        background.style.borderTopWidth = size - border + 'px';
+    }
+    return this;
+};
+},{}],54:[function(require,module,exports){
+arrow = require('../objects/arrow.js');
+Fader = require('../effects/fade.js');
+
+Arrows = function (screen, space, over, under) {
+	this.setDown(new Arrow('down'));
+	this.setUp(new Arrow('up'));
+    this.fader = new Fader(this.list(), this.color);
+    this.over = over || 0;
+    this.under = under || 0;
+    this.space = space || 0;
+	this.setScreen(screen);
+};
+Arrows.prototype.setSeperation = function (seperation) {
+    this.seperation = seperation;
+    return this;
+};
+Arrows.prototype.setDown = function (arrow) {this.d = arrow;};
+Arrows.prototype.setUp = function (arrow) {this.u = arrow};
+Arrows.prototype.list = function () {return [this.up(), this.down()];};
+Arrows.prototype.setScreen = function (screen) { this.s = screen;};
+Arrows.prototype.color = app.settings.colors.white;
+Arrows.prototype.hide = function () {this.display('none');};
+Arrows.prototype.show = function () {this.display(null);};
+Arrows.prototype.display = function (display) {
+    this.list().map(function(arrow){arrow.outline().style.display = display;});
+};
+Arrows.prototype.remove = function () {
+    if (this.fader.fading()) this.fader.stop();
+    this.list().map(function(arrow){arrow.remove();});
+};
+Arrows.prototype.setSize = function (size) {
+    this.setWidth(size);
+    this.list().map(function (arrow){arrow.setSize(size);});
+    return this;
+};
+Arrows.prototype.setSpace = function (space) {this.space = space; return this;};
+Arrows.prototype.setOver = function (over) {this.over = over; return this;};
+Arrows.prototype.setUnder = function (under) {this.under = under; return this;};
+Arrows.prototype.setWidth = function (width) {this.w = width; return this;};
+Arrows.prototype.width = function () {return this.w || 30;};
+Arrows.prototype.setPosition = function(element) {
+
+    var b, border = element.border && !isNaN((b = element.border())) ? b : 0;
+
+    var position = element.position();
+    var dimension = element.dimensions();
+    var arrow = this.width() / 2;
+    var top = position.y - arrow - border;
+    var left = position.x;
+    var width = dimension.x - (border * 2);
+    var bottom = top + dimension.y + arrow + (border * 3);
+    var center = (width / 2) - arrow;
+
+    this.up().setPosition(left + center, top - this.space - this.over);
+    this.down().setPosition(left + center, bottom + this.space + this.under);
+
+    return this;
+};
+Arrows.prototype.fade = function (speed, swell) {
+    this.fader.start(function (color, arrows) {
+        for (var i = 0, len = arrows.length; i < len; i += 1)
+            arrows[i].setColor(color);
+    });
+};
+Arrows.prototype.insert = function (element) {
+    this.setScreen(element);
+    element.appendChild(this.u.outline());
+    element.appendChild(this.d.outline()); 
+    return this;
+};
+Arrows.prototype.screen = function () { return this.s;};
+Arrows.prototype.up = function () { return this.u; };
+Arrows.prototype.down = function () { return this.d; };
+
+module.exports = Arrows;
+},{"../effects/fade.js":15,"../objects/arrow.js":53}],55:[function(require,module,exports){
 Building = require('../objects/building.js');
 //ListElement = require('../tools/dom/listElement.js');
 
@@ -4635,7 +5720,7 @@ Build.prototype.select = function () {
 //Building.prototype.units = new ListElement('buildings', ['infantry','apc']);
 
 module.exports = Build;
-},{"../objects/building.js":28}],28:[function(require,module,exports){
+},{"../objects/building.js":56}],56:[function(require,module,exports){
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
 
@@ -4656,7 +5741,7 @@ Building = function (type, position, index, player) {
     this.def = type.toLowerCase() === 'hq' ? 4 : 3;
 
 	Terrain.call(this, type, position);
-    this.pos = new Position(position.x, position.y);
+    this.pos = new Position (position.x, position.y);
 	this.units = function () { return app.buildings[type]; };
 	this.canBuild = function (object) { return Object.keys(this.units()).indexOf(type) > -1; };
     this.canHeal = function (object) { return this.healing.indexOf(object.transportation()) > -1; };
@@ -4671,6 +5756,16 @@ Building = function (type, position, index, player) {
     };
 };
 
+Building.prototype.properties = function () { 
+    var current = this._current;
+    return {
+        name: current.name,
+        player: current.player.number(),
+        position: current.position,
+        health: current.health,
+        index: current.index
+    }; 
+};
 Building.prototype.name = function (){ return this._current.name; };
 Building.prototype.defaults = { health: function () { return 20; } };
 Building.prototype.on = function (object) {
@@ -4718,13 +5813,16 @@ Building.prototype.owns = function (object) {
 };
 
 Building.prototype.select = function () {
-    app.display.selectionInterface(this.name().toLowerCase(), 'unitSelectionIndex');
+    app.display.info(app.buildings[this.name().toLowerCase()], ['name', 'cost'], {
+        section: 'buildUnitScreen',
+        div: 'selectUnitScreen'
+    });
     return true;
 };
 
 Building.prototype.evaluate = function () {
     if(!app.cursor.hidden) app.cursor.hide();
-    var unit = app.display.select('unitSelectionIndex', 'selectUnitScreen', app.effect.highlightListItem, 'ul', 7).id;
+    var unit = app.display.verticle().select(document.getElementById('selectUnitScreen'), app.effect.highlightListItem, 7).id;
     if (unit) return this.build(unit);
 };
 
@@ -4735,7 +5833,39 @@ Building.prototype.execute = function () {
 };
 
 module.exports = Building;
-},{"../controller/map.js":3,"../objects/position.js":37,"../objects/terrain.js":42,"../objects/unit.js":44,"../settings/app.js":46}],29:[function(require,module,exports){
+},{"../controller/map.js":4,"../objects/position.js":69,"../objects/terrain.js":74,"../objects/unit.js":76,"../settings/app.js":78}],57:[function(require,module,exports){
+BuildingDisplay = function () {
+	var property = function (id) { return document.getElementById(id).firstChild; };
+	this.e = app.display.info({
+	        city:{ numberOf:0, type:'city' },
+	        base:{ numberOf:0, type:'base' },
+	        airport:{ numberOf:0, type:'airport' },
+	        seaport:{ numberOf:0, type:'seaport' },
+	    }, 
+	    ['numberOf', 'canvas'], 
+	    {section:'buildingsDisplay', div:'numberOfBuildings'}, 
+        app.dom.addCanvas
+    );
+	this.city = property('city');
+	this.base = property('base');
+	this.airport = property('airport');
+	this.seaport = property('seaport');
+};
+
+BuildingDisplay.prototype.element = function () { return this.e; };
+BuildingDisplay.prototype.cities = function (number) { this.city.innerHtml = number; };
+BuildingDisplay.prototype.bases = function (number) { this.base.innerHTML = number; };
+BuildingDisplay.prototype.airPorts = function (number) { this.airport.innerHtml = number; };
+BuildingDisplay.prototype.seaPorts = function (number) { this.seaport.innerHtml = number; };
+BuildingDisplay.prototype.set = function (numberOf) {
+	if (numberOf.city) this.cities(numberOf.city);
+	if (numberOf.base) this.bases(numberOf.base);
+	if (numberOf.seaport) this.seaPorts(numberOf.seaport);
+	if (numberOf.airport) this.airPorts(numberOf.airport);
+};
+
+module.exports = BuildingDisplay;
+},{}],58:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     holds all co's, their skills and implimentation
@@ -4934,7 +6064,7 @@ module.exports = function () {
         }
     };
 }();
-},{"../settings/app.js":46}],30:[function(require,module,exports){
+},{"../settings/app.js":78}],59:[function(require,module,exports){
 app.dom = require('../tools/dom.js');
 
 StatusHud = function () {
@@ -4944,7 +6074,10 @@ StatusHud = function () {
 };
 
 StatusHud.prototype.visibility = function (visibility) {return document.getElementById('coStatusHud').style.display = visibility;}
-StatusHud.prototype.show = function () {this.visibility('');};
+StatusHud.prototype.show = function () {
+    this.visibility('');
+    this._previous = undefined;
+};
 StatusHud.prototype.hide = function () {this.visibility('none');};
 StatusHud.prototype.power = function () { return this._context; };
 StatusHud.prototype.display = function (player, location) {
@@ -5002,7 +6135,7 @@ StatusHud.prototype.display = function (player, location) {
 };
 
 module.exports = StatusHud;
-},{"../tools/dom.js":53}],31:[function(require,module,exports){
+},{"../tools/dom.js":86}],60:[function(require,module,exports){
 Feature = function (selected) {
     this.element = document.createElement('div');
     this.element.setAttribute('id', 'hud');
@@ -5032,11 +6165,16 @@ Feature.prototype.size = function (canvas) {
 };
 
 Feature.prototype.addElement = function (element, type, attributes) {
-    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo, 'hud');
-    this.size(list.canvas.canvas);
-    app.draw(list.canvas.context).hudCanvas(element.draw(), element.class());
-    this.element.appendChild(list.ul);
-    return list.ul;
+    var c = app.dom.createCanvas('hud', element, {width:128, height:128});
+    var canvas = app.dom.createElement('li', false, 'canvas');
+    canvas.appendChild(c.canvas);
+
+    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo);
+    list.appendChild(canvas);
+    this.size(canvas);
+    app.draw(c.context).hudCanvas(element.draw(), element.class());
+    this.element.appendChild(list);
+    return list;
 };
 
 Feature.prototype.set = function (element) {
@@ -5057,7 +6195,88 @@ Feature.prototype.set = function (element) {
 };
 
 module.exports = Feature;
-},{}],32:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Footer.js controls the creation and coordination of footer elements
+
+\* --------------------------------------------------------------------------------------*/
+
+module.exports = {
+    display: function () {
+
+        var footer = app.display.info([], [], {section:'descriptionOrChatScreen', div:'descriptionOrChat'});
+        this.setElement(footer);
+        var textField = footer.children[0];
+
+        var chat = document.createElement('ul');
+        var description = document.createElement('h1');
+
+        chat.setAttribute('id','chat');
+        description.setAttribute('id','descriptions');
+
+        textField.appendChild(chat);
+        textField.appendChild(description);
+
+        return textField;
+    },
+    setElement: function (element) {this.e = element;},
+    element: function () { return this.e; }, // could cause problems
+    remove: function () { 
+        var element = this.element();
+        if (element) element.parentNode.removeChild(element); 
+    },
+    scrolling: function () {
+        var footer = document.createElement('footer');
+        var info = document.createElement('p');
+        var footSpan = document.createElement('span');
+        footSpan.setAttribute('id','footerText');
+        info.appendChild(footSpan);
+        info.setAttribute('id', 'scrollingInfo');
+        footer.setAttribute('id','footer');
+        footer.appendChild(info);
+        this.setElement(footer);
+        this.setScrollBar(info);
+        this.setSpan(footSpan);
+        return footer;
+    },
+    hide: function () { this.element().display = 'none'; },
+    show: function () { this.element().display = null; },
+    setScrollBar: function (bar) {this.s = bar;},
+    scrollBar: function () {return this.s;},
+    setText: function (text) {
+        this.t = text;
+        this.scrollBar().innerHTML = text;
+    },
+    setSpan: function (span) {this.sp = span;},
+    span: function () {return this.sp;},
+    text: function () {return this.t;},
+    width: function () {return this.element().offsetWidth;},
+    textWidth: function () {return this.span().offsetWidth;},
+    incriment: function () {return this.scrollBar().offsetWidth; },
+    increase: function () {this.move(1);},
+    decrease: function () {this.move(-1);},
+    move: function (move) {this.setPosition(this.position() + move);},
+    setPosition: function (position) {
+        this.setLeft(position);
+        this.p = position;
+    },
+    position: function () {return this.p;},
+    reset:function () {this.setPosition(-(this.incriment() * 4));},
+    setLeft: function (left) {this.scrollBar().style.left = left + 'px';},
+    increase: function () {return this.setPosition(this.position() + 1);},
+    scroll: function(message) {
+        var scope = this, position = this.position();
+        if (message) {
+            if (this.scroller) clearTimeout(this.scroller);
+            if (!position) this.setPosition(-this.incriment());
+            this.setText(message);
+        }
+        this.position() <= this.width() ? this.increase() : this.reset();
+        this.scroller = setTimeout(function(){ scope.scroll(); }, 8);
+    }
+};
+},{}],62:[function(require,module,exports){
 Hud = function (elements) {
     this.element = document.createElement('div');
     this.element.setAttribute('id', 'hud');
@@ -5066,11 +6285,11 @@ Hud = function (elements) {
 
 Hud.prototype.clear = function () { while (this.element.firstChild) this.element.removeChild(this.element.firstChild); };
 Hud.prototype.hidden = function () { return this.element.style.display === 'none';};
-Hud.prototype.show = function () { 
+Hud.prototype.show = function () {
     this.element.style.display = null;
     this.setElements(app.cursor.hovered());
 };
-Hud.prototype.hide = function () { this.element.style.display = 'none';};
+Hud.prototype.hide = function () { this.element.style.display = 'none'; };
 Hud.prototype.resize = function (canvas) {
     var screenWidth = app.screen.width();
     var width = app.settings.hudWidth * this.number;
@@ -5085,13 +6304,20 @@ Hud.prototype.resize = function (canvas) {
 };
 
 Hud.prototype.addElement = function (element, type, attributes) {
-    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo, 'hud');
-    this.resize(list.canvas.canvas);
-    app.draw(list.canvas.context).hudCanvas(element.draw(), element.class());
-    this.element.appendChild(list.ul);
+
+    var c = app.dom.createCanvas('hud', element, {width:128, height:128});
+    var canvas = app.dom.createElement('li', false, 'canvas');
+    canvas.appendChild(c.canvas);
+
+    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo);
+    list.appendChild(canvas);
+    this.resize(canvas);
+    app.draw(c.context).hudCanvas(element.draw(), element.class());
+    this.element.appendChild(list);
+
     if(type === 'unit') 
         this.number += 1;
-    return list.ul;
+    return list;
 };
 
 
@@ -5121,7 +6347,110 @@ Hud.prototype.setElements = function (elements) {
 };
 
 module.exports = Hud;
-},{}],33:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
+app.type = require('../effects/typing.js');
+module.exports = {
+    
+	form: function (name, element, placeHolder) {
+        
+        var input = document.createElement('p');
+        input.setAttribute('class', 'inputForm');
+        input.setAttribute('id', name + 'Form');
+
+        var text = document.createElement('input');
+        text.setAttribute('id', name + 'Input');
+        text.setAttribute('class','textInput');
+        text.setAttribute('autocomplete','off');
+        text.setAttribute('type','text');
+
+        if (placeHolder) text.setAttribute('placeholder', placeHolder);
+
+        text.style.width = element.offsetWidth;
+        input.appendChild(text);
+        return input;
+    },
+
+    entry: function () {
+        var name = this.value();
+        if (!name) app.type.letters (this.description, 'A name must be entered for the game.');
+        else if (name.length < 3) app.type.letters (this.description, 'Name must be at least three letters long.');
+        else if (name) {
+            this.val = name;
+            return name;
+        }
+        return false;
+    },
+
+    name: function (parent, text) {
+
+        this.a = true;
+        var existing = document.getElementById('descriptionOrChatScreen');
+        var textField = this.text = app.footer.display();
+        var tfp = textField.parentNode;
+        this.parent = tfp;
+
+        if (existing) parent.replaceChild(tfp, existing);
+        else parent.appendChild(tfp);
+
+        this.description = document.getElementById('descriptions');
+        this.description.style.paddingTop = '2%';
+        this.description.style.paddingBottom = '1.5%';
+        this.description.parentNode.style.overflow = 'hidden';
+
+        this.addInput();
+        app.type.letters(this.description, text || 'Enter name for game.');
+
+        return tfp;
+    },
+
+    remove: function () {
+        this.a = false;
+        app.confirm.deactivate();
+        app.type.reset();
+        delete this.val;
+        app.footer.remove();
+        app.undo.all();
+        app.hud.show();
+        app.coStatus.show();
+        app.cursor.show();
+    },
+    active: function () { return this.a; },
+    clear: function () { 
+        if (this.a) {
+            this.description.style.paddingTop = null;
+            this.description.style.paddingBottom = null;
+            this.nameInput.style.display = null;
+            this.nameInput.style.height = null;
+            this.a = false;
+        }
+    },
+    removeInput: function () { 
+        this.text.removeChild(this.nameInput); 
+        //this.description.style.display = 'inline-block';
+        //this.text.style.display = 'inline-block';
+    },
+    addInput: function () {
+        this.text.appendChild(this.form('name', this.text, 'Enter name here.'));
+        this.nameInput = document.getElementById('nameForm');
+        this.nameInput.style.display = 'block';
+        this.nameInput.style.height = '30%';
+        // this.description.style.display = null;
+        document.getElementById('nameInput').focus();
+    },
+    value: function () { return this.val || document.getElementById('nameInput').value; },
+    goBack: function () {
+        this.a = true;
+        this.b = true;
+    },
+    a:false,
+    back: function () { return this.b; },
+    undoBack: function () { this.b = false; },
+    activate: function () { this.a = true; },
+    descriptions: function () { return document.getElementById('descriptions'); },
+    response: function () { return app.display.horizontal().select(this.descriptions(), app.effect.highlightListItem, false, false, 1).id; },
+    message: function (message) { return app.type.letters(this.descriptions(), message); }
+};
+},{"../effects/typing.js":19}],64:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     creates map object
@@ -5133,8 +6462,8 @@ Validator = require('../tools/validator.js');
 module.exports = function (id, name, players, dimensions, terrain, buildings, units) {
 
     var error;
-    validate = new Validator('map'),
-    category = units.length ? 'preDeployed' : {
+    //validate = new Validator('map'),
+    var category = units.length ? 'preDeployed' : {
         2:'two', 3:'three', 4:'four', 5:'five', 6:'six', 7:'seven', 8:'eight'
     } [players];
 
@@ -5146,10 +6475,10 @@ module.exports = function (id, name, players, dimensions, terrain, buildings, un
     this.terrain = terrain;
     this.buildings = buildings;
     this.units = units;
-    if((error = validate.map(this)))
-        throw error;
+    // if((error = validate.map(this)))
+    //     throw error;
 };
-},{"../tools/validator.js":63}],34:[function(require,module,exports){
+},{"../tools/validator.js":97}],65:[function(require,module,exports){
 // map elements
 
 module.exports = function (type, x, y, player) {
@@ -5157,12 +6486,145 @@ module.exports = function (type, x, y, player) {
 	this.position = {x:x, y:y};
 	this.player = player;
 };
-},{}],35:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Menu.js is a generic object that contains methods common to all menus
+
+\* --------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+app.effect = require('../game/effects.js');
+
+module.exports = {
+    // for co border color
+    color: app.settings.colors,
+    playerElement: [],
+    playerColor: app.settings.playerColor,
+    time: new Date(),
+    withArrows: function () { 
+        if (!this.arrows) this.arrows = new Arrows(); 
+        return this;
+    },
+    active: function () { return this.a; },
+    activate: function () { this.a = true; },
+    deactivate: function () { this.a = false; },
+    goBack: function () { this.bck = true; },
+    back: function () {
+        if (this.bck) {
+            this.bck = false;
+            return true;
+        }
+        return false;
+    },
+    exit: function (value, callback, exit) {
+        if (app.key.pressed(app.key.enter()) || app.key.pressed(app.key.esc()) || this.boot) {
+            if (callback) callback(value);
+            if(app.key.pressed(app.key.esc()) || this.boot){
+                app.key.undo();
+                if(this.boot) this.boot = false;
+                return exit ? exit : 'back';
+            }
+            app.key.undo();
+        }
+        return false;
+    },
+    moveElements: function (direction, callback, speed, index) {
+
+        var elements = this.element.childNodes;
+        var length = elements.length;
+        var scope = this;
+        var delay = speed || 5;
+        var timeout = delay * 100;
+        this.m = true;
+
+        if(!index) index = 0;
+        if (length > index) {
+            var offScreen = Number(app.offScreen);
+            setTimeout(function() { 
+                var elem = elements[index];
+                elem.style.transition = 'top .' + delay + 's ease';
+                setTimeout(function(){elem.style.transition = null}, timeout);
+                var position = Number(elem.style.top.replace('px',''));
+                if (position) {
+                    if (direction === 'up') target = position - offScreen;
+                    else if (direction === 'down') target = position + offScreen;
+                    else return false;
+                    elem.style.top = target + 'px';
+                }
+                scope.moveElements(direction, callback, speed, index + 1);
+            }, 30);
+        } else { 
+            this.m = false;
+            if (callback) setTimeout(callback, 80);
+        }
+    },
+    moving: function () {return this.m; },
+    screen: function () {return this._s;},
+    setScreen: function (s) {this._s = s;},
+    createTitle: function (title) {
+        var element = document.createElement('h1');
+        element.setAttribute('id', 'title');
+        element.innerHTML = title;
+        this.screen().appendChild(element);
+        return element;
+    },
+    percentage: function (height) {return Number(height.replace('%','')) / 100;},
+    screenHeight: function () {return this.screen().offsetHeight;},
+    removeScreen: function () {document.body.removeChild(this.screen());},
+    createScreen: function (name) {
+        var existing = document.getElementById(name);
+        var screen = document.createElement('article');
+        screen.setAttribute('id', name);
+        existing ? document.body.replaceChild(screen, existing) : document.body.appendChild(screen);
+        this.setScreen(screen);
+        app.touch(screen).swipeScreen();
+        app.click(screen).swipeScreen();
+        return screen;
+    },
+    clear: function () {
+        app.display.clearOld();
+        app.display.resetPreviousIndex();
+    },
+    resetDefaults: function (type) {
+
+        var element, previous, name, child, children, 
+        childrenLength, length = app.players.length();
+
+        for (var c, n = 1; n <= length; n += 1) {
+
+            element = document.getElementById('player' + n + type);
+            previous = app.players.number(n).property(type.toLowerCase());
+
+            if ((name = previous.name ? previous.name : previous)) {
+
+                children = element.childNodes;
+                childrenLength = children.length;
+
+                for (c = 0; c < childrenLength; c += 1)
+                    if ((child = children[c]).getAttribute('class').toLowerCase() === name.toLowerCase())
+                        child.setAttribute('default',true);
+                    else if (child.getAttribute('default'))
+                        child.removeAttribute('default');
+            }
+        }
+    },
+    changeTitle: function (name) {this.screen().firstChild.innerHTML = name;},
+    rise: function (callback, speed) {this.moveElements('up', callback, speed);},
+    fall: function (callback, speed) { this.moveElements('down', callback, speed);}
+};
+},{"../game/effects.js":24,"../settings/app.js":78}],67:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Obsticle.js is a generic object with methods common to all map obsticles
+
+\* --------------------------------------------------------------------------------------*/
+
 module.exports = function (type, defense) {
     this.type = function () { return type };
     this.defense = function () { return defense };
 };
-},{}],36:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 // create a new player object
 app = require('../settings/app.js');
 app.game = require('../game/game.js')
@@ -5188,11 +6650,17 @@ var Player = function (user) {
         number:user.number
     };
 };
-
+Player.prototype.setCo = function (co) {this.co = co;};
+Player.prototype.setProperty = function (property, value) {
+    this[property] = (property === 'co') ? app.co[value](this) : value;
+    if (app.user.number() === this.number())
+        socket.emit('setUserProperties', {property: property, value: value, player:this});
+};
+Player.prototype.property = function (property) {return this[property];};
 Player.prototype.color = function () { return this.number(); }; // <-------------- figure out color system at some point
 Player.prototype.number = function () { return this._current.number; };
 Player.prototype.index = function () { return app.players.indexOf(this); };
-Player.prototype.setNumber = function (number) { this._current.number = number; };
+Player.prototype.setNumber = function (number) { this._current.number = number; return this; };
 Player.prototype.endTurn = function () {
 
     // update score
@@ -5221,6 +6689,9 @@ Player.prototype.endTurn = function () {
 
     // assign the next player as the current player
     app.players.setCurrent(player);
+
+    // if the player is ai then send the games current state 
+    if (player.isCompuer) socket.emit('aiTurn', {map:app.map.get(), player:player});
 };
 
 Player.prototype.recover = function () {
@@ -5238,15 +6709,21 @@ Player.prototype.recover = function () {
     return true;
 };
 
-Player.prototype.isReady = function (state) { this._current.ready = state; };
+Player.prototype.isReady = function (state) { 
+    this._current.ready = state; 
+    app.players.checkReady();
+};
+
 Player.prototype.ready = function () { return this._current.ready; };
 Player.prototype.income = function () {
 
     // get the amount of income per building for current game
-    var  i = 0,  
+    var  i = 0; 
+
+    console.log(app.game.settings());
 
     // money allotted per building
-    income = 0, funds = app.game.settings().funds,
+    var income = 0, funds = app.game.settings().funds,
 
     // list of buildings
     building, buildings = app.map.buildings();
@@ -5268,8 +6745,9 @@ Player.prototype.collectIncome = function () {
     return gold;
 };
 
-Player.prototype.defeat = function (player, captured) {
+Player.prototype.defeat = function (player, capturing) {
 
+    if (app.user.owns(this)) { socket.emit('defeat', {defeated: player, conqueror: this, capturing: capturing});};
     this.score.conquer();
     player.score.defeat();
     app.players.defeat(player);
@@ -5283,7 +6761,7 @@ Player.prototype.defeat = function (player, captured) {
             this.score.capture();
             if(building.name().toLowerCase() === 'hq')
                 app.map.takeHQ(building);
-            building.changeOwner(captured);
+            building.changeOwner(capturing ? this : capturing);
         }
 
     app.animate('building');
@@ -5297,7 +6775,7 @@ Player.prototype.gold = function () { return this._current.gold; };
 Player.prototype.canPurchase = function (cost) { return this.gold() - cost >= 0; };
 Player.prototype.purchase = function (cost) {
     this.score.expenses(cost);
-    return this.setGold(this.gold() - cost); 
+    return this.setGold(this.gold() - cost);
 };
 Player.prototype.setGold = function (gold) { return gold >= 0 ? (this._current.gold = gold) + 1 : false; };
 Player.prototype.owns = function (object) { return object.player && this.get() === object.player(); };
@@ -5309,6 +6787,9 @@ Player.prototype.units = function () {
     return false;
 };
 
+Player.prototype.confirm = function () { this._current.confirmation = true; };
+Player.prototype.confirmed = function () { return this._current.confirmation; };
+Player.prototype.unconfirm = function () { delete this._current.confirmation; };
 Player.prototype.hq = function () {
 
     // list off all buildings on map
@@ -5318,9 +6799,8 @@ Player.prototype.hq = function () {
         if (building.name().toLowerCase() === 'hq' && this.owns(building))
             return building;
 };
-
 module.exports = Player;
-},{"../controller/map.js":3,"../controller/players.js":5,"../controller/screen.js":6,"../definitions/score.js":10,"../game/game.js":18,"../objects/co.js":29,"../settings/app.js":46}],37:[function(require,module,exports){
+},{"../controller/map.js":4,"../controller/players.js":7,"../controller/screen.js":8,"../definitions/score.js":12,"../game/game.js":25,"../objects/co.js":58,"../settings/app.js":78}],69:[function(require,module,exports){
 Position = function (x, y, relativePosition) {
 	this.x = x;
 	this.y = y;
@@ -5372,22 +6852,22 @@ Position.prototype.log = function () {
 };
 
 module.exports = Position;
-},{}],38:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 app = require('../settings/app.js');
 Validator = require('../tools/validator.js');
 
 module.exports = function (name, obsticle) {
 
-	var error, validate = new Validator('property');
+	// var error, validate = new Validator('property');
 
-	if((error = validate.defined(name, 'name') || validate.hasElements(obsticle, ['type', 'defense'])))
-		throw error;
+	// if((error = validate.defined(name, 'name') || validate.hasElements(obsticle, ['type', 'defense'])))
+	// 	throw error;
 
 	this.type = obsticle.type;
 	this.defense = obsticle.defense;
     this.name = function () { return name };
 };
-},{"../settings/app.js":46,"../tools/validator.js":63}],39:[function(require,module,exports){
+},{"../settings/app.js":78,"../tools/validator.js":97}],71:[function(require,module,exports){
 ScoreElement = function (name, worth) {
 	this.name = name;
 	this.worth = worth;
@@ -5395,70 +6875,24 @@ ScoreElement = function (name, worth) {
 };
 
 module.exports = ScoreElement;
-},{}],40:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 app = require('../settings/app.js');
+app.display = require('../tools/display.js');
 app.game = require('../game/game.js');
 app.dom = require('../tools/dom.js');
 app.touch = require('../tools/touch.js');
-app.menu = require('../menu/menu.js');
+app.click = require('../tools/click.js');
+app.input = require('../objects/input.js');
+app.footer = require('../objects/footer.js');
+
+Arrows = require('../objects/arrows.js');
 
 module.exports = function () {
 
-    var inputField = function (name) {
-        var text = document.createElement('input');
-        text.setAttribute('id', name + 'Input');
-        text.setAttribute('class','textInput');
-        text.setAttribute('autocomplete','off');
-        text.setAttribute('type','text');
-        return text;
-    };
-
-    var arrow = {
-
-        up: function () {
-
-            var exists = document.getElementById('upArrowOutline');
-
-            var upArrowBackground = document.createElement('div');
-            upArrowBackground.setAttribute('id','upArrowBackground');
-            upArrowBackground.setAttribute('class','upArrow');
-
-            var upArrowOutline = document.createElement('div');
-            upArrowOutline.setAttribute('id','upArrowOutline');
-            upArrowOutline.setAttribute('class','upArrow');
-
-            upArrowOutline.appendChild(upArrowBackground);
-
-            if(exists){
-                //exists.parentNode.replaceChild(upArrowOutline, exists);
-                //return false;
-                return upArrowOutline;
-            }else{
-                return upArrowOutline;
-            }
-        },
-        down: function () {
-
-            var exists = document.getElementById('downArrowOutline');
-
-            var downArrowBackground = document.createElement('div');
-            downArrowBackground.setAttribute('id','downArrowBackground');
-            downArrowBackground.setAttribute('class','downArrow');
-
-            var downArrowOutline = document.createElement('div');
-            downArrowOutline.setAttribute('id','downArrowOutline');
-            downArrowOutline.setAttribute('class','downArrow');
-
-            downArrowOutline.appendChild(downArrowBackground);
-
-            if(exists){
-                //exists.parentNode.replaceChild(downArrowOutline, exists);
-                //return false;
-                return downArrowOutline;
-            }else{
-                return downArrowOutline;
-            }        
-        }
+    var changeTitle = function (element, name) {
+    	// get the title and change it to select whatever type we are selecting
+        title = element.children[0];
+        title.innerHTML = name;
     };
 
 	return {
@@ -5472,7 +6906,7 @@ module.exports = function () {
 	        button.style.display = 'none';
 	        button.addEventListener("click", function(event){
 	            event.preventDefault();
-	            app.menu.start();
+	            app.game.start();
 	        });
 	        screen.appendChild(button);
 
@@ -5481,248 +6915,6 @@ module.exports = function () {
 	            hide: function () {button.style.display = 'none';},
 	            remove: function (){screen.removeChild(button);}
 	        };
-	    },
-
-	    rules: function (element, textField, back) {
-
-	        var allowed = ['on', 'off', 'num', 'clear', 'rain', 'snow', 'random', 'a', 'b', 'c']
-	        var settings = app.game.settings();
-	        var rules = app.settings.settingsDisplayElement;
-	        var keys = Object.keys(rules);
-	        var len = keys.length;
-	        var offScreen = Number(app.offScreen);
-
-	        var cont = document.createElement('section');
-	        cont.setAttribute('id', 'settings');
-
-	        var width = element.offsetWidth;
-	        var height = element.offsetHeight;
-
-	        var left = width * .05;
-	        var middle = height * .5;
-	        var top = back ? middle - offScreen : middle + offScreen;
-	        var id = 0;
-
-	        var nameInput = app.screens.inputForm('name', textField, 'Enter name here.');
-	        textField.appendChild(nameInput);
-
-	        for (var i = 0; i < len; i += 1){
-
-	            var div = document.createElement('div');
-	            var stable = document.createElement('div');
-
-	            var property = keys[i];
-	            var rule = rules[property];
-	            rule.hide = true;
-	            rule.index = true;
-
-	            if (rule.inc){
-	                for (var n = rule.min; n <= rule.max; n += rule.inc){
-	                    rule[n] = n;
-	                }
-	            }
-
-	            var heading = document.createElement('h1');
-	            heading.innerHTML = property;
-
-	            var ul = app.dom.createList(rule, property + 'Settings', allowed).ul;
-
-	            div.setAttribute('id', property + 'Background');
-	            div.setAttribute('class', 'rules');
-
-	            stable.setAttribute('id', property + 'Container');
-	            stable.setAttribute('class', 'stable');
-
-	            stable.appendChild(heading);
-
-	            div.style.left = left + 'px';
-	            div.style.top = top + 'px';
-
-	            stable.style.left = left + 'px';
-	            stable.style.top = top + 'px';
-
-	            left += .13 * width;
-	            top -= .06 * height;
-
-	            var list = app.dom.getImmediateChildrenByTagName(ul, 'li');
-
-	            var show = app.dom.findElementByTag('class', list, settings[property]);
-
-	            app.dom.show(show, list, 'inline-block');
-	            app.touch(stable).element().scroll(ul);
-
-	            stable.appendChild(ul);
-	            cont.appendChild(stable);
-	            cont.appendChild(div);
-	        }
-
-	        var up = arrow.up();
-	        var down = arrow.down();
-	        if (up) cont.appendChild(up);
-	        if (down) cont.appendChild(down);
-	        element.appendChild(cont);
-
-	        return cont;
-	    },
-
-		teams: function (element, textField) {
-
-	        var cos = app.co;
-	        var coList = Object.keys(cos);
-	        var len = coList.length;
-	        var elem = {};
-	        var obj = {};
-	        var teamElements = {};
-	        var height = element.offsetHeight;
-	        var width = element.offsetWidth;
-	        var size = 200;
-	        var fontSize = size / 4;
-	        var nop = app.map.players();
-	        var top = (height * .3) + app.offScreen;
-	        var exists = document.getElementById('teams');
-	        var teams = document.createElement('article');
-	        teams.setAttribute('id','teams');
-
-	        var chatScreen = document.getElementById('descriptionOrChatScreen');
-	        var chat = app.screens.inputForm('chat', chatScreen, 'type here to chat with other players');
-
-	        chatScreen.appendChild(chat);
-
-	        if(nop === undefined)
-	        	throw new Error('players missing!', 'screens', 182);
-
-	        if(nop > 2) {
-	            var teamProperties = {
-	                ind: true,
-	                hide: true,
-	                description:'Set alliances by selecting the same team.'
-	            };
-	            var allowed = [];
-	            var teamArr = ['a','b','c','d'];
-	            for(var i = 0; i < nop; i += 1){
-	                var t = teamArr[i];
-	                allowed[i] = t;
-	                teamProperties[t] = t.toUpperCase() + 'Team';
-	            }
-	            var teamSelect = true;
-	        }
-
-	        for (var p = 1; p <= nop; p += 1){
-
-	            var ind = p - 1;
-	            var playa = 'player' + p;
-	            var pName = p+'p';
-	            var modes = {
-	                index: true,
-	                hide:true,
-	                Cp:'Cp',
-	                description: 'Chose Player or Computer.'
-	            };
-
-	            var modeAllow = ['Cp', pName];
-	            var sections =  width / nop;
-	            var position = (sections * ind) + ((sections - size) / 2);
-
-	            var player = document.createElement('section');
-
-	            player.setAttribute('id','player' + p);
-	            player.setAttribute('class','players');
-	            player.style.width = size + 'px';
-	            player.style.height = size + 'px';
-	            player.style.left = position + 'px';
-	            player.style.top = top + 'px';
-
-	            var coId = playa + 'co';
-	            var modeId = playa + 'mode';
-
-	            elem[coId] = {description: 'Chose a CO.'};
-
-	            for(var i = 0; i < len; i += 1){
-	                var name = coList[i];
-	                var co = cos[name];
-	                elem[coId][name] = {
-	                    name:co.name,
-	                    image:co.image
-	                }
-	                obj[name] = name;
-	            }
-
-	            modes[pName] = pName;
-
-	            elem[modeId] = modes;
-
-	            obj.index = true;
-	            obj.hide = true;
-
-	            var modeUl = app.dom.createList(modes, modeId, modeAllow).ul;
-	            modeUl.setAttribute('class','playerMode');
-	            modeUl.style.fontSize = fontSize + 'px';
-	            modeUl.style.left = size - (fontSize / 2) + 'px';
-
-	            var coUl = app.dom.createList(obj, coId, coList).ul;
-	            coUl.setAttribute('class','coList');
-
-	            var users = app.players.all()[ind];
-
-	            if(users && users.mode) pName = users.mode;
-
-	            var modeList = app.dom.getImmediateChildrenByTagName(modeUl, 'li');
-	            var list = app.dom.getImmediateChildrenByTagName(coUl, 'li');
-
-	            if(users && users.co){
-	                var co = app.dom.show(app.dom.findElementByTag('class', list, users.co), list);
-	            }else{
-	                var co = app.dom.show(app.dom.findElementByTag(coId + 'Index', list, p), list);
-	            }
-
-	            var mode = app.dom.show(app.dom.findElementByTag('class', modeList, pName), modeList);
-
-	            if(teamSelect){
-	                teamElements[ playa + 'Team' ] = teamProperties;
-	                var id = playa + 'Team';
-	                var teamsElement = app.dom.createList(teamProperties, id, allowed).ul;
-	                teamsElement.setAttribute('class', 'team');
-	                teamsElement.style.width = size + 'px';
-	                teamsElement.style.top = size * 4 + 'px';
-	                var teamList = app.dom.getImmediateChildrenByTagName(teamsElement, 'li');
-	                var def = users && users.team ? users.team : teamArr[ind];
-	                var team = app.dom.show(app.dom.findElementByTag('class', teamList, def), teamList);
-	            }
-
-	            if(!users && !app.players.empty()){
-	                app.players.setProperty(modeId, mode);
-	                app.players.setProperty(coId, co);
-	                if (teamSelect)
-	                    app.players.setProperty(id, team);
-	            }
-
-	            player.appendChild(modeUl);
-	            player.appendChild(coUl);
-	            app.touch(modeUl).element().scroll();
-	            app.touch(coUl).element().scroll().doubleTap().esc();
-
-	            if (teamSelect){
-	             	player.appendChild(teamsElement);
-	             	app.touch(teamsElement).element().scroll().doubleTap();
-	            }
-	            teams.appendChild(player);
-	        }
-
-	        var up = arrow.up();
-	        var down = arrow.down();
-
-	        if (up) teams.appendChild(up);
-	        if (down) teams.appendChild(down);
-
-	        app.settings.playersDisplayElement = elem;
-	        if(teamSelect) app.settings.teamsDisplayElement = teamElements;
-
-	        if(exists){
-	            element.replaceChild(teams, exists);
-	        }else{
-	            element.appendChild(teams);
-	        }
-	        return teams;
 	    },
 
 		// display damage percentage
@@ -5763,6 +6955,7 @@ module.exports = function () {
 	        var setupScreen = document.createElement('article');
 	        setupScreen.setAttribute('id','setupScreen');
 	        app.touch(setupScreen).swipeScreen();
+	        app.click(setupScreen).swipeScreen();
 
 	        // create title to display on page
 	        var title = document.createElement('h1');
@@ -5811,6 +7004,8 @@ module.exports = function () {
 
 	            app.touch(text).changeMode().doubleTap();
 	            app.touch(background).changeMode().doubleTap();
+	            app.click(text).changeMode().doubleClick();
+	            app.click(background).changeMode().doubleClick();
 
 	            // create li item for each mode
 	            var item = document.createElement('li');
@@ -5842,6 +7037,7 @@ module.exports = function () {
 	                    option.setAttribute('modeOptionIndex', o + 1);
 	                    option.setAttribute('id', mi.options[o] + mi.id);
 	                    app.touch(option).modeOptions().doubleTap();
+	                    app.click(option).modeOptions().doubleClick();
 
 	                    // create id and display name for each option
 	                    option.innerHTML = mi.options[o];
@@ -5866,56 +7062,10 @@ module.exports = function () {
 	        }else{
 	            document.body.insertBefore(setupScreen, app.domInsertLocation);
 	        }
-	    },
-
-		inputForm: function (name, element, placeHolder) {
-
-	        var input = document.createElement('p');
-	        input.setAttribute('class', 'inputForm');
-	        input.setAttribute('id', name + 'Form');
-	        var text = inputField(name);
-
-	        if (placeHolder) text.setAttribute('placeholder', placeHolder);
-
-	        text.style.width = element.offsetWidth;
-	        input.appendChild(text);
-
-	        return input;
-	    },
-
-	    login: function () {
-
-	        // create login screen
-	        var loginScreen = document.createElement('article');
-	        loginScreen.setAttribute('id', 'login');
-
-	        // login form
-	        loginForm = document.createElement('section');
-	        loginForm.setAttribute('id', 'loginForm');
-	        var form = this.inputForm('loginText', loginForm,'Guest name input.');
-	        loginForm.appendChild(form);
-
-	        // create button for fb login
-	        var fbButton = document.createElement('button');
-	        fbButton.setAttribute('scope', 'public_profile, email');
-	        fbButton.setAttribute('onClick', 'app.menu.login();');
-	        fbButton.setAttribute('onLogin', 'app.display.checkLoginState();');
-	        fbButton.setAttribute('id', 'fbButton');
-
-	        // create a holder for the login status
-	        var fbStatus = document.createElement('div');
-	        fbStatus.setAttribute('id', 'status');
-
-	        loginForm.appendChild(fbButton);
-
-	        loginScreen.appendChild(loginForm);
-	        loginScreen.appendChild(fbStatus);
-
-	        return loginScreen;
 	    }
 	};
 }();
-},{"../game/game.js":18,"../menu/menu.js":22,"../settings/app.js":46,"../tools/dom.js":53,"../tools/touch.js":61}],41:[function(require,module,exports){
+},{"../game/game.js":25,"../objects/arrows.js":54,"../objects/footer.js":61,"../objects/input.js":63,"../settings/app.js":78,"../tools/click.js":83,"../tools/display.js":85,"../tools/dom.js":86,"../tools/touch.js":95}],73:[function(require,module,exports){
 module.exports = function() {
 
 	var position, action, target, setElement, damage, active, newTarget = true, index = 0, 
@@ -5986,7 +7136,13 @@ module.exports = function() {
 	    }
 	};
 }();
-},{}],42:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
+/* ---------------------------------------------------------------------- *\
+    
+    Terrain.js holds the terrain object, defining specific map terrain
+
+\* ---------------------------------------------------------------------- */
+
 app = require('../settings/app.js');
 app.properties = require('../definitions/properties.js');
 Position = require('../objects/position.js');
@@ -5994,11 +7150,12 @@ Validator = require('../tools/validator.js');
 
 Terrain = function (type, position) {
 
-	var error, properties = new app.properties(),
-    validate = new Validator('terrain'), property = properties[type];
+	var error, properties = new app.properties();
+    //validate = new Validator('terrain'), 
+    var property = properties[type];
     
-    if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
-		throw error;
+  //   if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
+		// throw error;
 
     this.n = property.name();
 	this.t = property.type();
@@ -6021,7 +7178,7 @@ Terrain.prototype.on = function (object) {
 
 module.exports = Terrain;
 
-},{"../definitions/properties.js":9,"../objects/position.js":37,"../settings/app.js":46,"../tools/validator.js":63}],43:[function(require,module,exports){
+},{"../definitions/properties.js":11,"../objects/position.js":69,"../settings/app.js":78,"../tools/validator.js":97}],75:[function(require,module,exports){
 module.exports = function () {
 
 	var element = require('../objects/mapElement.js'),
@@ -6054,11 +7211,9 @@ module.exports = function () {
 		new element('base', 4, 9, 1),
 		new element('base', 16, 9, 2)
 	];
-
 	return new map(null, 'test map #1', 2, {x:20, y:20}, terrain, buildings, []);
 }
-
-},{"../objects/map.js":33,"../objects/mapElement.js":34}],44:[function(require,module,exports){
+},{"../objects/map.js":64,"../objects/mapElement.js":65}],76:[function(require,module,exports){
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.undo = require('../tools/undo.js');
@@ -6075,7 +7230,7 @@ Building = require('../objects/building.js');
 
 Defaults = function (properties) {
     this.properties = {
-        ammo: properties.ammo,
+        ammo:properties.ammo,
         fuel:properties.fuel,
         movement:properties.movement,
         vision:properties.vision,
@@ -6434,7 +7589,7 @@ Unit.prototype.capture = function (building) {
             building.changeOwner(player);
             building.restore();
 
-        } else player.defeat(building.player(), player);
+        } else player.defeat(building.player(), true);
 
         this.deselect();
         this.captured = true;
@@ -6539,6 +7694,7 @@ Unit.prototype.move = function (position, moved) {
     this.refresh();
 };
 
+Unit.prototype.properties = function () {return this._current;};
 Unit.prototype.action = function () { return this._current.action; };
 Unit.prototype.setAction = function (action) { this._current.action = action; };
 Unit.prototype.actions = function (position) {
@@ -6583,7 +7739,7 @@ Unit.prototype.evaluate = function (position) {
             this.deselect();
 
         } else if ((actions = this.actions(position))
-        && (type = app.display.select('actionSelectionIndex', 'actions', app.effect.highlightListItem, 'ul'))){
+        && (type = app.display.verticle().select('actionSelectionIndex', 'actions', app.effect.highlightListItem, 'ul'))){
 
             if ((unload = (action = type.action) === 'drop') || action === 'attack') {
                 if (unload) this.unloading = type.id;
@@ -6684,7 +7840,7 @@ Unit.prototype.occupies = function () {
 };
 
 module.exports = Unit;
-},{"../controller/map.js":3,"../controller/players.js":5,"../game/animate.js":13,"../game/effects.js":17,"../game/game.js":18,"../objects/building.js":28,"../objects/position.js":37,"../objects/user.js":45,"../settings/app.js":46,"../settings/game.js":48,"../tools/undo.js":62,"../tools/validator.js":63}],45:[function(require,module,exports){
+},{"../controller/map.js":4,"../controller/players.js":7,"../game/animate.js":20,"../game/effects.js":24,"../game/game.js":25,"../objects/building.js":56,"../objects/position.js":69,"../objects/user.js":77,"../settings/app.js":78,"../settings/game.js":80,"../tools/undo.js":96,"../tools/validator.js":97}],77:[function(require,module,exports){
 Score = require('../definitions/score.js');
 
 module.exports = function (info) {
@@ -6704,10 +7860,10 @@ module.exports = function (info) {
 	this.raw = function () { return info };
 	this.score = new Score();
 };
-},{"../definitions/score.js":10}],46:[function(require,module,exports){
+},{"../definitions/score.js":12}],78:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\
     
-    app is a container and holds variables for all elements of the application 
+    App.js is a container and holds variables for all elements of the application 
 
 \* ---------------------------------------------------------------------------------------------------------*/
 
@@ -6759,31 +7915,17 @@ module.exports = {
         return this;
     }
 };
-},{"../settings/app.js":46}],47:[function(require,module,exports){
-module.exports = {
-	
-    // amount of income per building per turn, 1000 - 9500 incrimenting by 500, default is 1000
-    funds: 1000,
-
-    // toggle fog
-    fog:'off',
-
-    // toggle weather setting
-    weather:'random',
-
-    // end of game on number of turns completed 1 - 99, 0 is off
-    turn:'off',
-
-    // end game on cartain number of buildings captured 1 - 52,  0 is off
-    capt:'off',
-
-    //  toggle co powers active.. default on
-    power: 'on',
-
-    // toggle attack animations.. default off
-    visuals: 'off',
+},{"../settings/app.js":78}],79:[function(require,module,exports){
+module.exports = function () {
+    this.funds = 1000;
+    this.fog = 'off';
+    this.weather = 'random';
+    this.turn = 'off';
+    this.capt = 'off';
+    this.power = 'on';
+    this.visuals = 'off';
 };
-},{}],48:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     settings consolidates all the customizable options and rules for the game into
@@ -6794,20 +7936,6 @@ module.exports = {
 app = require('../settings/app.js');
 
 app.settings = {
-    // messages to display in the bottom scroll bar as items are hovered over and people join games, etc..
-    scrollMessages:{
-        logout:'select to log out of the game',
-        game:'Create or continue a saved game',
-        newgame:'Set up a new game',
-        continuegame:'Resume a saved game',
-        join:'Join a new or saved game',
-        newjoin:'Find and join a new game',
-        continuejoin:'Re-Join a saved game started at an earlier time',
-        COdesign:'Customize the look of your CO',
-        mapdesign:'Create your own custom maps',
-        design:'Design maps or edit CO appearance',
-        store:'Purchase maps, CO\'s, and other game goods' 
-    },
 
     // speed at which color swell.. fading in and out, will cycle (lower is faster)
     colorSwellIncriment:1.5,
@@ -6877,10 +8005,6 @@ app.settings = {
     selectedModeHeight: 75,
 
     selectModeMenu:[{
-            id:'logout',
-            display:'Logout',
-            type:'exit',
-        },{
             id:'game',
             display:'Game',
             type:'setup',
@@ -6901,7 +8025,12 @@ app.settings = {
             id:'store',
             display:'Store',
             type:'store',
-    }],
+        },{
+            id:'logout',
+            display:'Logout',
+            type:'exit',
+        }
+    ],
 
     categories:{
         two:{
@@ -6942,7 +8071,7 @@ app.settings = {
         boat: ['water', 'building']
     },
 
-    options: {
+    optionsMenu: {
         unit: {
             name: 'Unit'
         },
@@ -6960,27 +8089,8 @@ app.settings = {
         }
     },
 
-    buildingDisplayElement: {
-        city:{
-            numberOf:0,
-            type:'city'
-        },
-        base:{
-            numberOf:0,
-            type:'base'
-        },
-        airport:{
-            numberOf:0,
-            type:'airport'
-        },
-        seaport:{
-            numberOf:0,
-            type:'seaport'
-        },
-    },
-
     playersDisplayElement: {
-
+        
     },
 
     settingsDisplayElement: {
@@ -7043,9 +8153,6 @@ app.settings = {
     // spacing / positioning of mode menu selection elements
     modeMenuSpacing:20,
 
-    // displayable attributes for the building count element on map/game selection
-    buildingDisplay:['numberOf', 'canvas'],
-
     // which attributes of objects ( unit, buildings etc ) will be displayed in hud
     hoverInfo: ['ammo', 'showHealth', 'health', 'name', 'fuel', 'defense', 'canvas'],
 
@@ -7055,11 +8162,8 @@ app.settings = {
     // unit info attributes for display
     unitInfoDisplay: ['movement', 'vision', 'fuel', 'weapon1', 'weapon2', 'property', 'value'],
 
-    // which attributes of units will be displayed on unit selection/purchase/building hud
-    unitSelectionDisplay: ['name', 'cost'],
-
     // options attributes for displ
-    optionsDisplay: ['options', 'unit', 'intel', 'save', 'end', 'name'],
+    optionsMenuDisplay: ['options', 'unit', 'intel', 'save', 'end', 'name'],
 
     // map elements that cannot be selected
     notSelectable: ['terrain', 'hq', 'city'],
@@ -7080,7 +8184,7 @@ app.settings = {
 };
 
 module.exports = app.settings;
-},{"../settings/app.js":46}],49:[function(require,module,exports){
+},{"../settings/app.js":78}],81:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
     
     takes a string as an optional argument, this string is used as the name of a property 
@@ -7095,6 +8199,8 @@ Heap = function (property) {
     this.property = property;
 
 };
+// make a max heap instead of a min heap;
+Heap.prototype.setToMax = function () {this.max = true; return this;};
 
 // swaps the parent index with the child, returns child's new index (parent index)
 // subtract one from each input to compensate for the array starting at 0 rather then 1
@@ -7103,22 +8209,24 @@ Heap.prototype.swap = function (index, parentIndex) {
     return parentIndex;
 };
 
-    // get the value at the input index, compensate for whether there is a property being accessed or not
+// get the value at the input index, compensate for whether there is a property being accessed or not
 Heap.prototype.value = function (index) { return this.property ? this.heap[index - 1][this.property] : this.heap[index - 1];};
 
-    // calculate the parent index
+// calculate the parent index
 Heap.prototype.parent = function (index) {return Math.floor(index/2)};
 
-    // calculate the indexes of the left and right
+// calculate the indexes of the left and right
 Heap.prototype.left = function (i) {return i * 2;};
 Heap.prototype.right = function (i) {return this.left(i) + 1;};
 
-    // compare the values at the two supplied indexes, return the result of whether input l is greater then input r
+// compare the values at the two supplied indexes, return the result of whether input l is greater then input r
 Heap.prototype.lt = function(l,r) {return this.value(l) < this.value(r);};
+Heap.prototype.gt = function(l,r) {return this.value(l) > this.value(r);};
+Heap.prototype.equality = function (l,r) {return this.max ? this.gt(l,r) : this.lt(l,r);};
 
-    // if we are at the start of the array or the current nodes value is greater then its parent then return the current 
-    // index (compensate for 0), otherwise swap the parent and child then repeat from the childs new position
-Heap.prototype.bubble = function (index) {return index < 2 || this.lt(this.parent(index), index) ? index - 1 : this.bubble(this.swap(index, this.parent(index)));};
+// if we are at the start of the array or the current nodes value is greater then its parent then return the current 
+// index (compensate for 0), otherwise swap the parent and child then repeat from the childs new position
+Heap.prototype.bubble = function (index) {return index < 2 || this.equality(this.parent(index), index) ? index - 1 : this.bubble(this.swap(index, this.parent(index)));};
 
 Heap.prototype.sort = function (index) {
 
@@ -7135,7 +8243,7 @@ Heap.prototype.sort = function (index) {
 
     // if the right node is in range and less then the left node then swap 
     // the child with the right node, otherwise swap with the left
-    return this.sort(this.swap(index, length > r && this.lt(r,l) ? r : l ));
+    return this.sort(this.swap(index, length > r && this.equality(r,l) ? r : l ));
 };
 
 // add a value to the heap
@@ -7154,7 +8262,7 @@ Heap.prototype.min = function () {return this.heap.slice(0,1)[0];},
 Heap.prototype.size = function () {return this.heap.length;}
 
 module.exports = Heap;
-},{}],50:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
 
     handle user to user chat
@@ -7166,30 +8274,27 @@ app.user = require('../objects/user.js');
 
 module.exports = {
     // add message for display, input is message object containing a user name and id, or just a message
-    display: function (mo) {
+    post: function (mo) {
 
         // construct message with user name or if there is no user name just use the message
         var message = mo.user ? mo.user + ': ' + mo.message : mo.message;
 
-        // element that message is being appended to
-        var chat = document.getElementById('chat');
-
         // if the message is a string then append it to the chat element
-        if(chat && typeof (message) === 'string') {
+        if(this.chat && typeof (message) === 'string') {
             var chatMessage = document.createElement('li'); // create a list element to contain the message
             chatMessage.setAttribute('class', 'message'); // set attribute for styling
             chatMessage.innerHTML = message; // set text to message
-            chat.appendChild(chatMessage); // append the li element to the chat element
+            this.chat.appendChild(chatMessage); // append the li element to the chat element
             return message; // return the appended message
         }
         return false;
     },
 
     // send message, input is an object/element containing textual user input accessed by ".value"
-    message: function (element) {
+    send: function (element) {
 
         var player = app.user.player();
-        var text = element.value; // user text input
+        var text = this.input(); // user text input
         var name = player.name(); // get user name of user sending message
 
         if (name && text){ // make sure there is user input and a user name
@@ -7199,9 +8304,219 @@ module.exports = {
             return message; // return the input message
         }
         return false;
+    },
+
+    input: function () { return this.chatInput.value; },
+    display: function () {
+        var bb = 5;
+        this.chatScreen = document.getElementById('descriptionOrChatScreen');
+        this.chatScreen.style.height = this.chatScreen.offsetHeight * 1.8 + 'px';
+        this.chatBox = document.getElementById('descriptionOrChat');
+        this.chat = document.getElementById('chat');
+        this.chatBox.style.height = '77%';
+        this.chatBox.style.borderBottomWidth = bb + 'px';
+        this.chatInput = document.getElementById('chatInput');
+        document.getElementById('descriptions').innerHTML = '';
+        this.chatForm = document.getElementById('chatForm');
+        this.chatForm.style.display = 'block';
+        this.chatForm.style.height = '15%';
+        this.chatForm.style.borderBottomWidth = bb + 'px';
+        this.chat.style.display = 'block';
+        this.chatInput.focus();
+    },
+
+    remove: function () {
+        this.chatScreen.style.height = '20%';
+        var doc = this.chatBox;
+        doc.style.height = '83%';
+        doc.style.borderBottomWidth = '12px';
+        this.chat.style.display = 'none';
+        var form = this.chatForm;
+        form.style.height = '0px';
+        form.style.display = 'none';
     }
 };
-},{"../objects/user.js":45,"../settings/app.js":46}],51:[function(require,module,exports){
+},{"../objects/user.js":77,"../settings/app.js":78}],83:[function(require,module,exports){
+app = require('../settings/app.js');
+app.key = require('../tools/keyboard.js');
+app.scroll = require('../menu/scroll.js');
+app.user = require('../objects/user.js');
+app.display = require('../tools/display.js');
+app.menu = require('../controller/menu.js');
+
+module.exports = function (element) {
+
+	var timer = new Date();
+	var x, y, down = false;
+
+	var doubleClick = function () {
+		var now = new Date();
+		var tappedTwice = now - timer < 300 ? true : false;
+		timer = now;
+		return tappedTwice;
+	};
+
+	var input = function (input) { return input ? input : element; };
+
+	return {
+		scroll: function (elem) {
+
+			var e = input(elem);
+
+			e.addEventListener('mousedown', function () { down = true; });
+		    e.addEventListener('mouseup', function(){ down = false; });
+		    e.addEventListener('mouseleave', function (element) {
+		    	if (down) {
+			        //  get the position of the mouse
+			        var position = parseFloat(element.clientY) - 70;
+
+			        // if the position is above the top, move the element up, 
+			        // otherwise move it down if it is below the bottom
+			        if (position < e.offsetTop) app.scroll.wheel(1, new Date());
+			        else app.scroll.wheel(-1, new Date());
+			        //app.game.update();
+			        down = false;
+		    	}
+		    });
+
+		    return this;
+		},
+		swipe: function (elem) {
+
+			var e = input(elem);
+
+			// scroll via touch
+			e.addEventListener('mousedown', function () { down = true; });
+		    e.addEventListener('mouseup', function(element){
+
+		    	if (down) {
+
+			    	var width = e.offsetWidth / 3;
+
+			    	var offset = width / 3;
+
+			        // get the left boundry of the element
+			        var left = e.offsetLeft + offset + 10;
+
+			        // get the bottom boundry
+			        var right = e.offsetLeft + width - offset;
+
+			        //  get the position of the element
+			        var position = parseFloat(element.clientX) - 200;
+
+			        // if the position is above the top, move the element up, 
+			        // otherwise move it down if it is below the bottom
+			        if (position < left){
+			            app.scroll.swipe(-1, new Date());
+			        }else if (position > right){
+			            app.scroll.swipe(1, new Date());
+			        }
+			        down = false;
+			        //app.game.update();
+		    	}
+		    });
+		    return this;
+		},
+		swipeScreen: function (elem) {
+
+			var e = input(elem), start;
+
+			// get the start location of the finger press
+			e.addEventListener('mousedown', function(element){
+				start = element.clientX;
+				down = true;
+			});
+
+			// scroll via touch
+		    e.addEventListener('mouseup', function(element){
+
+		    	if (down) {
+	 		        //  get the position of the end of element
+			        var end = element.clientX;
+
+			        // make the length needed to swipe the width of the page divided by three and a half
+			        var swipeLength = e.offsetWidth / 3.5;
+
+			        // go back if swiping right
+			        if (start < end && end - start > swipeLength){
+			        	app.key.press(app.key.esc());
+
+			        // go forward if swiping left
+			        } else if (start > end && start - end > swipeLength) {
+			        	app.key.press(app.key.enter());
+			        }
+			    }
+			    start = undefined;
+			    down = false;
+		    });
+
+		    return this;
+		},
+		// may need to change to eliminate less useful select method
+		mapOrGame: function (elem){
+
+			var e = input(elem);
+
+			e.addEventListener('click', function(){
+				var label = 'SelectionIndex';
+				var clicked = e.id.indexOf(label) > -1 ? e: e.parentNode;
+				var type = clicked.id.indexOf('map') ? 'map' : 'game';
+	        	var index = clicked.attributes[type + label].value;
+	        	app.display.setIndex(index);
+	        	//app.game.update();
+	        });
+
+			return this;
+		},
+		modeOptions: function (elem) {
+
+			var e = input(elem);
+
+			e.addEventListener('click', function(){
+
+	        	// get the index
+	        	var index = e.attributes.modeOptionIndex.value;
+
+	        	// if the mode options are already under selection, then change the index
+	        	if(app.modes.active()){
+					app.display.setIndex(index);
+					//app.game.update();
+
+				// otherwise simulate selecting them with the key right push
+				// and set the default index to the selected option
+	        	}else{
+	        		app.display.setOptionIndex(index);
+		        	app.key.press(app.key.right());
+	        	}
+	        });
+	        return this;
+		},
+		changeMode: function (elem) {
+			input (elem).addEventListener('click', function () {if (app.modes.active()) app.key.press(app.key.left());});
+			return this;
+		},
+		doubleClick: function (elem) {
+			input (elem).addEventListener('click', function() {if (doubleClick()) return app.key.press(app.key.enter());});
+			return this;
+		},
+		element: function (elem) {
+			var e = input(elem);
+
+			e.addEventListener('click', function (){
+				var name = e.parentNode.id == 'settings' ? e.id : e.parentNode.id;
+				var setting = name.replace('Settings','').replace('Container','');
+				app.display.setIndex(setting);
+				//app.game.update();
+			});
+			return this;
+		},
+		esc: function (elem) {
+			input(elem).addEventListener('click', function() {if(app.user.player().ready()) return app.key.press(app.key.esc());});
+			return this;
+		}
+	};
+};
+},{"../controller/menu.js":6,"../menu/scroll.js":48,"../objects/user.js":77,"../settings/app.js":78,"../tools/display.js":85,"../tools/keyboard.js":90}],84:[function(require,module,exports){
 Counter = function (limit) {
 	this.limit = limit;
 	this.frames = 0;
@@ -7212,7 +8527,7 @@ Counter.prototype.reached = function (limit) { return this.frames > (limit ? lim
 Counter.prototype.reset = function () { if (this.reached()) this.frames = 0; };
 
 module.exports = Counter;
-},{}],52:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
    
    handles all the display screens and the users interaction with them
@@ -7220,87 +8535,35 @@ module.exports = Counter;
 \* ------------------------------------------------------------------------------------------------------*/
 
 app = require('../settings/app.js');
-var scrollText = require('../tools/scrollText.js');
+var scrollText = require('../effects/scrollText.js');
 socket = require('../tools/sockets.js');
 app.game = require('../game/game.js');
-app.options = require('../menu/options.js');
 app.settings = require('../settings/game.js');
 app.animate = require('../game/animate.js');
 app.effect = require('../game/effects.js');
 app.scroll = require('../menu/scroll.js');
 app.buildings = require('../definitions/buildings.js');
-app.modes = require('../menu/modes.js');
+app.menu = require('../controller/menu.js');
 app.dom = require('../tools/dom.js');
 app.undo = require('../tools/undo.js');
 app.calculate = require('../game/calculate.js');
 app.draw = require('../game/draw.js');
 app.co = require('../objects/co.js');
-app.menu = require('../menu/menu.js');
 app.screens = require('../objects/screens.js');
 app.key = require('../tools/keyboard.js');
 app.players = require('../controller/players.js');
 app.cursor = require('../controller/cursor.js');
-
+app.click = require('../tools/click.js');
+app.touch = require('../tools/touch.js');
+app.type = require('../effects/typing.js');
 
 module.exports = function () {
 
-    var sideX, sideY, selectionIndex = 1, previousList, touched, previousListLength, 
-    selectedElement, hide, len, prevX, prevSelection, prev = {}, temp = {}, selectable = true, 
-    prevIndex = undefined, unitSelectionActive = false, loop = false, 
-    modeOptionIndex = false, modeChildElement, parentIndex, prevElement, selectedElementId;
+    var selectionIndex = 0, previousList, touched, previousListLength, parentIndex, prevElement,
+    selectedElement, hide, len, listLength, prevSelection, prev = {}, temp = {}, selectable = true, 
+    prevIndex = undefined, loop = false, modeOptionIndex = false, modeChildElement;
 
-    var catElements = {
-        section: 'categorySelectScreen',
-        div:'selectCategoryScreen'
-    };
-
-    var buildingElements = {
-        section:'buildingsDisplay',
-        div:'numberOfBuildings'
-    };
-
-    var chatOrDesc = {
-        section:'descriptionOrChatScreen',
-        div:'descriptionOrChat',
-    };
-
-    var unitInfo = function (building, unit, tag) {
-
-        var elements = {
-            section: 'unitInfoScreen',
-            div: 'unitInfo'
-        };
-
-        var props = app.buildings[building][unit].properties;
-        var allowed = app.settings.unitInfoDisplay;
-        var properties = {};
-        var propName = Object.keys(props);
-
-        for (var n = 0; n < propName.length; n += 1)
-            if (allowed.hasValue(propName[n]))
-                properties[propName[n]] = {
-                    property: propName[n].uc_first(),
-                    value: props[propName[n]]
-                };
-
-        displayInfo(properties, allowed, elements, false, true);
-    };
-
-    var selectionInterface = function (building) {
-
-        // get the selectable unit types for the selected building
-        unitSelectionActive = true;
-        var units = app.buildings[building];
-
-        var elements = {
-            section: 'buildUnitScreen',
-            div: 'selectUnitScreen'
-        };
-
-        displayInfo(units, app.settings.unitSelectionDisplay, elements, 'unitSelectionIndex', true);
-    };
-
-    var displayInfo = function (properties, allowedProperties, elements, tag, insert) {
+    var displayInfo = function (properties, allowedProperties, elements, callback) {
         
         var inner = elements.div;
 
@@ -7323,409 +8586,78 @@ module.exports = function () {
             var props = properties[key];
 
             // create list for each unit with its cost
-            var list = app.dom.createList(props, key, allowedProperties, tag);
-
-            if(props.id || props.id === 0) list.ul.setAttribute('id', props.id);
-
-            if (tag) list.ul.setAttribute(tag, u + 1);
-
-            if(inner) list.ul.setAttribute('class', inner + 'Item');  
-
-            if(tag === 'mapSelectionIndex' || tag === 'gameSelectionIndex') {
-                app.touch(list.ul.childNodes[0]).mapOrGame().doubleTap();
-            };
+            var list = app.dom.createList(props, key, allowedProperties);
+            if (props.id || props.id === 0) list.setAttribute('id', props.id);
+            if (inner) list.setAttribute('class', inner + 'Item');
+            if (callback) callback(list, props);
 
             // add list to the select screen
-            innerScreen.appendChild(list.ul);
+            innerScreen.appendChild(list);
         }
 
         // add select screen to build screen container
-        display.appendChild(innerScreen);
+        if (exists) exists.parentNode.replaceChild(innerScreen, exists);
+        else document.body.insertBefore(display, app.domInsertLocation);
 
-        if(insert){
-            if (exists) {
-                exists.parentNode.replaceChild(innerScreen, exists);
-            } else {
-                // insert build screen into dom
-                document.body.insertBefore(display, app.domInsertLocation);
-            }
-        }
+        display.appendChild(innerScreen);
         return display;
     };
 
-    var select = function (tag, id, display, elementType, max, infiniteScroll) {
+    var coSelection = function (properties, prevList, prevSelection) {
 
-        var index, horizon, modeOptionsActive = app.modes.active();
-        var limit = infiniteScroll && !modeOptionsActive ? 'infinite' : 'finite';
+        // initialize a list to load properties the current user can edit
+        var list = [];
 
-        // if the index is not the same as it was prior, then highlight the new index ( new element )
-        if (!prevIndex || prevIndex !== selectionIndex || app.key.pressed(app.key.left()) || app.key.pressed(app.key.right()) || loop) {
+        // detect which player so that they can only edit their respective charector settings
+        var number = app.user.number();
 
-            // if there is a sub menu activated then select from the sub menu element instead of its parent
-            if(modeChildElement){
+        // get the keys to the properties that can be edited by the user (co selection, teams etc)
+        var keys = Object.keys(properties);
 
-                var hudElement = modeChildElement.element;
+        // number of properties
+        var keysLength = keys.length;
 
-                // keep track of selected parent element
-                parentIndex = parentIndex || selectionIndex;
+        var getValue = app.dom.getDisplayedValue;
 
-                if(!modeOptionsActive || loop) selectionIndex = modeChildElement.index;
+        // if there are previous items 
+        if (prevSelection !== undefined) 
+            var ind = prevList[prevSelection];
 
-                tag = modeChildElement.tag;
+        for(var k = 0; k < keysLength; k += 1){
 
-            }else if(!modeOptionsActive){
-                
-                if(loop){
-                    selectionIndex = parentIndex;
-                    prevIndex = parentIndex;
-                    loop = false;
-                    parentIndex = undefined;
+            var key = keys[k];
+            var mode = getValue(key);
+            var pNumber = key.getNumber();
+
+            if(key.indexOf('mode') > -1 && number === 1){
+                if(pNumber != 1){
+                    var i = pNumber - 1;
+                    var p = app.user.player();
+                    if(mode === 'Cp'){
+                        var property = 'player'+pNumber+'co';
+                        if(p && !p.cp){
+                            var value = getValue(property);
+                            var cp = aiPlayer(number, p);
+                            socket.emit('boot', {player:p, cp:cp});
+                            app.players.remove(i, cp);
+                            app.players.setProperty(property, value);
+                        }
+                        list.push(property);
+                    }else if(p && p.cp){
+                        socket.emit('boot', {player:false, cp:p});
+                        app.players.remove(i);
+                    }
                 }
-                var hudElement = document.getElementById(id);
-            }
-
-            // get the children
-            var elements = app.dom.getImmediateChildrenByTagName(hudElement, elementType);
-
-            len = elements.length;
-
-            // if there is no max set then set max to the length of he array
-            if (!max) max = len;
-
-            // hide elements to create scrolling effect
-            if (selectionIndex > max) {
-                hide = selectionIndex - max;
-
-                for (var h = 1; h <= hide; h += 1) {
-
-                    // find each element that needs to be hidden and hide it
-                    var hideElement = app.dom.findElementByTag(tag, elements, h);
-                    hideElement.style.display = 'none';
-                }
-            } else if (selectionIndex <= len - max && hide) {
-                // show hidden elements as they are hovered over
-                var showElement = app.dom.findElementByTag(tag, elements, selectionIndex);
-                showElement.style.display = '';
-            }
-
-            selectedElement = app.dom.findElementByTag(tag, elements, selectionIndex);
-
-            // scroll information about the selected element in the footer
-            if(selectedElement) scrollText( 
-                'footerText',
-                app.settings.scrollMessages[selectedElement.getAttribute('id')]
-            );
-
-            // callback that defines how to display the selected element ( functions located in app.effect )
-            if (selectedElement || loop)
-                selectable = display( selectedElement, tag, selectionIndex, prevElement, elements); 
-            
-            // store the last index for future comparison
-            prevIndex = selectionIndex;
-            prevElement = selectedElement;
-        }
-
-        // if the select key has been pressed and an element is available for selection then return its id
-        if (app.key.pressed(app.key.enter()) && selectedElement && selectable) {
-            selectionIndex = 1
-            app.modes.deactivate();
-            parentIndex = undefined;
-            modeChildElement = undefined;
-            prevIndex = undefined;
-            hide = undefined;
-            app.key.undo(app.key.enter());
-            return {
-                action: selectedElement.childNodes[0].innerHTML,
-                id : selectedElement.getAttribute('id')
-            };
-        }else{
-            index = app.scroll.verticle()[limit](selectionIndex, 1, len);
-            if(index) selectionIndex = index;
-        }
-        return false;
-    };
-
-    var complexSelect = function (elements, callback, player) {
-
-        /*
-            complexSelect is for complex selection of items displayed in the dom, it keeps track of 
-            which element is currently being scrolled through, the list item that is currently selected
-            and the last selected list item for each element if it is nolonger being scrolled through.
-            it also broadcasts the descriptions of each selected element, or scrolled through list 
-            items to any element of the name specified in the "text" attribute of the "elements" object
-            the first argument "elements" is an object which contains the names of the elements being 
-            selected in their various positions within the dom. they are as follows:
-                    
-            type: defines what page will be loaded
-            element: name of the element that is parent to the list
-            
-            index: name of the index, comes after the property name i.e. (property + index)
-            attribute: name of the tag being retrieved as a value from the selected element,
-             
-            text: name of the element that holds the chat and description etc, displayed text,
-            properties: the object that defines all that will be scrolled through
-            the second is a callback to handle what to do while scrolling and what elements to effect
-            the third is an optional parameter that allows you to assign a display type to the currently 
-            selected list item that is unhidden for display 
-            (all list items are hidden by default and displayed as selected)
-            it returns an object containing the current;y selected property and its value
-        */
-
-        var properties = elements.properties;
-
-        // create list of property names accessable to the player (object keys)
-        // needed for restricting selection options (only player 2 can edit player 2's settings etc..)
-        if((app.key.pressed() || !temp.list) && player && !app.players.empty()){
-            var co = app.menu.coSelection(properties, previousList, prevSelection);
-            temp.list = co.list;
-            var ind = co.ind;
-        }else if(!temp.list){
-            list = Object.keys(properties);
-        }
-
-        var list = temp.list ? temp.list : list, 
-        listLength = list.length;
-
-        // keep track of what is selected in the list for recall
-        if(previousListLength !== listLength && prevSelection && player) 
-            prevSelection = list.indexOf(ind);
-
-        // get the index of an element if it has been touched
-        touched = list.indexOf(touched);
-        
-        // get the currently selected index, start with 0 if one has not yet been defined
-        var index = touched > -1 ? touched : app.scroll.horizontal().infinite(prevSelection || 0, 0, list.length - 1);
-
-        // get the property name of the currently selected index for use in retrieving elements of the same name
-        var property = list[index];
-
-        // get the element that displays the text: descriptions, chat etc...
-        if(!temp.text) temp.text = document.getElementById(elements.text);
-
-        // if there arent any previous indexes (we have just started) or the last index is not
-        // the same as the current index then manipulate the newly selected element
-        if(prevSelection === undefined || prevSelection !== index || previousListLength !== listLength){
-            
-            previousList = list;
-            previousListLength = listLength;
-
-            // if the description for the current element is text then print it
-            if (property !== undefined && typeof (properties[property].description) === 'string' ){
-                app.effect.typeLetters(temp.text, properties[property].description);
-            }
-            
-            // indicate that we have changed elements
-            var change = true;
-
-            // callback that handles what to do with horizontally scrolled elements
-            var selected = callback(property);
-
-            // get all the list items from the currently selected element
-            temp.items = app.dom.getImmediateChildrenByTagName(selected, 'li');
-
-            // save the currently selected index as a comparison to possibly changed indexes in the future
-            prevSelection = index;
-
-            // if we have visited this element before, get the last selected index for it and display that
-            // rather then the currently selected list item index
-            if (prev[property]) var itemIndex = prev[property].getAttribute(property + elements.index);
-        }
-
-        // if there wasnt a previously selected item index for the current element 
-        if(!itemIndex){
-            
-            // get the length of the array of list items in the currently selected element
-            var len = temp.items.length;
-
-            // then find the position of scroll that we are currently at for the newly selected element
-            // use the length as a boundry marker in the scroll function
-            var itemIndex = app.scroll.verticle().infinite(prev.itemIndex || 1, 1, len);
-        }
-
-        // if there has been a change, or if the previous item index is not the same as the current
-        if(change || itemIndex && prev.itemIndex !== itemIndex){
-
-            // if there has been a change but there is no previously selected list item for the
-            // currently selected element
-            if(change && !prev[property]){
-
-                // get the element listed as the default value for selection
-                var element = app.dom.findElementByTag('default', temp.items, true);
-
-            }else{
-
-                // get the element at the currently selected list items index
-                var element = app.dom.findElementByTag(property + elements.index, temp.items, itemIndex);
-            }
-
-            // hide the previously selected list item for the currently selected element
-            if(prev[property] && !change) prev[property].style.display = 'none';
-
-            // display the currently selected list item
-            element.style.display = elements.display ? elements.display : '';
-
-            // save the currently selected list item for use as the last selected item
-            // in the currently selected element in case we need to move back to it
-            prev[property] = element;
-
-            // save the currently selected index as a comparison to possibly changed indexes in the future
-            prev.itemIndex = Number(itemIndex);
-
-            // get the value of the selected attribute
-            var value = element.getAttribute(elements.attribute);
-
-            // if the description from properties is an object then use the current value as a key 
-            // for that object in order to display a description for each list item, rather then its 
-            // parent element as a whole
-
-            if ( typeof (properties[property].description) === 'object' ){
-                app.effect.typeLetters(temp.text, properties[property].description[value]);
-            }
-
-            // return the selected property and its value
-            return {
-                property:property, 
-                value:value
-            };
-        }
-        touched = undefined;
-        return property;
-    };
-
-    var elementExists = function (id, element, parent){
-        var exists = document.getElementById(id);
-        if(exists){
-            parent.replaceChild(element, exists);
-        }else{
-            parent.appendChild(element);
-        }
-    };
-
-    var selectedMap = function (maps){
-
-        // get setup screen
-        var selector = document.getElementById('setupScreen');
-
-        if(maps && maps.buildings){
-            var map = maps;
-        }else{
-            var id = selectedElementId;
-            var len = maps ? maps.length : 0;
-
-            // get map
-            for(var i = 0; i < len; i += 1){
-                if(maps && maps[i].id == id){
-                    var map = maps[i];
-                    break;
-                }
+                list.push(key);
+            }else if(key.indexOf('Team') > -1 && (number == pNumber || mode === 'Cp' && number == 1) || key.indexOf(number+'co') > -1){
+                list.push(key);
             }
         }
-
-        if(map){
-            // display number of buildings on the map
-            var num = app.calculate.numberOfBuildings(map);
-            var buildings = displayInfo(num, app.settings.buildingDisplay, buildingElements, 'buildings');
-
-            elementExists(buildingElements.section, buildings, selector);
-
-            /*var dimensions = {width:500, height:500};
-            //display small version of map
-            var canvas = createCanvas('Map', 'preview', dimensions);
-            canvas.canvas.style.backgroundColor = 'white';
-            var cid = canvas.canvas.getAttribute('id');
-            // check if elements exist and replace them if they do, append them if they dont
-            elementExists(cid, canvas.canvas);
-            // draw map preview
-            app.draw(canvas.context).mapPreview();*/
-        }
-        // return screen
-        return selector;
-    };
-
-    // create page for selecting map or game to join/create
-    var mapOrGameDisplay = function (elements, items) {
-
-        // get the screen
-        var selector = document.getElementById('setupScreen');
-
-        // get the title and change it to select whatever type we are selecting
-        title = selector.children[0];
-        title.innerHTML = 'Select*'+ elements.type;
-
-        // create elements
-        var item = displayInfo(items, ['name'], elements, 'mapSelectionIndex');
-
-        // display buildings and how many are on each map
-        var buildings = displayInfo(app.settings.buildingDisplayElement, app.settings.buildingDisplay, buildingElements, 'building');
-
-        // display catagories 2p, 3p, 4p, etc...
-        var categories = displayInfo(app.settings.categories, '*', catElements, 'categorySelectionIndex');
-        var cats = categories.children[0].children;
-
-        // handle touch events for swiping through categories
-        app.touch(categories).swipe();
-
-        // hide categories for displaying only one at a time
-        var len = cats.length;
-        for(var c = 0; c < len; c += 1){
-            cats[c].style.display = 'none';
-        }
-
-        // add elements to the screen
-        selector.appendChild(buildings);
-        selector.appendChild(item);
-        selector.appendChild(categories);
-
-        //return the modified screen element
-        return selector;
+        return {list:list, ind:ind};
     };
 
     return {
         info: displayInfo,
-        selectionInterface: selectionInterface,
-        select: select,
-        mapInfo: selectedMap,
-        complexSelect:complexSelect,
-        setup: function (elements, element, back) {
-
-            var chatOrDescription = displayInfo([], [], chatOrDesc, false, true);
-            var textField = chatOrDescription.children[0];
-
-            var chat = document.createElement('ul');
-            var description = document.createElement('h1');
-
-            chat.setAttribute('id','chat');
-            description.setAttribute('id','descriptions');
-
-            textField.appendChild(chat);
-            textField.appendChild(description);
-
-            // get the title and change it to select whatever type we are selecting
-            title = element.children[0];
-            title.innerHTML = elements.type;
-
-            element.appendChild(chatOrDescription);
-
-            var display = app.screens[elements.type](element, textField, back);
-
-            return display;
-        },
-        clear: function () {temp = {}; prev = {};},
-        clearOld: function () {
-            prevSelection = undefined; 
-            previousList = undefined; 
-        },
-        previous: function () {
-            return {
-                selection: prevSelection,
-                list: previousList
-            }
-        },
-        reset: function () {selectionIndex = 1},
-        setIndex: function (index) {
-            selectionIndex = index;
-            touched = index;
-        },
         setOptionIndex: function (index){modeOptionIndex = index;},
         index: function () {return selectionIndex},
         previousIndex: function () {return prevIndex;},
@@ -7733,48 +8665,27 @@ module.exports = function () {
         resetPreviousIndex: function () {prevIndex = undefined;},
         loop: function () {loop=true},
         through: function (){loop=false},
-        menuItemOptions: function ( menu ) {
-
-            var previous = prev.horizon;
-            var horizon = app.scroll.horizontal().finite(previous || 1, 1, 2);
-
-            if(menu) menu.style.opacity = 1;
-
-            // display the menu options
-            if(horizon && previous !== horizon){
-
-                var modeOptionsActive = app.modes.active();
-                index = modeOptionIndex ? modeOptionIndex : 1;
-
-                if(horizon === 1 && modeOptionsActive){
-                    app.modes.deactivate();
-                    modeChildElement = undefined;
-                }else if(horizon === 2 && !modeOptionsActive){
-
-                    app.modes.activate();
-                    modeChildElement = {
-                        element:menu,
-                        tag:'modeOptionIndex',
-                        index:index
-                    }
-                }
-                app.effect.clear();
-                prev.horizon = horizon;
-                modeOptionIndex = false;
-                loop = true;
-            }
+        clear: function () {temp = {}; prev = {};},
+        reset: function () {selectionIndex = 0},
+        setIndex: function (index) {
+            selectionIndex = index;
+            touched = index;
         },
-        mapOrGame:function(type, items) { return mapOrGameDisplay(type, items); },
         mapOrGameSelection: function (id, elements) {
             var replace = document.getElementById(id);
             replace.parentNode.replaceChild(elements, replace);
-        },  
-        checkLoginState: function () {
-            FB.getLoginStatus(function(response) {
-                statusChangeCallback(response);
-            });
         },
-
+        clearOld: function () {
+            prevSelection = undefined; 
+            previousList = undefined; 
+            temp.text = undefined;
+        },
+        previous: function () {
+            return {
+                selection: prevSelection,
+                list: previousList
+            }
+        },
         actions: function (options) {
 
             if (!options) return false;
@@ -7791,51 +8702,264 @@ module.exports = function () {
             
             app.coStatus.hide();
 
-            unitSelectionActive = true;
+            return displayInfo(actionsObj, app.settings.actionsDisplay, {section: 'actionHud',div: 'actions'});
+        },
+        menuItemOptions: function (menu) {
 
-            return displayInfo(
-                actionsObj, 
-                app.settings.actionsDisplay, 
-                {
-                    section: 'actionHud',
-                    div: 'actions'
-                }, 
-                'actionSelectionIndex', 
-                true
-            );
+            var previous = prev.horizon;
+            var horizon = app.scroll.horizontal().finite(previous || 0, 0, 1);
+
+            if (menu) menu.style.opacity = 1;
+
+            // display the menu options
+            if (horizon !== undefined && previous !== horizon) {
+
+                var moa = app.menu.active();
+                index = modeOptionIndex ? modeOptionIndex : 0;
+
+                if (horizon === 0 && moa) {
+
+                    app.menu.deactivate();
+                    modeChildElement = undefined;
+
+                } else if(horizon === 1 && !moa) {
+
+                    app.menu.activate();
+                    modeChildElement = {
+                        element:menu,
+                        tag:'modeOptionIndex',
+                        index: index
+                    }
+                }
+                app.effect.clear();
+                prev.horizon = horizon;
+                modeOptionIndex = false;
+                loop = true;
+            }
+        },
+        complexSelect: function (elements, callback, player) {
+
+            /*
+                complexSelect is for complex selection of items displayed in the dom, it keeps track of 
+                which element is currently being scrolled through, the list item that is currently selected
+                and the last selected list item for each element if it is nolonger being scrolled through.
+                it also broadcasts the descriptions of each selected element, or scrolled through list 
+                items to any element of the name specified in the "text" attribute of the "elements" object
+                the first argument "elements" is an object which contains the names of the elements being 
+                selected in their various positions within the dom. they are as follows:
+                        
+                type: defines what page will be loaded
+                element: name of the element that is parent to the list
+                
+                index: name of the index, comes after the property name i.e. (property + index)
+                attribute: name of the tag being retrieved as a value from the selected element,
+                 
+                text: name of the element that holds the chat and description etc, displayed text,
+                properties: the object that defines all that will be scrolled through
+                the second is a callback to handle what to do while scrolling and what elements to effect
+                the third is an optional parameter that allows you to assign a display type to the currently 
+                selected list item that is unhidden for display 
+                (all list items are hidden by default and displayed as selected)
+                it returns an object containing the current;y selected property and its value
+            */
+
+            var properties = elements.properties;
+
+            // create list of property names accessable to the player (object keys)
+            // needed for restricting selection options (only player 2 can edit player 2's settings etc..)
+            if ((app.key.pressed() || !temp.list) && player && !app.players.empty()) {
+                var co = coSelection(properties, previousList, prevSelection);
+                temp.list = co.list;
+                var ind = co.ind;
+            } else if (!temp.list) {
+                list = Object.keys(properties);
+            }
+
+            var list = temp.list ? temp.list : list, 
+            listLength = list.length;
+
+            // keep track of what is selected in the list for recall
+            if(previousListLength !== listLength && prevSelection && player) 
+                prevSelection = list.indexOf(ind);
+
+            // get the index of an element if it has been touched
+            touched = list.indexOf(touched);
+            
+            // get the currently selected index, start with 0 if one has not yet been defined
+            var index = touched > -1 ? touched : app.scroll.horizontal().infinite(prevSelection || 0, 0, list.length - 1);
+
+            // get the property name of the currently selected index for use in retrieving elements of the same name
+            var property = list[index];
+
+            // get the element that displays the text: descriptions, chat etc...
+            if(!temp.text) temp.text = document.getElementById(elements.text);
+
+            // if there arent any previous indexes (we have just started) or the last index is not
+            // the same as the current index then manipulate the newly selected element
+            if(prevSelection === undefined || prevSelection !== index || previousListLength !== listLength){
+                
+                previousList = list;
+                previousListLength = listLength;
+
+                // if the description for the current element is text then print it
+                if (property !== undefined && typeof (properties[property].description) === 'string' ) {
+                    app.type.letters(temp.text, properties[property].description);
+                }
+                
+                // indicate that we have changed elements
+                var change = true;
+
+                // callback that handles what to do with horizontally scrolled elements
+                var selected = callback(property);
+
+                // get all the list items from the currently selected element
+                temp.items = app.dom.getImmediateChildrenByTagName(selected, 'li');
+
+                // save the currently selected index as a comparison to possibly changed indexes in the future
+                prevSelection = index;
+
+                // if we have visited this element before, get the last selected index for it and display that
+                // rather then the currently selected list item index
+                if (prev[property]) var itemIndex = prev[property].getAttribute(property + elements.index);
+            }
+
+            // if there wasnt a previously selected item index for the current element 
+            if(!itemIndex){
+                
+                // get the length of the array of list items in the currently selected element
+                var len = temp.items.length;
+
+                // then find the position of scroll that we are currently at for the newly selected element
+                // use the length as a boundry marker in the scroll function
+                var itemIndex = app.scroll.verticle().infinite(prev.itemIndex || 1, 1, len);
+            }
+
+            // if there has been a change, or if the previous item index is not the same as the current
+            if(change || itemIndex && prev.itemIndex !== itemIndex){
+
+                // if there has been a change but there is no previously selected list item for the
+                // currently selected element
+                if(change && !prev[property]){
+
+                    // get the element listed as the default value for selection
+                    var element = app.dom.findElementByTag('default', temp.items, true);
+
+                }else{
+
+                    // get the element at the currently selected list items index
+                    var element = app.dom.findElementByTag(property + elements.index, temp.items, itemIndex);
+                }
+
+                // hide the previously selected list item for the currently selected element
+                if(prev[property] && !change) prev[property].style.display = 'none';
+
+                // display the currently selected list item
+                element.style.display = elements.display ? elements.display : '';
+
+                // save the currently selected list item for use as the last selected item
+                // in the currently selected element in case we need to move back to it
+                prev[property] = element;
+
+                // save the currently selected index as a comparison to possibly changed indexes in the future
+                prev.itemIndex = Number(itemIndex);
+
+                // get the value of the selected attribute
+                var value = element.getAttribute(elements.attribute);
+
+                // if the description from properties is an object then use the current value as a key 
+                // for that object in order to display a description for each list item, rather then its 
+                // parent element as a whole
+                if ( typeof (properties[property].description) === 'object' )
+                    app.type.letters(temp.text, properties[property].description[value]);
+
+                // return the selected property and its value
+                return {
+                    property:property, 
+                    value:value
+                };
+            }
+            touched = undefined;
+            return property;
         },
 
-        gameNameInput:function(){
+        select: function (element, display, max, infiniteScroll, min) {
 
-            var nameInput = document.getElementById('nameForm');
-            var description = document.getElementById('descriptions');
-            var upArrow = document.getElementById('upArrowOutline');
-            var downArrow = document.getElementById('downArrowOutline');
-            var name = document.getElementById('nameInput');
+            var index, min = (min || 0), horizon, modeOptionsActive = app.menu.active();
+            var limit = infiniteScroll && !modeOptionsActive ? 'infinite' : 'finite';
 
-            description.style.paddingTop = '2%';
-            description.style.paddingBottom = '1.5%';
-            description.parentNode.style.overflow = 'hidden';
+            // if the index is not the same as it was prior, then highlight the new index ( new element )
+            if (prevIndex === undefined || prevIndex !== selectionIndex && prevIndex !== false || app.key.pressed(app.key.left()) || app.key.pressed(app.key.right()) || loop) {
 
-            nameInput.style.display = 'block';
-            nameInput.style.height = '30%';
+                // if there is a sub menu activated then select from the sub menu element instead of its parent
+                if (modeChildElement) {
+                    // keep track of selected parent element
+                    parentIndex = parentIndex || selectionIndex;
+                    element = modeChildElement.element;
+                    if(!modeOptionsActive || loop)
+                        selectionIndex = modeChildElement.index;
 
-            name.focus();
+                } else if (!modeOptionsActive && loop){
+                    selectionIndex = parentIndex || selectionIndex;
+                    prevIndex = parentIndex;
+                    loop = false;
+                    parentIndex = undefined;
+                }
 
-            upArrow.style.display = 'none';
-            downArrow.style.display = 'none';
+                if (selectionIndex < min) 
+                    selectionIndex = min;
 
-            return {
-                input: nameInput,
-                description: description,
-                upArrow:upArrow,
-                downArrow:downArrow,
-                name:name
-            };
+                // get the children
+                var children = element.childNodes;
+                if (!children) console.log(element);
+                len = app.dom.length(children, min) - 1;
+
+                // hide elements to create scrolling effect
+                app.effect.hideOffScreenElements(children, selectionIndex, min, max || len);
+
+                // scroll information about the selected element in the footer
+                if ((selectedElement = children[selectionIndex]))
+                    scrollText('footerText', app.settings.scrollMessages[selectedElement.getAttribute('id')]);
+
+                // callback that defines how to display the selected element ( functions located in app.effect )
+                if (selectedElement || loop) selectable = display(selectedElement, selectionIndex, prevElement, children); 
+                
+                // store the last index for future comparison
+                prevIndex = selectionIndex;
+                prevElement = selectedElement;
+            }
+
+            // if the select key has been pressed and an element is available for selection then return its id
+            if (app.key.pressed(app.key.enter()) && selectedElement && selectable) {
+
+                selectionIndex = min;
+                app.menu.deactivate();
+                parentIndex = undefined;
+                modeChildElement = undefined;
+                prevIndex = undefined;
+                hide = undefined;
+                app.key.undo(app.key.enter());
+                return {
+                    action: selectedElement.childNodes[0] ? selectedElement.childNodes[0].innerHTML : selectedElement.innerHTML,
+                    id : selectedElement.getAttribute('id')
+                };
+
+            } else {
+                index = app.scroll[this.direction || 'verticle']()[limit](selectionIndex, min, len);
+                if (index || index === min) selectionIndex = index;
+            }
+            return false;
+        },
+        horizontal: function () {
+            this.direction = 'horizontal';
+            return this;
+        },
+        verticle: function () {
+            this.direction = 'verticle';
+            return this;
         }
     };
 }();
-},{"../controller/cursor.js":2,"../controller/players.js":5,"../definitions/buildings.js":7,"../game/animate.js":13,"../game/calculate.js":15,"../game/draw.js":16,"../game/effects.js":17,"../game/game.js":18,"../menu/menu.js":22,"../menu/modes.js":23,"../menu/options.js":24,"../menu/scroll.js":25,"../objects/co.js":29,"../objects/screens.js":40,"../settings/app.js":46,"../settings/game.js":48,"../tools/dom.js":53,"../tools/keyboard.js":56,"../tools/scrollText.js":59,"../tools/sockets.js":60,"../tools/undo.js":62}],53:[function(require,module,exports){
+},{"../controller/cursor.js":3,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/buildings.js":9,"../effects/scrollText.js":17,"../effects/typing.js":19,"../game/animate.js":20,"../game/calculate.js":22,"../game/draw.js":23,"../game/effects.js":24,"../game/game.js":25,"../menu/scroll.js":48,"../objects/co.js":58,"../objects/screens.js":72,"../settings/app.js":78,"../settings/game.js":80,"../tools/click.js":83,"../tools/dom.js":86,"../tools/keyboard.js":90,"../tools/sockets.js":94,"../tools/touch.js":95,"../tools/undo.js":96}],86:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
     
     list of functions used to assist manipulating the dom
@@ -7855,7 +8979,7 @@ module.exports = {
         // set width, height and id attributes
         canvas.setAttribute('width', dimensions.width);
         canvas.setAttribute('height', dimensions.height);
-        canvas.setAttribute('id', type || on + id + 'Canvas');
+        canvas.setAttribute('id', type || id + 'Canvas');
 
         // return canvas info for further use
         return {
@@ -7866,26 +8990,29 @@ module.exports = {
         };
     },
 
-    createList: function (object, id, displayedAttributes, canvasId) {
-        
-        if (canvasId && displayedAttributes !== '*' && displayedAttributes.hasValue('canvas')) {
-            // create canvas and add it to the object
-            var canvas = this.createCanvas(canvasId, object, {width:128, height:128});
-            object.canvas = canvas.canvas;
-        }
+    createCanvasLi: function (id, object, dimensions) {
+        var li = this.createElement('li', false, 'canvas');
+        li.appendChild(this.createCanvas(id, object, dimensions || {width:128, height:128}).canvas);
+        return li;
+    },
+
+    createElement: function (tag, id, clas) {
+        var element = document.createElement(tag);
+        if (clas) element.setAttribute('class', clas);
+        if (id) element.setAttribute('id', id);
+        return element;
+    },
+
+    createList: function (object, id, displayedAttributes) {
 
         // get a list of property names
-        var properties = Object.keys(object);
+        var properties = Object.keys (object);
+        var ul = this.createElement ('ul', id);
 
-        // create an unordered list and give it the specified id
-        var ul = document.createElement('ul');
-        ul.setAttribute("id", id);
         if (object.id) ul.setAttribute('itemNumber', object.id);
 
-        var ind = 0;
-
         // go through each property and create a list element for it, then add it to the ul;
-        for (var i = 0; i < properties.length; i += 1) {
+        for (var ind = 0, i = 0; i < properties.length; i += 1) {
 
             // properties
             var props = properties[i];
@@ -7897,36 +9024,25 @@ module.exports = {
 
                 var property = typeof object[props] === 'function' ? object[props]() : object[props];
        
-                if(property === undefined)
-                    continue;
+                if (property === undefined) continue;
 
                 // create list element and give it a class defining its value
-                var li = document.createElement('li');
-                li.setAttribute('class', props);
+                var li = this.createElement('li', false, props);
+
                 if (object.index) li.setAttribute( id + 'Index', ind);
-                if(object.hide) li.style.display = 'none';
-                
-                // if the list element is a canvas then append it to the list element
-                if (props === 'canvas') li.appendChild(property);
+                if (object.hide) li.style.display = 'none';
 
-                    // if the list is an object, then create another list with that object and append it to the li element
-                else if( typeof (property) === 'object') {
-                    var list = app.dom.createList(property, props, displayedAttributes);
-                    li.appendChild(list.ul);
+                // if the list is an object, then create another list with that object and append it to the li element
+                if (typeof (property) === 'object') li.appendChild(this.createList(property, props, displayedAttributes));
 
-                    // if the list element is text, add it to the innerHTML of the li element
-                } else li.innerHTML = property;
+                // if the list element is text, add it to the innerHTML of the li element
+                else li.innerHTML = property;
 
                 // append the li to the ul
                 ul.appendChild(li);
             }
         }
-        
-        // return the ul and canvas info
-        return {
-            ul: ul,
-            canvas: canvas
-        };
+        return ul;
     },
 
     getDisplayedValue: function (id) {
@@ -7951,7 +9067,7 @@ module.exports = {
                 element.removeChild(clear);
             }
         }
-        if(keeper) element.appendChild(keeper);
+        if (keeper) element.appendChild(keeper);
     },
 
     // remove children of dom element
@@ -8035,11 +9151,31 @@ module.exports = {
                         return child.getAttribute('class');
         }
         return false;
+    },
+    length: function (children, min) {
+        var i = min;
+        while (children[i]) i += 1;
+        return i + 1;
     }
 };
-},{}],54:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Hsl.js creates an object for interaction with hsl color values
+
+\* --------------------------------------------------------------------------------------*/
+
+Hsl = function (h, s, l) {
+	this.hue = !s ? h.h : h;
+	this.saturation = s || h.s;
+	this.lightness = l || h.l;
+};
+Hsl.prototype.get = function () {return {h:this.hue, s:this.saturation, l:this.lightness};};
+Hsl.prototype.format = function () {return 'hsl('+this.hue+','+this.saturation+'%,'+this.lightness+'%)';};
+module.exports = Hsl;
+},{}],88:[function(require,module,exports){
 module.exports = function () { var id = 0; return { id: function () {id += 1; return id;}};}();
-},{}],55:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------------*\
     
     app.init creates a new canvas instance, taking the name of the target canvas id and optionally the context
@@ -8117,7 +9253,10 @@ module.exports = function (element, context) {
         throw new Error("browser does not support canvas element. canvas support required for animations");
     }
 };
-},{"../game/draw.js":16,"../settings/app.js":46}],56:[function(require,module,exports){
+},{"../game/draw.js":23,"../settings/app.js":78}],90:[function(require,module,exports){
+app.optionsMenu = require('../menu/options/optionsMenu.js');
+app.game = require('../game/game.js');
+
 module.exports = function () {
 
     var pressed = [], up = [],
@@ -8137,20 +9276,33 @@ module.exports = function () {
 
     key = function (k) { return isNaN(k) ? keys[k] : k; },
     undo = function (array) { return array.splice(0, array.length); };
+    press = function (k) { 
+        //app.game.update();
+        return pressing(k) ? true : pressed.push(key(k));
+    },
+    pressing = function (k) { return k ? pressed.indexOf(key(k)) > -1 : pressed.length; };
 
     window.addEventListener("keydown", function (e) {
-        if(!app.game.started() || app.user.turn() || e.keyCode === app.key.esc() || app.options.active())
-            pressed.push(e.keyCode);
+        if(!app.game.started() || app.user.turn() || e.keyCode === app.key.esc() || app.optionsMenu.active() || app.confirm.active())
+            press(e.keyCode);
     }, false);
 
     window.addEventListener("keyup", function (e) { 
         up.push(e.keyCode);
         undo(pressed);
+        //app.game.update();
     }, false);
 
     return {
-        press: function (k) { return this.pressed(k) ? true : pressed.push(key(k));},
-        pressed: function (k) { return k ? pressed.indexOf(key(k)) > -1 : pressed.length; },
+        press:press,
+        pressed:function (k) {
+            if (k && k.isArray()) {
+                var i = k.length;
+                while (i--)
+                    if (pressing([k[i]]))
+                        return true;
+            } else return pressing(k);
+        },
         keyUp: function (k) { return k ? up.indexOf(key(k)) > -1 : up.length; },
         undo: function (k) { return k ? pressed.splice(pressed.indexOf(key(k)), 1) : undo(pressed); },
         undoKeyUp: function (k) {return k ? up.splice(up.indexOf(key(k)), 1) : undo(up); },
@@ -8167,7 +9319,7 @@ module.exports = function () {
         copy: function(){ return keys.copy; }
     }
 }();
-},{}],57:[function(require,module,exports){
+},{"../game/game.js":25,"../menu/options/optionsMenu.js":46}],91:[function(require,module,exports){
 Terrain = require('../objects/terrain.js');
 
 Matrix = function(dimensions){
@@ -8230,7 +9382,7 @@ Matrix.prototype.log = function () {
 };
 
 module.exports = Matrix;
-},{"../objects/terrain.js":42}],58:[function(require,module,exports){
+},{"../objects/terrain.js":74}],92:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\
     
     handle AJAJ calls
@@ -8241,44 +9393,40 @@ module.exports = function () {
 
     var ajaj = function (input, action, callback, url) {
 
+      console.log(url);
+
         if ( !url ) throw new Error('No address specified for back end services');
 
         try{
-          // Opera 8.0+, Firefox, Chrome, Safari
-          var request = new XMLHttpRequest();
-       }catch (e){
-          // Internet Explorer Browsers
-          try{
-             var request = new ActiveXObject("Msxml2.XMLHTTP");
-          }catch (e) {
-             try{
-                var request = new ActiveXObject("Microsoft.XMLHTTP");
-             }catch (e){
-                // Something went wrong
-                alert("Your browser broke!");
-                return false;
-             }
-          }
-       }
-
-       request.onreadystatechange = function(){
-            if (request.readyState == 4 && request.status == 200)
-            {
-                if (callback){
-                    return callback(JSON.parse(request.responseText));
-                }else{
-                    // Javascript function JSON.parse to parse JSON data
-                    return JSON.parse(request.responseText);
-                }
+            // Opera 8.0+, Firefox, Chrome, Safari
+            var request = new XMLHttpRequest();
+        } catch (e){
+            // Internet Explorer Browsers
+            try{
+               var request = new ActiveXObject("Msxml2.XMLHTTP");
+            }catch (e) {
+               try{
+                  var request = new ActiveXObject("Microsoft.XMLHTTP");
+               }catch (e){
+                  // Something went wrong
+                  alert("Your browser broke!");
+                  return false;
+               }
             }
         }
+
+        request.onreadystatechange = function(){
+            if (request.readyState == 4 && request.status == 200)
+                return callback ? callback(JSON.parse(request.responseText)):
+                    JSON.parse(request.responseText);
+        };
 
         try {
             var ts = new Date().getTime();
             request.open(action, url+'?ts='+ts, true);
             request.setRequestHeader("Content-type","application/json;charset=UTF-8");
             request.send(JSON.stringify(input));
-        }catch (e){
+        } catch (e) {
             console.log(e);
             return false;
         }
@@ -8292,59 +9440,40 @@ module.exports = function () {
         }
     };
 }();
-},{}],59:[function(require,module,exports){
-/* ------------------------------------------------------------------------------------------------------*\
-   
-   handles scrolling of text accross the screen, requires the id of the containing element, which must be 
-   three elements, one a span, inside something else, inside something else. it also requires a message 
-   to be displayed
-   
-\* ------------------------------------------------------------------------------------------------------*/
-
-module.exports = function () {
-
-    var position;
-
-    var scrollText = function(container, message, footer, text, scroll){
-
-        // if this is our first time through initialize all variables
-        if(!text){
-            text = document.getElementById(container);
-            if(!text) return false;
-            text.innerHTML = message;
-            if(!position) position = -text.offsetWidth;
-            scroll = text.parentNode;
-            footer = scroll.parentNode;
-            if(!scroll || !footer) throw new Error('something up with the textual scroll, no parents.. needs parents');
-        }
-        
-        // if the element is no longer visable then stop
-        if(!text.offsetParent){ 
-            position = false; 
-            return false 
-        }
-
-        // if the text has been changed then stop
-        if(text.innerHTML !== message) return false;
-        
-        // compare the postion of the text to its containor
-        if(position !== undefined){
-
-            // if we are less then the container width then move right
-            if(position <= footer.offsetWidth ){
-                scroll.style.left = position + 'px';
-                position += 1;
-            }else{
-
-                // otherwise reset the position to the left
-                position = -text.offsetWidth * 4;
-            }
-        }
-        setTimeout(function(){ scrollText(container, message, footer, text, scroll);}, 10);
-    };
-    return scrollText;
-}();
-},{}],60:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
+module.exports = {
+    describe: function (selected) {
+        if (selected.description && selected.description()) 
+            app.input.message(selected.description());
+    },
+    getHorizontal: function () { return this.hElement; },
+    getVerticle: function () { return this.vElement; },
+    verticle: function (elements) { return this.move(elements, ['up','down']);},
+    horizontal: function (elements) { return this.move(elements, ['left','right']);},
+    move: function (elements, keys) { return app.key.pressed(keys[1]) ? elements.next() : elements.prev(); },
+    setHorizontal: function (e) {
+        var selected = e.current();
+        this.describe(selected);
+        this.hElement = selected;
+        return this;
+    },
+    setVerticle: function (e) {
+        if (e.descriptions()) this.describe(e);
+        this.vElement = e;
+        return this;   
+    },
+    touch: function (touched, elements) { 
+        var index = elements.indexOf(touched);
+        if (isNaN(index)) return false;
+        elements.current().hide();
+        this.setHorizontal(elements.setIndex(index).show('inline-block'));
+    },
+    clear: function () {
+        delete this.vElement;
+        delete this.hElement;
+    }
+};
+},{}],94:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
 
     handle socket connections
@@ -8354,8 +9483,8 @@ module.exports = function () {
 app = require('../settings/app.js');
 app.game = require('../game/game.js');
 app.chat = require('../tools/chat.js');
-app.modes = require('../menu/modes.js');
-app.options = require('../menu/options.js');
+app.menu = require('../controller/menu.js');
+app.optionsMenu = require('../menu/options/optionsMenu.js');
 app.key = require('../tools/keyboard.js');
 app.maps = require('../controller/maps.js');
 app.map = require('../controller/map.js');
@@ -8363,57 +9492,19 @@ app.players = require('../controller/players.js');
 app.cursor = require('../controller/cursor.js');
 app.background = require('../controller/background.js');
 app.units = require('../definitions/units.js');
+app.confirm = require('../controller/confirmation.js');
 
 Validator = require('../tools/validator.js');
 Player = require('../objects/player.js');
 Unit = require('../objects/unit.js');
+Teams = require('../menu/teams.js');
 
-var validate = new Validator('sockets');
+//var validate = new Validator('sockets');
 var socket = io.connect("http://127.0.0.1:8080") || io.connect("http://jswars-jswars.rhcloud.com:8000");
 
-socket.on('setMap', function (map) {app.game.setMap(map)});
-socket.on('start', function (game) {app.menu.start();});
-//socket.on('player', function (player) { app.players.add(player); });
-socket.on('userAdded', function (message) {app.chat.display(message);});
-socket.on('gameReadyMessage', function (message) {app.chat.display(message);});
-socket.on('propertyChange', function (properties) {app.players.changeProperty(properties);});
-socket.on('readyStateChange', function (player) {
-    app.players.get(new Player(player)).isReady(player.ready);
-});
-
-socket.on('addPlayer', function (player) {app.players.add(player);});
-socket.on('addRoom',function (room) { app.maps.add(room); });
-socket.on('removeRoom', function  (room) { app.maps.remove(room); });
-
-socket.on('disc', function (user) {
-    app.chat.display({message:'has been disconnected.', user:user.name.uc_first()});
-    app.players.remove(user);
-});
-
-socket.on('userLeft', function (user) {
-    app.chat.display({message: 'has left the game.', user: user.name.uc_first()});
-    app.players.remove(user);
-});
-
-socket.on('userRemoved', function  (user) {
-    app.chat.display({message:'has been removed from the game.', user:user.name.uc_first()});
-    app.players.remove(user);
-});
-
-socket.on('userJoined', function (user) {
-    app.players.add(user);
-    if(!user.cp) app.chat.display({message:'has joined the game.', user:user.name.uc_first()});
-});
-
-socket.on('joinedGame', function (joined) {
-    app.background.set(joined.background);
-    app.game.load(joined);
-});
-
-socket.on('back', function () {
-    app.modes.boot();
-    app.menu.back();
-});
+// all in game commands
+socket.on('confirmSave', function (player) { app.confirm.save(app.players.get(player));});
+socket.on('confirmationResponse', function (response) { app.confirm.player(response.answer, app.players.get(response.sender));});
 
 socket.on('cursorMove', function (move) {
     app.key.press(move);
@@ -8423,15 +9514,15 @@ socket.on('cursorMove', function (move) {
 socket.on('background', function (type) { app.background.set(type); });
 
 socket.on('endTurn', function (id) {    
-    if(validate.turn({id: function  () {return id;}}))
-        app.options.end();
+    //if(validate.turn(id))
+        app.optionsMenu.end();
 });
 
 socket.on('addUnit', function (unit) {
     var u = unit._current;
-    var player = app.players.get({id:function () {return u.player._current.id;}});
+    var player = app.players.get(u.player._current);
     var unit = new Unit(player, u.position, app.units[u.name.toLowerCase()]);
-    if(validate.build(unit))
+    //if(validate.build(unit))
         if(player.canPurchase(unit.cost())) {
             player.purchase(unit.cost());          
             app.map.addUnit(unit);
@@ -8439,52 +9530,95 @@ socket.on('addUnit', function (unit) {
 });
 
 socket.on('attack', function (action) {
-    if(validate.attack(action)) {
+    //if(validate.attack(action)) {
         var attacker = app.map.getUnit(action.attacker), 
         attacked = app.map.getUnit(action.attacked);
         attacker.attack(attacked, action.damage);
         if(app.user.owns(attacked) && !attacked.attacked())
             attacked.attack(attacker);
-    }
+    //}
 });
 
 socket.on('joinUnits', function (action) {
-    if(validate.combine(action)) {
+    //if(validate.combine(action)) {
         var unit = app.map.getUnit(action.unit);
         var selected = app.map.getUnit(action.selected);
         selected.join(unit);
-    }
+    //}
 });
 
 socket.on('moveUnit', function (move) {
     var unit = app.map.getUnit(move);
     var target = move.position;
-    if(validate.move(unit, target))
+    //if(validate.move(unit, target))
         unit.move(target, move.moved);
 });
 
 socket.on('loadUnit', function (load) {
     var passanger = app.map.getUnit({id:load.passanger});
     var transport = app.map.getUnit({id:load.transport});
-    if(validate.load(transport, passanger))
+    //if(validate.load(transport, passanger))
         passanger.load(transport);
 });
 
+socket.on('delete', function (unit) { app.map.removeUnit(unit); });
 socket.on('unload', function (transport) { 
     var unit = app.map.getUnit(transport);
     unit.drop(transport, transport.index); 
 });
+socket.on('defeat', function (battle) {
+    var player = app.players.get(battle.conqueror._current);
+    var defeated = app.players.get(battle.defeated._current);
+    player.defeat(defeated, battle.capturing);
+});
 
-socket.on('updatePlayerStates', function (players) { app.players.add(players); });
+// all setup and menu commands
+socket.on('setMap', function (map) {app.game.setMap(map)});
+socket.on('start', function (game) {app.game.start();});
+socket.on('userAdded', function (message) {app.chat.post(message);});
+socket.on('gameReadyMessage', function (message) {app.chat.post(message);});
+socket.on('propertyChange', function (properties) {app.players.changeProperty(properties);});
+socket.on('readyStateChange', function (player) {
+    app.players.get(new Player(player)).isReady(player.ready);
+    app.players.checkReady();
+});
+socket.on('addPlayer', function (player) {app.players.add(player);});
+socket.on('addRoom',function (room) { app.maps.add(room); });
+socket.on('removeRoom', function  (room) { app.maps.remove(room); });
+
+socket.on('disc', function (user) {
+    app.chat.post({message:'has been disconnected.', user:user.name.uc_first()});
+    app.players.remove(user);
+});
+
+socket.on('userLeft', function (user) {
+    app.chat.post({message: 'has left the game.', user: user.name.uc_first()});
+    app.players.remove(user);
+});
+
+socket.on('userRemoved', function  (user) {
+    app.chat.post({message:'has been removed from the game.', user:user.name.uc_first()});
+    app.players.remove(user);
+});
+
+socket.on('userJoined', function (user) {
+    app.players.add(user);
+    if(!user.cp) app.chat.post({message:'has joined the game.', user:user.name.uc_first()});
+});
+
+socket.on('joinedGame', function (joined) {app.game.load(joined);});
+socket.on('back', function () { Teams.boot(); });
+
+socket.on('updatePlayerStates', function (players) {app.players.add(players);});
 
 module.exports = socket;
-},{"../controller/background.js":1,"../controller/cursor.js":2,"../controller/map.js":3,"../controller/maps.js":4,"../controller/players.js":5,"../definitions/units.js":11,"../game/game.js":18,"../menu/modes.js":23,"../menu/options.js":24,"../objects/player.js":36,"../objects/unit.js":44,"../settings/app.js":46,"../tools/chat.js":50,"../tools/keyboard.js":56,"../tools/validator.js":63}],61:[function(require,module,exports){
+},{"../controller/background.js":1,"../controller/confirmation.js":2,"../controller/cursor.js":3,"../controller/map.js":4,"../controller/maps.js":5,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/units.js":13,"../game/game.js":25,"../menu/options/optionsMenu.js":46,"../menu/teams.js":50,"../objects/player.js":68,"../objects/unit.js":76,"../settings/app.js":78,"../tools/chat.js":82,"../tools/keyboard.js":90,"../tools/validator.js":97}],95:[function(require,module,exports){
 app = require('../settings/app.js');
 app.key = require('../tools/keyboard.js');
 app.scroll = require('../menu/scroll.js');
 app.user = require('../objects/user.js');
 app.display = require('../tools/display.js');
-app.modes = require('../menu/modes.js');
+app.menu = require('../controller/menu.js');
 
 module.exports = function (element) {
 
@@ -8501,6 +9635,7 @@ module.exports = function (element) {
 
 	return {
 		scroll: function (elem) {
+
 
 			var e = input(elem);
 
@@ -8523,6 +9658,7 @@ module.exports = function (element) {
 		        }else if (position > bottom){
 		            app.scroll.wheel(-1, new Date());
 		        }
+		        //app.game.update();
 		    });
 		    return this;
 		},
@@ -8555,6 +9691,7 @@ module.exports = function (element) {
 		        }else if (position > right){
 		            app.scroll.swipe(1, new Date());
 		        }
+		        //app.game.update();
 		    });
 		    return this;
 		},
@@ -8608,56 +9745,60 @@ module.exports = function (element) {
 
 			var e = input(elem);
 
-			e.addEventListener('touchstart', function(){
+			e.addEventListener('touchstart', function() {
 
 	        	// get the index
-	        	var index = e.attributes.modeOptionIndex.value;
+	        	var index = Array.prototype.indexOf.call(e.parentNode.childNodes, e);
 
 	        	// if the mode options are already under selection, then change the index
-	        	if(app.modes.active()){
-					app.display.setIndex(index);
+	        	if (app.menu.active()) {
+	        		 app.display.setIndex(index);
+	        		 //app.game.update();
 
 				// otherwise simulate selecting them with the key right push
 				// and set the default index to the selected option
-	        	}else{
+	        	} else { 
 	        		app.display.setOptionIndex(index);
 		        	app.key.press(app.key.right());
 	        	}
 	        });
+
 	        return this;
 		},
 		changeMode: function (elem) {
-			input(elem).addEventListener('touchstart', function () {if(app.modes.active()) app.key.press(app.key.left());});
+			input(elem).addEventListener('touchstart', function () {if(app.menu.active()) app.key.press(app.key.left());});
 			return this;
 		},
 		doubleTap: function (elem) {
-			input(elem).addEventListener('touchstart', function() {if(doubleTap()) return app.key.press(app.key.enter());});
+			input(elem).addEventListener('touchstart', function() { if (doubleTap()) app.key.press(app.key.enter());});
 			return this;
 		},
 		element: function (elem) {
-			input(elem).addEventListener('touchstart', function (touch){
+			input(elem).addEventListener('touchstart', function (touch) {
 				var touched = touch.target;
 				var name = touched.parentNode.id == 'settings' ? touched.id : touched.parentNode.id;
 				var setting = name.replace('Settings','').replace('Container','');
 				app.display.setIndex(setting);
+				//app.game.update();
 			});
 			return this;
 		},
 		esc: function (elem) {
-			input(elem).addEventListener('touchstart', function() {if(app.user.player().ready()) return app.key.press(app.key.esc());});
+			input(elem).addEventListener('touchstart', function() {if(app.user.player().ready()) app.key.press(app.key.esc());});
 			return this;
-		},
+		}
 	};
 };
-},{"../menu/modes.js":23,"../menu/scroll.js":25,"../objects/user.js":45,"../settings/app.js":46,"../tools/display.js":52,"../tools/keyboard.js":56}],62:[function(require,module,exports){
+},{"../controller/menu.js":6,"../menu/scroll.js":48,"../objects/user.js":77,"../settings/app.js":78,"../tools/display.js":85,"../tools/keyboard.js":90}],96:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\
     
     handles the cleanup and disposal of elements that are no longer needed or need to be removed
 
 \* ---------------------------------------------------------------------------------------------------------*/
+
 app = require('../settings/app.js');
 app.game = require('../game/game.js');
-app.options = require('../menu/options.js');
+app.optionsMenu = require('../menu/options/optionsMenu.js');
 app.settings = require('../settings/game.js');
 app.animate = require('../game/animate.js');
 app.effect = require('../game/effects.js');
@@ -8687,9 +9828,9 @@ module.exports = function () {
         hudHilight:function(){
             app.display.reset();
             if(app.display.index()) app.display.resetPreviousIndex();
-            if (app.options.active()) {
+            if (app.optionsMenu.active()) {
                 show('coStatusHud');
-                app.options.deactivate();
+                app.optionsMenu.deactivate();
             }
         },
 
@@ -8750,16 +9891,18 @@ module.exports = function () {
         }
     };
 }();
-},{"../controller/cursor.js":2,"../game/animate.js":13,"../game/effects.js":17,"../game/game.js":18,"../menu/options.js":24,"../settings/app.js":46,"../settings/game.js":48,"../tools/display.js":52,"../tools/keyboard.js":56}],63:[function(require,module,exports){
-// validates stuff
+},{"../controller/cursor.js":3,"../game/animate.js":20,"../game/effects.js":24,"../game/game.js":25,"../menu/options/optionsMenu.js":46,"../settings/app.js":78,"../settings/game.js":80,"../tools/display.js":85,"../tools/keyboard.js":90}],97:[function(require,module,exports){
+/* --------------------------------------------------------------------------- *\
+    
+    Validator.js is a tool to verify the correctness of data within the game
+
+\* --------------------------------------------------------------------------- */
+
 app = require('../settings/app.js');
 app.players = require('../controller/players.js');
 Building = require('../objects/building.js');
 
-Validator = function (fileName) {
-	this.fileName = fileName;
-};
-
+Validator = function (fileName) {this.fileName = fileName;};
 Validator.prototype.defined = function (element, name) {
 	if(!element) return new Error(name.uc_first() + ' undefined.', this.fileName);
 };
@@ -8880,5 +10023,7 @@ Validator.prototype.turn = function (player) {
 	return app.players.get(player).turn();
 };
 
+console.log(Validator);
+
 module.exports = Validator;
-},{"../controller/players.js":5,"../objects/building.js":28,"../settings/app.js":46}]},{},[20]);
+},{"../controller/players.js":7,"../objects/building.js":56,"../settings/app.js":78}]},{},[27]);

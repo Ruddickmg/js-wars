@@ -1,12 +1,14 @@
-// validates stuff
+/* --------------------------------------------------------------------------- *\
+    
+    Validator.js is a tool to verify the correctness of data within the game
+
+\* --------------------------------------------------------------------------- */
+
 app = require('../settings/app.js');
 app.players = require('../controller/players.js');
 Building = require('../objects/building.js');
 
-Validator = function (fileName) {
-	this.fileName = fileName;
-};
-
+Validator = function (fileName) {this.fileName = fileName;};
 Validator.prototype.defined = function (element, name) {
 	if(!element) return new Error(name.uc_first() + ' undefined.', this.fileName);
 };
@@ -126,5 +128,7 @@ Validator.prototype.build = function (unit) {
 Validator.prototype.turn = function (player) {
 	return app.players.get(player).turn();
 };
+
+console.log(Validator);
 
 module.exports = Validator;

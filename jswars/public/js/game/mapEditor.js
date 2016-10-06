@@ -1,8 +1,15 @@
+/* --------------------------------------------------------------------------------------*\
+    
+    MapEditor.js controls map creation
+
+\* --------------------------------------------------------------------------------------*/
+
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
 app.units = require('../definitions/units.js');
 app.animate = require('../game/animate.js');
+app.optionsMenu = require('../menu/options/optionsMenu.js');
 
 Validator = require('../tools/validator.js');
 Matrix = require('../tools/matrix.js');
@@ -74,8 +81,8 @@ module.exports = function () {
 
             // exit menus when esc key is pressed
             if(app.key.pressed(app.key.esc()))
-                if(!app.options.active())
-                    app.options.display();
+                if(!app.optionsMenu.active())
+                    app.optionsMenu.display();
                 else app.undo.all();
 
             app.key.undo();

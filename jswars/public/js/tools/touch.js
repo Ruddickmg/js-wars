@@ -3,7 +3,7 @@ app.key = require('../tools/keyboard.js');
 app.scroll = require('../menu/scroll.js');
 app.user = require('../objects/user.js');
 app.display = require('../tools/display.js');
-app.modes = require('../menu/modes.js');
+app.menu = require('../controller/menu.js');
 
 module.exports = function (element) {
 
@@ -20,6 +20,7 @@ module.exports = function (element) {
 
 	return {
 		scroll: function (elem) {
+
 
 			var e = input(elem);
 
@@ -42,6 +43,7 @@ module.exports = function (element) {
 		        }else if (position > bottom){
 		            app.scroll.wheel(-1, new Date());
 		        }
+		        //app.game.update();
 		    });
 		    return this;
 		},
@@ -74,6 +76,7 @@ module.exports = function (element) {
 		        }else if (position > right){
 		            app.scroll.swipe(1, new Date());
 		        }
+		        //app.game.update();
 		    });
 		    return this;
 		},
@@ -127,44 +130,47 @@ module.exports = function (element) {
 
 			var e = input(elem);
 
-			e.addEventListener('touchstart', function(){
+			e.addEventListener('touchstart', function() {
 
 	        	// get the index
-	        	var index = e.attributes.modeOptionIndex.value;
+	        	var index = Array.prototype.indexOf.call(e.parentNode.childNodes, e);
 
 	        	// if the mode options are already under selection, then change the index
-	        	if(app.modes.active()){
-					app.display.setIndex(index);
+	        	if (app.menu.active()) {
+	        		 app.display.setIndex(index);
+	        		 //app.game.update();
 
 				// otherwise simulate selecting them with the key right push
 				// and set the default index to the selected option
-	        	}else{
+	        	} else { 
 	        		app.display.setOptionIndex(index);
 		        	app.key.press(app.key.right());
 	        	}
 	        });
+
 	        return this;
 		},
 		changeMode: function (elem) {
-			input(elem).addEventListener('touchstart', function () {if(app.modes.active()) app.key.press(app.key.left());});
+			input(elem).addEventListener('touchstart', function () {if(app.menu.active()) app.key.press(app.key.left());});
 			return this;
 		},
 		doubleTap: function (elem) {
-			input(elem).addEventListener('touchstart', function() {if(doubleTap()) return app.key.press(app.key.enter());});
+			input(elem).addEventListener('touchstart', function() { if (doubleTap()) app.key.press(app.key.enter());});
 			return this;
 		},
 		element: function (elem) {
-			input(elem).addEventListener('touchstart', function (touch){
+			input(elem).addEventListener('touchstart', function (touch) {
 				var touched = touch.target;
 				var name = touched.parentNode.id == 'settings' ? touched.id : touched.parentNode.id;
 				var setting = name.replace('Settings','').replace('Container','');
 				app.display.setIndex(setting);
+				//app.game.update();
 			});
 			return this;
 		},
 		esc: function (elem) {
-			input(elem).addEventListener('touchstart', function() {if(app.user.player().ready()) return app.key.press(app.key.esc());});
+			input(elem).addEventListener('touchstart', function() {if(app.user.player().ready()) app.key.press(app.key.esc());});
 			return this;
-		},
+		}
 	};
 };

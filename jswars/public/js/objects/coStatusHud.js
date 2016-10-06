@@ -7,7 +7,10 @@ StatusHud = function () {
 };
 
 StatusHud.prototype.visibility = function (visibility) {return document.getElementById('coStatusHud').style.display = visibility;}
-StatusHud.prototype.show = function () {this.visibility('');};
+StatusHud.prototype.show = function () {
+    this.visibility('');
+    this._previous = undefined;
+};
 StatusHud.prototype.hide = function () {this.visibility('none');};
 StatusHud.prototype.power = function () { return this._context; };
 StatusHud.prototype.display = function (player, location) {

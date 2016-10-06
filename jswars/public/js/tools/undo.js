@@ -3,9 +3,10 @@
     handles the cleanup and disposal of elements that are no longer needed or need to be removed
 
 \* ---------------------------------------------------------------------------------------------------------*/
+
 app = require('../settings/app.js');
 app.game = require('../game/game.js');
-app.options = require('../menu/options.js');
+app.optionsMenu = require('../menu/options/optionsMenu.js');
 app.settings = require('../settings/game.js');
 app.animate = require('../game/animate.js');
 app.effect = require('../game/effects.js');
@@ -35,9 +36,9 @@ module.exports = function () {
         hudHilight:function(){
             app.display.reset();
             if(app.display.index()) app.display.resetPreviousIndex();
-            if (app.options.active()) {
+            if (app.optionsMenu.active()) {
                 show('coStatusHud');
-                app.options.deactivate();
+                app.optionsMenu.deactivate();
             }
         },
 

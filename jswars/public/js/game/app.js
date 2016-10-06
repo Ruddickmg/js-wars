@@ -19,9 +19,8 @@ app.increment = require('../tools/increment.js');
 // -------------------------------------------- menu --------------------------------------------------------------------
 
 app.login = require('../menu/login.js'); // login control
-app.menu = require('../menu/menu.js'); // game setup menu
 app.modes = require('../menu/modes.js'); // app.modes holds functions for the selection of game modes / logout etc..
-app.options = require('../menu/options.js'); // app.options handles the in game options selection, end turn, save etc.
+app.optionsMenu = require('../menu/options/optionsMenu.js'); // app.options handles the in game options selection, end turn, save etc.
 app.scroll = require('../menu/scroll.js'); // app.game.settings consolidates holds settings for the game
 
 // ----------------------------------------- definitions ----------------------------------------------------------------

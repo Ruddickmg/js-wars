@@ -27,11 +27,16 @@ Feature.prototype.size = function (canvas) {
 };
 
 Feature.prototype.addElement = function (element, type, attributes) {
-    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo, 'hud');
-    this.size(list.canvas.canvas);
-    app.draw(list.canvas.context).hudCanvas(element.draw(), element.class());
-    this.element.appendChild(list.ul);
-    return list.ul;
+    var c = app.dom.createCanvas('hud', element, {width:128, height:128});
+    var canvas = app.dom.createElement('li', false, 'canvas');
+    canvas.appendChild(c.canvas);
+
+    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo);
+    list.appendChild(canvas);
+    this.size(canvas);
+    app.draw(c.context).hudCanvas(element.draw(), element.class());
+    this.element.appendChild(list);
+    return list;
 };
 
 Feature.prototype.set = function (element) {

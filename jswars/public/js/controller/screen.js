@@ -14,6 +14,7 @@ module.exports = function () {
     var screenRefresh = function () { app.animate(['terrain', 'cursor', 'building', 'unit', 'effects']); };
 
     var move = function (distance, view, limit, sign, axis) {
+
         setTimeout(function () { // set delay time
             if (distance > -1 && view * sign + sign < limit){ 
                 view += sign; // <--- keep track of screen edge as it moves
@@ -58,6 +59,8 @@ module.exports = function () {
 	    // move screen to target position
         to: function (coordinates) {
 
+        	console.log(coordinates);
+
        		app.cursor.setPosition(coordinates);
 
 	        var mapDimensions = app.map.dimensions();
@@ -67,6 +70,8 @@ module.exports = function () {
 			for (var i = 0; i < 2; i += 1) {
 
 				a = axis[i], target = coordinates[a];
+
+				console.log(a);
 
 		        // beginning of screen view
 		        beginning = position[a];

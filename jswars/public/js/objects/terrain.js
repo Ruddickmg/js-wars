@@ -1,3 +1,9 @@
+/* ---------------------------------------------------------------------- *\
+    
+    Terrain.js holds the terrain object, defining specific map terrain
+
+\* ---------------------------------------------------------------------- */
+
 app = require('../settings/app.js');
 app.properties = require('../definitions/properties.js');
 Position = require('../objects/position.js');
@@ -5,11 +11,12 @@ Validator = require('../tools/validator.js');
 
 Terrain = function (type, position) {
 
-	var error, properties = new app.properties(),
-    validate = new Validator('terrain'), property = properties[type];
+	var error, properties = new app.properties();
+    //validate = new Validator('terrain'), 
+    var property = properties[type];
     
-    if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
-		throw error;
+  //   if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
+		// throw error;
 
     this.n = property.name();
 	this.t = property.type();

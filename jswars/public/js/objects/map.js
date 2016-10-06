@@ -9,8 +9,8 @@ Validator = require('../tools/validator.js');
 module.exports = function (id, name, players, dimensions, terrain, buildings, units) {
 
     var error;
-    validate = new Validator('map'),
-    category = units.length ? 'preDeployed' : {
+    //validate = new Validator('map'),
+    var category = units.length ? 'preDeployed' : {
         2:'two', 3:'three', 4:'four', 5:'five', 6:'six', 7:'seven', 8:'eight'
     } [players];
 
@@ -22,6 +22,6 @@ module.exports = function (id, name, players, dimensions, terrain, buildings, un
     this.terrain = terrain;
     this.buildings = buildings;
     this.units = units;
-    if((error = validate.map(this)))
-        throw error;
+    // if((error = validate.map(this)))
+    //     throw error;
 };

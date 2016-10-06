@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------------------------------------------------------*\
     
-    app is a container and holds variables for all elements of the application 
+    App.js is a container and holds variables for all elements of the application 
 
 \* ---------------------------------------------------------------------------------------------------------*/
 

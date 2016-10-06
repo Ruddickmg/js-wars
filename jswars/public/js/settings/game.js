@@ -8,20 +8,6 @@
 app = require('../settings/app.js');
 
 app.settings = {
-    // messages to display in the bottom scroll bar as items are hovered over and people join games, etc..
-    scrollMessages:{
-        logout:'select to log out of the game',
-        game:'Create or continue a saved game',
-        newgame:'Set up a new game',
-        continuegame:'Resume a saved game',
-        join:'Join a new or saved game',
-        newjoin:'Find and join a new game',
-        continuejoin:'Re-Join a saved game started at an earlier time',
-        COdesign:'Customize the look of your CO',
-        mapdesign:'Create your own custom maps',
-        design:'Design maps or edit CO appearance',
-        store:'Purchase maps, CO\'s, and other game goods' 
-    },
 
     // speed at which color swell.. fading in and out, will cycle (lower is faster)
     colorSwellIncriment:1.5,
@@ -91,10 +77,6 @@ app.settings = {
     selectedModeHeight: 75,
 
     selectModeMenu:[{
-            id:'logout',
-            display:'Logout',
-            type:'exit',
-        },{
             id:'game',
             display:'Game',
             type:'setup',
@@ -115,7 +97,12 @@ app.settings = {
             id:'store',
             display:'Store',
             type:'store',
-    }],
+        },{
+            id:'logout',
+            display:'Logout',
+            type:'exit',
+        }
+    ],
 
     categories:{
         two:{
@@ -156,7 +143,7 @@ app.settings = {
         boat: ['water', 'building']
     },
 
-    options: {
+    optionsMenu: {
         unit: {
             name: 'Unit'
         },
@@ -174,27 +161,8 @@ app.settings = {
         }
     },
 
-    buildingDisplayElement: {
-        city:{
-            numberOf:0,
-            type:'city'
-        },
-        base:{
-            numberOf:0,
-            type:'base'
-        },
-        airport:{
-            numberOf:0,
-            type:'airport'
-        },
-        seaport:{
-            numberOf:0,
-            type:'seaport'
-        },
-    },
-
     playersDisplayElement: {
-
+        
     },
 
     settingsDisplayElement: {
@@ -257,9 +225,6 @@ app.settings = {
     // spacing / positioning of mode menu selection elements
     modeMenuSpacing:20,
 
-    // displayable attributes for the building count element on map/game selection
-    buildingDisplay:['numberOf', 'canvas'],
-
     // which attributes of objects ( unit, buildings etc ) will be displayed in hud
     hoverInfo: ['ammo', 'showHealth', 'health', 'name', 'fuel', 'defense', 'canvas'],
 
@@ -269,11 +234,8 @@ app.settings = {
     // unit info attributes for display
     unitInfoDisplay: ['movement', 'vision', 'fuel', 'weapon1', 'weapon2', 'property', 'value'],
 
-    // which attributes of units will be displayed on unit selection/purchase/building hud
-    unitSelectionDisplay: ['name', 'cost'],
-
     // options attributes for displ
-    optionsDisplay: ['options', 'unit', 'intel', 'save', 'end', 'name'],
+    optionsMenuDisplay: ['options', 'unit', 'intel', 'save', 'end', 'name'],
 
     // map elements that cannot be selected
     notSelectable: ['terrain', 'hq', 'city'],

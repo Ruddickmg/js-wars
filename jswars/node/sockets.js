@@ -1,80 +1,90 @@
 /* ----------------------------------------------------------------------------------------------------------*\
     set up and handle socket io
 \* ----------------------------------------------------------------------------------------------------------*/
-//var cron = require('cron');
-var Room = require('./room.js');
-var Player = require('./player.js');
 
-module.exports = function () {
+Room = require('./room.js');
+Rooms = require('./rooms.js');
+Player = require('./player.js');
+Identity = require('./tools/identity.js');
+AiPlayer = require('./ai/aiPlayer.js');
+AiController = require('./ai/controller.js');
+Clients = require('./clients.js');
+events = require('events'),
 
-    var clients = {}; // holds sockets
-    var rooms = {
-        lobby: new Room(0, 'lobby'),
-        disconnected: new Room (undefined, 'disconnected')
-    };
-    var roomId = 2;
-    var usedId = [];
+module.exports = function (io) {
 
-    // fix this 
-    var recycleId = function () {
-        var id = roomId += 1;
-        var val = usedId[usedId.length - 1];
-        while (id < val) {
-            var len = usedId.length - 1;
-            delete usedId[len];
-            val = usedId[len - 1];
-        }
-        return roomId;
-    };
+    var inc = 0;
+    var ai = new AiController();
+    var rooms = new Rooms();
+    var emitter = new events.EventEmitter();
+    var clients = new Clients();
 
-    var removeRoom = function (room) {
-        var cat = rooms[room.category];
-        if(cat[room.name]) delete cat[room.name];
-    };
-    
-    return { 
+    return {
 
         // get rid of disconnected player objects after allowed amount of time
-        flush: function (allowed) {
-            var disconnected = rooms.disconnected;
-            for(player in disconnected)
-                if(disconnected[player].previousRoom 
-                    && new Date() - disconnected[player].previousRoom.timeOfDisconnect > allowed)
-                        delete disconnected[player];
-        },
+        flush: function (allowed) { return rooms.flush(allowed); },
 
         // get all rooms that arent already full
-        rooms: function (category) { 
-            var room, open = {}, all = rooms[category];
-            for(room in all)
-                if (!all[room].full) 
-                    open[room] = all[room];
-            return open;
-        },
+        open: function (category) { return rooms.open(category).open; },
+
+        // get rooms that arent full but have started
+        running: function (category) { return rooms.open().running; },
 
         // listen for socket communication
         watch: function (socket) {
 
             socket.joinRoom = function (room) {
-                var empty;
-                if(this.room && (empty = this.room.remove(this)))
-                    delete rooms[empty.category][empty.name];
+                var emptyRoom;
+                if(this.room && (emptyRoom = this.room.remove(this)))   
+                    rooms.remove(emptyRoom);
                 this.room = room;
                 this.join(room.name);
                 room.add(this.player);
                 return room;
             };
 
-            socket.on('boot', function (room) {
-                var room = socket.room;
-                if (room.player) {
-                    room.remove(room.player);
-                    socket.broadcast.to(room.player.socketId).emit('back', true);
-                    socket.broadcast.to(room.name).emit('userRemoved', room.cp);
-                }else{
-                    socket.room.players.splice(room.cp.number - 1, 1);
-                    socket.broadcast.to(name).emit('userRemoved', room.cp);
+            // add user to players
+            socket.on('addUser', function (user) {
+                socket.player = rooms.disconnected(user) || new Player(user, socket);
+                clients.add(socket);
+                socket.joinRoom(rooms.lobby());
+                socket.emit('player', socket.player);
+            });
+
+            // all in game related commands
+            socket.on('addUnit', function (unit) {socket.player.addUnit(unit, socket);});
+            socket.on('moveUnit', function (unit) {socket.player.moveUnit(unit, socket);});
+            socket.on('attack', function (unit) { socket.player.attack(unit, socket);});
+            socket.on('joinUnits', function (units) { socket.player.join(units, socket);});
+            socket.on('loadUnit', function (units) { socket.player.load(units, socket);});
+            socket.on('unload', function (unit) { socket.player.unload(unit, socket);});
+            socket.on('capture', function (building) { socket.player.capture(bulding, socket);});
+            socket.on('endTurn', function (turn) { socket.player.endTurn(turn, socket);});
+            socket.on('delete', function (unit) { socket.player.del(unit, socket);});
+            socket.on('defeat', function (player) { socket.player.defeat(player, socket);});
+            socket.on('cursorMove', function (cursor) { socket.player.moveCursor(cursor, socket);});
+            socket.on('confirmSave', function (game) { socket.player.save(game, socket);});
+            socket.on('confirmationResponse', function (game) { socket.player.confirm(game, socket);});
+
+            socket.on('aiTurn', function (game) {ai.get(socket.room.getPlayer(game.ai)).process(game.room);});
+            socket.on('start', function (game){ socket.broadcast.to(socket.room.name).emit('start', game); });
+            socket.on('background', function (type) {
+                if (socket.room.category) {
+                    socket.room.background = type;
+                    socket.broadcast.to(socket.room.name).emit('background', type);
                 }
+            });
+
+            // going to have to change how rooms work.. socket room name must be unique (intigrate with id's)
+
+            // all game menu and setup related commands
+            socket.on('boot', function (booted) {
+                var client, player, name = socket.room.name;
+                if ((player = socket.room.getPlayer(booted))) {
+                    (client = clients.get(player)).emit('back', true);
+                    client.joinRoom(rooms.lobby());
+                    socket.broadcast.to(name).emit('userRemoved', player);
+                } else socket.broadcast.to(name).emit('userRemoved', false);
             });
 
             socket.on('ready', function (player) {
@@ -82,86 +92,73 @@ module.exports = function () {
                 socket.broadcast.to(socket.room.name)
                     .emit('readyStateChange', socket.player);
             });
-
-            socket.on('getPlayerStates', function (game) { 
-                socket.emit('updatePlayerStates', rooms[game.category][game.name].players);
-            });
             
             socket.on('setUserProperties', function (p) {
-                var players = socket.room.players;
-                if (players.length) players[p.index][p.property] = p.value;
+                console.log('-- setUserProperties: ' + (inc++) + ' --');
+                console.log(p);
+                console.log('');
+                socket.room.getPlayer(p.player)[p.property] = p.value;
                 socket.broadcast.to(socket.room.name).emit('propertyChange', p);
             });
 
             socket.on('gameReadyChat', function(message){socket.broadcast.to(socket.room.name).emit('gameReadyMessage', message);});
-            socket.on('cursorMove', function(moved){socket.broadcast.to(socket.room.name).emit('cursorMove', moved);});
-            socket.on('moveUnit', function(move){socket.broadcast.to(socket.room.name).emit('moveUnit', move);});
-            socket.on('addUnit', function(unit){socket.broadcast.to(socket.room.name).emit('addUnit', unit);});
             socket.on('setMap', function(map){socket.broadcast.to(socket.room.name).emit('setMap', map);});
-            socket.on('attack', function(attack){socket.broadcast.to(socket.room.name).emit('attack', attack);});
-            socket.on('joinUnits', function(joinedUnits){socket.broadcast.to(socket.room.name).emit('joinUnits', joinedUnits);});
-            socket.on('loadUnit', function(load){socket.broadcast.to(socket.room.name).emit('loadUnit', load);});
-            socket.on('unload', function(transport){socket.broadcast.to(socket.room.name).emit('unload', transport);});
-            socket.on('start', function(game){ socket.broadcast.to(socket.room.name).emit('start', game); });
-            socket.on('capture', function(capture){ socket.broadcast.to(socket.room.name).emit('capture', capture);});
-            socket.on('endTurn', function(end){socket.broadcast.to(socket.room.name).emit('endTurn', end);});
             socket.on('removeRoom', function (room) {
-                room = rooms[room.category][room.name];
-                if(room && room.remove(socket))
-                    removeRoom(room); 
+                room = rooms.get(room);
+                if (room && room.remove(socket))               
+                    ai.remove(rooms.remove(room).aiPlayers());
             });
 
-            socket.on('join', function(room){
-                socket.joinRoom(rooms[room.category][room.name]);
+            socket.on('join', function (r) {
+                var room = rooms.get(r);
+                socket.joinRoom(room);
                 socket.emit('joinedGame', room);
                 socket.broadcast.to(room.name).emit('userJoined', socket.player);
             });
 
-            socket.on('background', function (type) { 
-                if(socket.room.category){
-                    socket.room.background = type;
-                    socket.broadcast.to(socket.room.name).emit('background', type);
-                }
+            socket.on('addAiPlayer', function (player) {
+                var room = socket.room;
+                player.roomId = room.id;
+                var aiPlayer = ai.add(player);
+                room.addAi(aiPlayer);
+                socket.broadcast.to(room.name).emit('aiPlayerAdded', aiPlayer);            
+                if (room.full()) socket.broadcast.to('lobby').emit('removeRoom', room);
+            });
+
+            socket.on('removeAiPlayer', function (player) {
+                var room = socket.room, aiPlayer = room.getPlayer(player);
+                var wasFull = room.full();
+                room.removePlayer(aiPlayer);
+                ai.remove(aiPlayer);
+                if (wasFull) socket.broadcast.to('lobby').emit('addRoom', room);
             });
 
             // create new game rooms
             socket.on('newRoom', function (game) {
-
-                var room, id = usedId[0] ? usedId.shift() : recycleId();
-
-                if(!rooms[game.category]) rooms[game.category] = {};
-                if(!rooms[game.category][game.name]){
-
-                    room = rooms[game.category][game.name] = new Room(id, game);
+                if (!rooms.get(game)) {
+                    var room = rooms.add(game);
                     socket.joinRoom(room);
                     socket.broadcast.to('lobby').emit('addRoom', room);
-
                 } else socket.emit('roomExists', game);
             });
 
             socket.on ('exit', function (boot) {
                 socket.broadcast.to(socket.room.name)
                     .emit(boot ? 'userRemoved' : 'userLeft', socket.player);
-                socket.room.remove(socket);
-            });
-
-            // add user to players
-            socket.on('addUser', function (user) {
-                socket.player = rooms.disconnected[user.id] || new Player(user);
-                socket.joinRoom(rooms.lobby);
-                socket.emit('player', socket.player);
+                if (socket.room.remove(socket)) {
+                    var room = rooms.remove(socket.room);
+                    if (room) ai.remove(room.aiPlayers());
+                }
             });
 
             socket.on('disconnect', function () {
-
-                var room = socket.room
-
+                var room = socket.room;
+                if (socket.player) clients.remove(socket);
                 if (room) {
 
                     socket.leave(room.name);
 
                     if (socket.player) {
-
                         socket.broadcast.to(room.name)
                             .emit('disc', socket.player);
 
@@ -170,15 +167,12 @@ module.exports = function () {
                             category: room.category, 
                             timeOfDisconnect: new Date()
                         };
-
                         socket.player.clear();
-                        rooms.disconnected[socket.player.id] = socket.player;
+                        rooms.disconnect(socket.player);
                     }
-
-                    if (room.remove(socket) && room.name !== 'lobby' && room.name !== 'disconnected')
-                        removeRoom(room);
+                    if (room.remove(socket)) ai.remove(rooms.remove(room).aiPlayers());
                 }
             });
         }
     };
-}();
+};
