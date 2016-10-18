@@ -93,10 +93,6 @@ module.exports = {
         app.click(screen).swipeScreen();
         return screen;
     },
-    clear: function () {
-        app.display.clearOld();
-        app.display.resetPreviousIndex();
-    },
     resetDefaults: function (type) {
 
         var element, previous, name, child, children, 

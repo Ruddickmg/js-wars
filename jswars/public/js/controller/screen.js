@@ -38,6 +38,23 @@ module.exports = function () {
 		left: function () { return position.x; },
 		right: function () { return position.x + dimensions.x; },
 
+
+		// deactivate all menus/selections and display screen in its initial state
+		reset: function () {
+            ['actionHud', 'damageDisplay', 'buildUnitScreen', 'unitInfoScreen', 'optionsMenu']
+                .forEach(function (screen) { app.dom.remove(screen); });
+
+            app.coStatus.show();
+            app.hud.show();
+            app.options.deactivate();
+            app.cursor.deselect();
+            app.path.clear();
+            app.range.clear();
+            app.cursor.show();
+            app.animate(['cursor', 'unit','effects']);
+            return this;
+        },
+
 		// creates scrolling effect allowing movement and map dimensions beyond screen dimensions
     	scroll: function () {
 	        var mapDimensions = app.map.dimensions();
@@ -59,8 +76,6 @@ module.exports = function () {
 	    // move screen to target position
         to: function (coordinates) {
 
-        	console.log(coordinates);
-
        		app.cursor.setPosition(coordinates);
 
 	        var mapDimensions = app.map.dimensions();
@@ -70,8 +85,6 @@ module.exports = function () {
 			for (var i = 0; i < 2; i += 1) {
 
 				a = axis[i], target = coordinates[a];
-
-				console.log(a);
 
 		        // beginning of screen view
 		        beginning = position[a];

@@ -15,16 +15,23 @@ TeamElement = function (number, size) {
     for (var t, i = 0; i < this.teams.length; i += 1)
         properties[(t = this.teams[i])] = t.toUpperCase() + 'Team';
 
-    //this.id = function () {return 'player'+this.number+'Team'; };
     this.setNumber(number);
-    this.setElement(app.dom.createList(this.p, this.id(), this.teams));
+    this.setType('team');
+    this.setElement(app.dom.createList(properties, this.id(), this.teams));
     this.setClass('team');
-    this.setHeight(size * 4); // may be setTop
+    this.setTop(size * 4); // may be setTop
     this.setWidth(size);
+    this.setCurrent(number - 1);
     this.setDescription('Set alliances by selecting the same team.');
     app.touch(this.element()).element().scroll().doubleTap();
     app.click(this.element()).element().scroll().doubleClick();        
 };
 TeamElement.prototype = Object.create(Element);
+TeamElement.prototype.getStyle = function (parameter) {
+    var parent = Number(this.element().parentNode.style[parameter].replace('px',''));
+    var element = Number(this.element().style[parameter].replace('px',''));
+    if (parameter === 'top') return parent + element + 10;
+    else return parameter === 'left' ? parent + element : element;
+}
 TeamElement.prototype.constructor = TeamElement;
 module.exports = TeamElement;

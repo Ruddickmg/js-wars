@@ -12,7 +12,6 @@ var Player = function (user) {
     this.fullName = function () { return user.name; };
     this.lastName = function () { return user.last_name; };
     this.id = function () { return user.id; };
-    this.socketId = function () { return user.socketId; };
     this.score = new Score(true);
     this.co = user.co || null;
     this._current = {
@@ -69,16 +68,14 @@ Player.prototype.endTurn = function () {
 
 Player.prototype.recover = function () {
 
-    var unit, building, u = 0, b = 0, units = app.map.units(), buildings = app.map.buildings();
-    
     // check for units that belong to the current player
-    while((unit = units[u++]))
-        unit.recover();
+    app.map.units().forEach(function (unit) {unit.recover();});
 
-    while((building = buildings[b++]))
-        if (!(unit = building.occupied()) || building.owns(unit))
+    app.map.buildings().forEach(function (building) {
+        var unit = building.occupied();
+        if (!unit || building.owns(unit))
             building.restore();
-
+    });
     return true;
 };
 
@@ -90,21 +87,10 @@ Player.prototype.isReady = function (state) {
 Player.prototype.ready = function () { return this._current.ready; };
 Player.prototype.income = function () {
 
-    // get the amount of income per building for current game
-    var  i = 0; 
-
-    console.log(app.game.settings());
-
-    // money allotted per building
-    var income = 0, funds = app.game.settings().funds,
-
-    // list of buildings
-    building, buildings = app.map.buildings();
-    
-    // count the number of buildings that belong to the current player
-    while ((building = buildings[i++]))
-        if (this.owns(building)) 
-            income += funds;
+    var scope = this, funds = app.game.settings().funds;
+    var income = app.map.buildings().reduce(function (money, building) {
+        return (isNaN(money) ? 0 : money)  + (scope.owns(building) ? funds : 0);
+    });
 
     // add income to score
     this.score.income(income);

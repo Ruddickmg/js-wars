@@ -6,7 +6,7 @@
 
 app = require('../settings/app.js');
 socket = require('../tools/sockets.js');
-app.key = require('../tools/keyboard.js');
+app.key = require('../input/keyboard.js');
 app.maps = require('../controller/maps.js'); 
 app.screens = require('../objects/screens.js');
 app.dom = require('../tools/dom.js');
@@ -50,11 +50,14 @@ Teams.init = function () {
         player.setProperty('co', element.co().value());
     });
     if (this.arrows) this.rise();
-    this.toCo();
+    app.game.started() ? this.toTeam() : this.toCo();
 };
 Teams.selectableTeams = function (team) {
-    var number = app.user.number(), element = this.playerElement(number);
-    return number === team.number() || number === 1 && element.mode().isComputer(); // maybe scope issues?
+    var number = app.user.number();
+    var teamNumber = team.number();
+    return number === teamNumber || 
+        number === 1 && Teams.playerElement && 
+            Teams.playerElement(teamNumber).mode().isComputer();
 };
 Teams.selectable = function (element, index, elements) {
     var mode = elements[index + 1], player = app.user.number(), number = element.number();
@@ -71,19 +74,22 @@ Teams.boot = function () {
 };
 Teams.remove = function () {
 
+    this.deactivate();
+
+    if (this.arrows) {
+        this.arrows.remove();
+        delete this.arrows;
+    }
+
     delete this.mode;
     delete this.playerElements;
-    this.deactivate();
-    if (this.arrows) this.arrows.remove();
+
     var name, screen = this.screen(), 
     teams = this.element;
 
     if (!app.game.joined()) 
         this.fall(function(){screen.removeChild(teams);});
     else screen.removeChild(teams);
-
-    app.undo.tempAndPrev();
-    this.clear();
 
     app.input.goBack();
     app.footer.remove();
@@ -96,31 +102,8 @@ Teams.remove = function () {
         });
         app.game.clear();
     }
-    if (!app.game.started()) app.players.reset();
-};
-Teams.fromCo = function () {
-    this.clear();
-    app.undo.tempAndPrev();
-    app.key.undo();
-    this.setMode(this.selectTeams() ? 'team' :'ready');
-    return this;
-};
-Teams.selectTeams = function () { return app.map.players() > 2 };
-Teams.fromReady = function () {
-    var player = app.user.player();
-    player.isReady(false);
-    socket.emit('ready', player);
-    if (this.arrows) this.arrows.hide();
-    app.chat.remove();
-    app.key.undo();
-    this.button.remove();
-    return this;
-};
-Teams.fromTeam = function () {
-    this.teamsHeight(this.top());
-    app.undo.tempAndPrev();
-    this.clear();
-    return this;
+    if (!app.game.started()) 
+        app.players.reset();
 };
 Teams.toCo = function (from) {
     if (app.game.joined()) {
@@ -131,16 +114,29 @@ Teams.toCo = function (from) {
         });
     }
     if (this.mode) this.playersHeight('30%');
-    if (this.arrows) this.arrows.setPosition(this.elements.current()).show();
+    if (this.arrows) this.arrows.setSpace(10).setPosition(this.elements.current()).show();
+    Select.setHorizontal(this.elements);
     this.setMode('co');
     this.sel = true;
+    return this;
 };
-Teams.setMode = function (mode) {this.mode = mode;};
+Teams.fromCo = function () {
+    app.key.undo();
+    this.setMode(this.selectTeams() ? 'team' :'ready');
+    return this;
+};
 Teams.toTeam = function () {
-    this.teamsHeight((this.top() * 7) / 24);
     this.playersHeight('20%');
-    if (this.arrows) this.arrows.setPosition(this.teams.current());
+    this.teamsHeight(this.playerElement(1).bottom() / 1.5);
+    this.showTeams();
+    if (this.arrows) this.arrows.setSpace(0).setPosition(this.teams.current()).show();
+    Select.setHorizontal(this.teams.limit(this.selectableTeams));
     this.setMode('team');
+    return this;
+};
+Teams.fromTeam = function () {
+    this.hideTeams();
+    return this;
 };
 Teams.toReady = function () {
     var top, player = app.user.player();
@@ -148,10 +144,23 @@ Teams.toReady = function () {
     this.setMode('ready');
     socket.emit('ready', player);
     this.playersHeight('20%');
-    if (this.arrows) this.arrows.setPosition(this.elements.current()).hide();
+    if (this.arrows) this.arrows.setSpace(10).setPosition(this.elements.current()).hide();
     this.button = app.screens.startButton('setupScreen');
     app.chat.display();
+    return this;
 };
+Teams.fromReady = function () {
+    var player = app.user.player();
+    player.isReady(false);
+    socket.emit('ready', player);
+    if (this.arrows) this.arrows.hide();
+    app.chat.remove();
+    app.key.undo();
+    this.button.remove();
+    return this;
+};
+Teams.setMode = function (mode) {this.mode = mode;};
+Teams.selectTeams = function () { return app.map.players() > 2 || app.game.started(); };
 Teams.choseCo = function () {
 
     var player, element, wasComputer, scope = this;
@@ -181,26 +190,24 @@ Teams.choseCo = function () {
         scope.remove();
     });
 };
-
-// figure this out!!!!
 Teams.choseTeam = function () {
-    if (app.key.pressed(['left', 'right'])) {
-        var team = Select.horizontal(this.teams).limit(this.selectableTeams);
-        if (this.arrows) this.arrows.setPosition(team.element());
-    }
-    if (app.key.pressed(['up','down'])) 
-        var team = Select.verticle(Select.getHorizontal());
-        
-    if (team) app.players.number(team.number()).setProperty(team.property(), team.value());
+    if (!app.game.started()) {
+        if (app.key.pressed(['left', 'right'])) {
+            var team = Select.setHorizontal(Select.horizontal(this.teams).limit(this.selectableTeams)).getHorizontal();
+            if (this.arrows) this.arrows.setPosition(team);
+        }
+        if (app.key.pressed(['up','down'])) var team = Select.verticle(Select.getHorizontal().hide()).show();
+            
+        if (team) app.players.number(team.number()).setProperty(team.type(), team.value());
 
-    if (app.key.pressed(app.key.esc()) || app.key.pressed(app.key.enter()) || this.booted()) {
-        if(app.key.pressed(app.key.enter()))
-            return this.fromTeam().toReady();
-        this.fromTeam().toCo();
-        app.key.undo();
+        if (app.key.pressed(app.key.esc()) || app.key.pressed(app.key.enter()) || this.booted()) {
+            if(app.key.pressed(app.key.enter()))
+                return this.fromTeam().toReady();
+            this.fromTeam().toCo();
+            app.key.undo();
+        }
     }
 };
-
 Teams.playerReady = function (from) {
     app.players.ready() && app.user.first() ? this.button.show() : this.button.hide();
 
@@ -215,7 +222,6 @@ Teams.playerReady = function (from) {
     if (app.key.pressed(app.key.esc()))
         this.selectTeams() ? this.fromReady().toTeam() : this.fromReady().toCo();
 };
-
 Teams.coBorderColor = function () {
 
     // move through the spaces and check the status of the players, change their border color
@@ -242,7 +248,7 @@ Teams.coBorderColor = function () {
     }
 };
 Teams.playerElement = function (number) {if (this.playerElements) return this.playerElements.getElement(number - 1);};
-Teams.teamElement = function (number) {return this.teams[number - 1];};
+Teams.teamElement = function (number) {return this.teams.getElement(number - 1);};
 Teams.playersHeight = function (height, len) {
     var height = this.screenHeight() * this.percentage(height);
     for (var n = 1, len = app.map.players(); n <= len; n += 1)
@@ -251,6 +257,14 @@ Teams.playersHeight = function (height, len) {
 Teams.teamsHeight = function (height) {
     for (var n = 1, len = app.map.players(); n <= len; n += 1)
         this.teamElement(n).setTop(height);
+};
+Teams.showTeams = function () { 
+    for (var n = 1, len = app.map.players(); n <= len; n += 1)
+        this.teamElement(n).show();
+};
+Teams.hideTeams = function () {
+    for (var n = 1, len = app.map.players(); n <= len; n += 1)
+        this.teamElement(n).hide();
 };
 Teams.addAiPlayer = function (number) {
     var player = app.players.number(number), n = (this.aiNumber += 1);
@@ -263,7 +277,7 @@ Teams.removeAiPlayer = function (number) {
 Teams.display = function () {
 
     var screen = this.createScreen('setupScreen');
-    var elements = [], players = [], size = 200;
+    var elements = [], teams = [], players = [], size = 200;
 
     var element = document.createElement('article');
     element.setAttribute('id','teams');
@@ -276,20 +290,20 @@ Teams.display = function () {
     var chat = app.input.form('chat', chatScreen, 'type here to chat with other players');
     chatScreen.appendChild(chat);
 
-    var height = (screen.offsetHeight * .3) + (this.arrows ? app.offScreen : 0);
+    var height = (screen.offsetHeight * .3) + (this.arrows ? app.offScreen : 0), started = app.game.started();
 
     for (var co, player, playerElement, mode, number = 1, nop = app.map.players(); number <= nop; number += 1) {
 
         playerElement = new PlayerElement(number, size, height);
         player = app.players.number(number);
 
-        elements.push((co = new CoElement(number, player ? player.property('co') : 0)).setBorder(5));
-        elements.push((mode = new PlayerNumber(number, size, player ? player.property('mode') : 0)).setBorder(5));
+        elements.push((co = new CoElement(number, player ? player.co : number - 1)).setBorder(5));
+        elements.push((mode = new PlayerNumber(number, size, player ? player.mode : 0)).setBorder(5));
 
         this.players[co.id()] = co.properties();
         this.players[mode.id()] = mode.properties();
 
-        if (player) {
+        if (!started && player) {
             player.setNumber(number);
             player.setProperty(co.type(), co.value());
             player.setProperty(mode.type(), mode.value());
@@ -302,7 +316,7 @@ Teams.display = function () {
 
         if (this.selectTeams()) {
             var team = new TeamElement(number, size);
-            if (player) player.setProperty(team.type(), team.value());
+            if (!started && player) player.setProperty(team.type(), team.value());
             playerElement.add(team.element());
             teams.push(team);
         }
@@ -312,8 +326,7 @@ Teams.display = function () {
     }
     this.playerElements = new List(players);
 
-    this.elements = new List(elements);
-    this.elements.limit(this.selectable);
+    this.elements = new List(elements).limit(this.selectable);
     if (this.selectTeams()) this.teams = new List(teams).limit(this.selectableTeams);
     if (this.arrows) this.arrows.setSize(30).setSpace(10).insert(element).setPosition(this.elements.current()).fade();
     

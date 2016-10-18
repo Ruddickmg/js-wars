@@ -1,6 +1,14 @@
+/* ------------------------------------------------------------------------------- *\
+
+    Input handles user input (Generally displayed via the footer element)
+
+\* ------------------------------------------------------------------------------- */
+
 app.type = require('../effects/typing.js');
 module.exports = {
     
+    // takes the name of the form, the element it is being inserted into and 
+    // a placeholder/words to be displayed in the form box before entry
 	form: function (name, element, placeHolder) {
         
         var input = document.createElement('p');
@@ -20,10 +28,17 @@ module.exports = {
         return input;
     },
 
+    // returns user input if it is found and adequate
     entry: function () {
         var name = this.value();
+
+        // inform the user that no input was detected
         if (!name) app.type.letters (this.description, 'A name must be entered for the game.');
+
+        // inform the user that input must be over three charachtors long
         else if (name.length < 3) app.type.letters (this.description, 'Name must be at least three letters long.');
+        
+        // return the input value
         else if (name) {
             this.val = name;
             return name;
@@ -31,6 +46,7 @@ module.exports = {
         return false;
     },
 
+    // create display screen for name input
     name: function (parent, text) {
 
         this.a = true;
@@ -53,18 +69,18 @@ module.exports = {
         return tfp;
     },
 
+    // remove the screen and deactivate input
     remove: function () {
         this.a = false;
         app.confirm.deactivate();
         app.type.reset();
         delete this.val;
         app.footer.remove();
-        app.undo.all();
-        app.hud.show();
-        app.coStatus.show();
-        app.cursor.show();
+        app.screen.reset();
     },
     active: function () { return this.a; },
+
+    // remove input form from footer
     clear: function () { 
         if (this.a) {
             this.description.style.paddingTop = null;
@@ -97,6 +113,5 @@ module.exports = {
     undoBack: function () { this.b = false; },
     activate: function () { this.a = true; },
     descriptions: function () { return document.getElementById('descriptions'); },
-    response: function () { return app.display.horizontal().select(this.descriptions(), app.effect.highlightListItem, false, false, 1).id; },
     message: function (message) { return app.type.letters(this.descriptions(), message); }
 };

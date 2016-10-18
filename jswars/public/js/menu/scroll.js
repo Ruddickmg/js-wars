@@ -5,8 +5,7 @@
 \* --------------------------------------------------------------------------------------*/
 
 app = require('../settings/app.js');
-app.undo = require('../tools/undo.js');
-app.key = require('../tools/keyboard.js');
+app.key = require('../input/keyboard.js');
 
 module.exports = function () {
 

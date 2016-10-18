@@ -15,8 +15,7 @@ Map = require('../objects/map.js')
 module.exports = function () {
 
 	var error, maps, keys, change, index, type = 'map', category;
-	//validate = new Validator('maps'), 
-	var categories = ['two'];
+	var validate = new Validator('maps'), categories = ['two'];
 
 	var types = {
 		map:{
@@ -153,8 +152,8 @@ module.exports = function () {
         screen: function () { return types[type].elements; },
         save: function (map, name) {
 
-        	// if((error = validate.defined (app.user.email(), 'email') || (error = validate.map(map))))
-        	// 	throw error;
+        	 if((error = validate.defined (app.user.email(), 'email') || (error = validate.map(map))))
+        	 	throw error;
 
             app.request.post({
 			    creator: app.user.email(),

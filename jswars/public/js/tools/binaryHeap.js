@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------------------------------------*\
     
     takes a string as an optional argument, this string is used as the name of a property 
-    in a potential object to be accessed while assessing its value in relation to the 
+    in a potential object to be compared when assessing its value in relation to the 
     other heap elements
 
 \* ------------------------------------------------------------------------------------------------------*/
@@ -35,28 +35,27 @@ Heap.prototype.right = function (i) {return this.left(i) + 1;};
 // compare the values at the two supplied indexes, return the result of whether input l is greater then input r
 Heap.prototype.lt = function(l,r) {return this.value(l) < this.value(r);};
 Heap.prototype.gt = function(l,r) {return this.value(l) > this.value(r);};
-Heap.prototype.equality = function (l,r) {return this.max ? this.gt(l,r) : this.lt(l,r);};
+Heap.prototype.inequality = function (l,r) {return this.max ? this.gt(l,r) : this.lt(l,r);};
 
 // if we are at the start of the array or the current nodes value is greater then its parent then return the current 
 // index (compensate for 0), otherwise swap the parent and child then repeat from the childs new position
-Heap.prototype.bubble = function (index) {return index < 2 || this.equality(this.parent(index), index) ? index - 1 : this.bubble(this.swap(index, this.parent(index)));};
+Heap.prototype.bubble = function (index) {
+    while (index >= 2 && !this.inequality (this.parent(index), index))
+        index = this.swap(index, this.parent(index));
+    return index - 1;
+};
 
 Heap.prototype.sort = function (index) {
 
-    var l = this.left(index), r = this.right(index), length = this.heap.length;
+    var l, r, length = this.heap.length;
 
-    // if there are no more childnodes, swap the value at the current index with the value at
-    // end of the array, sort the value at the current index then remove and return the 
-    // last array element (the minimum element)
-    if (length <= l) {
-        this.swap(index, length); 
-        this.bubble(index); 
-        return this.heap.pop(); 
-    }
+    while (length > (l = this.left(index)))
+        index = this.swap(index, length > (r = this.right(index)) && this.inequality(r,l) ? r : l)
 
-    // if the right node is in range and less then the left node then swap 
-    // the child with the right node, otherwise swap with the left
-    return this.sort(this.swap(index, length > r && this.equality(r,l) ? r : l ));
+    this.swap(index, length); 
+    this.bubble(index);
+
+    return this.heap.pop();
 };
 
 // add a value to the heap

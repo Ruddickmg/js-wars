@@ -14,22 +14,15 @@ app = require('../settings/app.js');
 app.menu = require('../controller/menu.js');
 app.animate = require('../game/animate.js');
 app.effect = require('../game/effects.js');
-app.display = require('../tools/display.js');
-app.undo = require('../tools/undo.js');
-app.key = require('../tools/keyboard.js');
+app.key = require('../input/keyboard.js');
 app.target = require('../objects/target.js');
 app.user = require('../objects/user.js');
 app.players = require('../controller/players.js');
 app.cursor = require('../controller/cursor.js');
 app.background = require('../controller/background.js');
-app.optionsMenu = require('../menu/options/optionsMenu.js');
+app.options = require('../menu/options/optionsMenu.js');
 app.confirm = require('../controller/confirmation.js');
 app.exit = new Exit();
-app.yield = new Exit(function(){
-    app.game.end();
-    var player = app.user.player();
-    socket.emit('defeat', {defeated:player, conqueror:player, capturing:false});
-});
 
 app.coStatus = new StatusHud();
 
@@ -73,14 +66,10 @@ module.exports = function () {
         },
         players: function () {return players;},
         load: function (room) { 
-            console.log(room);
             app.background.set(room.map.background);
-            console.log(map);
             settings = room.settings;
-            console.log(settings);
             app.players.add(room.players);
             players = app.players.all();
-            console.log(app.game.players);
         },
         name: function () { return name; },
         category: function () {return map.category;},
@@ -123,7 +112,6 @@ module.exports = function () {
         },
         reset: function () {
             game = mode = false;
-            app.display.clear();
             app.screens.modeMenu();
             this.setup();
         },
@@ -134,6 +122,9 @@ module.exports = function () {
 
             // set up game map
             app.map.initialize();
+
+            // make sure players are ready
+            app.players.initialize();
 
             // get the first player
             var player = app.players.first();
@@ -148,9 +139,6 @@ module.exports = function () {
 
             // start game mechanics
             app.game.loop();
-
-            // clear selection indices
-            app.display.reset();
 
             // move the screen to the current players headquarters
             app.screen.to(hq);
@@ -172,37 +160,40 @@ module.exports = function () {
         update: function () { return app.game.started() ? app.game.loop() : app.game.setup(); },
         loop: function () {
 
-            var confirmation, options;
+            var confirmation, menu, options = app.options.active();
 
             // incriment frame counter
             tick.incriment();
 
-            if ((confirmation = app.confirm.active())) app.confirm.evaluate();
-            if (app.cursor.deleting()) 
-                app.cursor.deleteUnit();
+            if ((confirmation = app.confirm.active())) 
+                app.confirm.evaluate();
+            
+            if (app.cursor.deleting()) app.cursor.deleteUnit();
 
             // if target is active, enabel target selection
-            if (app.target.active()) 
-                app.target.chose(app.cursor.selected());
-
-            // listen for options activation and selection
-            options = app.optionsMenu.coordinate(menus);
+            if (app.target.active()) app.target.chose(app.cursor.selected());
 
             // move cursor
             if (!options && !confirmation) app.cursor.move();
 
             // handle selection of objects
             if ((selected = app.cursor.selected()) && selected.evaluate(app.cursor.position()))
-                app.undo.all();
+                app.screen.reset();
 
             // display co status hud
-            else if (!app.optionsMenu.active()) {
+            else if (!options) {
                 app.coStatus.display(app.players.current(), app.cursor.side('x'));
                 app.map.focus();
             }
 
+            if (options) {
+                app.options.select();
+                if (menu = app.options.subMenu())
+                    app.options[menu]();
+            }
+
             // controls cursor selection
-            if (!options && !confirmation)
+            if (!options && !confirmation) 
                 app.cursor.select();
 
             // control map info hud
@@ -217,17 +208,14 @@ module.exports = function () {
             }
 
             // exit menus when esc key is pressed
-            if (app.key.pressed(app.key.esc())){
+            if (app.key.pressed(app.key.esc())) {
                 if (app.cursor.deleting()) { 
                     app.cursor.selectMode();
-                } else if(!app.optionsMenu.active() && !options && !selected && !confirmation){
-                    app.optionsMenu.display();
+                } else if(!app.options.active() && !selected && !confirmation) {
+                    app.options.display();
                     app.coStatus.hide();
-                } else {
-                    app.optionsMenu.deactivate(menus);
-                    app.hud.show();
-                    app.coStatus.show();
-                    app.undo.all();
+                } else if (!app.options.subMenu()) {
+                    app.screen.reset();
                 }
             }
 

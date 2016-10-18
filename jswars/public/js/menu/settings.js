@@ -57,20 +57,23 @@ Settings.select = function (selected) {
             this.sweller.stop().setElement(selected.background()).start();
             if (this.arrows) this.arrows.setPosition(selected);
         }
-        if(app.key.pressed(['up','down'])) 
+
+        if(app.key.pressed(['up','down']) && !app.game.started()) 
             selected = Select.setVerticle(Select.verticle(Select.getHorizontal().hide()))
                 .getHorizontal().show();
         
-        if (selected) this.set(selected.type(), selected.value());
+        if (selected && !app.game.started()) this.set(selected.type(), selected.value());
     }
     
-    if(app.key.pressed(app.key.enter()) && this.arrows || app.input.active()) 
-        return this.input();
-    else return this.exit(this, function (scope) { 
-        scope.m = false;
-        scope.goBack();
-        scope.remove();
-    });
+    if (!app.game.started()) {
+        if(app.key.pressed(app.key.enter()) || app.input.active()) 
+            return this.input();
+        else return this.exit(this, function (scope) { 
+            scope.m = false;
+            scope.goBack();
+            scope.remove();
+        });
+    }
 };
 
 Settings.set = function (setting, value) { return this.parameters[setting] = value; };
@@ -102,7 +105,6 @@ Settings.input = function () {
         app.key.undo(app.key.esc());
         app.input.clear();
         this.arrows.show();
-        app.display.clearOld();
     }
 };
 
@@ -114,9 +116,6 @@ Settings.remove = function () {
     this.swelling = false;
     delete this.elements;
     Select.clear();
-    app.display.reset();
-    app.undo.tempAndPrev();
-    this.clear();
     if (app.key.pressed(app.key.esc()))
         this.screen().removeChild(this.element);
     app.key.undo();

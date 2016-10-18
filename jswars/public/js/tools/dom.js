@@ -6,6 +6,14 @@
 
 module.exports = {
 
+    insertLocation: document.getElementById('before'),
+
+    remove: function (element) {
+        var remove = document.getElementById(element);
+        if (remove) remove.parentNode.removeChild(remove);
+        return this;
+    },
+
     // create a canvas to display the hovered map element in the hud
     createCanvas: function (id, object, dimensions) {
 
@@ -194,5 +202,45 @@ module.exports = {
         var i = min;
         while (children[i]) i += 1;
         return i + 1;
+    },
+    createMenu: function (properties, allowedProperties, elements, callback) {
+    
+        var inner = elements.div;
+        var outer = elements.section;
+
+        // build the outside screen container or use the existing element
+        var display = document.getElementById(outer) || document.createElement('section');
+        display.setAttribute('id', outer);
+
+        // build inner select screen or use existing one
+        var exists = document.getElementById(inner);
+        var innerScreen = document.createElement('div');
+        innerScreen.setAttribute('id', inner);
+
+        // get each unit type for looping over
+        var keys = Object.keys(properties);
+        var len = keys.length;
+
+        for (var u = 0; u < len; u += 1) {
+
+            var key = keys[u];
+            var props = properties[key];
+
+            // create list for each unit with its cost
+            var list = this.createList(props, key, allowedProperties);
+            if (props.id || props.id === 0) list.setAttribute('id', props.id);
+            if (inner) list.setAttribute('class', inner + 'Item');
+            if (callback) callback(list, props);
+
+            // add list to the select screen
+            innerScreen.appendChild(list);
+        }
+
+        // add select screen to build screen container
+        if (exists) exists.parentNode.replaceChild(innerScreen, exists);
+        else document.body.insertBefore(display, this.insertLocation);
+
+        display.appendChild(innerScreen);
+        return display;
     }
 };

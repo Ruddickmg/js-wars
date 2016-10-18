@@ -10,7 +10,7 @@ Heap = require('../tools/binaryHeap.js');
 var Path = function () {this._coordinates = [];};
 
 Path.prototype.size = function () { return this._coordinates.length; };
-Path.prototype.clear = function () { return this._coordinates = []; };
+Path.prototype.clear = function () { this._coordinates = []; return this; };
 Path.prototype.set = function (p) { return (this._coordinates = this._coordinates.concat(p)); };
 Path.prototype.get = function () { return this._coordinates; };
 Path.prototype.getNeighbors = function (position, check) {
@@ -56,22 +56,17 @@ Path.prototype.reachable = function (unit, clean, movement) {
 
         current = open.pop();
 
-        neighbors = this.getNeighbors(current.position(), unit);
-
-        for (var i = 0; i < neighbors.length; i += 1) {
-
-            neighbor = neighbors[i];
+        this.getNeighbors(current.position(), unit).forEach(function (neighbor) {
 
             cost = (current.f || 0) + unit.moveCost(neighbor);
 
-            // if the currentrent square is in the open array and a better position then update it
             if (cost <= allowed) {
                 neighbor.f = cost;
                 app.map.close(neighbor);
                 reachable.push(neighbor);
                 open.push(neighbor);
             } 
-        }
+        });
     }
     return clean ? app.map.clean(reachable) : reachable;
 };
@@ -79,7 +74,7 @@ Path.prototype.reachable = function (unit, clean, movement) {
 Path.prototype.find = function (unit, target) {
 
     var allowed = unit.movement(), clean = [unit], cost, neighbor, i, neighbors, position, current,
-    open = new Heap('f'); 
+    open = new Heap('f'), scope = this; 
     app.map.close(unit);
     open.push(unit);
  
@@ -96,24 +91,17 @@ Path.prototype.find = function (unit, target) {
             return this.set(path);
         }
 
-        neighbors = this.getNeighbors(position);
-
-        for (i = 0; i < neighbors.length; i += 1) {
-
-            neighbor = neighbors[i]; // current neighboring square
-
-            cost = (current.g || 0) + unit.moveCost(neighbor);
-
-            // if the currentrent square is in the open array and a better position then update it
+        this.getNeighbors(position).forEach(function (neighbor) {
+            cost = (current.g || 0) + unit.moveCost(neighbor); 
             if (cost <= allowed && (!neighbor.g || neighbor.g >= current.g)) {
-                neighbor.g = cost; // distance from start to neighboring square
-                neighbor.f = cost + this.distance(neighbor.position(), target, unit.position()); // distance from start to neighboring square added to the distance from neighboring square to target
+                neighbor.g = cost;
+                neighbor.f = cost + scope.distance(neighbor.position(), target, unit.position());
                 neighbor.p = current; //<--- keep reference to parent
                 app.map.close(neighbor);
                 clean.push(neighbor);
                 open.push(neighbor);
             }
-        }
+        });
     }
     app.map.clean(clean);
     return false;

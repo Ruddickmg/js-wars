@@ -12,11 +12,11 @@ Validator = require('../tools/validator.js');
 Terrain = function (type, position) {
 
 	var error, properties = new app.properties();
-    //validate = new Validator('terrain'), 
+    var validate = new Validator('terrain');
     var property = properties[type];
     
-  //   if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
-		// throw error;
+     if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
+		 throw error;
 
     this.n = property.name();
 	this.t = property.type();

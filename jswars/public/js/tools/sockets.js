@@ -8,8 +8,8 @@ app = require('../settings/app.js');
 app.game = require('../game/game.js');
 app.chat = require('../tools/chat.js');
 app.menu = require('../controller/menu.js');
-app.optionsMenu = require('../menu/options/optionsMenu.js');
-app.key = require('../tools/keyboard.js');
+app.options = require('../menu/options/optionsMenu.js');
+app.key = require('../input/keyboard.js');
 app.maps = require('../controller/maps.js');
 app.map = require('../controller/map.js');
 app.players = require('../controller/players.js');
@@ -23,12 +23,12 @@ Player = require('../objects/player.js');
 Unit = require('../objects/unit.js');
 Teams = require('../menu/teams.js');
 
-//var validate = new Validator('sockets');
+var validate = new Validator('sockets');
 var socket = io.connect("http://127.0.0.1:8080") || io.connect("http://jswars-jswars.rhcloud.com:8000");
 
 // all in game commands
-socket.on('confirmSave', function (player) { app.confirm.save(app.players.get(player));});
-socket.on('confirmationResponse', function (response) { app.confirm.player(response.answer, app.players.get(response.sender));});
+socket.on('confirmSave', function (player) {app.confirm.save(app.players.get(player));});
+socket.on('confirmationResponse', function (response) {app.confirm.player(response.answer, app.players.get(response.sender));});
 
 socket.on('cursorMove', function (move) {
     app.key.press(move);
@@ -38,15 +38,15 @@ socket.on('cursorMove', function (move) {
 socket.on('background', function (type) { app.background.set(type); });
 
 socket.on('endTurn', function (id) {    
-    //if(validate.turn(id))
-        app.optionsMenu.end();
+    if(validate.turn(id))
+        app.options.end();
 });
 
 socket.on('addUnit', function (unit) {
     var u = unit._current;
     var player = app.players.get(u.player._current);
     var unit = new Unit(player, u.position, app.units[u.name.toLowerCase()]);
-    //if(validate.build(unit))
+    if(validate.build(unit))
         if(player.canPurchase(unit.cost())) {
             player.purchase(unit.cost());          
             app.map.addUnit(unit);
@@ -54,34 +54,34 @@ socket.on('addUnit', function (unit) {
 });
 
 socket.on('attack', function (action) {
-    //if(validate.attack(action)) {
+    if(validate.attack(action)) {
         var attacker = app.map.getUnit(action.attacker), 
         attacked = app.map.getUnit(action.attacked);
         attacker.attack(attacked, action.damage);
         if(app.user.owns(attacked) && !attacked.attacked())
             attacked.attack(attacker);
-    //}
+    }
 });
 
 socket.on('joinUnits', function (action) {
-    //if(validate.combine(action)) {
+    if(validate.combine(action)) {
         var unit = app.map.getUnit(action.unit);
         var selected = app.map.getUnit(action.selected);
         selected.join(unit);
-    //}
+    }
 });
 
 socket.on('moveUnit', function (move) {
     var unit = app.map.getUnit(move);
     var target = move.position;
-    //if(validate.move(unit, target))
+    if(validate.move(unit, target))
         unit.move(target, move.moved);
 });
 
 socket.on('loadUnit', function (load) {
     var passanger = app.map.getUnit({id:load.passanger});
     var transport = app.map.getUnit({id:load.transport});
-    //if(validate.load(transport, passanger))
+    if(validate.load(transport, passanger))
         passanger.load(transport);
 });
 

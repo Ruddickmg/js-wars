@@ -12,9 +12,9 @@ AiPlayer = function (number) {
     this.fullName = function () { return 'Mr. Robot'; };
     this.lastName = function () { return 'Robot'; };
     this.id = function () { return this._current.id; };
-    this.socketId = function () { return 'IAmSocketless'; };
     this.score = new Score(true);
     this.co = null;
+    this.mode = 'cp';
     this.isComputer = true;
     if (app.user.first()) socket.emit('addAiPlayer', this);
 };

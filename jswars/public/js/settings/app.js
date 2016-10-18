@@ -23,9 +23,6 @@ module.exports = {
     // holds number of pixles to move elements on or off screen
     offScreen: 800,
 
-    // target element to insert before
-    domInsertLocation: document.getElementById('before'),
-
     // holds temporary shared variables, usually info on game state changes that need to be accessed globally
     temp:{},
 

@@ -63,8 +63,10 @@ module.exports = function (io) {
             socket.on('delete', function (unit) { socket.player.del(unit, socket);});
             socket.on('defeat', function (player) { socket.player.defeat(player, socket);});
             socket.on('cursorMove', function (cursor) { socket.player.moveCursor(cursor, socket);});
-            socket.on('confirmSave', function (game) { socket.player.save(game, socket);});
-            socket.on('confirmationResponse', function (game) { socket.player.confirm(game, socket);});
+
+            // save confirmation between players
+            socket.on('confirmSave', function (game) {socket.player.save(game, socket);});
+            socket.on('confirmationResponse', function (game) {socket.player.confirm(game, socket);});
 
             socket.on('aiTurn', function (game) {ai.get(socket.room.getPlayer(game.ai)).process(game.room);});
             socket.on('start', function (game){ socket.broadcast.to(socket.room.name).emit('start', game); });
@@ -94,9 +96,6 @@ module.exports = function (io) {
             });
             
             socket.on('setUserProperties', function (p) {
-                console.log('-- setUserProperties: ' + (inc++) + ' --');
-                console.log(p);
-                console.log('');
                 socket.room.getPlayer(p.player)[p.property] = p.value;
                 socket.broadcast.to(socket.room.name).emit('propertyChange', p);
             });

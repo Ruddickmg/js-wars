@@ -1,7 +1,7 @@
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
 app.dom = require('../tools/dom.js');
-app.key = require('../tools/keyboard.js');
+app.key = require('../input/keyboard.js');
 Player = require('../objects/player.js');
 AiPlayer = require('../objects/aiPlayer.js');
 Teams = require('../menu/teams.js');
@@ -9,11 +9,6 @@ Teams = require('../menu/teams.js');
 module.exports = function () {
 
 	var current, players = [], defeated = [], elements = [], ready,
-	
-	setProperties = function (property, value, index) {
-        var i = isNaN(index) ? property.getNumber() - 1 : index;
-        if (players[i]) players[i].setProperty(property, value);
-    },
 
     exists = function (player) {
         var id = player._current ? player._current.id : typeof (player.id) === 'function' ? player.id() : player.id;
@@ -38,6 +33,7 @@ module.exports = function () {
             var element = Teams.playerElement(number);
             var value = element && !player.co ? element.co().value() : player.co;
             if (value) player.setCo(value);
+
             return true;
         }
         return false;
@@ -70,15 +66,14 @@ module.exports = function () {
     };
 
 	return {
-		setProperty:setProperties,
+        replace: replacePlayer,
 		changeProperty: function (p) { 
             var player = players[exists(p.player)];
             var property = p.property;
             var value = p.value;
-
-            Teams.playerElement(player.number())[property]()
-                .changeCurrent(value);
-
+            var element = Teams.playerElement(player.number());
+            if (element && element[property]) 
+                element[property]().changeCurrent(value);
             player.setProperty(property, value);
         },
         setElements: function (e) {elements = e;},
@@ -88,7 +83,7 @@ module.exports = function () {
         first: function () { return players[0]; },
         last: function () { return players[players.length - 1]; },
        	next: function () { return current === this.last() ? this.first() : players[current.number()]; },
-        other: function () { return players.filter(function (player) {player.id() !== app.user.id();});},
+        other: function () { return players.filter(function (player) {return player.id() !== app.user.id();});},
         all: function () { return players.concat(defeated); },
         length: function () { return players.length; },
         add: function (player) {
@@ -125,13 +120,12 @@ module.exports = function () {
         },
         names: function (players) {
             return players.reduce(function (prev, player, i, players) {
-                var p = prev ? prev : '', len = players.length, name = player.name();
+                var p = typeof(prev) === "string" ? prev : '', len = players.length;
                 var transition = (i + 1 < len ? (i + 2 < len ? ', ' : ' and ') : '');
-                return p + name + transition;
+                return p + player.name() + transition;
             });
         },
-        unconfirm: function () {players.map(function(element){element.unconfirm();});},
-        replace: replacePlayer,
+        unconfirm: function () {players.forEach(function(element){element.unconfirm();});},
         remove: function (player) {
 
             var index, removed;
@@ -140,10 +134,16 @@ module.exports = function () {
 
                 if((removed = players.splice(index, 1)[0]).isComputer && app.user.first())
                     socket.emit('removeAiPlayer', removed);
-
+                
                 if (players.length >= index + 1)
                     shiftPlayers(index);
             }
+        },
+        initialize: function () {
+            players.forEach(function (player) {
+                if (typeof(player.co) === "string")
+                    player.setProperty("co", player.co);
+            });
         }
     };
 }();

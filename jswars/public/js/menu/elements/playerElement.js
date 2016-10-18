@@ -29,6 +29,7 @@ PlayerElement.prototype.team = function () {return this.t;};
 PlayerElement.prototype.fade = function () {return this.co().fader.start(); };
 PlayerElement.prototype.fading = function () { return this.co().fader.fading(); };
 PlayerElement.prototype.stopFading = function () {return this.co().fader.stop();};
+PlayerElement.prototype.bottom = function () {return this.top() + this.height() + 10; };
 PlayerElement.prototype.toSolid = function () {return this.co().fader.stop().toSolid();};
 PlayerElement.prototype.toWhite = function () {return this.co().fader.stop().toWhite();};
 PlayerElement.prototype.show = function () {

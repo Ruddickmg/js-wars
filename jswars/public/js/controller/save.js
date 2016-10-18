@@ -1,8 +1,7 @@
 // save
-app.key = require('../../tools/keyboard.js');
+app.key = require('../../input/keyboard.js');
 app.cursor = require('../../controller/cursor.js');
 app.input = require('../../objects/input.js');
-app.undo = require('../../tools/undo.js');
 
 module.exports = {
     display: function () {  
@@ -17,10 +16,7 @@ module.exports = {
     	if (app.key.pressed(app.key.enter()) || app.key.pressed(app.key.esc())){
     	 	if (app.input.entry()) app.confirm.save(app.input.value());
         	app.input.remove();
-        	app.hud.show();
-        	app.coStatus.show();
-        	app.cursor.show();
-        	app.undo.all();
+        	app.screen.reset();
         	this.a = false;
     	}
     },

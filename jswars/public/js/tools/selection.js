@@ -5,8 +5,8 @@ module.exports = {
     },
     getHorizontal: function () { return this.hElement; },
     getVerticle: function () { return this.vElement; },
-    verticle: function (elements) { return this.move(elements, ['up','down']);},
-    horizontal: function (elements) { return this.move(elements, ['left','right']);},
+    verticle: function (elements) { return this.move(elements, ["up", "down"]); },
+    horizontal: function (elements) { return this.move(elements, ["left","right"]);},
     move: function (elements, keys) { return app.key.pressed(keys[1]) ? elements.next() : elements.prev(); },
     setHorizontal: function (e) {
         var selected = e.current();
@@ -23,7 +23,7 @@ module.exports = {
         var index = elements.indexOf(touched);
         if (isNaN(index)) return false;
         elements.current().hide();
-        this.setHorizontal(elements.setIndex(index).show('inline-block'));
+        this.setHorizontal(elements.setIndex(index).show("inline-block"));
     },
     clear: function () {
         delete this.vElement;

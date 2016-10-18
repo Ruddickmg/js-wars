@@ -16,7 +16,7 @@ module.exports = function () {
     var error, focused, longestLength, map = {},
     matrix, buildings = [], terrain = [], units = [],
     color = app.settings.playerColor, allowedUnits, allowedBuildings;
-    //validate = new Validator('map');
+    // var validate = new Validator('map');
 
     var restricted = {
         sea: ['sea', 'reef', 'shoal'],
@@ -250,37 +250,49 @@ module.exports = function () {
         terrain: function () { return terrain; },
         insert: function (element) { return matrix.insert(element); },
         units: function () { return units; },
-        top: function (position, replace) { return matrix.position(position, replace); },
+        top: function (position, replace) { 
+            return matrix.position(position, replace); 
+        },
         get: function () { return map; },
         set: function (selectedMap) { map = selectedMap; },
         initialize: function (editor) {
 
-            var terr = map.terrain,
-            building = map.buildings,
-            unit = map.units, 
-            dim = map.dimensions,
-            product = dim.x * dim.y,
-            i, t, b, u, e, element, pos;
+            var dim = map.dimensions, product = (dim.x * dim.y);
 
             matrix = new Matrix(dim);
 
             allowedBuildings = Math.ceil(product/10) - 1;
             allowedUnits = Math.ceil(product/12.5);
 
-            for (var t, i = 0; i < terr.length; i += 1)
-                terrain.push(matrix.insert(new Terrain(terr[i].type, terr[i].position)));
-
-            for (var b, j = 0; j < building.length; j += 1) 
-                buildings.push(matrix.insert(new Building(building[j].type, building[j].position, j, editor ? building[j].player : app.players.number(building[j].player))));
- 
-            for (var u, k = 0; k < unit.length; k += 1)
-                units.push(matrix.insert(new Unit(editor ? unit[k].player : app.players.number(unit[k].player), unit[k].position, app.unit[unit[k].type])));
+            terrain =  map.terrain.map(function (t) {
+                return matrix.insert(new Terrain(t.type, t.position));
+            });
+            buildings = map.buildings.map(function (b, index) {
+                return matrix.insert(
+                    new Building(
+                        b.type,
+                        b.position,
+                        index,
+                        (editor ? b.player : app.players.number(b.player))
+                    )
+                );
+            });
+            units = map.units.map(function (u) {
+                return matrix.insert(
+                    new Unit(
+                        (editor ? u.player : app.players.number(u.player)), 
+                        u.position, 
+                        app.unit[u.type]
+                    )
+                );
+            });
         },
         moveUnit: function (unit, target) {
             var e, current = units[getIndex(unit, units)];
 
             if (current) matrix.remove(current);
             else current = unit;
+
             current.setPosition(target);
 
             if(!(e = matrix.position(target)) || e.type() !== 'unit')

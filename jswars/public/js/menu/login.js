@@ -1,7 +1,6 @@
 socket = require('../tools/sockets.js');
 app.game = require('../game/game.js');
 app.screens = require('../objects/screens.js');
-app.display = require('../tools/display.js');
 app.user = require('../objects/user.js');
 app.input = require('../objects/input.js');
 Menu = require('../objects/menu.js');
@@ -104,7 +103,7 @@ Login.display = function () {
         }(document, 'script', 'facebook-jssdk'));
 
         this.loginScreen = this.setup();
-        document.body.appendChild(this.loginScreen, app.domInsertLocation);
+        document.body.appendChild(this.loginScreen, app.dom.insertLocation);
 
         // hide the login screen, only show if someone has logged in
         this.loginScreen.style.display = 'none';

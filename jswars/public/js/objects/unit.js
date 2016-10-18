@@ -1,6 +1,5 @@
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
-app.undo = require('../tools/undo.js');
 app.game = require('../game/game.js');
 app.effect = require('../game/effects.js');
 app.animate = require('../game/animate.js');
@@ -159,7 +158,7 @@ Unit.prototype.movementRange = function (distance) {
         if(this.on(range[i]))
             range.unshift(range.splice(i,1)[0]);
 
-    reachable = distance !== undefined ? range : app.path.reachable(this, true);
+    reachable = (distance !== undefined) ? range : app.path.reachable(this, true);
 
     for (i = 0; i < reachable.length; i += 1)
         if(reachable[i].type() !== 'unit' || this.owns(reachable[i]))
@@ -338,7 +337,7 @@ Unit.prototype.compare = function (unit) {
 
 Unit.prototype.wait = function () {
     this.deselect();
-    app.undo.display('actionHud');
+    app.dom.remove('actionHud');
 };
 
 Unit.prototype.canCapture = function (position) {
@@ -432,7 +431,7 @@ Unit.prototype.attack = function(unit, damage, attacking){
     if(app.user.owns(this) && !this.attacked()){
         app.cursor.show();
         this.deselect();    
-        app.undo.display('damageDisplay');
+        app.dom.remove('damageDisplay');
         socket.emit('attack', { attacker:this, attacked:unit, damage:damage });
     }
     this.refresh();
@@ -502,52 +501,81 @@ Unit.prototype.actions = function (position) {
             actions.join = unit;
         else actions.load = unit;
 
-    if (this.loaded())
-        actions.drop = this._current.loaded;
+    if (this.loaded()) actions.drop = this._current.loaded;
 
     // if there are any actions that can be taken then return them
     return actions;
 };
+Unit.prototype.displayActions = function (position) {
 
+    var actions = {}, options = this.actions(position);
+
+    Object.keys(options).forEach(function (action) {
+        if (action === "drop" && options.drop.isArray())
+            options.drop.forEach(function (unit, index) {
+                actions[index] = { name: action };
+            });
+        else actions[action] = { name: action };
+    });
+
+    app.coStatus.hide();
+
+    this.allActions = new UList(app.dom.createMenu(
+        actions, 
+        app.settings.actionsDisplay, 
+        {section: 'actionHud', div: 'actions'}
+    ).firstChild).highlight();
+
+    return this.selected = this.allActions.id();
+};
 Unit.prototype.refresh = function () {app.animate('unit');};
 
 Unit.prototype.evaluate = function (position) {
 
     if(app.cursor.hidden() && !app.target.active()){
         
-        var unload, action;
+        if (app.key.pressed(app.key.esc())) {
 
-        if(app.key.pressed(app.key.esc())){
             this.moveBack();
             this.escape();
             this.deselect();
 
-        } else if ((actions = this.actions(position))
-        && (type = app.display.verticle().select('actionSelectionIndex', 'actions', app.effect.highlightListItem, 'ul'))){
+        } else if ((actions = this.actions(position)) && this.selected) {
 
-            if ((unload = (action = type.action) === 'drop') || action === 'attack') {
-                if (unload) this.unloading = type.id;
-                else this._current.targets = actions.attack;
-                app.target.activate(action);
-            } else {
-                this[action](actions[action]);
-                app.cursor.show()
+            if (app.key.pressed(["up","down"]))
+                this.selected = Select.verticle(this.allActions.deHighlight()).highlight().id();
+
+            var action = this.selected;
+
+            if (app.key.pressed(app.key.enter())) {
+                if (action === 'attack') {
+                    this.setTargets(actions.attack);
+                    app.target.activate(action);
+                } else if (action === 'drop') {
+                    app.target.activate((this.unloading = actions[action]));
+                } else {
+                    this[action](actions[action]);
+                    app.cursor.show()
+                }
+                this.escape();
             }
-            this.escape();
         }
     }
 };
-
+Unit.prototype.setTargets = function (targets) {this._current.targets = targets;};
 Unit.prototype.moveBack = function () { if (this.mov) this.move(this.previous(), -this.mov); };
 Unit.prototype.execute = function (p) {
 
     // and remove the range and path highlights
     this.move(new Position(p.x, p.y), this.moved(p));
-    app.undo.effect('highlight').effect('path');
+
+    // display path to cursor
+    app.path.clear();
+    app.range.clear();
 
     // if there are actions that can be taken then display the necessary options
-    if (!app.display.actions(this.actions(p)))
-        app.undo.all();
+    if (!this.displayActions(p)) app.screen.reset();
+
     app.cursor.hide();
 };
 
@@ -604,7 +632,7 @@ Unit.prototype.drop = function (u, i) {
 };
 
 Unit.prototype.deselect = function () {
-    app.undo.all();
+    app.screen.reset();
     app.hud.show();
     app.cursor.show();
     app.coStatus.show();
@@ -614,8 +642,9 @@ Unit.prototype.deselect = function () {
 
 Unit.prototype.escape = function () {
     app.key.undo();
-    app.undo.hudHilight();
-    app.undo.display('actionHud');
+    app.coStatus.show();
+    // app.options.deactivate();    
+    app.dom.remove('actionHud');
 };
 
 Unit.prototype.occupies = function () {

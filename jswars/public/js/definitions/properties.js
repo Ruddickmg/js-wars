@@ -9,9 +9,9 @@ app.obsticles = require('../definitions/obsticles.js');
 Validator = require('../tools/validator.js');
 
 module.exports = function () {
-	// var error, validate = new Validator('properties');
-	// if((error = validate.hasElements(app.obsticles, ['wood','building','plain','mountain', 'unit'])))
-	// 	throw error;
+	var error, validate = new Validator('properties');
+	if((error = validate.hasElements(app.obsticles, ['wood','building','plain','mountain', 'unit'])))
+	   throw error;
 
     this.tallMountain = new app.property('Mountain', app.obsticles.mountain);
     this.tree = new app.property('Woods', app.obsticles.wood);

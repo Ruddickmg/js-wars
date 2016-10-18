@@ -1,6 +1,6 @@
 BuildingDisplay = function () {
 	var property = function (id) { return document.getElementById(id).firstChild; };
-	this.e = app.display.info({
+	this.e = app.dom.createMenu({
 	        city:{ numberOf:0, type:'city' },
 	        base:{ numberOf:0, type:'base' },
 	        airport:{ numberOf:0, type:'airport' },

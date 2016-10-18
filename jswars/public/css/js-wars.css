@@ -1072,10 +1072,10 @@ li[pos=twoBelow] {
     z-index: 10;
 }
 
-.a::first-letter,
-.b::first-letter,
-.c::first-letter,
-.d::first-letter {
+.team .a::first-letter,
+.team .b::first-letter,
+.team .c::first-letter,
+.team .d::first-letter {
     font-size: 80px;
     text-shadow:     
     -2px 0 0 white,
@@ -1119,19 +1119,19 @@ li[pos=twoBelow] {
       8px 8px 0 black;
 }
 
-.a::first-letter {
+.team .a::first-letter {
     color: #E6DE8E;
 }
 
-.b::first-letter {
+.team .b::first-letter {
     color: #85E0FF;
 }
 
-.c::first-letter {
+.team .c::first-letter {
     color: #A4E68E;
 }
 
-.d::first-letter {
+.team .d::first-letter {
     color: #FAACDC;
 }
 

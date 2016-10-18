@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------------------------------------------*\
     
-    Calculate.js handles calculations like pathfinding and the definition of movement range
+    Calculate.js handles necessary game calculations 
 
 \* ----------------------------------------------------------------------------------------------------------*/
 

@@ -12,7 +12,7 @@ List.prototype.setIndex = function (index) {
     this.i = index && index > 0 ? index : 0;
     return this;
 };
-List.prototype.setCurrent = function (property) {return this.setIndex(property ? this.indexOf(property) : 0);};
+List.prototype.setCurrent = function (property) {return this.setIndex(isNaN(property) ? this.indexOf(property) : (property || 0));};
 List.prototype.reset = function () {return this.setIndex(0);},
 List.prototype.index = function () { return this.i; },
 List.prototype.wrap = function (number) {
@@ -36,7 +36,9 @@ List.prototype.current = function () {
     var limit = this.limited, index = this.i;
     return limit ? limit[index < limit.length ? index : 0] : this.getElement(index);
 };
-List.prototype.getElement = function (index) {return this.elements()[index];};
+List.prototype.getElement = function (index) {
+    return this.elements()[index];
+};
 List.prototype.limit = function (callback) {
     var elements = this.elements(), current = this.current();
     this.limited = elements.filter(callback);

@@ -15,14 +15,56 @@ Ul.prototype.element = function () { return this.e; };
 Ul.prototype.setElement = function (element) {
     this.e = element;
     this.setElements(element.childNodes);
+    return this;
 };
 Ul.prototype.hideAll = function () {
     var elements = this.elements(), i = elements.length;
     while (i--) elements[i].style.display = 'none';
     return this;
 };
-Ul.prototype.display = function (display) {
-    this.current().style.display = display || null;
+Ul.prototype.move = function (index) { return this.setIndex(this.scroll(this.wrap(index))); };
+Ul.prototype.setMin = function (min) {this.listTop = min; return this;};
+Ul.prototype.setMax = function (max) {this.listBottom = (this.max = max); return this;};
+Ul.prototype.setScroll = function (min, max) {
+    this.setMin(min).setMax(max).scroll(this.index()); 
+    return this;
+};
+Ul.prototype.scroll = function (target) {
+
+    var max = this.max; 
+
+    if (max) {
+
+        var move = false;
+
+        if (target > this.listBottom) {
+
+            move = true;
+            this.listBottom = target;
+            this.listTop = target - max;
+
+        } else if (target < this.listTop) {
+
+            move = true;
+            this.listBottom = target + max;
+            this.listTop = target;
+        }
+
+        if (move) { 
+            var top = this.listTop;
+            var bottom = this.listBottom;
+            var scope = this;
+
+            this.elements().forEach(function (e,i) {
+                scope.display(i < top || i > bottom ? "none" : "block", e);
+            });
+        }
+    }
+    return target;
+};
+Ul.prototype.display = function (display, element) {
+    (element ? element : this.current())
+        .style.display = display || null;
     return this;
 };
 Ul.prototype.indexOf = function (property) {

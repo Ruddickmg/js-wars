@@ -18,7 +18,7 @@ module.exports = {
         midTank:app.units.midTank,
         artillery:app.units.artillery,
         missles:app.units.missles,
-        rockets:app.units.infantry,
+        rockets:app.units.rockets,
         neoTank:app.units.neoTank
     },
     airport: {

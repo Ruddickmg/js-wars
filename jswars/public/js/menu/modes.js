@@ -34,7 +34,7 @@ Modes.setHeight = function (height) {this.h = height;};
 Modes.height = function () {return this.h;};
 Modes.properties = function () { return app.settings.selectModeMenu; };
 Modes.message = function (id) {return this.messages[id];};
-Modes.insert = function (screen) {document.body.insertBefore(screen, app.domInsertLocation);};
+Modes.insert = function (screen) {document.body.insertBefore(screen, app.dom.insertLocation);};
 Modes.remove = function () {
     app.dom.removeChildren(this.screen(), 'title');
     app.footer.remove();

@@ -9,7 +9,7 @@ app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
 app.units = require('../definitions/units.js');
 app.animate = require('../game/animate.js');
-app.optionsMenu = require('../menu/options/optionsMenu.js');
+app.options = require('../menu/options/optionsMenu.js');
 
 Validator = require('../tools/validator.js');
 Matrix = require('../tools/matrix.js');
@@ -81,9 +81,9 @@ module.exports = function () {
 
             // exit menus when esc key is pressed
             if(app.key.pressed(app.key.esc()))
-                if(!app.optionsMenu.active())
-                    app.optionsMenu.display();
-                else app.undo.all();
+                if(!app.options.active())
+                    app.options.display();
+                else app.screen.reset();
 
             app.key.undo();
             app.key.undoKeyUp();

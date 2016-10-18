@@ -1,14 +1,11 @@
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
-app.optionsMenu = require('../menu/options/optionsMenu.js');
+app.options = require('../menu/options/optionsMenu.js');
 app.calculate = require('../game/calculate.js');
 app.effect = require('../game/effects.js');
-app.undo = require('../tools/undo.js');
 app.animate = require('../game/animate.js');
-app.key = require('../tools/keyboard.js');
-//app.user = require('../objects/user.js');
+app.key = require('../input/keyboard.js');
 app.game = require('../game/game.js');
-app.display = require('../tools/display.js');
 app.feature = require('../objects/featureHud.js');
 
 module.exports = function () {
@@ -27,10 +24,9 @@ module.exports = function () {
         var target, range, move = position[axis] + operation;
         if (comparison <= 0 ? move >= 0 : move < comparison){
             position[axis] += operation;
-            if(selected && allowed()){
-                app.undo.effect('path');
+            if (selected && allowed()) {
                 selected.movementRange(app.calculate.distance(selected.position(), position))
-                app.path.find(selected, position);
+                app.path.clear().find(selected, position);
                 app.animate('effects');
             }
             return position;
@@ -100,16 +96,14 @@ module.exports = function () {
                             return selected = false;
 
                     // if there is nothing selected
-                    } else if (!selected && !app.optionsMenu.active() && app.user.owns(hovered)){
+                    } else if (!selected && !app.options.active() && app.user.owns(hovered)){
                         
-                        selected = hovered;
-
-                        // save the selected element and then select it
-                        if(selected.select())
+                        // save the selected element and select it
+                        if ((selected = hovered).select()) {
 
                             app.hud.hide();
                         
-                        else selected = false;
+                        } else selected = false;
                     }
 
                 } else if (!selected && (hovered.type() === 'unit' || app.key.keyUp(app.key.range()))) {
@@ -152,7 +146,7 @@ module.exports = function () {
 
             moved = false;
 
-            if ((!selected || selected.type() !== 'building' ||  app.editor.active()) && !app.optionsMenu.active() && !hidden && app.user.turn() || emitted) {
+            if ((!selected || selected.type() !== 'building' ||  app.editor.active()) && !app.options.active() && !hidden && app.user.turn() || emitted) {
 
                 var d = app.map.dimensions(), pressed;
 

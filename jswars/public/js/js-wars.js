@@ -68,92 +68,97 @@ module.exports = {
 		}
 	}
 };
-},{"../game/calculate.js":22,"../objects/terrain.js":74}],2:[function(require,module,exports){
-app.maps = require ('../controller/maps.js');
-app.effect = require('../game/effects.js');
-app.click = require('../tools/click.js');
-app.touch = require('../tools/touch.js');
-app.type = require('../effects/typing.js');
+},{"../game/calculate.js":22,"../objects/terrain.js":75}],2:[function(require,module,exports){
+app.maps = require ("../controller/maps.js");
+app.effect = require("../game/effects.js");
+app.click = require("../input/click.js");
+app.touch = require("../input/touch.js");
+app.type = require("../effects/typing.js");
 
 module.exports = {
 
 	active: function () { return this.a; },
 	activate: function () { this.a = true; },
 	deactivate: function () {this.a = false;},
-	save: function (player) { 
+	save: function (player) {
 		this.sender = player;
-		this.display(player.name().uc_first() + ' wants to save the game and continue later, is that ok? '); 
+		player.confirm();
+		this.display(player.name().uc_first() + " wants to save the game and continue later, is that ok? "); 
 	},
 	evaluate: function () {
-		var answer = app.input.response();
-		if (answer) {
-			app.input.remove();
-			this.a = false;
-			socket.emit('confirmationResponse', {answer:(answer === 'yes'), to:this.sender.id()});
+		var response = this.response;
+		if (response) {
+
+			if (app.key.pressed(["left","right"]))
+				Select.horizontal(response.deHighlight()).highlight();
+
+			if (app.key.pressed(["enter","esc"])) {
+				var answer = app.key.pressed(app.key.esc()) ? false : (response.id() === "yes");
+				app.input.remove();
+				this.a = false;
+				socket.emit("confirmationResponse", {
+					answer: answer, 
+					to: this.sender.id()
+				});
+				if (!answer) app.players.unconfirm();
+			}
 		}
 	},
-
 	display: function (message, inactive) {
-
-		console.log('displaying..');
-
+		var scope = this;
 		var text = app.footer.display(), description = app.input.descriptions();
 		app.game.screen().appendChild(text.parentNode);
 		app.input.activate();
 		app.type.letters(description, message, function (element) {
-			var yes = document.createElement('span'); 
-			var no = document.createElement('span');
-			yes.innerHTML = ' Yes ';
-			no.innerHTML = ' No ';
-			yes.setAttribute('id','yes');
-			no.setAttribute('id','no');
+			var yes = document.createElement("span"); 
+			var no = document.createElement("span");
+			yes.innerHTML = " Yes ";
+			no.innerHTML = " No ";
+			yes.setAttribute("id","yes");
+			no.setAttribute("id","no");
 			app.touch(yes).element();
 			app.click(no).element();
 			description.appendChild(yes);
 			description.appendChild(no);
+			scope.response = new UList(description).setElements([yes, no]).highlight();
 			if (!inactive) app.confirm.activate();
 		});
 	},
-
 	player: function (answer, player) {
-		var i, message, players = app.players.other(), waiting = [];
+		var i, message, players = app.players.other();
 
 		if (answer) {
 			player.confirm();
-			message = player.name().uc_first() + ' agrees to continue later. ';
+			message = player.name().uc_first() + " agrees to continue later. ";
 		} else return this.no(player);
 
-		for (i = 0; i < players.length; i += 1)
-			if (!players[i].confirmed())
-				waiting.push(players[i]);
-		
+		var waiting = players.filter(function (p) {return !p.confirmed();});
+
 		app.input.message(message);
+
 		return waiting.length ? this.waiting(waiting, message) : this.yes();                                   
 	},
-
 	yes: function () { 
-		alert('Save the game!!: '+app.input.value()); 
+		alert("Save the game!!: "+app.input.value()); 
+		app.save.recieved();
 		app.game.end(true);
 	},
 	no: function (player) { 
-		app.input.message(player.name().uc_first() + 'wants to finish the game.');
+		app.input.message(player.name().uc_first() + " wants to finish the game.");
 		app.players.unconfirm(); 
 		app.save.recieved();
 	},
-	waiting: function (players) { app.input.message('Waiting for a response from ' + app.players.names(players)); }
+	waiting: function (players) { app.input.message("Waiting for a response from " + app.players.names(players)); }
 };
-},{"../controller/maps.js":5,"../effects/typing.js":19,"../game/effects.js":24,"../tools/click.js":83,"../tools/touch.js":95}],3:[function(require,module,exports){
+},{"../controller/maps.js":5,"../effects/typing.js":19,"../game/effects.js":24,"../input/click.js":27,"../input/touch.js":29}],3:[function(require,module,exports){
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
-app.optionsMenu = require('../menu/options/optionsMenu.js');
+app.options = require('../menu/options/optionsMenu.js');
 app.calculate = require('../game/calculate.js');
 app.effect = require('../game/effects.js');
-app.undo = require('../tools/undo.js');
 app.animate = require('../game/animate.js');
-app.key = require('../tools/keyboard.js');
-//app.user = require('../objects/user.js');
+app.key = require('../input/keyboard.js');
 app.game = require('../game/game.js');
-app.display = require('../tools/display.js');
 app.feature = require('../objects/featureHud.js');
 
 module.exports = function () {
@@ -172,10 +177,9 @@ module.exports = function () {
         var target, range, move = position[axis] + operation;
         if (comparison <= 0 ? move >= 0 : move < comparison){
             position[axis] += operation;
-            if(selected && allowed()){
-                app.undo.effect('path');
+            if (selected && allowed()) {
                 selected.movementRange(app.calculate.distance(selected.position(), position))
-                app.path.find(selected, position);
+                app.path.clear().find(selected, position);
                 app.animate('effects');
             }
             return position;
@@ -245,16 +249,14 @@ module.exports = function () {
                             return selected = false;
 
                     // if there is nothing selected
-                    } else if (!selected && !app.optionsMenu.active() && app.user.owns(hovered)){
+                    } else if (!selected && !app.options.active() && app.user.owns(hovered)){
                         
-                        selected = hovered;
-
-                        // save the selected element and then select it
-                        if(selected.select())
+                        // save the selected element and select it
+                        if ((selected = hovered).select()) {
 
                             app.hud.hide();
                         
-                        else selected = false;
+                        } else selected = false;
                     }
 
                 } else if (!selected && (hovered.type() === 'unit' || app.key.keyUp(app.key.range()))) {
@@ -297,7 +299,7 @@ module.exports = function () {
 
             moved = false;
 
-            if ((!selected || selected.type() !== 'building' ||  app.editor.active()) && !app.optionsMenu.active() && !hidden && app.user.turn() || emitted) {
+            if ((!selected || selected.type() !== 'building' ||  app.editor.active()) && !app.options.active() && !hidden && app.user.turn() || emitted) {
 
                 var d = app.map.dimensions(), pressed;
 
@@ -327,7 +329,7 @@ module.exports = function () {
         }
     };
 }();
-},{"../controller/map.js":4,"../game/animate.js":20,"../game/calculate.js":22,"../game/effects.js":24,"../game/game.js":25,"../menu/options/optionsMenu.js":46,"../objects/featureHud.js":60,"../settings/app.js":78,"../tools/display.js":85,"../tools/keyboard.js":90,"../tools/undo.js":96}],4:[function(require,module,exports){
+},{"../controller/map.js":4,"../game/animate.js":20,"../game/calculate.js":22,"../game/effects.js":24,"../game/game.js":25,"../input/keyboard.js":28,"../menu/options/optionsMenu.js":47,"../objects/featureHud.js":61,"../settings/app.js":79}],4:[function(require,module,exports){
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
@@ -346,7 +348,7 @@ module.exports = function () {
     var error, focused, longestLength, map = {},
     matrix, buildings = [], terrain = [], units = [],
     color = app.settings.playerColor, allowedUnits, allowedBuildings;
-    //validate = new Validator('map');
+    // var validate = new Validator('map');
 
     var restricted = {
         sea: ['sea', 'reef', 'shoal'],
@@ -580,37 +582,49 @@ module.exports = function () {
         terrain: function () { return terrain; },
         insert: function (element) { return matrix.insert(element); },
         units: function () { return units; },
-        top: function (position, replace) { return matrix.position(position, replace); },
+        top: function (position, replace) { 
+            return matrix.position(position, replace); 
+        },
         get: function () { return map; },
         set: function (selectedMap) { map = selectedMap; },
         initialize: function (editor) {
 
-            var terr = map.terrain,
-            building = map.buildings,
-            unit = map.units, 
-            dim = map.dimensions,
-            product = dim.x * dim.y,
-            i, t, b, u, e, element, pos;
+            var dim = map.dimensions, product = (dim.x * dim.y);
 
             matrix = new Matrix(dim);
 
             allowedBuildings = Math.ceil(product/10) - 1;
             allowedUnits = Math.ceil(product/12.5);
 
-            for (var t, i = 0; i < terr.length; i += 1)
-                terrain.push(matrix.insert(new Terrain(terr[i].type, terr[i].position)));
-
-            for (var b, j = 0; j < building.length; j += 1) 
-                buildings.push(matrix.insert(new Building(building[j].type, building[j].position, j, editor ? building[j].player : app.players.number(building[j].player))));
- 
-            for (var u, k = 0; k < unit.length; k += 1)
-                units.push(matrix.insert(new Unit(editor ? unit[k].player : app.players.number(unit[k].player), unit[k].position, app.unit[unit[k].type])));
+            terrain =  map.terrain.map(function (t) {
+                return matrix.insert(new Terrain(t.type, t.position));
+            });
+            buildings = map.buildings.map(function (b, index) {
+                return matrix.insert(
+                    new Building(
+                        b.type,
+                        b.position,
+                        index,
+                        (editor ? b.player : app.players.number(b.player))
+                    )
+                );
+            });
+            units = map.units.map(function (u) {
+                return matrix.insert(
+                    new Unit(
+                        (editor ? u.player : app.players.number(u.player)), 
+                        u.position, 
+                        app.unit[u.type]
+                    )
+                );
+            });
         },
         moveUnit: function (unit, target) {
             var e, current = units[getIndex(unit, units)];
 
             if (current) matrix.remove(current);
             else current = unit;
+
             current.setPosition(target);
 
             if(!(e = matrix.position(target)) || e.type() !== 'unit')
@@ -704,7 +718,7 @@ module.exports = function () {
         }
     };
 }();
-},{"../controller/players.js":7,"../definitions/units.js":13,"../game/animate.js":20,"../objects/building.js":56,"../objects/position.js":69,"../objects/terrain.js":74,"../objects/unit.js":76,"../settings/app.js":78,"../settings/game.js":80,"../tools/matrix.js":91,"../tools/validator.js":97}],5:[function(require,module,exports){
+},{"../controller/players.js":7,"../definitions/units.js":13,"../game/animate.js":20,"../objects/building.js":57,"../objects/position.js":70,"../objects/terrain.js":75,"../objects/unit.js":77,"../settings/app.js":79,"../settings/game.js":81,"../tools/matrix.js":89,"../tools/validator.js":93}],5:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Maps.js controls the saving and retrieving of maps
@@ -722,8 +736,7 @@ Map = require('../objects/map.js')
 module.exports = function () {
 
 	var error, maps, keys, change, index, type = 'map', category;
-	//validate = new Validator('maps'), 
-	var categories = ['two'];
+	var validate = new Validator('maps'), categories = ['two'];
 
 	var types = {
 		map:{
@@ -860,8 +873,8 @@ module.exports = function () {
         screen: function () { return types[type].elements; },
         save: function (map, name) {
 
-        	// if((error = validate.defined (app.user.email(), 'email') || (error = validate.map(map))))
-        	// 	throw error;
+        	 if((error = validate.defined (app.user.email(), 'email') || (error = validate.map(map))))
+        	 	throw error;
 
             app.request.post({
 			    creator: app.user.email(),
@@ -881,7 +894,7 @@ module.exports = function () {
         //getbyid: function (id) { app.request.get(id, 'maps/select', function (response) { app.map.set(response); }); },
 	};
 }();
-},{"../game/game.js":25,"../objects/map.js":64,"../settings/app.js":78,"../settings/game.js":80,"../tools/request.js":92,"../tools/validator.js":97}],6:[function(require,module,exports){
+},{"../game/game.js":25,"../objects/map.js":65,"../settings/app.js":79,"../settings/game.js":81,"../tools/request.js":90,"../tools/validator.js":93}],6:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
 
     holds functions for the selection of game modes / logout etc.. <--- can be redone better
@@ -892,7 +905,7 @@ app = require('../settings/app.js');
 app.maps = require('../controller/maps.js');
 app.user = require('../objects/user.js');
 app.settings = require('../settings/game.js');
-app.key = require('../tools/keyboard.js');
+app.key = require('../input/keyboard.js');
 app.testMap = require('../objects/testMap.js');
 app.editor = require('../game/mapEditor.js');
 app.join = require('../menu/join.js');
@@ -979,11 +992,11 @@ module.exports = function () {
         deactivate: function() {active = false;}
     };
 }();
-},{"../controller/maps.js":5,"../game/mapEditor.js":26,"../menu/join.js":40,"../menu/modes.js":42,"../menu/settings.js":49,"../menu/teams.js":50,"../objects/testMap.js":75,"../objects/user.js":77,"../settings/app.js":78,"../settings/game.js":80,"../tools/keyboard.js":90}],7:[function(require,module,exports){
+},{"../controller/maps.js":5,"../game/mapEditor.js":26,"../input/keyboard.js":28,"../menu/join.js":43,"../menu/modes.js":45,"../menu/settings.js":50,"../menu/teams.js":51,"../objects/testMap.js":76,"../objects/user.js":78,"../settings/app.js":79,"../settings/game.js":81}],7:[function(require,module,exports){
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
 app.dom = require('../tools/dom.js');
-app.key = require('../tools/keyboard.js');
+app.key = require('../input/keyboard.js');
 Player = require('../objects/player.js');
 AiPlayer = require('../objects/aiPlayer.js');
 Teams = require('../menu/teams.js');
@@ -991,11 +1004,6 @@ Teams = require('../menu/teams.js');
 module.exports = function () {
 
 	var current, players = [], defeated = [], elements = [], ready,
-	
-	setProperties = function (property, value, index) {
-        var i = isNaN(index) ? property.getNumber() - 1 : index;
-        if (players[i]) players[i].setProperty(property, value);
-    },
 
     exists = function (player) {
         var id = player._current ? player._current.id : typeof (player.id) === 'function' ? player.id() : player.id;
@@ -1020,6 +1028,7 @@ module.exports = function () {
             var element = Teams.playerElement(number);
             var value = element && !player.co ? element.co().value() : player.co;
             if (value) player.setCo(value);
+
             return true;
         }
         return false;
@@ -1052,15 +1061,14 @@ module.exports = function () {
     };
 
 	return {
-		setProperty:setProperties,
+        replace: replacePlayer,
 		changeProperty: function (p) { 
             var player = players[exists(p.player)];
             var property = p.property;
             var value = p.value;
-
-            Teams.playerElement(player.number())[property]()
-                .changeCurrent(value);
-
+            var element = Teams.playerElement(player.number());
+            if (element && element[property]) 
+                element[property]().changeCurrent(value);
             player.setProperty(property, value);
         },
         setElements: function (e) {elements = e;},
@@ -1070,7 +1078,7 @@ module.exports = function () {
         first: function () { return players[0]; },
         last: function () { return players[players.length - 1]; },
        	next: function () { return current === this.last() ? this.first() : players[current.number()]; },
-        other: function () { return players.filter(function (player) {player.id() !== app.user.id();});},
+        other: function () { return players.filter(function (player) {return player.id() !== app.user.id();});},
         all: function () { return players.concat(defeated); },
         length: function () { return players.length; },
         add: function (player) {
@@ -1107,13 +1115,12 @@ module.exports = function () {
         },
         names: function (players) {
             return players.reduce(function (prev, player, i, players) {
-                var p = prev ? prev : '', len = players.length, name = player.name();
+                var p = typeof(prev) === "string" ? prev : '', len = players.length;
                 var transition = (i + 1 < len ? (i + 2 < len ? ', ' : ' and ') : '');
-                return p + name + transition;
+                return p + player.name() + transition;
             });
         },
-        unconfirm: function () {players.map(function(element){element.unconfirm();});},
-        replace: replacePlayer,
+        unconfirm: function () {players.forEach(function(element){element.unconfirm();});},
         remove: function (player) {
 
             var index, removed;
@@ -1122,14 +1129,20 @@ module.exports = function () {
 
                 if((removed = players.splice(index, 1)[0]).isComputer && app.user.first())
                     socket.emit('removeAiPlayer', removed);
-
+                
                 if (players.length >= index + 1)
                     shiftPlayers(index);
             }
+        },
+        initialize: function () {
+            players.forEach(function (player) {
+                if (typeof(player.co) === "string")
+                    player.setProperty("co", player.co);
+            });
         }
     };
 }();
-},{"../controller/map.js":4,"../menu/teams.js":50,"../objects/aiPlayer.js":51,"../objects/player.js":68,"../settings/app.js":78,"../tools/dom.js":86,"../tools/keyboard.js":90}],8:[function(require,module,exports){
+},{"../controller/map.js":4,"../input/keyboard.js":28,"../menu/teams.js":51,"../objects/aiPlayer.js":52,"../objects/player.js":69,"../settings/app.js":79,"../tools/dom.js":85}],8:[function(require,module,exports){
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.animate = require('../game/animate.js');
@@ -1170,6 +1183,23 @@ module.exports = function () {
 		left: function () { return position.x; },
 		right: function () { return position.x + dimensions.x; },
 
+
+		// deactivate all menus/selections and display screen in its initial state
+		reset: function () {
+            ['actionHud', 'damageDisplay', 'buildUnitScreen', 'unitInfoScreen', 'optionsMenu']
+                .forEach(function (screen) { app.dom.remove(screen); });
+
+            app.coStatus.show();
+            app.hud.show();
+            app.options.deactivate();
+            app.cursor.deselect();
+            app.path.clear();
+            app.range.clear();
+            app.cursor.show();
+            app.animate(['cursor', 'unit','effects']);
+            return this;
+        },
+
 		// creates scrolling effect allowing movement and map dimensions beyond screen dimensions
     	scroll: function () {
 	        var mapDimensions = app.map.dimensions();
@@ -1191,8 +1221,6 @@ module.exports = function () {
 	    // move screen to target position
         to: function (coordinates) {
 
-        	console.log(coordinates);
-
        		app.cursor.setPosition(coordinates);
 
 	        var mapDimensions = app.map.dimensions();
@@ -1202,8 +1230,6 @@ module.exports = function () {
 			for (var i = 0; i < 2; i += 1) {
 
 				a = axis[i], target = coordinates[a];
-
-				console.log(a);
 
 		        // beginning of screen view
 		        beginning = position[a];
@@ -1233,7 +1259,7 @@ module.exports = function () {
 	    }
     };
 }();
-},{"../controller/cursor.js":3,"../controller/map.js":4,"../game/animate.js":20,"../settings/app.js":78,"../settings/game.js":80}],9:[function(require,module,exports){
+},{"../controller/cursor.js":3,"../controller/map.js":4,"../game/animate.js":20,"../settings/app.js":79,"../settings/game.js":81}],9:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     a list of each building and the inits they are capable of producing
@@ -1254,7 +1280,7 @@ module.exports = {
         midTank:app.units.midTank,
         artillery:app.units.artillery,
         missles:app.units.missles,
-        rockets:app.units.infantry,
+        rockets:app.units.rockets,
         neoTank:app.units.neoTank
     },
     airport: {
@@ -1270,7 +1296,7 @@ module.exports = {
         bShip:app.units.bShip
     }
 };
-},{"../definitions/units.js":13,"../settings/app.js":78}],10:[function(require,module,exports){
+},{"../definitions/units.js":13,"../settings/app.js":79}],10:[function(require,module,exports){
 /* ---------------------------------------------------------------------- *\
     
     Obsticles.js holds the each possible object for the map 
@@ -1287,7 +1313,7 @@ module.exports = {
     snow: new obsticle('snow', 1),
     unit: new obsticle('unit', 0)
 };
-},{"../objects/obsticle.js":67}],11:[function(require,module,exports){
+},{"../objects/obsticle.js":68}],11:[function(require,module,exports){
 /* ---------------------------------------------------------------------- *\
     
     Properties.js holds the properties of each map object
@@ -1299,9 +1325,9 @@ app.obsticles = require('../definitions/obsticles.js');
 Validator = require('../tools/validator.js');
 
 module.exports = function () {
-	// var error, validate = new Validator('properties');
-	// if((error = validate.hasElements(app.obsticles, ['wood','building','plain','mountain', 'unit'])))
-	// 	throw error;
+	var error, validate = new Validator('properties');
+	if((error = validate.hasElements(app.obsticles, ['wood','building','plain','mountain', 'unit'])))
+	   throw error;
 
     this.tallMountain = new app.property('Mountain', app.obsticles.mountain);
     this.tree = new app.property('Woods', app.obsticles.wood);
@@ -1311,7 +1337,7 @@ module.exports = function () {
     this.unit = new app.property('Unit', app.obsticles.unit);
     this.snow = new app.property('Snow', app.obsticles.snow);
 };
-},{"../definitions/obsticles.js":10,"../objects/property.js":70,"../tools/validator.js":97}],12:[function(require,module,exports){
+},{"../definitions/obsticles.js":10,"../objects/property.js":71,"../tools/validator.js":93}],12:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Score.js calculates the game score
@@ -1398,7 +1424,7 @@ Score.prototype.calculate = function () {
 };
 
 module.exports = Score;
-},{"../objects/scoreElement.js":71}],13:[function(require,module,exports){
+},{"../objects/scoreElement.js":72}],13:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     app.units is a repo for the units that may be created on the map and their stats
@@ -2116,7 +2142,7 @@ module.exports = {
         cost: 28000
     }
 };
-},{"../settings/app.js":78,"../settings/game.js":80}],14:[function(require,module,exports){
+},{"../settings/app.js":79,"../settings/game.js":81}],14:[function(require,module,exports){
 module.exports = function (x, y, size) {
     this.x = x;
     this.y = y;
@@ -2210,7 +2236,7 @@ Heap = require('../tools/binaryHeap.js');
 var Path = function () {this._coordinates = [];};
 
 Path.prototype.size = function () { return this._coordinates.length; };
-Path.prototype.clear = function () { return this._coordinates = []; };
+Path.prototype.clear = function () { this._coordinates = []; return this; };
 Path.prototype.set = function (p) { return (this._coordinates = this._coordinates.concat(p)); };
 Path.prototype.get = function () { return this._coordinates; };
 Path.prototype.getNeighbors = function (position, check) {
@@ -2256,22 +2282,17 @@ Path.prototype.reachable = function (unit, clean, movement) {
 
         current = open.pop();
 
-        neighbors = this.getNeighbors(current.position(), unit);
-
-        for (var i = 0; i < neighbors.length; i += 1) {
-
-            neighbor = neighbors[i];
+        this.getNeighbors(current.position(), unit).forEach(function (neighbor) {
 
             cost = (current.f || 0) + unit.moveCost(neighbor);
 
-            // if the currentrent square is in the open array and a better position then update it
             if (cost <= allowed) {
                 neighbor.f = cost;
                 app.map.close(neighbor);
                 reachable.push(neighbor);
                 open.push(neighbor);
             } 
-        }
+        });
     }
     return clean ? app.map.clean(reachable) : reachable;
 };
@@ -2279,7 +2300,7 @@ Path.prototype.reachable = function (unit, clean, movement) {
 Path.prototype.find = function (unit, target) {
 
     var allowed = unit.movement(), clean = [unit], cost, neighbor, i, neighbors, position, current,
-    open = new Heap('f'); 
+    open = new Heap('f'), scope = this; 
     app.map.close(unit);
     open.push(unit);
  
@@ -2296,24 +2317,17 @@ Path.prototype.find = function (unit, target) {
             return this.set(path);
         }
 
-        neighbors = this.getNeighbors(position);
-
-        for (i = 0; i < neighbors.length; i += 1) {
-
-            neighbor = neighbors[i]; // current neighboring square
-
-            cost = (current.g || 0) + unit.moveCost(neighbor);
-
-            // if the currentrent square is in the open array and a better position then update it
+        this.getNeighbors(position).forEach(function (neighbor) {
+            cost = (current.g || 0) + unit.moveCost(neighbor); 
             if (cost <= allowed && (!neighbor.g || neighbor.g >= current.g)) {
-                neighbor.g = cost; // distance from start to neighboring square
-                neighbor.f = cost + this.distance(neighbor.position(), target, unit.position()); // distance from start to neighboring square added to the distance from neighboring square to target
+                neighbor.g = cost;
+                neighbor.f = cost + scope.distance(neighbor.position(), target, unit.position());
                 neighbor.p = current; //<--- keep reference to parent
                 app.map.close(neighbor);
                 clean.push(neighbor);
                 open.push(neighbor);
             }
-        }
+        });
     }
     app.map.clean(clean);
     return false;
@@ -2322,7 +2336,7 @@ Path.prototype.find = function (unit, target) {
 Path.prototype.show = function (effect) { app.animate('effects'); };
 
 module.exports = Path;
-},{"../objects/position.js":69,"../tools/binaryHeap.js":81}],17:[function(require,module,exports){
+},{"../objects/position.js":70,"../tools/binaryHeap.js":82}],17:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
    
    ScrollText.js handles scrolling of text accross the screen, requires the id of the containing element, which must be 
@@ -2478,7 +2492,7 @@ Sweller.prototype.setSpeed = function (speed) {this.s = speed;};
 Sweller.prototype.speed = function () {return this.s; };
 Sweller.prototype.element = function () {return this.e;};
 module.exports = Sweller;
-},{"../effects/elements/origin.js":14,"../settings/game.js":80}],19:[function(require,module,exports){
+},{"../effects/elements/origin.js":14,"../settings/game.js":81}],19:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Typing.js controls typing effect in game menus
@@ -2538,7 +2552,7 @@ module.exports = function (objectName, hide) {
             app[objectName[i] + 'Canvas'].setAnimations(app['draw' + objectName[i].uc_first()]).render(hide);
     });
 };
-},{"../settings/app.js":78}],21:[function(require,module,exports){
+},{"../settings/app.js":79}],21:[function(require,module,exports){
 
 // ------------------------------------------ settings -----------------------------------------------------------------
 
@@ -2547,21 +2561,22 @@ app.settings = require('../settings/game.js'); // app.settings holds application
 
 // ------------------------------------------- tools --------------------------------------------------------------------
 
-app.init = require('../tools/init.js'); // app.init creates a new canvas instance
-app.touch = require('../tools/touch.js'); // handle touch screen operations
 app.chat = require('../tools/chat.js'); // handle chat interactions
-app.key = require('../tools/keyboard.js'); // handles keyboard input
+app.init = require('../tools/init.js'); // app.init creates a new canvas instance
 app.request = require('../tools/request.js'); //handles AJAJ calls where needed
 app.dom = require('../tools/dom.js'); // app.dom is a list of functions used to assist manipulating the dom
-app.undo = require('../tools/undo.js'); // app.undo handles the cleanup of elements that are no longer needed
 app.increment = require('../tools/increment.js');
 
+// ------------------------------------------- input --------------------------------------------------------------------
+
+app.touch = require('../input/touch.js'); // handle touch screen operations
+app.key = require('../input/keyboard.js'); // handles keyboard input
 
 // -------------------------------------------- menu --------------------------------------------------------------------
 
 app.login = require('../menu/login.js'); // login control
 app.modes = require('../menu/modes.js'); // app.modes holds functions for the selection of game modes / logout etc..
-app.optionsMenu = require('../menu/options/optionsMenu.js'); // app.options handles the in game options selection, end turn, save etc.
+app.options = require('../menu/options/optionsMenu.js'); // app.options handles the in game options selection, end turn, save etc.
 app.scroll = require('../menu/scroll.js'); // app.game.settings consolidates holds settings for the game
 
 // ----------------------------------------- definitions ----------------------------------------------------------------
@@ -2578,7 +2593,6 @@ app.draw = require('../game/draw.js'); // app.draw controls drawing of animation
 app.game = require('../game/game.js'); //controls the setting up and selection of games / game modes 
 app.effect = require('../game/effects.js'); // app.effect is holds the coordinates for effects
 app.calculate = require('../game/calculate.js'); //app.calculate handles calculations like pathfinding etc
-app.display = require('../tools/display.js'); // app.display handles all the display screens and the users interaction with them
 
 // ------------------------------------------ objects -------------------------------------------------------------------
 
@@ -2600,10 +2614,10 @@ app.cursor = require('../controller/cursor.js');
 app.screen = require('../controller/screen.js');
 
 module.exports = app;
-},{"../controller/cursor.js":3,"../controller/map.js":4,"../controller/maps.js":5,"../controller/players.js":7,"../controller/screen.js":8,"../definitions/buildings.js":9,"../definitions/obsticles.js":10,"../definitions/properties.js":11,"../definitions/units.js":13,"../game/animate.js":20,"../game/calculate.js":22,"../game/draw.js":23,"../game/effects.js":24,"../game/game.js":25,"../menu/login.js":41,"../menu/modes.js":42,"../menu/options/optionsMenu.js":46,"../menu/scroll.js":48,"../objects/animations.js":52,"../objects/co.js":58,"../objects/hud.js":62,"../objects/obsticle.js":67,"../objects/property.js":70,"../objects/screens.js":72,"../objects/target.js":73,"../objects/user.js":77,"../settings/app.js":78,"../settings/game.js":80,"../tools/chat.js":82,"../tools/display.js":85,"../tools/dom.js":86,"../tools/increment.js":88,"../tools/init.js":89,"../tools/keyboard.js":90,"../tools/request.js":92,"../tools/touch.js":95,"../tools/undo.js":96}],22:[function(require,module,exports){
+},{"../controller/cursor.js":3,"../controller/map.js":4,"../controller/maps.js":5,"../controller/players.js":7,"../controller/screen.js":8,"../definitions/buildings.js":9,"../definitions/obsticles.js":10,"../definitions/properties.js":11,"../definitions/units.js":13,"../game/animate.js":20,"../game/calculate.js":22,"../game/draw.js":23,"../game/effects.js":24,"../game/game.js":25,"../input/keyboard.js":28,"../input/touch.js":29,"../menu/login.js":44,"../menu/modes.js":45,"../menu/options/optionsMenu.js":47,"../menu/scroll.js":49,"../objects/animations.js":53,"../objects/co.js":59,"../objects/hud.js":63,"../objects/obsticle.js":68,"../objects/property.js":71,"../objects/screens.js":73,"../objects/target.js":74,"../objects/user.js":78,"../settings/app.js":79,"../settings/game.js":81,"../tools/chat.js":83,"../tools/dom.js":85,"../tools/increment.js":87,"../tools/init.js":88,"../tools/request.js":90}],22:[function(require,module,exports){
 /* ----------------------------------------------------------------------------------------------------------*\
     
-    Calculate.js handles calculations like pathfinding and the definition of movement range
+    Calculate.js handles necessary game calculations 
 
 \* ----------------------------------------------------------------------------------------------------------*/
 
@@ -2686,7 +2700,7 @@ module.exports = function () {
         random: function(range) { return Math.floor(Math.random() * range); }
     };
 }();
-},{"../controller/map.js":4,"../controller/screen.js":8,"../settings/app.js":78,"../settings/game.js":80}],23:[function(require,module,exports){
+},{"../controller/map.js":4,"../controller/screen.js":8,"../settings/app.js":79,"../settings/game.js":81}],23:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------------------------*\
 
     app.draw provides a set of methods for interacting with, scaling, caching, coordinating  
@@ -2880,7 +2894,7 @@ module.exports = function (canvas, dimensions, base) {
         }
     };
 };
-},{"../controller/background.js":1,"../controller/map.js":4,"../controller/screen.js":8,"../game/effects.js":24,"../objects/animations.js":52,"../settings/app.js":78,"../settings/game.js":80}],24:[function(require,module,exports){
+},{"../controller/background.js":1,"../controller/map.js":4,"../controller/screen.js":8,"../game/effects.js":24,"../objects/animations.js":53,"../settings/app.js":79,"../settings/game.js":81}],24:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
 
     Effect.js holds the coordinates for effects
@@ -2896,35 +2910,13 @@ app.attackRange = new Path();
 
 module.exports = function () {
 
-    var key, undo, block, prev = {}, temp = {};
     var highlight = app.range;
     var path = app.path;
     var attackRange = app.attackRange;
-    var refresh = function () {app.animate('effects');};
-    var findElementsByClass = function (element, className) {
-        for (var i = 0, elements = []; i < element.childNodes.length; i += 1)
-            if (element.childNodes[i].className === className)
-                elements.push(element.childNodes[i]);
-        return elements;
-    };
-
-    var highlightListItem = function (selectedElement, index, previous, elements) {
-
-        // apply highlighting 
-        selectedElement.style.backgroundColor = 'tan';
-
-        // display info on the currently hovered over element
-        if (selectedElement.id === 'selectUnitScreen') unitInfo (selected, selectedElement.id); /// selected unnacounted for
-
-        // if there is then remove its highlighting
-        if (previous) previous.style.backgroundColor = '';
-        return true;
-    };
 
     return {
 
-        highlightListItem:highlightListItem,
-        refresh:refresh,
+        refresh: function () {app.animate('effects');},
 
         undo: {
             path: function () {path.clear();},
@@ -2935,23 +2927,13 @@ module.exports = function () {
         highlight: function () { return highlight.get(); },
         path: function () { return path.get(); },
         attackRange: function () {return attackRange.get(); },
+
         setHighlight: function (range) {highlight.set(range);},
         setPath: function (path) {path.set(path);},
-        setAttackRange: function (range) {attackRange.set(range);},
-        clear: function () {temp = {};prev = {};},
-        hideOffScreenElements: function (elements, index, min, max) {
-            var hide = index - max;
-            if (hide >= min){
-                if (index > max)
-                    for (var h = 0; h < hide; h += 1)
-                        elements[h].style.display = 'none';
-                else if (index < elements.length - max)
-                    elements[index].style.display = '';
-            }
-        }
+        setAttackRange: function (range) {attackRange.set(range);}
     };
 }();
-},{"../controller/confirmation.js":2,"../effects/path.js":16,"../settings/app.js":78}],25:[function(require,module,exports){
+},{"../controller/confirmation.js":2,"../effects/path.js":16,"../settings/app.js":79}],25:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
    
     Game.js controls the setting up and selection of games / game modes 
@@ -2968,22 +2950,15 @@ app = require('../settings/app.js');
 app.menu = require('../controller/menu.js');
 app.animate = require('../game/animate.js');
 app.effect = require('../game/effects.js');
-app.display = require('../tools/display.js');
-app.undo = require('../tools/undo.js');
-app.key = require('../tools/keyboard.js');
+app.key = require('../input/keyboard.js');
 app.target = require('../objects/target.js');
 app.user = require('../objects/user.js');
 app.players = require('../controller/players.js');
 app.cursor = require('../controller/cursor.js');
 app.background = require('../controller/background.js');
-app.optionsMenu = require('../menu/options/optionsMenu.js');
+app.options = require('../menu/options/optionsMenu.js');
 app.confirm = require('../controller/confirmation.js');
 app.exit = new Exit();
-app.yield = new Exit(function(){
-    app.game.end();
-    var player = app.user.player();
-    socket.emit('defeat', {defeated:player, conqueror:player, capturing:false});
-});
 
 app.coStatus = new StatusHud();
 
@@ -3027,14 +3002,10 @@ module.exports = function () {
         },
         players: function () {return players;},
         load: function (room) { 
-            console.log(room);
             app.background.set(room.map.background);
-            console.log(map);
             settings = room.settings;
-            console.log(settings);
             app.players.add(room.players);
             players = app.players.all();
-            console.log(app.game.players);
         },
         name: function () { return name; },
         category: function () {return map.category;},
@@ -3077,7 +3048,6 @@ module.exports = function () {
         },
         reset: function () {
             game = mode = false;
-            app.display.clear();
             app.screens.modeMenu();
             this.setup();
         },
@@ -3088,6 +3058,9 @@ module.exports = function () {
 
             // set up game map
             app.map.initialize();
+
+            // make sure players are ready
+            app.players.initialize();
 
             // get the first player
             var player = app.players.first();
@@ -3102,9 +3075,6 @@ module.exports = function () {
 
             // start game mechanics
             app.game.loop();
-
-            // clear selection indices
-            app.display.reset();
 
             // move the screen to the current players headquarters
             app.screen.to(hq);
@@ -3126,37 +3096,40 @@ module.exports = function () {
         update: function () { return app.game.started() ? app.game.loop() : app.game.setup(); },
         loop: function () {
 
-            var confirmation, options;
+            var confirmation, menu, options = app.options.active();
 
             // incriment frame counter
             tick.incriment();
 
-            if ((confirmation = app.confirm.active())) app.confirm.evaluate();
-            if (app.cursor.deleting()) 
-                app.cursor.deleteUnit();
+            if ((confirmation = app.confirm.active())) 
+                app.confirm.evaluate();
+            
+            if (app.cursor.deleting()) app.cursor.deleteUnit();
 
             // if target is active, enabel target selection
-            if (app.target.active()) 
-                app.target.chose(app.cursor.selected());
-
-            // listen for options activation and selection
-            options = app.optionsMenu.coordinate(menus);
+            if (app.target.active()) app.target.chose(app.cursor.selected());
 
             // move cursor
             if (!options && !confirmation) app.cursor.move();
 
             // handle selection of objects
             if ((selected = app.cursor.selected()) && selected.evaluate(app.cursor.position()))
-                app.undo.all();
+                app.screen.reset();
 
             // display co status hud
-            else if (!app.optionsMenu.active()) {
+            else if (!options) {
                 app.coStatus.display(app.players.current(), app.cursor.side('x'));
                 app.map.focus();
             }
 
+            if (options) {
+                app.options.select();
+                if (menu = app.options.subMenu())
+                    app.options[menu]();
+            }
+
             // controls cursor selection
-            if (!options && !confirmation)
+            if (!options && !confirmation) 
                 app.cursor.select();
 
             // control map info hud
@@ -3171,17 +3144,14 @@ module.exports = function () {
             }
 
             // exit menus when esc key is pressed
-            if (app.key.pressed(app.key.esc())){
+            if (app.key.pressed(app.key.esc())) {
                 if (app.cursor.deleting()) { 
                     app.cursor.selectMode();
-                } else if(!app.optionsMenu.active() && !options && !selected && !confirmation){
-                    app.optionsMenu.display();
+                } else if(!app.options.active() && !selected && !confirmation) {
+                    app.options.display();
                     app.coStatus.hide();
-                } else {
-                    app.optionsMenu.deactivate(menus);
-                    app.hud.show();
-                    app.coStatus.show();
-                    app.undo.all();
+                } else if (!app.options.subMenu()) {
+                    app.screen.reset();
                 }
             }
 
@@ -3198,7 +3168,7 @@ module.exports = function () {
         }
     };
 }();
-},{"../controller/background.js":1,"../controller/confirmation.js":2,"../controller/cursor.js":3,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/score.js":12,"../game/animate.js":20,"../game/effects.js":24,"../menu/options/exit.js":43,"../menu/options/optionsMenu.js":46,"../objects/coStatusHud.js":59,"../objects/hud.js":62,"../objects/target.js":73,"../objects/user.js":77,"../settings/app.js":78,"../tools/counter.js":84,"../tools/display.js":85,"../tools/keyboard.js":90,"../tools/undo.js":96}],26:[function(require,module,exports){
+},{"../controller/background.js":1,"../controller/confirmation.js":2,"../controller/cursor.js":3,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/score.js":12,"../game/animate.js":20,"../game/effects.js":24,"../input/keyboard.js":28,"../menu/options/exit.js":46,"../menu/options/optionsMenu.js":47,"../objects/coStatusHud.js":60,"../objects/hud.js":63,"../objects/target.js":74,"../objects/user.js":78,"../settings/app.js":79,"../tools/counter.js":84}],26:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     MapEditor.js controls map creation
@@ -3210,7 +3180,7 @@ app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
 app.units = require('../definitions/units.js');
 app.animate = require('../game/animate.js');
-app.optionsMenu = require('../menu/options/optionsMenu.js');
+app.options = require('../menu/options/optionsMenu.js');
 
 Validator = require('../tools/validator.js');
 Matrix = require('../tools/matrix.js');
@@ -3282,9 +3252,9 @@ module.exports = function () {
 
             // exit menus when esc key is pressed
             if(app.key.pressed(app.key.esc()))
-                if(!app.optionsMenu.active())
-                    app.optionsMenu.display();
-                else app.undo.all();
+                if(!app.options.active())
+                    app.options.display();
+                else app.screen.reset();
 
             app.key.undo();
             app.key.undoKeyUp();
@@ -3298,7 +3268,428 @@ module.exports = function () {
         }
 	};
 }();
-},{"../controller/players.js":7,"../definitions/units.js":13,"../game/animate.js":20,"../menu/options/optionsMenu.js":46,"../objects/build.js":55,"../objects/building.js":56,"../objects/featureHud.js":60,"../objects/position.js":69,"../objects/terrain.js":74,"../objects/unit.js":76,"../settings/app.js":78,"../settings/game.js":80,"../tools/counter.js":84,"../tools/matrix.js":91,"../tools/validator.js":97}],27:[function(require,module,exports){
+},{"../controller/players.js":7,"../definitions/units.js":13,"../game/animate.js":20,"../menu/options/optionsMenu.js":47,"../objects/build.js":56,"../objects/building.js":57,"../objects/featureHud.js":61,"../objects/position.js":70,"../objects/terrain.js":75,"../objects/unit.js":77,"../settings/app.js":79,"../settings/game.js":81,"../tools/counter.js":84,"../tools/matrix.js":89,"../tools/validator.js":93}],27:[function(require,module,exports){
+app = require('../settings/app.js');
+app.key = require('../input/keyboard.js');
+app.scroll = require('../menu/scroll.js');
+app.user = require('../objects/user.js');
+app.menu = require('../controller/menu.js');
+
+module.exports = function (element) {
+
+	var timer = new Date();
+	var x, y, down = false;
+
+	var doubleClick = function () {
+		var now = new Date();
+		var tappedTwice = now - timer < 300 ? true : false;
+		timer = now;
+		return tappedTwice;
+	};
+
+	var input = function (input) { return input ? input : element; };
+
+	return {
+		scroll: function (elem) {
+
+			var e = input(elem);
+
+			e.addEventListener('mousedown', function () { down = true; });
+		    e.addEventListener('mouseup', function(){ down = false; });
+		    e.addEventListener('mouseleave', function (element) {
+		    	if (down) {
+			        //  get the position of the mouse
+			        var position = parseFloat(element.clientY) - 70;
+
+			        // if the position is above the top, move the element up, 
+			        // otherwise move it down if it is below the bottom
+			        if (position < e.offsetTop) app.scroll.wheel(1, new Date());
+			        else app.scroll.wheel(-1, new Date());
+			        //app.game.update();
+			        down = false;
+		    	}
+		    });
+
+		    return this;
+		},
+		swipe: function (elem) {
+
+			var e = input(elem);
+
+			// scroll via touch
+			e.addEventListener('mousedown', function () { down = true; });
+		    e.addEventListener('mouseup', function(element){
+
+		    	if (down) {
+
+			    	var width = e.offsetWidth / 3;
+
+			    	var offset = width / 3;
+
+			        // get the left boundry of the element
+			        var left = e.offsetLeft + offset + 10;
+
+			        // get the bottom boundry
+			        var right = e.offsetLeft + width - offset;
+
+			        //  get the position of the element
+			        var position = parseFloat(element.clientX) - 200;
+
+			        // if the position is above the top, move the element up, 
+			        // otherwise move it down if it is below the bottom
+			        if (position < left){
+			            app.scroll.swipe(-1, new Date());
+			        }else if (position > right){
+			            app.scroll.swipe(1, new Date());
+			        }
+			        down = false;
+			        //app.game.update();
+		    	}
+		    });
+		    return this;
+		},
+		swipeScreen: function (elem) {
+
+			var e = input(elem), start;
+
+			// get the start location of the finger press
+			e.addEventListener('mousedown', function(element){
+				start = element.clientX;
+				down = true;
+			});
+
+			// scroll via touch
+		    e.addEventListener('mouseup', function(element){
+
+		    	if (down) {
+	 		        //  get the position of the end of element
+			        var end = element.clientX;
+
+			        // make the length needed to swipe the width of the page divided by three and a half
+			        var swipeLength = e.offsetWidth / 3.5;
+
+			        // go back if swiping right
+			        if (start < end && end - start > swipeLength){
+			        	app.key.press(app.key.esc());
+
+			        // go forward if swiping left
+			        } else if (start > end && start - end > swipeLength) {
+			        	app.key.press(app.key.enter());
+			        }
+			    }
+			    start = undefined;
+			    down = false;
+		    });
+
+		    return this;
+		},
+		// may need to change to eliminate less useful select method
+		mapOrGame: function (elem){
+
+			var e = input(elem);
+
+			e.addEventListener('click', function(){
+				var label = 'SelectionIndex';
+				var clicked = e.id.indexOf(label) > -1 ? e: e.parentNode;
+				var type = clicked.id.indexOf('map') ? 'map' : 'game';
+	        	var index = clicked.attributes[type + label].value;
+	        	// app.display.setIndex(index);
+	        	//app.game.update();
+	        });
+
+			return this;
+		},
+		modeOptions: function (elem) {
+
+			var e = input(elem);
+
+			e.addEventListener('click', function(){
+
+	        	// get the index
+	        	var index = e.attributes.modeOptionIndex.value;
+
+	        	// if the mode options are already under selection, then change the index
+	        	if(app.modes.active()){
+					// app.display.setIndex(index);
+					//app.game.update();
+
+				// otherwise simulate selecting them with the key right push
+				// and set the default index to the selected option
+	        	}else{
+	        		// app.display.setOptionIndex(index);
+		        	app.key.press(app.key.right());
+	        	}
+	        });
+	        return this;
+		},
+		changeMode: function (elem) {
+			input (elem).addEventListener('click', function () {if (app.modes.active()) app.key.press(app.key.left());});
+			return this;
+		},
+		doubleClick: function (elem) {
+			input (elem).addEventListener('click', function() {if (doubleClick()) return app.key.press(app.key.enter());});
+			return this;
+		},
+		element: function (elem) {
+			var e = input(elem);
+
+			e.addEventListener('click', function (){
+				var name = e.parentNode.id == 'settings' ? e.id : e.parentNode.id;
+				var setting = name.replace('Settings','').replace('Container','');
+				// app.display.setIndex(setting);
+				//app.game.update();
+			});
+			return this;
+		},
+		esc: function (elem) {
+			input(elem).addEventListener('click', function() {if(app.user.player().ready()) return app.key.press(app.key.esc());});
+			return this;
+		}
+	};
+};
+},{"../controller/menu.js":6,"../input/keyboard.js":28,"../menu/scroll.js":49,"../objects/user.js":78,"../settings/app.js":79}],28:[function(require,module,exports){
+app.options = require('../menu/options/optionsMenu.js');
+app.game = require('../game/game.js');
+
+module.exports = function () {
+
+    var pressed = [], up = [],
+
+    keys = {
+        esc: 27,
+        enter: 13,
+        copy: 67,
+        up: 38,
+        down: 40,
+        left: 37,
+        right: 39,
+        range: 82,
+        map: 77,
+        info: 73
+    },
+
+    key = function (k) { return isNaN(k) ? keys[k] : k; },
+    undo = function (array) { return array.splice(0, array.length); };
+    press = function (k) { 
+        //app.game.update();
+        return pressing(k) ? true : pressed.push(key(k));
+    },
+    pressing = function (k) { return k ? pressed.indexOf(key(k)) > -1 : pressed.length; };
+
+    window.addEventListener("keydown", function (e) {
+        if(!app.game.started() || app.user.turn() || e.keyCode === app.key.esc() || app.options.active() || app.confirm.active())
+            press(e.keyCode);
+    }, false);
+
+    window.addEventListener("keyup", function (e) { 
+        up.push(e.keyCode);
+        undo(pressed);
+        //app.game.update();
+    }, false);
+
+    return {
+        press:press,
+        pressed:function (k) {
+            if (k && k.isArray()) {
+                var i = k.length;
+                while (i--)
+                    if (pressing([k[i]]))
+                        return true;
+            } else return pressing(k);
+        },
+        keyUp: function (k) { return k ? up.indexOf(key(k)) > -1 : up.length; },
+        undo: function (k) { return k ? pressed.splice(pressed.indexOf(key(k)), 1) : undo(pressed); },
+        undoKeyUp: function (k) {return k ? up.splice(up.indexOf(key(k)), 1) : undo(up); },
+        set: function (key, newKey) { keys[key] = newKey; },
+        esc: function(){ return keys.esc; },
+        enter: function(){ return keys.enter; },
+        up: function(){ return keys.up; },
+        down: function(){ return keys.down; },
+        left: function(){ return keys.left; },
+        right: function(){ return keys.right; },
+        range: function(){ return keys.range; },
+        map: function(){ return keys.map; },
+        info: function(){ return keys.info; },
+        copy: function(){ return keys.copy; }
+    }
+}();
+},{"../game/game.js":25,"../menu/options/optionsMenu.js":47}],29:[function(require,module,exports){
+app = require('../settings/app.js');
+app.key = require('../input/keyboard.js');
+app.scroll = require('../menu/scroll.js');
+app.user = require('../objects/user.js');
+app.menu = require('../controller/menu.js');
+
+module.exports = function (element) {
+
+	var timer = new Date();
+
+	var doubleTap = function () {
+		var now = new Date();
+		var tappedTwice = now - timer < 300 ? true : false;
+		timer = now;
+		return tappedTwice;
+	};
+
+	var input = function (input) { return input ? input : element; };
+
+	return {
+		scroll: function (elem) {
+
+
+			var e = input(elem);
+
+			// scroll via touch
+		    e.addEventListener('touchmove', function(touch){
+
+		        // get the top  boundry of the element
+		        var top = e.offsetTop - 50;
+
+		        // get the bottom boundry
+		        var bottom = top + e.offsetHeight + 50;
+
+		        //  get the position of the touch
+		        var position = parseFloat(touch.changedTouches[0].pageY ) - 50;
+
+		        // if the position is above the top, move the element up, 
+		        // otherwise move it down if it is below the bottom
+		        if (position < top){
+		            app.scroll.wheel(1, new Date());
+		        }else if (position > bottom){
+		            app.scroll.wheel(-1, new Date());
+		        }
+		        //app.game.update();
+		    });
+		    return this;
+		},
+		swipe: function (elem) {
+
+			var e = input(elem);
+
+			// scroll via touch
+		    e.addEventListener('touchmove', function(touch){
+
+		    	touch.preventDefault();
+
+		    	var width = e.offsetWidth / 3;
+
+		    	var offset = width / 3;
+
+		        // get the left boundry of the element
+		        var left = e.offsetLeft + offset;
+
+		        // get the bottom boundry
+		        var right = e.offsetLeft + width - offset;
+
+		        //  get the position of the touch
+		        var position = parseFloat(touch.changedTouches[0].pageX );
+
+		        // if the position is above the top, move the element up, 
+		        // otherwise move it down if it is below the bottom
+		        if (position < left){
+		            app.scroll.swipe(-1, new Date());
+		        }else if (position > right){
+		            app.scroll.swipe(1, new Date());
+		        }
+		        //app.game.update();
+		    });
+		    return this;
+		},
+		swipeScreen: function (elem) {
+
+			var e = input(elem), start;
+
+			// get the start location of the finger press
+			e.addEventListener('touchstart', function(touch){
+				touch.preventDefault();
+				start = touch.changedTouches[0].pageX;
+			});
+
+			// scroll via touch
+		    e.addEventListener('touchend', function(touch){
+		    	touch.preventDefault();
+
+		        //  get the position of the end of touch
+		        var end = touch.changedTouches[0].pageX;
+
+		        // make the length needed to swipe the width of the page divided by three and a half
+		        var swipeLength = e.offsetWidth / 3.5;
+
+		        // go back if swiping right
+		        if (start < end && end - start > swipeLength){
+		        	app.key.press(app.key.esc());
+
+		        // go forward if swiping left
+		        }else if (start > end && start - end > swipeLength){
+		        	app.key.press(app.key.enter());
+		        }
+		        start = undefined;
+		    });
+
+		    return this;
+		},
+		// may need to change to eliminate less useful select method
+		mapOrGame: function (elem){
+			var e = input(elem);
+			e.addEventListener('touchstart', function(touch){
+				var label = 'SelectionIndex';
+				var target = touch.target;
+				var touched = target.id.indexOf(label) > -1 ? target: target.parentNode;
+				var type = touched.id.indexOf('map') ? 'map' : 'game';
+	        	var index = touched.attributes[type + label].value;
+	        	// // app.display.setIndex(index);
+	        });
+			return this;
+		},
+		modeOptions: function (elem) {
+
+			var e = input(elem);
+
+			e.addEventListener('touchstart', function() {
+
+	        	// get the index
+	        	var index = Array.prototype.indexOf.call(e.parentNode.childNodes, e);
+
+	        	// if the mode options are already under selection, then change the index
+	        	if (app.menu.active()) {
+	        		 // app.display.setIndex(index);
+	        		 //app.game.update();
+
+				// otherwise simulate selecting them with the key right push
+				// and set the default index to the selected option
+	        	} else { 
+	        		// app.display.setOptionIndex(index);
+		        	app.key.press(app.key.right());
+	        	}
+	        });
+
+	        return this;
+		},
+		changeMode: function (elem) {
+			input(elem).addEventListener('touchstart', function () {if(app.menu.active()) app.key.press(app.key.left());});
+			return this;
+		},
+		doubleTap: function (elem) {
+			input(elem).addEventListener('touchstart', function() { if (doubleTap()) app.key.press(app.key.enter());});
+			return this;
+		},
+		element: function (elem) {
+			input(elem).addEventListener('touchstart', function (touch) {
+				var touched = touch.target;
+				var name = touched.parentNode.id == 'settings' ? touched.id : touched.parentNode.id;
+				var setting = name.replace('Settings','').replace('Container','');
+				// app.display.setIndex(setting);
+				//app.game.update();
+			});
+			return this;
+		},
+		esc: function (elem) {
+			input(elem).addEventListener('touchstart', function() {if(app.user.player().ready()) app.key.press(app.key.esc());});
+			return this;
+		}
+	};
+};
+},{"../controller/menu.js":6,"../input/keyboard.js":28,"../menu/scroll.js":49,"../objects/user.js":78,"../settings/app.js":79}],30:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\   
     app
 \* ---------------------------------------------------------------------------------------------------------*/
@@ -3312,24 +3703,12 @@ app = require("./game/app.js");
 // add first letter capitalization funcitonality
 Object.prototype.isArray = function () { return this.constructor === Array };
 String.prototype.uc_first = function () { return this.charAt(0).toUpperCase() + this.slice(1); };
-String.prototype.getNumber = function () { return this.substring(6,7); };
 Array.prototype.hasValue = function (value) { return this.indexOf(value) > -1; };
-
-// remove one arrays values from another
-Array.prototype.offsetArray = function (offsetArray) {
-    for (var z = 0; z < offsetArray.length; z += 1)
-        for (var n = 0; n < this.length; n += 1)
-            if (this[n].x === offsetArray[z].x && this[n].y === offsetArray[z].y)
-                this.splice(n, 1);
-    return this;
-};
-
 Array.prototype.map = function (callback) {
     var mapped = [], i = this.length;
     while (i--) mapped[i] = callback(this[i], i, this);
     return mapped;
 };
-
 Array.prototype.filter = function (callback) {
     var filtered = [], len = this.length;
     for (var i = 0; i < len; i += 1) 
@@ -3337,14 +3716,12 @@ Array.prototype.filter = function (callback) {
             filtered.push(this[i]);
     return filtered;
 };
-
 Array.prototype.reduce = function (callback, initial) {
     var current, prev = initial || this[0];
     for (var i = initial ? 1 : 0, length = this.length; i < length; ++i)
         prev = callback(prev, this[i], i, this);
     return prev;
 };
-
 Array.prototype.findIndex = function (callback) {
     var i = this.length;
     while (i--) if (callback(this[i], i, this)) return i;
@@ -3404,21 +3781,19 @@ app.drawTerrain = function (draw) { draw.cache().coordinate('map', 'terrain'); }
 app.drawBuilding = function (draw) { draw.coordinate('map', 'buildings'); };
 app.drawBackground = function (draw) {draw.background('background'); };
 app.drawUnit = function (draw) { draw.coordinate('map', 'units'); };
-app.drawWeather = function (draw) {}; // weather stuff animated here
-
+app.drawWeather = function (draw) {};
 app.drawEffects = function (draw) {
     draw.coordinate('effect', 'highlight'); // highlighting of movement range
     draw.coordinate('effect', 'path'); // highlighting current path
     draw.coordinate('effect', 'attackRange'); // highlight attack range
 };
-
 app.drawCursor = function (draw) {
     if (!app.cursor.hidden() && app.user.turn())
         draw.coordinate('map', 'cursor', [app.cursor.position()]);
     if (app.target.active()) 
         draw.coordinate('map', app.target.cursor(), [app.target.position()]);
 };
-},{"./game/app.js":21,"./objects/map.js":64}],28:[function(require,module,exports){
+},{"./game/app.js":21,"./objects/map.js":65}],31:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     CoElement.js defines the element that holds co selection information
@@ -3452,7 +3827,7 @@ CoElement.prototype.getStyle = function (parameter) {
     return Number(this.element().parentNode.style[parameter].replace('px',''));
 };
 module.exports = CoElement;
-},{"../../menu/elements/element.js":29}],29:[function(require,module,exports){
+},{"../../menu/elements/element.js":32}],32:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Element.js defines a generic menu element with methods common to all game menus
@@ -3486,12 +3861,12 @@ Element.position = function () {return {x:this.left(), y:this.top()};};
 Element.dimensions = function () {return {x:this.width(), y:this.height()};};
 Element.top = function () {return this.getStyle('top');};
 Element.left = function () {return this.getStyle('left');};
-Element.width = function () {return this.getStyle('height') || this.element().offsetHeight;};
-Element.height = function () {return this.getStyle('width') || this.element().offsetWidth;};
+Element.height = function () {return this.getStyle('height') || this.element().offsetHeight;};
+Element.width = function () {return this.getStyle('width') || this.element().offsetWidth;};
 Element.setBorder = function (border) {this.b = border; return this};
 Element.border = function () {return this.b; };
 module.exports = Element;
-},{"../../menu/elements/ul.js":39}],30:[function(require,module,exports){
+},{"../../menu/elements/ul.js":42}],33:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     List.js creates an interface for iterating over a list of dom elements
@@ -3506,7 +3881,7 @@ List.prototype.setIndex = function (index) {
     this.i = index && index > 0 ? index : 0;
     return this;
 };
-List.prototype.setCurrent = function (property) {return this.setIndex(property ? this.indexOf(property) : 0);};
+List.prototype.setCurrent = function (property) {return this.setIndex(isNaN(property) ? this.indexOf(property) : (property || 0));};
 List.prototype.reset = function () {return this.setIndex(0);},
 List.prototype.index = function () { return this.i; },
 List.prototype.wrap = function (number) {
@@ -3530,7 +3905,9 @@ List.prototype.current = function () {
     var limit = this.limited, index = this.i;
     return limit ? limit[index < limit.length ? index : 0] : this.getElement(index);
 };
-List.prototype.getElement = function (index) {return this.elements()[index];};
+List.prototype.getElement = function (index) {
+    return this.elements()[index];
+};
 List.prototype.limit = function (callback) {
     var elements = this.elements(), current = this.current();
     this.limited = elements.filter(callback);
@@ -3538,7 +3915,7 @@ List.prototype.limit = function (callback) {
     return this;
 };
 module.exports = List;
-},{}],31:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     ModeElement.js defines the element used for option selection on the mode menu
@@ -3569,7 +3946,7 @@ ModeElement.prototype.add = function (element) {
 };
 ModeElement.prototype.clearHeight = function () {this.current().style.height = '';};
 module.exports = ModeElement;
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     ModesElement.js defines the element that is used in game mode selection
@@ -3669,7 +4046,7 @@ ModesElement.prototype.deselect = function () {
     return this;
 };
 module.exports = ModesElement;
-},{"../../menu/elements/modeElement.js":31,"../../menu/elements/optionElement.js":33,"../../menu/elements/textElement.js":38,"../../menu/elements/ul.js":39,"../../tools/hsl.js":87}],33:[function(require,module,exports){
+},{"../../menu/elements/modeElement.js":34,"../../menu/elements/optionElement.js":36,"../../menu/elements/textElement.js":41,"../../menu/elements/ul.js":42,"../../tools/hsl.js":86}],36:[function(require,module,exports){
 UList = require('../../menu/elements/ul.js');
 OptionElement = function (c) {
     this.setElement(document.createElement('ul'));
@@ -3691,7 +4068,7 @@ OptionElement.prototype.deactivate = function () {
 	this.a = false;
 };
 module.exports = OptionElement;
-},{"../../menu/elements/ul.js":39}],34:[function(require,module,exports){
+},{"../../menu/elements/ul.js":42}],37:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     PlayerElement.js creates an element and interface for interacting with co selection
@@ -3723,6 +4100,7 @@ PlayerElement.prototype.team = function () {return this.t;};
 PlayerElement.prototype.fade = function () {return this.co().fader.start(); };
 PlayerElement.prototype.fading = function () { return this.co().fader.fading(); };
 PlayerElement.prototype.stopFading = function () {return this.co().fader.stop();};
+PlayerElement.prototype.bottom = function () {return this.top() + this.height() + 10; };
 PlayerElement.prototype.toSolid = function () {return this.co().fader.stop().toSolid();};
 PlayerElement.prototype.toWhite = function () {return this.co().fader.stop().toWhite();};
 PlayerElement.prototype.show = function () {
@@ -3731,7 +4109,7 @@ PlayerElement.prototype.show = function () {
 };
 PlayerElement.prototype.constructor = PlayerElement;
 module.exports = PlayerElement;
-},{"../../menu/elements/element.js":29}],35:[function(require,module,exports){
+},{"../../menu/elements/element.js":32}],38:[function(require,module,exports){
 Element = require('../../menu/elements/element.js');
 PlayerNumber = function (number, size, init) {
 	var fontSize = size / 4, properties = {
@@ -3740,14 +4118,16 @@ PlayerNumber = function (number, size, init) {
     };
     this.name = number+'p';
     properties[this.name] = this.name;
-    properties.Cp = 'Cp';
+    if (number !== 1 || app.game.started()) 
+    	properties.Cp = 'Cp';
+    var props = [this.name, 'Cp'];
 	this.setNumber(number);
     this.setType('mode');
-	this.setElement(app.dom.createList(properties, this.id(), [this.name, 'Cp']));
+	this.setElement(app.dom.createList(properties, this.id(), props));
 	this.setClass('playerMode');
 	this.sizeFont(fontSize);
 	this.setLeft(size - (fontSize / 2));
-	this.setCurrent(init);
+	this.setIndex(init ? props.indexOf(init.uc_first()) : 0);
 	this.setDescription('Chose Player or Computer.');
 	app.touch(this.element()).element().scroll();
 	app.click(this.element()).element().scroll();
@@ -3760,7 +4140,7 @@ PlayerNumber.prototype.getStyle = function (parameter) {
 	return parameter === 'top' || parameter === 'left' ? parent + element : element;
 };
 module.exports = PlayerNumber;
-},{"../../menu/elements/element.js":29}],36:[function(require,module,exports){
+},{"../../menu/elements/element.js":32}],39:[function(require,module,exports){
 Element = require('../../menu/elements/element.js');
 SettingElement = function (property, parameters) {
     var def, list = app.dom.createList(this.rule(property), property + 'Settings', this.allowed);
@@ -3888,7 +4268,7 @@ SettingElement.prototype.settings = {
     }
 };
 module.exports = SettingElement;
-},{"../../menu/elements/element.js":29}],37:[function(require,module,exports){
+},{"../../menu/elements/element.js":32}],40:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     TeamElement.js defines the element that is used in team selection
@@ -3906,20 +4286,27 @@ TeamElement = function (number, size) {
     for (var t, i = 0; i < this.teams.length; i += 1)
         properties[(t = this.teams[i])] = t.toUpperCase() + 'Team';
 
-    //this.id = function () {return 'player'+this.number+'Team'; };
     this.setNumber(number);
-    this.setElement(app.dom.createList(this.p, this.id(), this.teams));
+    this.setType('team');
+    this.setElement(app.dom.createList(properties, this.id(), this.teams));
     this.setClass('team');
-    this.setHeight(size * 4); // may be setTop
+    this.setTop(size * 4); // may be setTop
     this.setWidth(size);
+    this.setCurrent(number - 1);
     this.setDescription('Set alliances by selecting the same team.');
     app.touch(this.element()).element().scroll().doubleTap();
     app.click(this.element()).element().scroll().doubleClick();        
 };
 TeamElement.prototype = Object.create(Element);
+TeamElement.prototype.getStyle = function (parameter) {
+    var parent = Number(this.element().parentNode.style[parameter].replace('px',''));
+    var element = Number(this.element().style[parameter].replace('px',''));
+    if (parameter === 'top') return parent + element + 10;
+    else return parameter === 'left' ? parent + element : element;
+}
 TeamElement.prototype.constructor = TeamElement;
 module.exports = TeamElement;
-},{"../../menu/elements/element.js":29}],38:[function(require,module,exports){
+},{"../../menu/elements/element.js":32}],41:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     TextElement.js controls the text element on the mode screen
@@ -3987,7 +4374,7 @@ TextElement.prototype.deselect = function () {
     this.setBackgroundColor('white');
 };
 module.exports = TextElement;
-},{}],39:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Ul.js creates an interface for iterating over ul list items
@@ -4005,14 +4392,56 @@ Ul.prototype.element = function () { return this.e; };
 Ul.prototype.setElement = function (element) {
     this.e = element;
     this.setElements(element.childNodes);
+    return this;
 };
 Ul.prototype.hideAll = function () {
     var elements = this.elements(), i = elements.length;
     while (i--) elements[i].style.display = 'none';
     return this;
 };
-Ul.prototype.display = function (display) {
-    this.current().style.display = display || null;
+Ul.prototype.move = function (index) { return this.setIndex(this.scroll(this.wrap(index))); };
+Ul.prototype.setMin = function (min) {this.listTop = min; return this;};
+Ul.prototype.setMax = function (max) {this.listBottom = (this.max = max); return this;};
+Ul.prototype.setScroll = function (min, max) {
+    this.setMin(min).setMax(max).scroll(this.index()); 
+    return this;
+};
+Ul.prototype.scroll = function (target) {
+
+    var max = this.max; 
+
+    if (max) {
+
+        var move = false;
+
+        if (target > this.listBottom) {
+
+            move = true;
+            this.listBottom = target;
+            this.listTop = target - max;
+
+        } else if (target < this.listTop) {
+
+            move = true;
+            this.listBottom = target + max;
+            this.listTop = target;
+        }
+
+        if (move) { 
+            var top = this.listTop;
+            var bottom = this.listBottom;
+            var scope = this;
+
+            this.elements().forEach(function (e,i) {
+                scope.display(i < top || i > bottom ? "none" : "block", e);
+            });
+        }
+    }
+    return target;
+};
+Ul.prototype.display = function (display, element) {
+    (element ? element : this.current())
+        .style.display = display || null;
     return this;
 };
 Ul.prototype.indexOf = function (property) {
@@ -4044,7 +4473,7 @@ Ul.prototype.prepHorizontal = function () {
 };
 Ul.prototype.constructor = Ul;
 module.exports = Ul;
-},{"../../menu/elements/list.js":30}],40:[function(require,module,exports){
+},{"../../menu/elements/list.js":33}],43:[function(require,module,exports){
 Menu = require('../objects/menu.js');
 BuildingsDisplay = require('../objects/buildingsDisplay.js');
 Ulist = require('../menu/elements/ul.js');
@@ -4061,7 +4490,7 @@ Join.game = function () {
 };
 Join.host = function () { return this.h; };
 Join.update = function (type) {
-    var elements = app.display.info(app.maps.all(), ['name'], this.element);
+    var elements = app.dom.createMenu(app.maps.all(), ['name'], this.element);
     var replace = document.getElementById(this.element.section);
     replace.parentNode.replaceChild(elements, replace);
     this.buildings.set(app.maps.info());
@@ -4112,13 +4541,13 @@ Join.display = function (type) {
     var screen = this.createScreen('setupScreen');
     this.createTitle('Select*'+type);
 
-    var categories, maps = app.display.info(app.maps.all(), ['name'], this.element, function (list) {
+    var categories, maps = app.dom.createMenu(app.maps.all(), ['name'], this.element, function (list) {
         var element = list.childNodes[0];
         app.touch(element).mapOrGame().doubleTap();
         app.click(element).mapOrGame().doubleClick();
     });
 
-    this.category = categories = app.display.info(app.settings.categories, '*', {
+    this.category = categories = app.dom.createMenu(app.settings.categories, '*', {
         section: 'categorySelectScreen',
         div:'selectCategoryScreen'
     });
@@ -4152,15 +4581,12 @@ Join.remove = function () {
     screen.removeChild(categories);
     app.key.undo();
     app.maps.clear();
-    app.undo.tempAndPrev();
-    this.clear();
 };
 module.exports = Join;
-},{"../menu/elements/ul.js":39,"../objects/buildingsDisplay.js":57,"../objects/menu.js":66,"../tools/selection.js":93}],41:[function(require,module,exports){
+},{"../menu/elements/ul.js":42,"../objects/buildingsDisplay.js":58,"../objects/menu.js":67,"../tools/selection.js":91}],44:[function(require,module,exports){
 socket = require('../tools/sockets.js');
 app.game = require('../game/game.js');
 app.screens = require('../objects/screens.js');
-app.display = require('../tools/display.js');
 app.user = require('../objects/user.js');
 app.input = require('../objects/input.js');
 Menu = require('../objects/menu.js');
@@ -4263,7 +4689,7 @@ Login.display = function () {
         }(document, 'script', 'facebook-jssdk'));
 
         this.loginScreen = this.setup();
-        document.body.appendChild(this.loginScreen, app.domInsertLocation);
+        document.body.appendChild(this.loginScreen, app.dom.insertLocation);
 
         // hide the login screen, only show if someone has logged in
         this.loginScreen.style.display = 'none';
@@ -4282,7 +4708,7 @@ Login.display = function () {
     }
 };
 module.exports = Login;
-},{"../game/game.js":25,"../objects/input.js":63,"../objects/menu.js":66,"../objects/screens.js":72,"../objects/user.js":77,"../tools/display.js":85,"../tools/sockets.js":94}],42:[function(require,module,exports){
+},{"../game/game.js":25,"../objects/input.js":64,"../objects/menu.js":67,"../objects/screens.js":73,"../objects/user.js":78,"../tools/sockets.js":92}],45:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Modes.js controls game mode selection 
@@ -4319,7 +4745,7 @@ Modes.setHeight = function (height) {this.h = height;};
 Modes.height = function () {return this.h;};
 Modes.properties = function () { return app.settings.selectModeMenu; };
 Modes.message = function (id) {return this.messages[id];};
-Modes.insert = function (screen) {document.body.insertBefore(screen, app.domInsertLocation);};
+Modes.insert = function (screen) {document.body.insertBefore(screen, app.dom.insertLocation);};
 Modes.remove = function () {
     app.dom.removeChildren(this.screen(), 'title');
     app.footer.remove();
@@ -4425,31 +4851,48 @@ Modes.display = function () {
     return screen;
 };
 module.exports = Modes;
-},{"../effects/fade.js":15,"../effects/scrollText.js":17,"../menu/elements/list.js":30,"../menu/elements/modesElement.js":32,"../menu/elements/ul.js":39,"../objects/menu.js":66}],43:[function(require,module,exports){
+},{"../effects/fade.js":15,"../effects/scrollText.js":17,"../menu/elements/list.js":33,"../menu/elements/modesElement.js":35,"../menu/elements/ul.js":42,"../objects/menu.js":67}],46:[function(require,module,exports){
+//Select = require("../");
 Exit = function (callback) {
 	this.leave = callback || function () {
 		this.game.end(); 
 		this.a = false;
-		socket.emit('exit', false);
+		socket.emit("exit", app.user.player());
+		return this;
 	};
 };
 
 Exit.prototype.prompt = function (message) { 
-	app.undo.all();
     app.hud.hide();
     app.coStatus.hide();
     app.cursor.hide();
 	this.a = true;
-	app.confirm.display(message, true); 
+	app.confirm.display(message, true);
+	return this; 
 };
 
 Exit.prototype.evaluate = function () {
-	var answer = app.input.response();
-	if (answer) {
-		this.a = false;
-		app.input.remove();
-		if (answer === 'yes')
-			return this.leave();
+
+	var response = app.confirm.response;
+
+	if (response) {
+
+		if (app.key.pressed(["left","right"]))
+			Select.horizontal(response.deHighlight()).highlight();
+
+		if (app.key.pressed(['enter', 'esc'])) {
+
+			this.deactivate();
+			app.confirm.deactivate();
+			app.input.remove();
+
+			if (app.key.pressed(app.key.enter()) && response.id() === "yes")
+				this.leave();
+
+			delete app.confirm.response;
+			delete this.selected;
+			return true;
+		}
 	}
 };
 
@@ -4457,240 +4900,221 @@ Exit.prototype.active = function () { return this.a };
 Exit.prototype.deactivate = function () {this.a = false;};
 
 module.exports = Exit;
-},{}],44:[function(require,module,exports){
-// intel
-
-module.exports = {
-    status: function () {
-
-    },
-    unit: function () {
-
-    },
-    rules: function () {
-        // show settings and teams menus (non editable)
-    },
-    display: function () {
-
-    },
-    active: function () {
-    	return false;
-    },
-    deactivate: function () {
-        this.a = false;
-    }
-};
-},{}],45:[function(require,module,exports){
-app.settings = require('../../settings/game.js');
-
-module.exports = {
-    
-    del: function () {
-        app.optionsMenu.remove();
-        app.undo.all();
-        app.hud.show();
-        app.coStatus.show();
-        app.cursor.deleteMode(); 
-    },
-
-    yield: function () { app.yield.prompt('Are you sure you want to yeild? '); },
-    exit: function () { app.exit.prompt('Are you sure you want to exit? '); },
-
-    // fugure out how to activate scroll through on hover, then use that to coordinate selection
-    // for music and visuals
-
-    music: function () {        
-        app.optionsMenu.remove();
-        alert('no music yet');
-    },
-    visual: function () {
-        app.optionsMenu.remove();
-        alert('no visuals yet');
-        var description = {
-            A: 'View battle and capture animations.',
-            B: 'Only view battle animations.',
-            C: 'Only view player battle animations'
-        }
-    },
-
-    // --------------------------------------------------------------
-    
-    evaluate: function () {
-        var option, type = app.display.verticle().select(app.optionsMenu.list(), app.effect.highlightListItem).id
-        if (type) {
-            this.a = false;
-            app.options[type]();
-        }
-    },
-
-    display: function () {
-        app.optionsMenu.remove();
-        app.display.info(
-            {
-                del: { name: 'Delete' },
-                yield: { name: 'Yield' },
-                music: { name: 'Music' },
-                visual: { name: 'Visual'},
-                exit: { name: 'Leave' }
-            },
-            ['del', 'yield', 'music', 'visual', 'exit', 'name'],
-            { section: 'optionsMenu', div: 'optionSelect' }
-        );
-        this.a = true;
-    },
-
-    active: function () { return this.a; },
-    deactivate: function () {this.a = false; },
-};
-},{"../../settings/game.js":80}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /* ----------------------------------------------------------------------------------------------------------*\
     
     app.options handles the in game options selection, end turn, save etc.
     
 \* ----------------------------------------------------------------------------------------------------------*/
 
-app = require('../../settings/app.js');
-app.game = require('../../game/game.js');
-app.players = require('../../controller/players.js');
-app.key = require('../../tools/keyboard.js');
-socket = require('../../tools/sockets.js');
-app.intel = require('./intel.js');
-app.options = require('./options.js');
-app.save = require('./save.js');
+app = require("../../settings/app.js");
+app.game = require("../../game/game.js");
+app.settings = require("../../settings/game.js");
+app.players = require("../../controller/players.js");
+app.save = require("./save.js");
+socket = require("../../tools/sockets.js");
 
-// Element = require('../elements/element.js');
+Exit = require("./exit.js");
+UList = require("../elements/ul.js");
+Settings = require("../settings.js");
+app.key = require("../../input/keyboard.js");
 
-// OptionsMenu = Object.create(Element);
-// OptionsMenu.co = function () { app.undo.all(); };
-// OptionsMenu.intel = function () { app.intel.display(); };
-// OptionsMenu.options = function () { app.options.display(); };
-// OptionsMenu.save = function () { 
-//     app.undo.all();
-//     app.save.display(); 
-// };
+Options = Object.create(UList.prototype);
+Options.subMenus = ["rules", "exit", "yield", "save", "status", "unit"];
+Options.ruleMenus = [Settings, Teams];
+Options.ri = 0;
 
-// // end turn
-// OptionsMenu.end = function () {
-//     var player = app.players.current();
-//     player.endTurn();
-//     if (app.user.player() === player) {
-//         app.undo.all();
-//         app.animate(['cursor']);
-//         socket.emit('endTurn', player.id());
-//     }
-//     return this;
-// };
-// OptionsMenu.display = function () {
-//     app.key.undo(app.key.esc());
-//     active = true;
-//     app.display.info(app.settings.optionsMenu, app.settings.optionsMenuDisplay, { section: 'optionsMenu', div: 'optionSelect' });
-//     return this;
-// };
-// OptionsMenu.evaluate = function() { 
-//     if (app.key.pressed(['up', 'down'])) Select.verticle(this.list());
-//     if (app.key.pressed(app.key.enter())) {
-//         this.deactivate();
-//         app.optionsMenu[Select.getVerticle()]();
-//     }
-// };
-// OptionsMenu.coordinate = function (options) {
-//     for (var i = 0; i < options.length; i += 1){
-//         if (app[options[i]].active()) {
-//             app[options[i]].evaluate();
-//             return true;
-//         }
-//     }
-// };
-// OptionsMenu.active = function()   { return active; };
-// OptionsMenu.activate = function() { active = true; };
-// OptionsMenu.deactivate = function(all){
-//     if (all) for (var i = 0; i < all.length; i += 1)
-//         app[all[i]].deactivate();
-//     active = false;
-// };
-// OptionsMenu.remove =function(){
-//     var menu = this.screen();
-//     menu.parentNode.removeChild(menu);
-//     app.display.clear();
-// };
-// OptionsMenu.screen = function () { return document.getElementById('optionsMenu'); };
-// OptionsMenu.list = function () { return document.getElementById('optionSelect'); };
+/* ------=======------ helpers -------=====------ *\
+\* -----------------------------------------------*/
+
+Options.hidden = function () {return this.hid;};
+Options.deactivate = function () {this.a = false;};
+Options.active = function () {return this.a; };
+Options.activate = function () {this.a = true;};
+Options.screen = function () { return this.s; };
+Options.setScreen = function (s) {this.s = s;};
+Options.setMode = function (mode) {this.m = mode; return this;};
+Options.mode = function () {return this.m;};
+Options.screen = function () { return document.getElementById("optionsMenu"); };
+Options.leaveGame = function (callback) {
+    if (!this.leave) {
+        this.leave = new Exit(callback).prompt("Are you sure you want to "+this.mode()+"? ");
+        this.hide();
+    } else if (this.leave.evaluate()) {
+        this.leave = false;
+        app.screen.reset();
+        this.remove();
+    }
+};
+Options.remove = function () {
+    this.setMode(false);
+    this.show();
+    var menu = this.screen();
+    if (menu) menu.parentNode.removeChild(menu);
+};
+Options.init = function (properties, allowed, elements) {
+    this.activate();
+    this.parent = app.dom.createMenu(properties, allowed, elements);
+    this.selected = this.setElement(this.parent.firstChild).setIndex(0).highlight().id();
+    return this;
+};
+Options.select = function() { 
+    if (!this.hidden()) {
+        if (app.key.pressed(["up", "down"])) 
+            this.selected = Select.verticle(this.deHighlight()).highlight().id();
+
+        if (app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter()))
+            this[this.setMode(this.selected).mode()]();
+    }
+};
+Options.subMenu = function () {
+    var mode = this.mode();
+    return this.subMenus.find(function (option) { return mode === option; });
+};
+Options.hide = function () { 
+    this.parent.style.display = "none"; 
+    this.hid = true; 
+    return this;
+};
+Options.show = function () { 
+    this.parent.style.display = null; 
+    this.hid = false; 
+    return this;
+};
+
+/* ------=======------ main menus -------=====------ *\
+\* --------------------------------------------------*/
+
+Options.display = function () {
+    this.init(
+        app.settings.optionsMenu, 
+        app.settings.optionsMenuDisplay, 
+        { section: "optionsMenu", div: "optionSelect" }
+    );
+    return this;
+};
 
 
-module.exports = function () {
+Options.co = function () { app.screen.reset(); };
+Options.save = function () { 
+    if (!app.save.active()) {
+        this.hide();
+        app.save.display();
+    } else if (app.save.evaluate()) {
+        app.save.deactivate();
+        this.remove();
+        app.screen.reset();
+    }
+};
+Options.end = function () {
+    var player = app.players.current();
+    player.endTurn();
+    if (app.user.player() === player) {
+        app.screen.reset();
+        app.animate(["cursor"]);
+        socket.emit("endTurn", player.id());
+    }
+    return this;
+};
 
-    var active = false;
+/* ------=======------ option menus -------=====------ *\
+\* ----------------------------------------------------*/
 
-    return {
-
-        co: function () { app.undo.all(); },
-        intel: function () { app.intel.display(); },
-        options: function () { app.options.display(); },
-        save: function () { 
-            app.undo.all();
-            app.save.display(); 
+Options.options = function () { 
+    this.init(
+        {
+            del: { name: "Delete" },
+            yield: { name: "Yield" },
+            music: { name: "Music" },
+            visual: { name: "Visual"},
+            exit: { name: "Leave" }
         },
+        ["del", "yield", "music", "visual", "exit", "name"],
+        { section: "optionsMenu", div: "optionSelect" }
+    ); 
+};
+Options.del = function () {
+    this.remove();
+    app.screen.reset();
+    app.hud.show();
+    app.coStatus.show();
+    app.cursor.deleteMode(); 
+};
+Options.yield = function () {
+    this.leaveGame(function () {
+        app.game.end();
+        var player = app.user.player();
+        socket.emit("defeat", {defeated:player, conqueror:player, capturing:false});
+    })
+};
+Options.music = function () {        
+    this.remove();
+    alert("no music yet");
+};
+Options.visual = function () {
+    this.remove();
+    alert("no visuals yet");
+    var description = {
+        noVisual: "No visuals.",
+        A: "View battle and capture animations.",
+        B: "Only view battle animations.",
+        C: "Only view player battle animations."
+    }
+};
+Options.exit = function () { this.leaveGame(); };
 
-        // end turn
-        end: function () {
-            var player = app.players.current();
-            player.endTurn();
-            if (app.user.player() === player) {
-                app.undo.all();
-                app.animate(['cursor']);
-                socket.emit('endTurn', player.id());
-            }
-            return this;
-        },
-        display: function () {
-            app.key.undo(app.key.esc());
-            active = true;
-            app.display.info(app.settings.optionsMenu, app.settings.optionsMenuDisplay, { section: 'optionsMenu', div: 'optionSelect' });
-            return this;
-        },
-        evaluate: function() { 
-            if (app.key.pressed(['up', 'down'])) Select.verticle(this.list());
-            if (app.key.pressed(app.key.enter())) {
-                this.deactivate();
-                app.optionsMenu[Select.getVerticle()]();
-            }
-        },
-        coordinate: function (options) {
-            for (var i = 0; i < options.length; i += 1){
-                if (app[options[i]].active()) {
-                    app[options[i]].evaluate();
-                    return true;
-                }
-            }
-        },
-        active:function()   { return active; },
-        activate:function() { active = true; },
-        deactivate:function(all){
-            if (all) for (var i = 0; i < all.length; i += 1)
-                app[all[i]].deactivate();
-            active = false;
-        },
 
-        remove:function(){
-            var menu = this.screen();
-            menu.parentNode.removeChild(menu);
-            app.display.clear();
+/* ------=======------ intel menus -------=====------ *\
+\* ---------------------------------------------------*/
+
+Options.intel = function () {
+    this.init(
+        {
+            rules: { name: "Rules" },
+            status: { name: "Status" },
+            unit: { name: "Unit" }
         },
-        screen: function () { return document.getElementById('optionsMenu'); },
-        list: function () { return document.getElementById('optionSelect'); }
-    };
-}();
-},{"../../controller/players.js":7,"../../game/game.js":25,"../../settings/app.js":78,"../../tools/keyboard.js":90,"../../tools/sockets.js":94,"./intel.js":44,"./options.js":45,"./save.js":47}],47:[function(require,module,exports){
+        ["rules", "status", "unit", "name"],
+        { section: "optionsMenu", div: "optionSelect" }
+    );
+};
+Options.status = function () {
+    // map name at top
+    // graph showing units, units lost, bases, income and funds for each player
+    // neutral base count at bottom
+},
+Options.unit = function () {
+    // graph showing hp, fuel and ammo for each unit, orders them by currently hovered over parameter (hp, fuel, ammo)
+    // use select button to toggle lowest or highest at the top
+},
+
+Options.ruleIndex = function () {return this.ri + 1 < this.ruleMenus.length ? (this.ri += 1) : (this.ri = 0);};
+Options.rules = function () {
+    if ((app.key.pressed(app.key.enter()) || !this.hidden())) {
+
+        if (!this.hidden()) this.hide();
+        else this.currentMenu.remove();
+        (this.currentMenu = this.ruleMenus[this.ruleIndex()]).select();
+
+    } else if (app.key.pressed(app.key.esc())) {
+
+        this.currentMenu.remove();
+        var ii = document.getElementById("setupScreen");
+        ii.parentNode.removeChild(ii);
+        this.show().setMode("intel").intel();
+
+    }
+};
+module.exports = Options;
+},{"../../controller/players.js":7,"../../game/game.js":25,"../../input/keyboard.js":28,"../../settings/app.js":79,"../../settings/game.js":81,"../../tools/sockets.js":92,"../elements/ul.js":42,"../settings.js":50,"./exit.js":46,"./save.js":48}],48:[function(require,module,exports){
 // save
-app.key = require('../../tools/keyboard.js');
+app.key = require('../../input/keyboard.js');
 app.cursor = require('../../controller/cursor.js');
 app.input = require('../../objects/input.js');
-app.undo = require('../../tools/undo.js');
 app.confirm = require('../../controller/confirmation.js');
 
 module.exports = {
     display: function () {  
-        current = 'save';
         app.hud.hide();
         app.coStatus.hide();
         app.cursor.hide();
@@ -4698,31 +5122,29 @@ module.exports = {
         this.a = true;
     },
     evaluate: function () {
-    	if (!this.sent() && app.key.pressed(app.key.enter())) {
-            if(app.input.entry()){
-                this.s = true;
-                socket.emit('confirmSave', app.user.player());
-                app.input.removeInput();
-                app.confirm.waiting(app.players.other());
-            }
-    	} else if (app.key.pressed(app.key.esc())) 
+    	if (!this.sent() && app.key.pressed(app.key.enter()) && app.input.entry()) {
+            this.s = true;
+            socket.emit('confirmSave', app.user.player());
+            app.input.removeInput();
+            app.confirm.waiting(app.players.other());
+    	} else if ((this.r && app.key.pressed(app.key.enter())) || app.key.pressed(app.key.esc())) {
             this.remove();
+            return true;
+        }
     },
+    recieved: function () {this.r = true;},
     active: function () { return this.a; },
     sent: function () { return this.s; },
-    recieved: function () { this.s = false; },
     remove: function () {
         app.input.remove();
-        app.hud.show();
-        app.coStatus.show();
-        app.cursor.show();
-        app.undo.all();
+        app.screen.reset();
         this.a = false;
         this.s = false;
+        this.r = false;
     },
     deactivate: function () {this.a = false;}
 };
-},{"../../controller/confirmation.js":2,"../../controller/cursor.js":3,"../../objects/input.js":63,"../../tools/keyboard.js":90,"../../tools/undo.js":96}],48:[function(require,module,exports){
+},{"../../controller/confirmation.js":2,"../../controller/cursor.js":3,"../../input/keyboard.js":28,"../../objects/input.js":64}],49:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     handles scrolling of menu elements etc..
@@ -4730,8 +5152,7 @@ module.exports = {
 \* --------------------------------------------------------------------------------------*/
 
 app = require('../settings/app.js');
-app.undo = require('../tools/undo.js');
-app.key = require('../tools/keyboard.js');
+app.key = require('../input/keyboard.js');
 
 module.exports = function () {
 
@@ -4787,7 +5208,7 @@ module.exports = function () {
         }
     };
 }();
-},{"../settings/app.js":78,"../tools/keyboard.js":90,"../tools/undo.js":96}],49:[function(require,module,exports){
+},{"../input/keyboard.js":28,"../settings/app.js":79}],50:[function(require,module,exports){
 Menu = require('../objects/menu.js');
 Arrows = require('../objects/arrows.js');
 Teams = require('../menu/teams.js');
@@ -4847,20 +5268,23 @@ Settings.select = function (selected) {
             this.sweller.stop().setElement(selected.background()).start();
             if (this.arrows) this.arrows.setPosition(selected);
         }
-        if(app.key.pressed(['up','down'])) 
+
+        if(app.key.pressed(['up','down']) && !app.game.started()) 
             selected = Select.setVerticle(Select.verticle(Select.getHorizontal().hide()))
                 .getHorizontal().show();
         
-        if (selected) this.set(selected.type(), selected.value());
+        if (selected && !app.game.started()) this.set(selected.type(), selected.value());
     }
     
-    if(app.key.pressed(app.key.enter()) && this.arrows || app.input.active()) 
-        return this.input();
-    else return this.exit(this, function (scope) { 
-        scope.m = false;
-        scope.goBack();
-        scope.remove();
-    });
+    if (!app.game.started()) {
+        if(app.key.pressed(app.key.enter()) || app.input.active()) 
+            return this.input();
+        else return this.exit(this, function (scope) { 
+            scope.m = false;
+            scope.goBack();
+            scope.remove();
+        });
+    }
 };
 
 Settings.set = function (setting, value) { return this.parameters[setting] = value; };
@@ -4892,7 +5316,6 @@ Settings.input = function () {
         app.key.undo(app.key.esc());
         app.input.clear();
         this.arrows.show();
-        app.display.clearOld();
     }
 };
 
@@ -4904,9 +5327,6 @@ Settings.remove = function () {
     this.swelling = false;
     delete this.elements;
     Select.clear();
-    app.display.reset();
-    app.undo.tempAndPrev();
-    this.clear();
     if (app.key.pressed(app.key.esc()))
         this.screen().removeChild(this.element);
     app.key.undo();
@@ -4956,7 +5376,7 @@ Settings.display = function () {
     return element;
 };
 module.exports = Settings;
-},{"../effects/swell.js":18,"../menu/elements/settingElement.js":36,"../menu/teams.js":50,"../objects/arrows.js":54,"../objects/menu.js":66,"../settings/default.js":79,"../tools/selection.js":93}],50:[function(require,module,exports){
+},{"../effects/swell.js":18,"../menu/elements/settingElement.js":39,"../menu/teams.js":51,"../objects/arrows.js":55,"../objects/menu.js":67,"../settings/default.js":80,"../tools/selection.js":91}],51:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Teams.js controls co and team selection
@@ -4965,7 +5385,7 @@ module.exports = Settings;
 
 app = require('../settings/app.js');
 socket = require('../tools/sockets.js');
-app.key = require('../tools/keyboard.js');
+app.key = require('../input/keyboard.js');
 app.maps = require('../controller/maps.js'); 
 app.screens = require('../objects/screens.js');
 app.dom = require('../tools/dom.js');
@@ -5009,11 +5429,14 @@ Teams.init = function () {
         player.setProperty('co', element.co().value());
     });
     if (this.arrows) this.rise();
-    this.toCo();
+    app.game.started() ? this.toTeam() : this.toCo();
 };
 Teams.selectableTeams = function (team) {
-    var number = app.user.number(), element = this.playerElement(number);
-    return number === team.number() || number === 1 && element.mode().isComputer(); // maybe scope issues?
+    var number = app.user.number();
+    var teamNumber = team.number();
+    return number === teamNumber || 
+        number === 1 && Teams.playerElement && 
+            Teams.playerElement(teamNumber).mode().isComputer();
 };
 Teams.selectable = function (element, index, elements) {
     var mode = elements[index + 1], player = app.user.number(), number = element.number();
@@ -5030,19 +5453,22 @@ Teams.boot = function () {
 };
 Teams.remove = function () {
 
+    this.deactivate();
+
+    if (this.arrows) {
+        this.arrows.remove();
+        delete this.arrows;
+    }
+
     delete this.mode;
     delete this.playerElements;
-    this.deactivate();
-    if (this.arrows) this.arrows.remove();
+
     var name, screen = this.screen(), 
     teams = this.element;
 
     if (!app.game.joined()) 
         this.fall(function(){screen.removeChild(teams);});
     else screen.removeChild(teams);
-
-    app.undo.tempAndPrev();
-    this.clear();
 
     app.input.goBack();
     app.footer.remove();
@@ -5055,31 +5481,8 @@ Teams.remove = function () {
         });
         app.game.clear();
     }
-    if (!app.game.started()) app.players.reset();
-};
-Teams.fromCo = function () {
-    this.clear();
-    app.undo.tempAndPrev();
-    app.key.undo();
-    this.setMode(this.selectTeams() ? 'team' :'ready');
-    return this;
-};
-Teams.selectTeams = function () { return app.map.players() > 2 };
-Teams.fromReady = function () {
-    var player = app.user.player();
-    player.isReady(false);
-    socket.emit('ready', player);
-    if (this.arrows) this.arrows.hide();
-    app.chat.remove();
-    app.key.undo();
-    this.button.remove();
-    return this;
-};
-Teams.fromTeam = function () {
-    this.teamsHeight(this.top());
-    app.undo.tempAndPrev();
-    this.clear();
-    return this;
+    if (!app.game.started()) 
+        app.players.reset();
 };
 Teams.toCo = function (from) {
     if (app.game.joined()) {
@@ -5090,16 +5493,29 @@ Teams.toCo = function (from) {
         });
     }
     if (this.mode) this.playersHeight('30%');
-    if (this.arrows) this.arrows.setPosition(this.elements.current()).show();
+    if (this.arrows) this.arrows.setSpace(10).setPosition(this.elements.current()).show();
+    Select.setHorizontal(this.elements);
     this.setMode('co');
     this.sel = true;
+    return this;
 };
-Teams.setMode = function (mode) {this.mode = mode;};
+Teams.fromCo = function () {
+    app.key.undo();
+    this.setMode(this.selectTeams() ? 'team' :'ready');
+    return this;
+};
 Teams.toTeam = function () {
-    this.teamsHeight((this.top() * 7) / 24);
     this.playersHeight('20%');
-    if (this.arrows) this.arrows.setPosition(this.teams.current());
+    this.teamsHeight(this.playerElement(1).bottom() / 1.5);
+    this.showTeams();
+    if (this.arrows) this.arrows.setSpace(0).setPosition(this.teams.current()).show();
+    Select.setHorizontal(this.teams.limit(this.selectableTeams));
     this.setMode('team');
+    return this;
+};
+Teams.fromTeam = function () {
+    this.hideTeams();
+    return this;
 };
 Teams.toReady = function () {
     var top, player = app.user.player();
@@ -5107,10 +5523,23 @@ Teams.toReady = function () {
     this.setMode('ready');
     socket.emit('ready', player);
     this.playersHeight('20%');
-    if (this.arrows) this.arrows.setPosition(this.elements.current()).hide();
+    if (this.arrows) this.arrows.setSpace(10).setPosition(this.elements.current()).hide();
     this.button = app.screens.startButton('setupScreen');
     app.chat.display();
+    return this;
 };
+Teams.fromReady = function () {
+    var player = app.user.player();
+    player.isReady(false);
+    socket.emit('ready', player);
+    if (this.arrows) this.arrows.hide();
+    app.chat.remove();
+    app.key.undo();
+    this.button.remove();
+    return this;
+};
+Teams.setMode = function (mode) {this.mode = mode;};
+Teams.selectTeams = function () { return app.map.players() > 2 || app.game.started(); };
 Teams.choseCo = function () {
 
     var player, element, wasComputer, scope = this;
@@ -5140,26 +5569,24 @@ Teams.choseCo = function () {
         scope.remove();
     });
 };
-
-// figure this out!!!!
 Teams.choseTeam = function () {
-    if (app.key.pressed(['left', 'right'])) {
-        var team = Select.horizontal(this.teams).limit(this.selectableTeams);
-        if (this.arrows) this.arrows.setPosition(team.element());
-    }
-    if (app.key.pressed(['up','down'])) 
-        var team = Select.verticle(Select.getHorizontal());
-        
-    if (team) app.players.number(team.number()).setProperty(team.property(), team.value());
+    if (!app.game.started()) {
+        if (app.key.pressed(['left', 'right'])) {
+            var team = Select.setHorizontal(Select.horizontal(this.teams).limit(this.selectableTeams)).getHorizontal();
+            if (this.arrows) this.arrows.setPosition(team);
+        }
+        if (app.key.pressed(['up','down'])) var team = Select.verticle(Select.getHorizontal().hide()).show();
+            
+        if (team) app.players.number(team.number()).setProperty(team.type(), team.value());
 
-    if (app.key.pressed(app.key.esc()) || app.key.pressed(app.key.enter()) || this.booted()) {
-        if(app.key.pressed(app.key.enter()))
-            return this.fromTeam().toReady();
-        this.fromTeam().toCo();
-        app.key.undo();
+        if (app.key.pressed(app.key.esc()) || app.key.pressed(app.key.enter()) || this.booted()) {
+            if(app.key.pressed(app.key.enter()))
+                return this.fromTeam().toReady();
+            this.fromTeam().toCo();
+            app.key.undo();
+        }
     }
 };
-
 Teams.playerReady = function (from) {
     app.players.ready() && app.user.first() ? this.button.show() : this.button.hide();
 
@@ -5174,7 +5601,6 @@ Teams.playerReady = function (from) {
     if (app.key.pressed(app.key.esc()))
         this.selectTeams() ? this.fromReady().toTeam() : this.fromReady().toCo();
 };
-
 Teams.coBorderColor = function () {
 
     // move through the spaces and check the status of the players, change their border color
@@ -5201,7 +5627,7 @@ Teams.coBorderColor = function () {
     }
 };
 Teams.playerElement = function (number) {if (this.playerElements) return this.playerElements.getElement(number - 1);};
-Teams.teamElement = function (number) {return this.teams[number - 1];};
+Teams.teamElement = function (number) {return this.teams.getElement(number - 1);};
 Teams.playersHeight = function (height, len) {
     var height = this.screenHeight() * this.percentage(height);
     for (var n = 1, len = app.map.players(); n <= len; n += 1)
@@ -5210,6 +5636,14 @@ Teams.playersHeight = function (height, len) {
 Teams.teamsHeight = function (height) {
     for (var n = 1, len = app.map.players(); n <= len; n += 1)
         this.teamElement(n).setTop(height);
+};
+Teams.showTeams = function () { 
+    for (var n = 1, len = app.map.players(); n <= len; n += 1)
+        this.teamElement(n).show();
+};
+Teams.hideTeams = function () {
+    for (var n = 1, len = app.map.players(); n <= len; n += 1)
+        this.teamElement(n).hide();
 };
 Teams.addAiPlayer = function (number) {
     var player = app.players.number(number), n = (this.aiNumber += 1);
@@ -5222,7 +5656,7 @@ Teams.removeAiPlayer = function (number) {
 Teams.display = function () {
 
     var screen = this.createScreen('setupScreen');
-    var elements = [], players = [], size = 200;
+    var elements = [], teams = [], players = [], size = 200;
 
     var element = document.createElement('article');
     element.setAttribute('id','teams');
@@ -5235,20 +5669,20 @@ Teams.display = function () {
     var chat = app.input.form('chat', chatScreen, 'type here to chat with other players');
     chatScreen.appendChild(chat);
 
-    var height = (screen.offsetHeight * .3) + (this.arrows ? app.offScreen : 0);
+    var height = (screen.offsetHeight * .3) + (this.arrows ? app.offScreen : 0), started = app.game.started();
 
     for (var co, player, playerElement, mode, number = 1, nop = app.map.players(); number <= nop; number += 1) {
 
         playerElement = new PlayerElement(number, size, height);
         player = app.players.number(number);
 
-        elements.push((co = new CoElement(number, player ? player.property('co') : 0)).setBorder(5));
-        elements.push((mode = new PlayerNumber(number, size, player ? player.property('mode') : 0)).setBorder(5));
+        elements.push((co = new CoElement(number, player ? player.co : number - 1)).setBorder(5));
+        elements.push((mode = new PlayerNumber(number, size, player ? player.mode : 0)).setBorder(5));
 
         this.players[co.id()] = co.properties();
         this.players[mode.id()] = mode.properties();
 
-        if (player) {
+        if (!started && player) {
             player.setNumber(number);
             player.setProperty(co.type(), co.value());
             player.setProperty(mode.type(), mode.value());
@@ -5261,7 +5695,7 @@ Teams.display = function () {
 
         if (this.selectTeams()) {
             var team = new TeamElement(number, size);
-            if (player) player.setProperty(team.type(), team.value());
+            if (!started && player) player.setProperty(team.type(), team.value());
             playerElement.add(team.element());
             teams.push(team);
         }
@@ -5271,8 +5705,7 @@ Teams.display = function () {
     }
     this.playerElements = new List(players);
 
-    this.elements = new List(elements);
-    this.elements.limit(this.selectable);
+    this.elements = new List(elements).limit(this.selectable);
     if (this.selectTeams()) this.teams = new List(teams).limit(this.selectableTeams);
     if (this.arrows) this.arrows.setSize(30).setSpace(10).insert(element).setPosition(this.elements.current()).fade();
     
@@ -5282,7 +5715,7 @@ Teams.display = function () {
     return this.element = element;
 };
 module.exports = Teams;
-},{"../controller/background.js":1,"../controller/maps.js":5,"../menu/elements/coElement.js":28,"../menu/elements/playerElement.js":34,"../menu/elements/playerNumber.js":35,"../menu/elements/teamElement.js":37,"../menu/settings.js":49,"../objects/aiPlayer.js":51,"../objects/arrows":54,"../objects/footer.js":61,"../objects/menu.js":66,"../objects/screens.js":72,"../settings/app.js":78,"../tools/dom.js":86,"../tools/keyboard.js":90,"../tools/selection.js":93,"../tools/sockets.js":94}],51:[function(require,module,exports){
+},{"../controller/background.js":1,"../controller/maps.js":5,"../input/keyboard.js":28,"../menu/elements/coElement.js":31,"../menu/elements/playerElement.js":37,"../menu/elements/playerNumber.js":38,"../menu/elements/teamElement.js":40,"../menu/settings.js":50,"../objects/aiPlayer.js":52,"../objects/arrows":55,"../objects/footer.js":62,"../objects/menu.js":67,"../objects/screens.js":73,"../settings/app.js":79,"../tools/dom.js":85,"../tools/selection.js":91,"../tools/sockets.js":92}],52:[function(require,module,exports){
 Player = require('../objects/player.js');
 Score = require('../definitions/score.js');
 AiPlayer = function (number) {
@@ -5297,9 +5730,9 @@ AiPlayer = function (number) {
     this.fullName = function () { return 'Mr. Robot'; };
     this.lastName = function () { return 'Robot'; };
     this.id = function () { return this._current.id; };
-    this.socketId = function () { return 'IAmSocketless'; };
     this.score = new Score(true);
     this.co = null;
+    this.mode = 'cp';
     this.isComputer = true;
     if (app.user.first()) socket.emit('addAiPlayer', this);
 };
@@ -5307,7 +5740,7 @@ AiPlayer.prototype = Object.create(Player.prototype);
 AiPlayer.prototype.constructor = AiPlayer;
 AiPlayer.prototype.setNumber = function (number) {this._current.number = number;};
 module.exports = AiPlayer;
-},{"../definitions/score.js":12,"../objects/player.js":68}],52:[function(require,module,exports){
+},{"../definitions/score.js":12,"../objects/player.js":69}],53:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------------------------*\
 
     default object animation repo, the 'm' parameter is a method passed from 
@@ -5544,7 +5977,7 @@ module.exports = function (width, height) {
         }
     };
 };
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 Arrow = function (d) {
     this.direction = d;
     this.arrowBackground = document.createElement('div');
@@ -5616,7 +6049,7 @@ Arrow.prototype.setSize = function (size) {
     }
     return this;
 };
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 arrow = require('../objects/arrow.js');
 Fader = require('../effects/fade.js');
 
@@ -5692,7 +6125,7 @@ Arrows.prototype.up = function () { return this.u; };
 Arrows.prototype.down = function () { return this.d; };
 
 module.exports = Arrows;
-},{"../effects/fade.js":15,"../objects/arrow.js":53}],55:[function(require,module,exports){
+},{"../effects/fade.js":15,"../objects/arrow.js":54}],56:[function(require,module,exports){
 Building = require('../objects/building.js');
 //ListElement = require('../tools/dom/listElement.js');
 
@@ -5720,25 +6153,25 @@ Build.prototype.select = function () {
 //Building.prototype.units = new ListElement('buildings', ['infantry','apc']);
 
 module.exports = Build;
-},{"../objects/building.js":56}],56:[function(require,module,exports){
-app = require('../settings/app.js');
-app.map = require('../controller/map.js');
+},{"../objects/building.js":57}],57:[function(require,module,exports){
+app = require("../settings/app.js");
+app.map = require("../controller/map.js");
 
-Terrain = require('../objects/terrain.js');
-Unit = require('../objects/unit.js');
-Position = require('../objects/position.js');
+Terrain = require("../objects/terrain.js");
+Unit = require("../objects/unit.js");
+Position = require("../objects/position.js");
 
 Building = function (type, position, index, player) {
     
     this.healing = {
-        hq:['foot', 'wheels'],
+        hq:["foot", "wheels"],
         city:this.hq,
         base:this.hq,
-        seaport:['boat'],
-        airport:['flight']
-    }[type];
+        seaport:["boat"],
+        airport:["flight"]
+    } [type];
 
-    this.def = type.toLowerCase() === 'hq' ? 4 : 3;
+    this.def = type.toLowerCase() === "hq" ? 4 : 3;
 
 	Terrain.call(this, type, position);
     this.pos = new Position (position.x, position.y);
@@ -5755,7 +6188,6 @@ Building = function (type, position, index, player) {
     	index: index
     };
 };
-
 Building.prototype.properties = function () { 
     var current = this._current;
     return {
@@ -5773,7 +6205,7 @@ Building.prototype.on = function (object) {
     var position = this.position();
     return position.x === objectPosition.x && position.y === objectPosition.y;
 };
-Building.prototype.type = function () { return 'building';};
+Building.prototype.type = function () { return "building";};
 Building.prototype.build = function (type) {
 
     var player = this.player(), p = this.position();
@@ -5783,60 +6215,61 @@ Building.prototype.build = function (type) {
     if(player.canPurchase(unit.cost())){
         player.purchase(unit.cost());          
         app.map.addUnit(unit);
-        if (app.user.turn()) socket.emit('addUnit', unit);
+        if (app.user.turn()) socket.emit("addUnit", unit);
         app.hud.setElements(app.cursor.hovered());
         return this;
     }
     return false;
 };
-
 Building.prototype.position = function () {return new Position(this.pos.x, this.pos.y);};
-Building.prototype.occupied = function () { return app.map.top(this.position()).type() === 'unit'; };
+Building.prototype.occupied = function () { return app.map.top(this.position()).type() === "unit"; };
 Building.prototype.changeOwner = function(player) { app.map.changeOwner(this, player); };
 Building.prototype.setPlayer = function (player) {
     this._current.player = player;
     return this;
 };
 Building.prototype.player = function (){ return this._current.player; };
-Building.prototype.color = function () { return this.player() ? this.player().color() : 'default'; };
+Building.prototype.color = function () { return this.player() ? this.player().color() : "default"; };
 Building.prototype.capture = function (capture) {
     return this.health() - capture > 0 ? (this._current.health -= capture) : false; 
 };
 Building.prototype.restore = function () { this._current.health = this.defaults.health(); };
-Building.prototype.class = function () { return 'building'; };
+Building.prototype.class = function () { return "building"; };
 Building.prototype.index = function () { return this._current.index; };
-Building.prototype.get = function(unit) { return app.map.buildings()[this._current.index]; };
+Building.prototype.get = function (unit) { return app.map.buildings()[this._current.index]; };
 
 // check if the unit is owned by the same player as the passed in object
 Building.prototype.owns = function (object) { 
     return object.player && object.player() === this.player(); 
-};
-
+}
 Building.prototype.select = function () {
-    app.display.info(app.buildings[this.name().toLowerCase()], ['name', 'cost'], {
-        section: 'buildUnitScreen',
-        div: 'selectUnitScreen'
-    });
-    return true;
+    this.unitScreen = new UList(app.dom.createMenu(app.buildings[this.name().toLowerCase()], ["name", "cost"], {
+        section: "buildUnitScreen",
+        div: "selectUnitScreen"
+    }).firstChild).setScroll(0, 6).highlight();
+    return this.selected = this.unitScreen.id();
 };
-
 Building.prototype.evaluate = function () {
     if(!app.cursor.hidden) app.cursor.hide();
-    var unit = app.display.verticle().select(document.getElementById('selectUnitScreen'), app.effect.highlightListItem, 7).id;
-    if (unit) return this.build(unit);
-};
 
+    if (app.key.pressed(["up","down"]))
+        this.selected = Select.verticle(this.unitScreen.deHighlight()).highlight().id();
+
+    if (app.key.pressed(app.key.enter())) {
+        app.hud.show();
+        return this.build(this.selected);
+    }
+};
 Building.prototype.execute = function () {
     app.hud.setElements(app.cursor.hovered());
-    app.undo.all(); 
+    app.screen.reset(); 
     return true;
 };
-
 module.exports = Building;
-},{"../controller/map.js":4,"../objects/position.js":69,"../objects/terrain.js":74,"../objects/unit.js":76,"../settings/app.js":78}],57:[function(require,module,exports){
+},{"../controller/map.js":4,"../objects/position.js":70,"../objects/terrain.js":75,"../objects/unit.js":77,"../settings/app.js":79}],58:[function(require,module,exports){
 BuildingDisplay = function () {
 	var property = function (id) { return document.getElementById(id).firstChild; };
-	this.e = app.display.info({
+	this.e = app.dom.createMenu({
 	        city:{ numberOf:0, type:'city' },
 	        base:{ numberOf:0, type:'base' },
 	        airport:{ numberOf:0, type:'airport' },
@@ -5865,7 +6298,7 @@ BuildingDisplay.prototype.set = function (numberOf) {
 };
 
 module.exports = BuildingDisplay;
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     holds all co's, their skills and implimentation
@@ -6064,7 +6497,7 @@ module.exports = function () {
         }
     };
 }();
-},{"../settings/app.js":78}],59:[function(require,module,exports){
+},{"../settings/app.js":79}],60:[function(require,module,exports){
 app.dom = require('../tools/dom.js');
 
 StatusHud = function () {
@@ -6126,7 +6559,7 @@ StatusHud.prototype.display = function (player, location) {
         if (coHud) {
             coHud.parentNode.replaceChild(hud, coHud);
         } else {
-            document.body.insertBefore(hud, app.domInsertLocation);
+            document.body.insertBefore(hud, app.dom.insertLocation);
         }
         // return the context for animation of the power bar
         return this.context = context;
@@ -6135,7 +6568,7 @@ StatusHud.prototype.display = function (player, location) {
 };
 
 module.exports = StatusHud;
-},{"../tools/dom.js":86}],60:[function(require,module,exports){
+},{"../tools/dom.js":85}],61:[function(require,module,exports){
 Feature = function (selected) {
     this.element = document.createElement('div');
     this.element.setAttribute('id', 'hud');
@@ -6195,7 +6628,7 @@ Feature.prototype.set = function (element) {
 };
 
 module.exports = Feature;
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Footer.js controls the creation and coordination of footer elements
@@ -6205,7 +6638,7 @@ module.exports = Feature;
 module.exports = {
     display: function () {
 
-        var footer = app.display.info([], [], {section:'descriptionOrChatScreen', div:'descriptionOrChat'});
+        var footer = app.dom.createMenu([], [], {section:'descriptionOrChatScreen', div:'descriptionOrChat'});
         this.setElement(footer);
         var textField = footer.children[0];
 
@@ -6276,7 +6709,7 @@ module.exports = {
         this.scroller = setTimeout(function(){ scope.scroll(); }, 8);
     }
 };
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 Hud = function (elements) {
     this.element = document.createElement('div');
     this.element.setAttribute('id', 'hud');
@@ -6347,10 +6780,18 @@ Hud.prototype.setElements = function (elements) {
 };
 
 module.exports = Hud;
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
+/* ------------------------------------------------------------------------------- *\
+
+    Input handles user input (Generally displayed via the footer element)
+
+\* ------------------------------------------------------------------------------- */
+
 app.type = require('../effects/typing.js');
 module.exports = {
     
+    // takes the name of the form, the element it is being inserted into and 
+    // a placeholder/words to be displayed in the form box before entry
 	form: function (name, element, placeHolder) {
         
         var input = document.createElement('p');
@@ -6370,10 +6811,17 @@ module.exports = {
         return input;
     },
 
+    // returns user input if it is found and adequate
     entry: function () {
         var name = this.value();
+
+        // inform the user that no input was detected
         if (!name) app.type.letters (this.description, 'A name must be entered for the game.');
+
+        // inform the user that input must be over three charachtors long
         else if (name.length < 3) app.type.letters (this.description, 'Name must be at least three letters long.');
+        
+        // return the input value
         else if (name) {
             this.val = name;
             return name;
@@ -6381,6 +6829,7 @@ module.exports = {
         return false;
     },
 
+    // create display screen for name input
     name: function (parent, text) {
 
         this.a = true;
@@ -6403,18 +6852,18 @@ module.exports = {
         return tfp;
     },
 
+    // remove the screen and deactivate input
     remove: function () {
         this.a = false;
         app.confirm.deactivate();
         app.type.reset();
         delete this.val;
         app.footer.remove();
-        app.undo.all();
-        app.hud.show();
-        app.coStatus.show();
-        app.cursor.show();
+        app.screen.reset();
     },
     active: function () { return this.a; },
+
+    // remove input form from footer
     clear: function () { 
         if (this.a) {
             this.description.style.paddingTop = null;
@@ -6447,10 +6896,9 @@ module.exports = {
     undoBack: function () { this.b = false; },
     activate: function () { this.a = true; },
     descriptions: function () { return document.getElementById('descriptions'); },
-    response: function () { return app.display.horizontal().select(this.descriptions(), app.effect.highlightListItem, false, false, 1).id; },
     message: function (message) { return app.type.letters(this.descriptions(), message); }
 };
-},{"../effects/typing.js":19}],64:[function(require,module,exports){
+},{"../effects/typing.js":19}],65:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     creates map object
@@ -6461,8 +6909,7 @@ Validator = require('../tools/validator.js');
 
 module.exports = function (id, name, players, dimensions, terrain, buildings, units) {
 
-    var error;
-    //validate = new Validator('map'),
+    var error, validate = new Validator('map');
     var category = units.length ? 'preDeployed' : {
         2:'two', 3:'three', 4:'four', 5:'five', 6:'six', 7:'seven', 8:'eight'
     } [players];
@@ -6475,10 +6922,10 @@ module.exports = function (id, name, players, dimensions, terrain, buildings, un
     this.terrain = terrain;
     this.buildings = buildings;
     this.units = units;
-    // if((error = validate.map(this)))
-    //     throw error;
+    if((error = validate.map(this)))
+        throw error;
 };
-},{"../tools/validator.js":97}],65:[function(require,module,exports){
+},{"../tools/validator.js":93}],66:[function(require,module,exports){
 // map elements
 
 module.exports = function (type, x, y, player) {
@@ -6486,7 +6933,7 @@ module.exports = function (type, x, y, player) {
 	this.position = {x:x, y:y};
 	this.player = player;
 };
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Menu.js is a generic object that contains methods common to all menus
@@ -6582,10 +7029,6 @@ module.exports = {
         app.click(screen).swipeScreen();
         return screen;
     },
-    clear: function () {
-        app.display.clearOld();
-        app.display.resetPreviousIndex();
-    },
     resetDefaults: function (type) {
 
         var element, previous, name, child, children, 
@@ -6613,7 +7056,7 @@ module.exports = {
     rise: function (callback, speed) {this.moveElements('up', callback, speed);},
     fall: function (callback, speed) { this.moveElements('down', callback, speed);}
 };
-},{"../game/effects.js":24,"../settings/app.js":78}],67:[function(require,module,exports){
+},{"../game/effects.js":24,"../settings/app.js":79}],68:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Obsticle.js is a generic object with methods common to all map obsticles
@@ -6624,7 +7067,7 @@ module.exports = function (type, defense) {
     this.type = function () { return type };
     this.defense = function () { return defense };
 };
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 // create a new player object
 app = require('../settings/app.js');
 app.game = require('../game/game.js')
@@ -6639,7 +7082,6 @@ var Player = function (user) {
     this.fullName = function () { return user.name; };
     this.lastName = function () { return user.last_name; };
     this.id = function () { return user.id; };
-    this.socketId = function () { return user.socketId; };
     this.score = new Score(true);
     this.co = user.co || null;
     this._current = {
@@ -6696,16 +7138,14 @@ Player.prototype.endTurn = function () {
 
 Player.prototype.recover = function () {
 
-    var unit, building, u = 0, b = 0, units = app.map.units(), buildings = app.map.buildings();
-    
     // check for units that belong to the current player
-    while((unit = units[u++]))
-        unit.recover();
+    app.map.units().forEach(function (unit) {unit.recover();});
 
-    while((building = buildings[b++]))
-        if (!(unit = building.occupied()) || building.owns(unit))
+    app.map.buildings().forEach(function (building) {
+        var unit = building.occupied();
+        if (!unit || building.owns(unit))
             building.restore();
-
+    });
     return true;
 };
 
@@ -6717,21 +7157,10 @@ Player.prototype.isReady = function (state) {
 Player.prototype.ready = function () { return this._current.ready; };
 Player.prototype.income = function () {
 
-    // get the amount of income per building for current game
-    var  i = 0; 
-
-    console.log(app.game.settings());
-
-    // money allotted per building
-    var income = 0, funds = app.game.settings().funds,
-
-    // list of buildings
-    building, buildings = app.map.buildings();
-    
-    // count the number of buildings that belong to the current player
-    while ((building = buildings[i++]))
-        if (this.owns(building)) 
-            income += funds;
+    var scope = this, funds = app.game.settings().funds;
+    var income = app.map.buildings().reduce(function (money, building) {
+        return (isNaN(money) ? 0 : money)  + (scope.owns(building) ? funds : 0);
+    });
 
     // add income to score
     this.score.income(income);
@@ -6800,7 +7229,7 @@ Player.prototype.hq = function () {
             return building;
 };
 module.exports = Player;
-},{"../controller/map.js":4,"../controller/players.js":7,"../controller/screen.js":8,"../definitions/score.js":12,"../game/game.js":25,"../objects/co.js":58,"../settings/app.js":78}],69:[function(require,module,exports){
+},{"../controller/map.js":4,"../controller/players.js":7,"../controller/screen.js":8,"../definitions/score.js":12,"../game/game.js":25,"../objects/co.js":59,"../settings/app.js":79}],70:[function(require,module,exports){
 Position = function (x, y, relativePosition) {
 	this.x = x;
 	this.y = y;
@@ -6852,22 +7281,22 @@ Position.prototype.log = function () {
 };
 
 module.exports = Position;
-},{}],70:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 app = require('../settings/app.js');
 Validator = require('../tools/validator.js');
 
 module.exports = function (name, obsticle) {
 
-	// var error, validate = new Validator('property');
+	var error, validate = new Validator('property');
 
-	// if((error = validate.defined(name, 'name') || validate.hasElements(obsticle, ['type', 'defense'])))
-	// 	throw error;
+	if((error = validate.defined(name, 'name') || validate.hasElements(obsticle, ['type', 'defense'])))
+	 	throw error;
 
 	this.type = obsticle.type;
 	this.defense = obsticle.defense;
     this.name = function () { return name };
 };
-},{"../settings/app.js":78,"../tools/validator.js":97}],71:[function(require,module,exports){
+},{"../settings/app.js":79,"../tools/validator.js":93}],72:[function(require,module,exports){
 ScoreElement = function (name, worth) {
 	this.name = name;
 	this.worth = worth;
@@ -6875,201 +7304,66 @@ ScoreElement = function (name, worth) {
 };
 
 module.exports = ScoreElement;
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 app = require('../settings/app.js');
-app.display = require('../tools/display.js');
 app.game = require('../game/game.js');
 app.dom = require('../tools/dom.js');
-app.touch = require('../tools/touch.js');
-app.click = require('../tools/click.js');
-app.input = require('../objects/input.js');
-app.footer = require('../objects/footer.js');
+app.touch = require('../input/touch.js');
+app.click = require('../input/click.js');
 
-Arrows = require('../objects/arrows.js');
+module.exports = {
 
-module.exports = function () {
+	startButton: function (id) {
 
-    var changeTitle = function (element, name) {
-    	// get the title and change it to select whatever type we are selecting
-        title = element.children[0];
-        title.innerHTML = name;
-    };
+        var screen = document.getElementById(id);
+        button = document.createElement('div');
+        button.setAttribute('class', 'button');
+        button.setAttribute('id', 'startButton');
+        button.style.display = 'none';
+        button.addEventListener("click", function(event){
+            event.preventDefault();
+            app.game.start();
+        });
+        screen.appendChild(button);
 
-	return {
+        return {
+            show: function () {button.style.display = '';},
+            hide: function () {button.style.display = 'none';},
+            remove: function (){screen.removeChild(button);}
+        };
+    },
 
-		startButton: function (id) {
+	// display damage percentage
+    damage: function (percentage){
 
-	        var screen = document.getElementById(id);
-	        button = document.createElement('div');
-	        button.setAttribute('class', 'button');
-	        button.setAttribute('id', 'startButton');
-	        button.style.display = 'none';
-	        button.addEventListener("click", function(event){
-	            event.preventDefault();
-	            app.game.start();
-	        });
-	        screen.appendChild(button);
+        var exists = document.getElementById('damageDisplay');
+        var damageDisp = document.createElement('div');
+        var damageDiv = document.createElement('div');
 
-	        return {
-	            show: function () {button.style.display = '';},
-	            hide: function () {button.style.display = 'none';},
-	            remove: function (){screen.removeChild(button);}
-	        };
-	    },
+        damageDisp.setAttribute('id', 'damageDisplay'); 
+        damageDiv.setAttribute('id', 'damage');
 
-		// display damage percentage
-	    damage: function (percentage){
+        var heading = document.createElement('h1');
+        var percent = document.createElement('h2');
 
-	        var exists = document.getElementById('damageDisplay');
-	        var damageDisp = document.createElement('div');
-	        var damageDiv = document.createElement('div');
+        heading.innerHTML = 'DAMAGE';
+        percent.innerHTML = percentage + '%';
 
-	        damageDisp.setAttribute('id', 'damageDisplay'); 
-	        damageDiv.setAttribute('id', 'damage');
-
-	        var heading = document.createElement('h1');
-	        var percent = document.createElement('h2');
-
-	        heading.innerHTML = 'DAMAGE';
-	        percent.innerHTML = percentage + '%';
-
-	        damageDisp.appendChild(heading);
-	        damageDiv.appendChild(percent);
-	        damageDisp.appendChild(damageDiv);
-	        if(exists){
-	            exists.parentNode.replaceChild(damageDisp, exists);
-	        }else{
-	            document.body.insertBefore(damageDisp, app.domInsertLocation);
-	        }
-	    },
-
-		modeMenu: function () { 
-
-	        // height of each mode element
-	        var height = app.settings.selectedModeHeight;
-
-	        // menu layout
-	        var menu = app.settings.selectModeMenu;
-
-	        // (war room, campaign) eventually integrate ai opponents?
-	        var setupScreen = document.createElement('article');
-	        setupScreen.setAttribute('id','setupScreen');
-	        app.touch(setupScreen).swipeScreen();
-	        app.click(setupScreen).swipeScreen();
-
-	        // create title to display on page
-	        var title = document.createElement('h1');
-	        title.setAttribute('id', 'title');
-	        title.innerHTML = 'Select*Mode';
-	        setupScreen.appendChild(title);
-
-	        // create list of selectable modes
-	        var selectMenu = document.createElement('ul');
-	        selectMenu.setAttribute('id', 'selectModeMenu');
-
-	        // create footer for game info and chat
-	        var footer = document.createElement('footer');
-	        var info = document.createElement('p');
-	        var footSpan = document.createElement('span');
-	        footSpan.setAttribute('id','footerText');
-	        info.appendChild(footSpan);
-	        info.setAttribute('id', 'scrollingInfo');
-	        footer.setAttribute('id','footer');
-	        footer.appendChild(info);
-
-	        // create and insert information for each mode
-	        for( var m = 0; m < menu.length; m += 1){
-
-	            var mi = menu[m];
-	            var color = app.hsl(app.settings.colors[mi.id]);
-
-	            // block is the background bar
-	            var block = document.createElement('div');
-	            block.setAttribute('class', 'block');
-	            block.style.backgroundColor = color;
-
-	            var background = document.createElement('div');
-	            background.setAttribute('class', 'modeBackground');
-
-	            // span is to make a background around the text
-	            var span = document.createElement('span');
-	            span.setAttribute('class', 'textBackground');
-	            span.innerHTML = mi.display;
-
-	            // set displayed text for mode selection
-	            var text = document.createElement('h1');
-	            text.setAttribute('class', 'text');
-	            text.style.borderColor = color;
-	            text.appendChild(span);
-
-	            app.touch(text).changeMode().doubleTap();
-	            app.touch(background).changeMode().doubleTap();
-	            app.click(text).changeMode().doubleClick();
-	            app.click(background).changeMode().doubleClick();
-
-	            // create li item for each mode
-	            var item = document.createElement('li');
-	            item.setAttribute('class','modeItem');
-	            item.setAttribute('modeItemIndex', m + 1);
-	            item.setAttribute('id', mi.id);
-	            item.style.height = height;
-	            item.style.color = color;
-	            item.appendChild(background);
-	            item.appendChild(block);
-	            item.appendChild(text);
-
-	            // if there are further options for the mode
-	            if(mi.options){
-
-	                // create list of options
-	                var options = document.createElement('ul');
-	                var length = mi.options.length;
-	                options.setAttribute('class', 'modeOptions');
-
-	                // default to not showing options (hide them when not selected)
-	                options.style.opacity = 0;
-
-	                for(var o = 0; o < length; o += 1){
-
-	                    // create li item for each option
-	                    var option = document.createElement('li');
-	                    option.setAttribute('class', 'modeOption');
-	                    option.setAttribute('modeOptionIndex', o + 1);
-	                    option.setAttribute('id', mi.options[o] + mi.id);
-	                    app.touch(option).modeOptions().doubleTap();
-	                    app.click(option).modeOptions().doubleClick();
-
-	                    // create id and display name for each option
-	                    option.innerHTML = mi.options[o];
-
-	                    // add each option to options list
-	                    options.appendChild(option);
-	                }
-	                // add options to the item
-	                item.appendChild(options);
-	            }
-	            // add items to select menu
-	            selectMenu.appendChild(item);
-	        }
-	        // add select menu to select mode screen
-	        setupScreen.appendChild(selectMenu);
-	        setupScreen.appendChild(footer);
-
-	        // insert select mode screen into dom
-	        var ss = document.getElementById('setupScreen');
-	        if(ss) {
-	            ss.parentNode.replaceChild(setupScreen, ss);
-	        }else{
-	            document.body.insertBefore(setupScreen, app.domInsertLocation);
-	        }
-	    }
-	};
-}();
-},{"../game/game.js":25,"../objects/arrows.js":54,"../objects/footer.js":61,"../objects/input.js":63,"../settings/app.js":78,"../tools/click.js":83,"../tools/display.js":85,"../tools/dom.js":86,"../tools/touch.js":95}],73:[function(require,module,exports){
+        damageDisp.appendChild(heading);
+        damageDiv.appendChild(percent);
+        damageDisp.appendChild(damageDiv);
+        if(exists){
+            exists.parentNode.replaceChild(damageDisp, exists);
+        }else{
+            document.body.insertBefore(damageDisp, app.dom.insertLocation);
+        }
+    }
+};
+},{"../game/game.js":25,"../input/click.js":27,"../input/touch.js":29,"../settings/app.js":79,"../tools/dom.js":85}],74:[function(require,module,exports){
 module.exports = function() {
 
 	var position, action, target, setElement, damage, active, newTarget = true, index = 0, 
-	key = app.key, keys = ['left', 'right', 'up', 'down'], cursors = {attack:'target', drop:'pointer'};
+	keys = ['left', 'right', 'up', 'down'], cursors = {attack:'target', drop:'pointer'};
 	var refresh = function () {app.animate(['cursor']);};
 	
 	return {
@@ -7088,11 +7382,11 @@ module.exports = function() {
 		cursor: function () { return cursors[action]; },
 		chose: function (element) {
 
-			if(key.pressed(key.esc()) && key.undo(key.esc())) {
+			if(app.key.pressed(app.key.esc()) && app.key.undo(app.key.esc())) {
 				newTarget = true;
 	        	active = false;
 	        	action = false;				
-	        	app.display.actions(element.actions());
+	        	element.displayActions();
 				return refresh();
 			}
 
@@ -7101,7 +7395,7 @@ module.exports = function() {
 	        // move to  and from targets units
 	        if (length > 1)
 	        	for (i = 0; i < length; i += 1)
-	            	if ((k = keys[i]) && key.pressed(k) && key.undo(k) && (pressed = true)) 
+	            	if ((k = keys[i]) && app.key.pressed(k) && app.key.undo(k) && (pressed = true)) 
 	               		index += k === 'left' || k === 'down' ? -1 : 1;
 
 	        if (pressed || newTarget) {
@@ -7111,21 +7405,20 @@ module.exports = function() {
 	            target = element.targets(index);
 		        var pos = target.position();
 
-	            if(action === 'attack'){
+	            if (action === 'attack') {
 
 		            damage = element.target(index);
 
 		            // calcualte damage percentage for each targets unit
 		            app.screens.damage(Math.round(damage));
 	        	}
-
 	            // create target for rendering at specified coordinates
 	            position = {x:pos.x, y:pos.y};
 	            refresh();
 	        }
 
 	        // if the target has been selected return it
-	        if (key.pressed(key.enter()) && key.undo(key.enter())){
+	        if (app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter())){
 	        	element[action](target, damage, true);
 	        	newTarget = true;
 	        	active = false;
@@ -7136,7 +7429,7 @@ module.exports = function() {
 	    }
 	};
 }();
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 /* ---------------------------------------------------------------------- *\
     
     Terrain.js holds the terrain object, defining specific map terrain
@@ -7151,11 +7444,11 @@ Validator = require('../tools/validator.js');
 Terrain = function (type, position) {
 
 	var error, properties = new app.properties();
-    //validate = new Validator('terrain'), 
+    var validate = new Validator('terrain');
     var property = properties[type];
     
-  //   if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
-		// throw error;
+     if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
+		 throw error;
 
     this.n = property.name();
 	this.t = property.type();
@@ -7178,7 +7471,7 @@ Terrain.prototype.on = function (object) {
 
 module.exports = Terrain;
 
-},{"../definitions/properties.js":11,"../objects/position.js":69,"../settings/app.js":78,"../tools/validator.js":97}],75:[function(require,module,exports){
+},{"../definitions/properties.js":11,"../objects/position.js":70,"../settings/app.js":79,"../tools/validator.js":93}],76:[function(require,module,exports){
 module.exports = function () {
 
 	var element = require('../objects/mapElement.js'),
@@ -7213,10 +7506,9 @@ module.exports = function () {
 	];
 	return new map(null, 'test map #1', 2, {x:20, y:20}, terrain, buildings, []);
 }
-},{"../objects/map.js":64,"../objects/mapElement.js":65}],76:[function(require,module,exports){
+},{"../objects/map.js":65,"../objects/mapElement.js":66}],77:[function(require,module,exports){
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
-app.undo = require('../tools/undo.js');
 app.game = require('../game/game.js');
 app.effect = require('../game/effects.js');
 app.animate = require('../game/animate.js');
@@ -7375,7 +7667,7 @@ Unit.prototype.movementRange = function (distance) {
         if(this.on(range[i]))
             range.unshift(range.splice(i,1)[0]);
 
-    reachable = distance !== undefined ? range : app.path.reachable(this, true);
+    reachable = (distance !== undefined) ? range : app.path.reachable(this, true);
 
     for (i = 0; i < reachable.length; i += 1)
         if(reachable[i].type() !== 'unit' || this.owns(reachable[i]))
@@ -7554,7 +7846,7 @@ Unit.prototype.compare = function (unit) {
 
 Unit.prototype.wait = function () {
     this.deselect();
-    app.undo.display('actionHud');
+    app.dom.remove('actionHud');
 };
 
 Unit.prototype.canCapture = function (position) {
@@ -7648,7 +7940,7 @@ Unit.prototype.attack = function(unit, damage, attacking){
     if(app.user.owns(this) && !this.attacked()){
         app.cursor.show();
         this.deselect();    
-        app.undo.display('damageDisplay');
+        app.dom.remove('damageDisplay');
         socket.emit('attack', { attacker:this, attacked:unit, damage:damage });
     }
     this.refresh();
@@ -7718,52 +8010,81 @@ Unit.prototype.actions = function (position) {
             actions.join = unit;
         else actions.load = unit;
 
-    if (this.loaded())
-        actions.drop = this._current.loaded;
+    if (this.loaded()) actions.drop = this._current.loaded;
 
     // if there are any actions that can be taken then return them
     return actions;
 };
+Unit.prototype.displayActions = function (position) {
 
+    var actions = {}, options = this.actions(position);
+
+    Object.keys(options).forEach(function (action) {
+        if (action === "drop" && options.drop.isArray())
+            options.drop.forEach(function (unit, index) {
+                actions[index] = { name: action };
+            });
+        else actions[action] = { name: action };
+    });
+
+    app.coStatus.hide();
+
+    this.allActions = new UList(app.dom.createMenu(
+        actions, 
+        app.settings.actionsDisplay, 
+        {section: 'actionHud', div: 'actions'}
+    ).firstChild).highlight();
+
+    return this.selected = this.allActions.id();
+};
 Unit.prototype.refresh = function () {app.animate('unit');};
 
 Unit.prototype.evaluate = function (position) {
 
     if(app.cursor.hidden() && !app.target.active()){
         
-        var unload, action;
+        if (app.key.pressed(app.key.esc())) {
 
-        if(app.key.pressed(app.key.esc())){
             this.moveBack();
             this.escape();
             this.deselect();
 
-        } else if ((actions = this.actions(position))
-        && (type = app.display.verticle().select('actionSelectionIndex', 'actions', app.effect.highlightListItem, 'ul'))){
+        } else if ((actions = this.actions(position)) && this.selected) {
 
-            if ((unload = (action = type.action) === 'drop') || action === 'attack') {
-                if (unload) this.unloading = type.id;
-                else this._current.targets = actions.attack;
-                app.target.activate(action);
-            } else {
-                this[action](actions[action]);
-                app.cursor.show()
+            if (app.key.pressed(["up","down"]))
+                this.selected = Select.verticle(this.allActions.deHighlight()).highlight().id();
+
+            var action = this.selected;
+
+            if (app.key.pressed(app.key.enter())) {
+                if (action === 'attack') {
+                    this.setTargets(actions.attack);
+                    app.target.activate(action);
+                } else if (action === 'drop') {
+                    app.target.activate((this.unloading = actions[action]));
+                } else {
+                    this[action](actions[action]);
+                    app.cursor.show()
+                }
+                this.escape();
             }
-            this.escape();
         }
     }
 };
-
+Unit.prototype.setTargets = function (targets) {this._current.targets = targets;};
 Unit.prototype.moveBack = function () { if (this.mov) this.move(this.previous(), -this.mov); };
 Unit.prototype.execute = function (p) {
 
     // and remove the range and path highlights
     this.move(new Position(p.x, p.y), this.moved(p));
-    app.undo.effect('highlight').effect('path');
+
+    // display path to cursor
+    app.path.clear();
+    app.range.clear();
 
     // if there are actions that can be taken then display the necessary options
-    if (!app.display.actions(this.actions(p)))
-        app.undo.all();
+    if (!this.displayActions(p)) app.screen.reset();
+
     app.cursor.hide();
 };
 
@@ -7820,7 +8141,7 @@ Unit.prototype.drop = function (u, i) {
 };
 
 Unit.prototype.deselect = function () {
-    app.undo.all();
+    app.screen.reset();
     app.hud.show();
     app.cursor.show();
     app.coStatus.show();
@@ -7830,8 +8151,9 @@ Unit.prototype.deselect = function () {
 
 Unit.prototype.escape = function () {
     app.key.undo();
-    app.undo.hudHilight();
-    app.undo.display('actionHud');
+    app.coStatus.show();
+    // app.options.deactivate();    
+    app.dom.remove('actionHud');
 };
 
 Unit.prototype.occupies = function () {
@@ -7840,7 +8162,7 @@ Unit.prototype.occupies = function () {
 };
 
 module.exports = Unit;
-},{"../controller/map.js":4,"../controller/players.js":7,"../game/animate.js":20,"../game/effects.js":24,"../game/game.js":25,"../objects/building.js":56,"../objects/position.js":69,"../objects/user.js":77,"../settings/app.js":78,"../settings/game.js":80,"../tools/undo.js":96,"../tools/validator.js":97}],77:[function(require,module,exports){
+},{"../controller/map.js":4,"../controller/players.js":7,"../game/animate.js":20,"../game/effects.js":24,"../game/game.js":25,"../objects/building.js":57,"../objects/position.js":70,"../objects/user.js":78,"../settings/app.js":79,"../settings/game.js":81,"../tools/validator.js":93}],78:[function(require,module,exports){
 Score = require('../definitions/score.js');
 
 module.exports = function (info) {
@@ -7860,7 +8182,7 @@ module.exports = function (info) {
 	this.raw = function () { return info };
 	this.score = new Score();
 };
-},{"../definitions/score.js":12}],78:[function(require,module,exports){
+},{"../definitions/score.js":12}],79:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\
     
     App.js is a container and holds variables for all elements of the application 
@@ -7885,9 +8207,6 @@ module.exports = {
 
     // holds number of pixles to move elements on or off screen
     offScreen: 800,
-
-    // target element to insert before
-    domInsertLocation: document.getElementById('before'),
 
     // holds temporary shared variables, usually info on game state changes that need to be accessed globally
     temp:{},
@@ -7915,7 +8234,13 @@ module.exports = {
         return this;
     }
 };
-},{"../settings/app.js":78}],79:[function(require,module,exports){
+},{"../settings/app.js":79}],80:[function(require,module,exports){
+/* ------------------------------------------------------------------------------- *\
+
+    Default values for game settings
+
+\* ------------------------------------------------------------------------------- */
+
 module.exports = function () {
     this.funds = 1000;
     this.fog = 'off';
@@ -7925,7 +8250,7 @@ module.exports = function () {
     this.power = 'on';
     this.visuals = 'off';
 };
-},{}],80:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     settings consolidates all the customizable options and rules for the game into
@@ -8184,11 +8509,11 @@ app.settings = {
 };
 
 module.exports = app.settings;
-},{"../settings/app.js":78}],81:[function(require,module,exports){
+},{"../settings/app.js":79}],82:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
     
     takes a string as an optional argument, this string is used as the name of a property 
-    in a potential object to be accessed while assessing its value in relation to the 
+    in a potential object to be compared when assessing its value in relation to the 
     other heap elements
 
 \* ------------------------------------------------------------------------------------------------------*/
@@ -8222,28 +8547,27 @@ Heap.prototype.right = function (i) {return this.left(i) + 1;};
 // compare the values at the two supplied indexes, return the result of whether input l is greater then input r
 Heap.prototype.lt = function(l,r) {return this.value(l) < this.value(r);};
 Heap.prototype.gt = function(l,r) {return this.value(l) > this.value(r);};
-Heap.prototype.equality = function (l,r) {return this.max ? this.gt(l,r) : this.lt(l,r);};
+Heap.prototype.inequality = function (l,r) {return this.max ? this.gt(l,r) : this.lt(l,r);};
 
 // if we are at the start of the array or the current nodes value is greater then its parent then return the current 
 // index (compensate for 0), otherwise swap the parent and child then repeat from the childs new position
-Heap.prototype.bubble = function (index) {return index < 2 || this.equality(this.parent(index), index) ? index - 1 : this.bubble(this.swap(index, this.parent(index)));};
+Heap.prototype.bubble = function (index) {
+    while (index >= 2 && !this.inequality (this.parent(index), index))
+        index = this.swap(index, this.parent(index));
+    return index - 1;
+};
 
 Heap.prototype.sort = function (index) {
 
-    var l = this.left(index), r = this.right(index), length = this.heap.length;
+    var l, r, length = this.heap.length;
 
-    // if there are no more childnodes, swap the value at the current index with the value at
-    // end of the array, sort the value at the current index then remove and return the 
-    // last array element (the minimum element)
-    if (length <= l) {
-        this.swap(index, length); 
-        this.bubble(index); 
-        return this.heap.pop(); 
-    }
+    while (length > (l = this.left(index)))
+        index = this.swap(index, length > (r = this.right(index)) && this.inequality(r,l) ? r : l)
 
-    // if the right node is in range and less then the left node then swap 
-    // the child with the right node, otherwise swap with the left
-    return this.sort(this.swap(index, length > r && this.equality(r,l) ? r : l ));
+    this.swap(index, length); 
+    this.bubble(index);
+
+    return this.heap.pop();
 };
 
 // add a value to the heap
@@ -8262,7 +8586,7 @@ Heap.prototype.min = function () {return this.heap.slice(0,1)[0];},
 Heap.prototype.size = function () {return this.heap.length;}
 
 module.exports = Heap;
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
 
     handle user to user chat
@@ -8336,187 +8660,7 @@ module.exports = {
         form.style.display = 'none';
     }
 };
-},{"../objects/user.js":77,"../settings/app.js":78}],83:[function(require,module,exports){
-app = require('../settings/app.js');
-app.key = require('../tools/keyboard.js');
-app.scroll = require('../menu/scroll.js');
-app.user = require('../objects/user.js');
-app.display = require('../tools/display.js');
-app.menu = require('../controller/menu.js');
-
-module.exports = function (element) {
-
-	var timer = new Date();
-	var x, y, down = false;
-
-	var doubleClick = function () {
-		var now = new Date();
-		var tappedTwice = now - timer < 300 ? true : false;
-		timer = now;
-		return tappedTwice;
-	};
-
-	var input = function (input) { return input ? input : element; };
-
-	return {
-		scroll: function (elem) {
-
-			var e = input(elem);
-
-			e.addEventListener('mousedown', function () { down = true; });
-		    e.addEventListener('mouseup', function(){ down = false; });
-		    e.addEventListener('mouseleave', function (element) {
-		    	if (down) {
-			        //  get the position of the mouse
-			        var position = parseFloat(element.clientY) - 70;
-
-			        // if the position is above the top, move the element up, 
-			        // otherwise move it down if it is below the bottom
-			        if (position < e.offsetTop) app.scroll.wheel(1, new Date());
-			        else app.scroll.wheel(-1, new Date());
-			        //app.game.update();
-			        down = false;
-		    	}
-		    });
-
-		    return this;
-		},
-		swipe: function (elem) {
-
-			var e = input(elem);
-
-			// scroll via touch
-			e.addEventListener('mousedown', function () { down = true; });
-		    e.addEventListener('mouseup', function(element){
-
-		    	if (down) {
-
-			    	var width = e.offsetWidth / 3;
-
-			    	var offset = width / 3;
-
-			        // get the left boundry of the element
-			        var left = e.offsetLeft + offset + 10;
-
-			        // get the bottom boundry
-			        var right = e.offsetLeft + width - offset;
-
-			        //  get the position of the element
-			        var position = parseFloat(element.clientX) - 200;
-
-			        // if the position is above the top, move the element up, 
-			        // otherwise move it down if it is below the bottom
-			        if (position < left){
-			            app.scroll.swipe(-1, new Date());
-			        }else if (position > right){
-			            app.scroll.swipe(1, new Date());
-			        }
-			        down = false;
-			        //app.game.update();
-		    	}
-		    });
-		    return this;
-		},
-		swipeScreen: function (elem) {
-
-			var e = input(elem), start;
-
-			// get the start location of the finger press
-			e.addEventListener('mousedown', function(element){
-				start = element.clientX;
-				down = true;
-			});
-
-			// scroll via touch
-		    e.addEventListener('mouseup', function(element){
-
-		    	if (down) {
-	 		        //  get the position of the end of element
-			        var end = element.clientX;
-
-			        // make the length needed to swipe the width of the page divided by three and a half
-			        var swipeLength = e.offsetWidth / 3.5;
-
-			        // go back if swiping right
-			        if (start < end && end - start > swipeLength){
-			        	app.key.press(app.key.esc());
-
-			        // go forward if swiping left
-			        } else if (start > end && start - end > swipeLength) {
-			        	app.key.press(app.key.enter());
-			        }
-			    }
-			    start = undefined;
-			    down = false;
-		    });
-
-		    return this;
-		},
-		// may need to change to eliminate less useful select method
-		mapOrGame: function (elem){
-
-			var e = input(elem);
-
-			e.addEventListener('click', function(){
-				var label = 'SelectionIndex';
-				var clicked = e.id.indexOf(label) > -1 ? e: e.parentNode;
-				var type = clicked.id.indexOf('map') ? 'map' : 'game';
-	        	var index = clicked.attributes[type + label].value;
-	        	app.display.setIndex(index);
-	        	//app.game.update();
-	        });
-
-			return this;
-		},
-		modeOptions: function (elem) {
-
-			var e = input(elem);
-
-			e.addEventListener('click', function(){
-
-	        	// get the index
-	        	var index = e.attributes.modeOptionIndex.value;
-
-	        	// if the mode options are already under selection, then change the index
-	        	if(app.modes.active()){
-					app.display.setIndex(index);
-					//app.game.update();
-
-				// otherwise simulate selecting them with the key right push
-				// and set the default index to the selected option
-	        	}else{
-	        		app.display.setOptionIndex(index);
-		        	app.key.press(app.key.right());
-	        	}
-	        });
-	        return this;
-		},
-		changeMode: function (elem) {
-			input (elem).addEventListener('click', function () {if (app.modes.active()) app.key.press(app.key.left());});
-			return this;
-		},
-		doubleClick: function (elem) {
-			input (elem).addEventListener('click', function() {if (doubleClick()) return app.key.press(app.key.enter());});
-			return this;
-		},
-		element: function (elem) {
-			var e = input(elem);
-
-			e.addEventListener('click', function (){
-				var name = e.parentNode.id == 'settings' ? e.id : e.parentNode.id;
-				var setting = name.replace('Settings','').replace('Container','');
-				app.display.setIndex(setting);
-				//app.game.update();
-			});
-			return this;
-		},
-		esc: function (elem) {
-			input(elem).addEventListener('click', function() {if(app.user.player().ready()) return app.key.press(app.key.esc());});
-			return this;
-		}
-	};
-};
-},{"../controller/menu.js":6,"../menu/scroll.js":48,"../objects/user.js":77,"../settings/app.js":78,"../tools/display.js":85,"../tools/keyboard.js":90}],84:[function(require,module,exports){
+},{"../objects/user.js":78,"../settings/app.js":79}],84:[function(require,module,exports){
 Counter = function (limit) {
 	this.limit = limit;
 	this.frames = 0;
@@ -8529,444 +8673,20 @@ Counter.prototype.reset = function () { if (this.reached()) this.frames = 0; };
 module.exports = Counter;
 },{}],85:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
-   
-   handles all the display screens and the users interaction with them
-   
-\* ------------------------------------------------------------------------------------------------------*/
-
-app = require('../settings/app.js');
-var scrollText = require('../effects/scrollText.js');
-socket = require('../tools/sockets.js');
-app.game = require('../game/game.js');
-app.settings = require('../settings/game.js');
-app.animate = require('../game/animate.js');
-app.effect = require('../game/effects.js');
-app.scroll = require('../menu/scroll.js');
-app.buildings = require('../definitions/buildings.js');
-app.menu = require('../controller/menu.js');
-app.dom = require('../tools/dom.js');
-app.undo = require('../tools/undo.js');
-app.calculate = require('../game/calculate.js');
-app.draw = require('../game/draw.js');
-app.co = require('../objects/co.js');
-app.screens = require('../objects/screens.js');
-app.key = require('../tools/keyboard.js');
-app.players = require('../controller/players.js');
-app.cursor = require('../controller/cursor.js');
-app.click = require('../tools/click.js');
-app.touch = require('../tools/touch.js');
-app.type = require('../effects/typing.js');
-
-module.exports = function () {
-
-    var selectionIndex = 0, previousList, touched, previousListLength, parentIndex, prevElement,
-    selectedElement, hide, len, listLength, prevSelection, prev = {}, temp = {}, selectable = true, 
-    prevIndex = undefined, loop = false, modeOptionIndex = false, modeChildElement;
-
-    var displayInfo = function (properties, allowedProperties, elements, callback) {
-        
-        var inner = elements.div;
-
-        // build the outside screen container or use the existing element
-        var display = document.createElement('section');
-        display.setAttribute('id', elements.section);
-
-        // build inner select screen or use existing one
-        var exists = document.getElementById(elements.div);
-        var innerScreen = document.createElement('div');
-        innerScreen.setAttribute('id', inner);
-
-        // get each unit type for looping over
-        var keys = Object.keys(properties);
-        var len = keys.length;
-
-        for (var u = 0; u < len; u += 1) {
-
-            var key = keys[u];
-            var props = properties[key];
-
-            // create list for each unit with its cost
-            var list = app.dom.createList(props, key, allowedProperties);
-            if (props.id || props.id === 0) list.setAttribute('id', props.id);
-            if (inner) list.setAttribute('class', inner + 'Item');
-            if (callback) callback(list, props);
-
-            // add list to the select screen
-            innerScreen.appendChild(list);
-        }
-
-        // add select screen to build screen container
-        if (exists) exists.parentNode.replaceChild(innerScreen, exists);
-        else document.body.insertBefore(display, app.domInsertLocation);
-
-        display.appendChild(innerScreen);
-        return display;
-    };
-
-    var coSelection = function (properties, prevList, prevSelection) {
-
-        // initialize a list to load properties the current user can edit
-        var list = [];
-
-        // detect which player so that they can only edit their respective charector settings
-        var number = app.user.number();
-
-        // get the keys to the properties that can be edited by the user (co selection, teams etc)
-        var keys = Object.keys(properties);
-
-        // number of properties
-        var keysLength = keys.length;
-
-        var getValue = app.dom.getDisplayedValue;
-
-        // if there are previous items 
-        if (prevSelection !== undefined) 
-            var ind = prevList[prevSelection];
-
-        for(var k = 0; k < keysLength; k += 1){
-
-            var key = keys[k];
-            var mode = getValue(key);
-            var pNumber = key.getNumber();
-
-            if(key.indexOf('mode') > -1 && number === 1){
-                if(pNumber != 1){
-                    var i = pNumber - 1;
-                    var p = app.user.player();
-                    if(mode === 'Cp'){
-                        var property = 'player'+pNumber+'co';
-                        if(p && !p.cp){
-                            var value = getValue(property);
-                            var cp = aiPlayer(number, p);
-                            socket.emit('boot', {player:p, cp:cp});
-                            app.players.remove(i, cp);
-                            app.players.setProperty(property, value);
-                        }
-                        list.push(property);
-                    }else if(p && p.cp){
-                        socket.emit('boot', {player:false, cp:p});
-                        app.players.remove(i);
-                    }
-                }
-                list.push(key);
-            }else if(key.indexOf('Team') > -1 && (number == pNumber || mode === 'Cp' && number == 1) || key.indexOf(number+'co') > -1){
-                list.push(key);
-            }
-        }
-        return {list:list, ind:ind};
-    };
-
-    return {
-        info: displayInfo,
-        setOptionIndex: function (index){modeOptionIndex = index;},
-        index: function () {return selectionIndex},
-        previousIndex: function () {return prevIndex;},
-        setPreviousIndex: function (index) {prevIndex = index;},
-        resetPreviousIndex: function () {prevIndex = undefined;},
-        loop: function () {loop=true},
-        through: function (){loop=false},
-        clear: function () {temp = {}; prev = {};},
-        reset: function () {selectionIndex = 0},
-        setIndex: function (index) {
-            selectionIndex = index;
-            touched = index;
-        },
-        mapOrGameSelection: function (id, elements) {
-            var replace = document.getElementById(id);
-            replace.parentNode.replaceChild(elements, replace);
-        },
-        clearOld: function () {
-            prevSelection = undefined; 
-            previousList = undefined; 
-            temp.text = undefined;
-        },
-        previous: function () {
-            return {
-                selection: prevSelection,
-                list: previousList
-            }
-        },
-        actions: function (options) {
-
-            if (!options) return false;
-
-            var actions = Object.keys(options);
-            var action, array;
-            var actionsObj = {};
-
-            for (var i, a = 0; a < actions.length; a += 1)
-                if (typeof((array = options[(action = actions[a])])) === 'array')
-                    for (i = 0; i < array.length; i += 1)
-                        actionsObj[i] = { name: action };
-                else actionsObj[action] = { name: action };
-            
-            app.coStatus.hide();
-
-            return displayInfo(actionsObj, app.settings.actionsDisplay, {section: 'actionHud',div: 'actions'});
-        },
-        menuItemOptions: function (menu) {
-
-            var previous = prev.horizon;
-            var horizon = app.scroll.horizontal().finite(previous || 0, 0, 1);
-
-            if (menu) menu.style.opacity = 1;
-
-            // display the menu options
-            if (horizon !== undefined && previous !== horizon) {
-
-                var moa = app.menu.active();
-                index = modeOptionIndex ? modeOptionIndex : 0;
-
-                if (horizon === 0 && moa) {
-
-                    app.menu.deactivate();
-                    modeChildElement = undefined;
-
-                } else if(horizon === 1 && !moa) {
-
-                    app.menu.activate();
-                    modeChildElement = {
-                        element:menu,
-                        tag:'modeOptionIndex',
-                        index: index
-                    }
-                }
-                app.effect.clear();
-                prev.horizon = horizon;
-                modeOptionIndex = false;
-                loop = true;
-            }
-        },
-        complexSelect: function (elements, callback, player) {
-
-            /*
-                complexSelect is for complex selection of items displayed in the dom, it keeps track of 
-                which element is currently being scrolled through, the list item that is currently selected
-                and the last selected list item for each element if it is nolonger being scrolled through.
-                it also broadcasts the descriptions of each selected element, or scrolled through list 
-                items to any element of the name specified in the "text" attribute of the "elements" object
-                the first argument "elements" is an object which contains the names of the elements being 
-                selected in their various positions within the dom. they are as follows:
-                        
-                type: defines what page will be loaded
-                element: name of the element that is parent to the list
-                
-                index: name of the index, comes after the property name i.e. (property + index)
-                attribute: name of the tag being retrieved as a value from the selected element,
-                 
-                text: name of the element that holds the chat and description etc, displayed text,
-                properties: the object that defines all that will be scrolled through
-                the second is a callback to handle what to do while scrolling and what elements to effect
-                the third is an optional parameter that allows you to assign a display type to the currently 
-                selected list item that is unhidden for display 
-                (all list items are hidden by default and displayed as selected)
-                it returns an object containing the current;y selected property and its value
-            */
-
-            var properties = elements.properties;
-
-            // create list of property names accessable to the player (object keys)
-            // needed for restricting selection options (only player 2 can edit player 2's settings etc..)
-            if ((app.key.pressed() || !temp.list) && player && !app.players.empty()) {
-                var co = coSelection(properties, previousList, prevSelection);
-                temp.list = co.list;
-                var ind = co.ind;
-            } else if (!temp.list) {
-                list = Object.keys(properties);
-            }
-
-            var list = temp.list ? temp.list : list, 
-            listLength = list.length;
-
-            // keep track of what is selected in the list for recall
-            if(previousListLength !== listLength && prevSelection && player) 
-                prevSelection = list.indexOf(ind);
-
-            // get the index of an element if it has been touched
-            touched = list.indexOf(touched);
-            
-            // get the currently selected index, start with 0 if one has not yet been defined
-            var index = touched > -1 ? touched : app.scroll.horizontal().infinite(prevSelection || 0, 0, list.length - 1);
-
-            // get the property name of the currently selected index for use in retrieving elements of the same name
-            var property = list[index];
-
-            // get the element that displays the text: descriptions, chat etc...
-            if(!temp.text) temp.text = document.getElementById(elements.text);
-
-            // if there arent any previous indexes (we have just started) or the last index is not
-            // the same as the current index then manipulate the newly selected element
-            if(prevSelection === undefined || prevSelection !== index || previousListLength !== listLength){
-                
-                previousList = list;
-                previousListLength = listLength;
-
-                // if the description for the current element is text then print it
-                if (property !== undefined && typeof (properties[property].description) === 'string' ) {
-                    app.type.letters(temp.text, properties[property].description);
-                }
-                
-                // indicate that we have changed elements
-                var change = true;
-
-                // callback that handles what to do with horizontally scrolled elements
-                var selected = callback(property);
-
-                // get all the list items from the currently selected element
-                temp.items = app.dom.getImmediateChildrenByTagName(selected, 'li');
-
-                // save the currently selected index as a comparison to possibly changed indexes in the future
-                prevSelection = index;
-
-                // if we have visited this element before, get the last selected index for it and display that
-                // rather then the currently selected list item index
-                if (prev[property]) var itemIndex = prev[property].getAttribute(property + elements.index);
-            }
-
-            // if there wasnt a previously selected item index for the current element 
-            if(!itemIndex){
-                
-                // get the length of the array of list items in the currently selected element
-                var len = temp.items.length;
-
-                // then find the position of scroll that we are currently at for the newly selected element
-                // use the length as a boundry marker in the scroll function
-                var itemIndex = app.scroll.verticle().infinite(prev.itemIndex || 1, 1, len);
-            }
-
-            // if there has been a change, or if the previous item index is not the same as the current
-            if(change || itemIndex && prev.itemIndex !== itemIndex){
-
-                // if there has been a change but there is no previously selected list item for the
-                // currently selected element
-                if(change && !prev[property]){
-
-                    // get the element listed as the default value for selection
-                    var element = app.dom.findElementByTag('default', temp.items, true);
-
-                }else{
-
-                    // get the element at the currently selected list items index
-                    var element = app.dom.findElementByTag(property + elements.index, temp.items, itemIndex);
-                }
-
-                // hide the previously selected list item for the currently selected element
-                if(prev[property] && !change) prev[property].style.display = 'none';
-
-                // display the currently selected list item
-                element.style.display = elements.display ? elements.display : '';
-
-                // save the currently selected list item for use as the last selected item
-                // in the currently selected element in case we need to move back to it
-                prev[property] = element;
-
-                // save the currently selected index as a comparison to possibly changed indexes in the future
-                prev.itemIndex = Number(itemIndex);
-
-                // get the value of the selected attribute
-                var value = element.getAttribute(elements.attribute);
-
-                // if the description from properties is an object then use the current value as a key 
-                // for that object in order to display a description for each list item, rather then its 
-                // parent element as a whole
-                if ( typeof (properties[property].description) === 'object' )
-                    app.type.letters(temp.text, properties[property].description[value]);
-
-                // return the selected property and its value
-                return {
-                    property:property, 
-                    value:value
-                };
-            }
-            touched = undefined;
-            return property;
-        },
-
-        select: function (element, display, max, infiniteScroll, min) {
-
-            var index, min = (min || 0), horizon, modeOptionsActive = app.menu.active();
-            var limit = infiniteScroll && !modeOptionsActive ? 'infinite' : 'finite';
-
-            // if the index is not the same as it was prior, then highlight the new index ( new element )
-            if (prevIndex === undefined || prevIndex !== selectionIndex && prevIndex !== false || app.key.pressed(app.key.left()) || app.key.pressed(app.key.right()) || loop) {
-
-                // if there is a sub menu activated then select from the sub menu element instead of its parent
-                if (modeChildElement) {
-                    // keep track of selected parent element
-                    parentIndex = parentIndex || selectionIndex;
-                    element = modeChildElement.element;
-                    if(!modeOptionsActive || loop)
-                        selectionIndex = modeChildElement.index;
-
-                } else if (!modeOptionsActive && loop){
-                    selectionIndex = parentIndex || selectionIndex;
-                    prevIndex = parentIndex;
-                    loop = false;
-                    parentIndex = undefined;
-                }
-
-                if (selectionIndex < min) 
-                    selectionIndex = min;
-
-                // get the children
-                var children = element.childNodes;
-                if (!children) console.log(element);
-                len = app.dom.length(children, min) - 1;
-
-                // hide elements to create scrolling effect
-                app.effect.hideOffScreenElements(children, selectionIndex, min, max || len);
-
-                // scroll information about the selected element in the footer
-                if ((selectedElement = children[selectionIndex]))
-                    scrollText('footerText', app.settings.scrollMessages[selectedElement.getAttribute('id')]);
-
-                // callback that defines how to display the selected element ( functions located in app.effect )
-                if (selectedElement || loop) selectable = display(selectedElement, selectionIndex, prevElement, children); 
-                
-                // store the last index for future comparison
-                prevIndex = selectionIndex;
-                prevElement = selectedElement;
-            }
-
-            // if the select key has been pressed and an element is available for selection then return its id
-            if (app.key.pressed(app.key.enter()) && selectedElement && selectable) {
-
-                selectionIndex = min;
-                app.menu.deactivate();
-                parentIndex = undefined;
-                modeChildElement = undefined;
-                prevIndex = undefined;
-                hide = undefined;
-                app.key.undo(app.key.enter());
-                return {
-                    action: selectedElement.childNodes[0] ? selectedElement.childNodes[0].innerHTML : selectedElement.innerHTML,
-                    id : selectedElement.getAttribute('id')
-                };
-
-            } else {
-                index = app.scroll[this.direction || 'verticle']()[limit](selectionIndex, min, len);
-                if (index || index === min) selectionIndex = index;
-            }
-            return false;
-        },
-        horizontal: function () {
-            this.direction = 'horizontal';
-            return this;
-        },
-        verticle: function () {
-            this.direction = 'verticle';
-            return this;
-        }
-    };
-}();
-},{"../controller/cursor.js":3,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/buildings.js":9,"../effects/scrollText.js":17,"../effects/typing.js":19,"../game/animate.js":20,"../game/calculate.js":22,"../game/draw.js":23,"../game/effects.js":24,"../game/game.js":25,"../menu/scroll.js":48,"../objects/co.js":58,"../objects/screens.js":72,"../settings/app.js":78,"../settings/game.js":80,"../tools/click.js":83,"../tools/dom.js":86,"../tools/keyboard.js":90,"../tools/sockets.js":94,"../tools/touch.js":95,"../tools/undo.js":96}],86:[function(require,module,exports){
-/* ------------------------------------------------------------------------------------------------------*\
     
     list of functions used to assist manipulating the dom
 
 \* ------------------------------------------------------------------------------------------------------*/
 
 module.exports = {
+
+    insertLocation: document.getElementById('before'),
+
+    remove: function (element) {
+        var remove = document.getElementById(element);
+        if (remove) remove.parentNode.removeChild(remove);
+        return this;
+    },
 
     // create a canvas to display the hovered map element in the hud
     createCanvas: function (id, object, dimensions) {
@@ -9156,9 +8876,49 @@ module.exports = {
         var i = min;
         while (children[i]) i += 1;
         return i + 1;
+    },
+    createMenu: function (properties, allowedProperties, elements, callback) {
+    
+        var inner = elements.div;
+        var outer = elements.section;
+
+        // build the outside screen container or use the existing element
+        var display = document.getElementById(outer) || document.createElement('section');
+        display.setAttribute('id', outer);
+
+        // build inner select screen or use existing one
+        var exists = document.getElementById(inner);
+        var innerScreen = document.createElement('div');
+        innerScreen.setAttribute('id', inner);
+
+        // get each unit type for looping over
+        var keys = Object.keys(properties);
+        var len = keys.length;
+
+        for (var u = 0; u < len; u += 1) {
+
+            var key = keys[u];
+            var props = properties[key];
+
+            // create list for each unit with its cost
+            var list = this.createList(props, key, allowedProperties);
+            if (props.id || props.id === 0) list.setAttribute('id', props.id);
+            if (inner) list.setAttribute('class', inner + 'Item');
+            if (callback) callback(list, props);
+
+            // add list to the select screen
+            innerScreen.appendChild(list);
+        }
+
+        // add select screen to build screen container
+        if (exists) exists.parentNode.replaceChild(innerScreen, exists);
+        else document.body.insertBefore(display, this.insertLocation);
+
+        display.appendChild(innerScreen);
+        return display;
     }
 };
-},{}],87:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Hsl.js creates an object for interaction with hsl color values
@@ -9173,9 +8933,9 @@ Hsl = function (h, s, l) {
 Hsl.prototype.get = function () {return {h:this.hue, s:this.saturation, l:this.lightness};};
 Hsl.prototype.format = function () {return 'hsl('+this.hue+','+this.saturation+'%,'+this.lightness+'%)';};
 module.exports = Hsl;
-},{}],88:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 module.exports = function () { var id = 0; return { id: function () {id += 1; return id;}};}();
-},{}],89:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------------*\
     
     app.init creates a new canvas instance, taking the name of the target canvas id and optionally the context
@@ -9253,73 +9013,7 @@ module.exports = function (element, context) {
         throw new Error("browser does not support canvas element. canvas support required for animations");
     }
 };
-},{"../game/draw.js":23,"../settings/app.js":78}],90:[function(require,module,exports){
-app.optionsMenu = require('../menu/options/optionsMenu.js');
-app.game = require('../game/game.js');
-
-module.exports = function () {
-
-    var pressed = [], up = [],
-
-    keys = {
-        esc: 27,
-        enter: 13,
-        copy: 67,
-        up: 38,
-        down: 40,
-        left: 37,
-        right: 39,
-        range: 82,
-        map: 77,
-        info: 73
-    },
-
-    key = function (k) { return isNaN(k) ? keys[k] : k; },
-    undo = function (array) { return array.splice(0, array.length); };
-    press = function (k) { 
-        //app.game.update();
-        return pressing(k) ? true : pressed.push(key(k));
-    },
-    pressing = function (k) { return k ? pressed.indexOf(key(k)) > -1 : pressed.length; };
-
-    window.addEventListener("keydown", function (e) {
-        if(!app.game.started() || app.user.turn() || e.keyCode === app.key.esc() || app.optionsMenu.active() || app.confirm.active())
-            press(e.keyCode);
-    }, false);
-
-    window.addEventListener("keyup", function (e) { 
-        up.push(e.keyCode);
-        undo(pressed);
-        //app.game.update();
-    }, false);
-
-    return {
-        press:press,
-        pressed:function (k) {
-            if (k && k.isArray()) {
-                var i = k.length;
-                while (i--)
-                    if (pressing([k[i]]))
-                        return true;
-            } else return pressing(k);
-        },
-        keyUp: function (k) { return k ? up.indexOf(key(k)) > -1 : up.length; },
-        undo: function (k) { return k ? pressed.splice(pressed.indexOf(key(k)), 1) : undo(pressed); },
-        undoKeyUp: function (k) {return k ? up.splice(up.indexOf(key(k)), 1) : undo(up); },
-        set: function (key, newKey) { keys[key] = newKey; },
-        esc: function(){ return keys.esc; },
-        enter: function(){ return keys.enter; },
-        up: function(){ return keys.up; },
-        down: function(){ return keys.down; },
-        left: function(){ return keys.left; },
-        right: function(){ return keys.right; },
-        range: function(){ return keys.range; },
-        map: function(){ return keys.map; },
-        info: function(){ return keys.info; },
-        copy: function(){ return keys.copy; }
-    }
-}();
-},{"../game/game.js":25,"../menu/options/optionsMenu.js":46}],91:[function(require,module,exports){
+},{"../game/draw.js":23,"../settings/app.js":79}],89:[function(require,module,exports){
 Terrain = require('../objects/terrain.js');
 
 Matrix = function(dimensions){
@@ -9336,9 +9030,10 @@ Matrix.prototype.insert = function (element) {
 };
 
 Matrix.prototype.remove = function (element) {
-	if(this.get(element).type() !== 'building'){
+	var existing = this.get(element);
+	if(existing.type() !== 'building') {
 		if (element.type() === 'unit') {
-			if(this.get(element) === element)
+			if(existing === element)
 				this.insert(element.occupies());
 		} else this.insert(new Terrain('plain', element.position()));
 	}
@@ -9348,9 +9043,9 @@ Matrix.prototype.remove = function (element) {
 Matrix.prototype.position = function (p, init) {
 	var e, d = this.dimensions;
 	if (p.x <= d.x && p.x >= 0 && p.y <= d.y && p.y >= 0){
-		if(!this.matrix[p.x][p.y] && !init){
+		if(!this.matrix[p.x][p.y] && !init) {
 			this.dummies.push(p);
-			this.matrix[p.x][p.y] = new Terrain('plain', p);
+			this.insert(new Terrain('plain', p));
 		}
 		return this.matrix[p.x][p.y];
 	}
@@ -9360,29 +9055,26 @@ Matrix.prototype.position = function (p, init) {
 Matrix.prototype.clean = function () {
 	for (var p, e, i = 0; i < this.dummies.length; i += 1){
 		var p = this.dummies[i];
-		if((e = this.matrix[p.x][p.y]) && e.type() !== 'unit')
+		if((e = this.matrix[p.x][p.y]) && e.type() !== "unit" && e.type !== "building")
 			this.matrix[p.x][p.y] = undefined;
 	}
 	this.dummies = [];
 };
 
 Matrix.prototype.close = function (p) { this.matrix[p.x][p.y].closed = true; };
-Matrix.prototype.get = function (element) { return this.position(element.position());};
+Matrix.prototype.get = function (element) {return this.position(element.position());};
 Matrix.prototype.log = function () {
 	console.log(' ');
 	console.log('------- matrix --------');
 	console.log(' ');
 	for (var arr, x = 0; x < this.matrix.length; x += 1)
 		for (var y = 0; y < this.matrix[x].length; y += 1)
-			if(this.matrix[x][y])
-				console.log(this.matrix[x][y]);
-			//else console.log('nothing at {x:'+x+', y:'+y+'}');
+			if(this.matrix[x][y]) console.log(this.matrix[x][y]);
 	console.log('--------- end ---------');
 	console.log(' ');
 };
-
 module.exports = Matrix;
-},{"../objects/terrain.js":74}],92:[function(require,module,exports){
+},{"../objects/terrain.js":75}],90:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\
     
     handle AJAJ calls
@@ -9440,7 +9132,7 @@ module.exports = function () {
         }
     };
 }();
-},{}],93:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 module.exports = {
     describe: function (selected) {
         if (selected.description && selected.description()) 
@@ -9448,8 +9140,8 @@ module.exports = {
     },
     getHorizontal: function () { return this.hElement; },
     getVerticle: function () { return this.vElement; },
-    verticle: function (elements) { return this.move(elements, ['up','down']);},
-    horizontal: function (elements) { return this.move(elements, ['left','right']);},
+    verticle: function (elements) { return this.move(elements, ["up", "down"]); },
+    horizontal: function (elements) { return this.move(elements, ["left","right"]);},
     move: function (elements, keys) { return app.key.pressed(keys[1]) ? elements.next() : elements.prev(); },
     setHorizontal: function (e) {
         var selected = e.current();
@@ -9466,14 +9158,14 @@ module.exports = {
         var index = elements.indexOf(touched);
         if (isNaN(index)) return false;
         elements.current().hide();
-        this.setHorizontal(elements.setIndex(index).show('inline-block'));
+        this.setHorizontal(elements.setIndex(index).show("inline-block"));
     },
     clear: function () {
         delete this.vElement;
         delete this.hElement;
     }
 };
-},{}],94:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
 
     handle socket connections
@@ -9484,8 +9176,8 @@ app = require('../settings/app.js');
 app.game = require('../game/game.js');
 app.chat = require('../tools/chat.js');
 app.menu = require('../controller/menu.js');
-app.optionsMenu = require('../menu/options/optionsMenu.js');
-app.key = require('../tools/keyboard.js');
+app.options = require('../menu/options/optionsMenu.js');
+app.key = require('../input/keyboard.js');
 app.maps = require('../controller/maps.js');
 app.map = require('../controller/map.js');
 app.players = require('../controller/players.js');
@@ -9499,12 +9191,12 @@ Player = require('../objects/player.js');
 Unit = require('../objects/unit.js');
 Teams = require('../menu/teams.js');
 
-//var validate = new Validator('sockets');
+var validate = new Validator('sockets');
 var socket = io.connect("http://127.0.0.1:8080") || io.connect("http://jswars-jswars.rhcloud.com:8000");
 
 // all in game commands
-socket.on('confirmSave', function (player) { app.confirm.save(app.players.get(player));});
-socket.on('confirmationResponse', function (response) { app.confirm.player(response.answer, app.players.get(response.sender));});
+socket.on('confirmSave', function (player) {app.confirm.save(app.players.get(player));});
+socket.on('confirmationResponse', function (response) {app.confirm.player(response.answer, app.players.get(response.sender));});
 
 socket.on('cursorMove', function (move) {
     app.key.press(move);
@@ -9514,15 +9206,15 @@ socket.on('cursorMove', function (move) {
 socket.on('background', function (type) { app.background.set(type); });
 
 socket.on('endTurn', function (id) {    
-    //if(validate.turn(id))
-        app.optionsMenu.end();
+    if(validate.turn(id))
+        app.options.end();
 });
 
 socket.on('addUnit', function (unit) {
     var u = unit._current;
     var player = app.players.get(u.player._current);
     var unit = new Unit(player, u.position, app.units[u.name.toLowerCase()]);
-    //if(validate.build(unit))
+    if(validate.build(unit))
         if(player.canPurchase(unit.cost())) {
             player.purchase(unit.cost());          
             app.map.addUnit(unit);
@@ -9530,34 +9222,34 @@ socket.on('addUnit', function (unit) {
 });
 
 socket.on('attack', function (action) {
-    //if(validate.attack(action)) {
+    if(validate.attack(action)) {
         var attacker = app.map.getUnit(action.attacker), 
         attacked = app.map.getUnit(action.attacked);
         attacker.attack(attacked, action.damage);
         if(app.user.owns(attacked) && !attacked.attacked())
             attacked.attack(attacker);
-    //}
+    }
 });
 
 socket.on('joinUnits', function (action) {
-    //if(validate.combine(action)) {
+    if(validate.combine(action)) {
         var unit = app.map.getUnit(action.unit);
         var selected = app.map.getUnit(action.selected);
         selected.join(unit);
-    //}
+    }
 });
 
 socket.on('moveUnit', function (move) {
     var unit = app.map.getUnit(move);
     var target = move.position;
-    //if(validate.move(unit, target))
+    if(validate.move(unit, target))
         unit.move(target, move.moved);
 });
 
 socket.on('loadUnit', function (load) {
     var passanger = app.map.getUnit({id:load.passanger});
     var transport = app.map.getUnit({id:load.transport});
-    //if(validate.load(transport, passanger))
+    if(validate.load(transport, passanger))
         passanger.load(transport);
 });
 
@@ -9612,286 +9304,7 @@ socket.on('back', function () { Teams.boot(); });
 socket.on('updatePlayerStates', function (players) {app.players.add(players);});
 
 module.exports = socket;
-},{"../controller/background.js":1,"../controller/confirmation.js":2,"../controller/cursor.js":3,"../controller/map.js":4,"../controller/maps.js":5,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/units.js":13,"../game/game.js":25,"../menu/options/optionsMenu.js":46,"../menu/teams.js":50,"../objects/player.js":68,"../objects/unit.js":76,"../settings/app.js":78,"../tools/chat.js":82,"../tools/keyboard.js":90,"../tools/validator.js":97}],95:[function(require,module,exports){
-app = require('../settings/app.js');
-app.key = require('../tools/keyboard.js');
-app.scroll = require('../menu/scroll.js');
-app.user = require('../objects/user.js');
-app.display = require('../tools/display.js');
-app.menu = require('../controller/menu.js');
-
-module.exports = function (element) {
-
-	var timer = new Date();
-
-	var doubleTap = function () {
-		var now = new Date();
-		var tappedTwice = now - timer < 300 ? true : false;
-		timer = now;
-		return tappedTwice;
-	};
-
-	var input = function (input) { return input ? input : element; };
-
-	return {
-		scroll: function (elem) {
-
-
-			var e = input(elem);
-
-			// scroll via touch
-		    e.addEventListener('touchmove', function(touch){
-
-		        // get the top  boundry of the element
-		        var top = e.offsetTop - 50;
-
-		        // get the bottom boundry
-		        var bottom = top + e.offsetHeight + 50;
-
-		        //  get the position of the touch
-		        var position = parseFloat(touch.changedTouches[0].pageY ) - 50;
-
-		        // if the position is above the top, move the element up, 
-		        // otherwise move it down if it is below the bottom
-		        if (position < top){
-		            app.scroll.wheel(1, new Date());
-		        }else if (position > bottom){
-		            app.scroll.wheel(-1, new Date());
-		        }
-		        //app.game.update();
-		    });
-		    return this;
-		},
-		swipe: function (elem) {
-
-			var e = input(elem);
-
-			// scroll via touch
-		    e.addEventListener('touchmove', function(touch){
-
-		    	touch.preventDefault();
-
-		    	var width = e.offsetWidth / 3;
-
-		    	var offset = width / 3;
-
-		        // get the left boundry of the element
-		        var left = e.offsetLeft + offset;
-
-		        // get the bottom boundry
-		        var right = e.offsetLeft + width - offset;
-
-		        //  get the position of the touch
-		        var position = parseFloat(touch.changedTouches[0].pageX );
-
-		        // if the position is above the top, move the element up, 
-		        // otherwise move it down if it is below the bottom
-		        if (position < left){
-		            app.scroll.swipe(-1, new Date());
-		        }else if (position > right){
-		            app.scroll.swipe(1, new Date());
-		        }
-		        //app.game.update();
-		    });
-		    return this;
-		},
-		swipeScreen: function (elem) {
-
-			var e = input(elem), start;
-
-			// get the start location of the finger press
-			e.addEventListener('touchstart', function(touch){
-				touch.preventDefault();
-				start = touch.changedTouches[0].pageX;
-			});
-
-			// scroll via touch
-		    e.addEventListener('touchend', function(touch){
-		    	touch.preventDefault();
-
-		        //  get the position of the end of touch
-		        var end = touch.changedTouches[0].pageX;
-
-		        // make the length needed to swipe the width of the page divided by three and a half
-		        var swipeLength = e.offsetWidth / 3.5;
-
-		        // go back if swiping right
-		        if (start < end && end - start > swipeLength){
-		        	app.key.press(app.key.esc());
-
-		        // go forward if swiping left
-		        }else if (start > end && start - end > swipeLength){
-		        	app.key.press(app.key.enter());
-		        }
-		        start = undefined;
-		    });
-
-		    return this;
-		},
-		// may need to change to eliminate less useful select method
-		mapOrGame: function (elem){
-			var e = input(elem);
-			e.addEventListener('touchstart', function(touch){
-				var label = 'SelectionIndex';
-				var target = touch.target;
-				var touched = target.id.indexOf(label) > -1 ? target: target.parentNode;
-				var type = touched.id.indexOf('map') ? 'map' : 'game';
-	        	var index = touched.attributes[type + label].value;
-	        	app.display.setIndex(index);
-	        });
-			return this;
-		},
-		modeOptions: function (elem) {
-
-			var e = input(elem);
-
-			e.addEventListener('touchstart', function() {
-
-	        	// get the index
-	        	var index = Array.prototype.indexOf.call(e.parentNode.childNodes, e);
-
-	        	// if the mode options are already under selection, then change the index
-	        	if (app.menu.active()) {
-	        		 app.display.setIndex(index);
-	        		 //app.game.update();
-
-				// otherwise simulate selecting them with the key right push
-				// and set the default index to the selected option
-	        	} else { 
-	        		app.display.setOptionIndex(index);
-		        	app.key.press(app.key.right());
-	        	}
-	        });
-
-	        return this;
-		},
-		changeMode: function (elem) {
-			input(elem).addEventListener('touchstart', function () {if(app.menu.active()) app.key.press(app.key.left());});
-			return this;
-		},
-		doubleTap: function (elem) {
-			input(elem).addEventListener('touchstart', function() { if (doubleTap()) app.key.press(app.key.enter());});
-			return this;
-		},
-		element: function (elem) {
-			input(elem).addEventListener('touchstart', function (touch) {
-				var touched = touch.target;
-				var name = touched.parentNode.id == 'settings' ? touched.id : touched.parentNode.id;
-				var setting = name.replace('Settings','').replace('Container','');
-				app.display.setIndex(setting);
-				//app.game.update();
-			});
-			return this;
-		},
-		esc: function (elem) {
-			input(elem).addEventListener('touchstart', function() {if(app.user.player().ready()) app.key.press(app.key.esc());});
-			return this;
-		}
-	};
-};
-},{"../controller/menu.js":6,"../menu/scroll.js":48,"../objects/user.js":77,"../settings/app.js":78,"../tools/display.js":85,"../tools/keyboard.js":90}],96:[function(require,module,exports){
-/* ---------------------------------------------------------------------------------------------------------*\
-    
-    handles the cleanup and disposal of elements that are no longer needed or need to be removed
-
-\* ---------------------------------------------------------------------------------------------------------*/
-
-app = require('../settings/app.js');
-app.game = require('../game/game.js');
-app.optionsMenu = require('../menu/options/optionsMenu.js');
-app.settings = require('../settings/game.js');
-app.animate = require('../game/animate.js');
-app.effect = require('../game/effects.js');
-app.display = require('../tools/display.js');
-app.key = require('../tools/keyboard.js');
-app.cursor = require('../controller/cursor.js');
-
-module.exports = function () {
-
-    // show undoes a hide of an element
-    var show = function (hiddenElement) {
-
-        // get hidden element
-        var hidden = document.getElementById(hiddenElement);
-
-        // show element
-        if (hidden) hidden.style.display = '';
-    };
-
-    return {
-
-        // undo the selection of map elements
-        selectElement: function () {
-            app.cursor.deselect();
-        },
-
-        hudHilight:function(){
-            app.display.reset();
-            if(app.display.index()) app.display.resetPreviousIndex();
-            if (app.optionsMenu.active()) {
-                show('coStatusHud');
-                app.optionsMenu.deactivate();
-            }
-        },
-
-        selectUnit:function(){
-            if (app.cursor.selected() && app.cursor.selected().type() === 'unit') {
-                app.cursor.deselect();
-                app.animate('unit');
-            }
-        },
-
-        actionsSelect: function (){
-            this.display('actionHud');
-            this.display('damageDisplay');
-            app.animate('cursor');
-        },
-
-        effect: function (effect) {
-            if (app.effect.undo[effect]) {
-                app.effect.undo[effect]();
-                app.animate('effects');
-            }
-            return this;
-        },
-
-        display: function (element) {
-            var remove = document.getElementById(element);
-            if (remove) remove.parentNode.removeChild(remove);
-            return this;
-        },
-
-        buildUnitScreen: function () {
-            var removeArray = ['buildUnitScreen', 'unitInfoScreen', 'optionsMenu'];
-            for (var r = 0; r < removeArray.length; r += 1) {
-                var remove = document.getElementById(removeArray[r]);
-                if (remove) remove.parentNode.removeChild(remove);
-            }
-            return this;
-        },
-
-        all: function () {
-            this.selectUnit();
-            this.selectElement();
-            this.actionsSelect();
-            this.hudHilight();
-            app.key.undo(app.key.enter());
-            this.buildUnitScreen();
-            this.effect('highlight').effect('path');
-            app.cursor.show();
-            return this;
-        },
-
-        tempAndPrev: function () {
-            app.display.clear();
-            app.cursor.clear();
-            app.effect.clear();
-            app.temp = {};
-            app.prev = {};
-        }
-    };
-}();
-},{"../controller/cursor.js":3,"../game/animate.js":20,"../game/effects.js":24,"../game/game.js":25,"../menu/options/optionsMenu.js":46,"../settings/app.js":78,"../settings/game.js":80,"../tools/display.js":85,"../tools/keyboard.js":90}],97:[function(require,module,exports){
+},{"../controller/background.js":1,"../controller/confirmation.js":2,"../controller/cursor.js":3,"../controller/map.js":4,"../controller/maps.js":5,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/units.js":13,"../game/game.js":25,"../input/keyboard.js":28,"../menu/options/optionsMenu.js":47,"../menu/teams.js":51,"../objects/player.js":69,"../objects/unit.js":77,"../settings/app.js":79,"../tools/chat.js":83,"../tools/validator.js":93}],93:[function(require,module,exports){
 /* --------------------------------------------------------------------------- *\
     
     Validator.js is a tool to verify the correctness of data within the game
@@ -10026,4 +9439,4 @@ Validator.prototype.turn = function (player) {
 console.log(Validator);
 
 module.exports = Validator;
-},{"../controller/players.js":7,"../objects/building.js":56,"../settings/app.js":78}]},{},[27]);
+},{"../controller/players.js":7,"../objects/building.js":57,"../settings/app.js":79}]},{},[30]);

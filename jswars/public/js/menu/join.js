@@ -14,7 +14,7 @@ Join.game = function () {
 };
 Join.host = function () { return this.h; };
 Join.update = function (type) {
-    var elements = app.display.info(app.maps.all(), ['name'], this.element);
+    var elements = app.dom.createMenu(app.maps.all(), ['name'], this.element);
     var replace = document.getElementById(this.element.section);
     replace.parentNode.replaceChild(elements, replace);
     this.buildings.set(app.maps.info());
@@ -65,13 +65,13 @@ Join.display = function (type) {
     var screen = this.createScreen('setupScreen');
     this.createTitle('Select*'+type);
 
-    var categories, maps = app.display.info(app.maps.all(), ['name'], this.element, function (list) {
+    var categories, maps = app.dom.createMenu(app.maps.all(), ['name'], this.element, function (list) {
         var element = list.childNodes[0];
         app.touch(element).mapOrGame().doubleTap();
         app.click(element).mapOrGame().doubleClick();
     });
 
-    this.category = categories = app.display.info(app.settings.categories, '*', {
+    this.category = categories = app.dom.createMenu(app.settings.categories, '*', {
         section: 'categorySelectScreen',
         div:'selectCategoryScreen'
     });
@@ -105,7 +105,5 @@ Join.remove = function () {
     screen.removeChild(categories);
     app.key.undo();
     app.maps.clear();
-    app.undo.tempAndPrev();
-    this.clear();
 };
 module.exports = Join;

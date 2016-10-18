@@ -59,7 +59,7 @@ StatusHud.prototype.display = function (player, location) {
         if (coHud) {
             coHud.parentNode.replaceChild(hud, coHud);
         } else {
-            document.body.insertBefore(hud, app.domInsertLocation);
+            document.body.insertBefore(hud, app.dom.insertLocation);
         }
         // return the context for animation of the power bar
         return this.context = context;

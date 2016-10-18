@@ -7,7 +7,7 @@
 module.exports = {
     display: function () {
 
-        var footer = app.display.info([], [], {section:'descriptionOrChatScreen', div:'descriptionOrChat'});
+        var footer = app.dom.createMenu([], [], {section:'descriptionOrChatScreen', div:'descriptionOrChat'});
         this.setElement(footer);
         var textField = footer.children[0];
 
