@@ -110,8 +110,8 @@ module.exports = function () {
             if(app.key.pressed()) app.key.undo();        
         },
         reset: function () {
-            game = mode = false;
-            app.screens.modeMenu();
+            game = false;
+            mode = app.menu.mode();
             this.setup();
         },
         start: function (game) {

@@ -430,7 +430,6 @@ Unit.prototype.attack = function(unit, damage, attacking){
     if(app.user.owns(this) && !this.attacked()){
         app.cursor.show();
         this.deselect();    
-        app.dom.remove('damageDisplay');
         socket.emit('attack', { attacker:this, attacked:unit, damage:damage });
     }
     this.refresh();
@@ -552,6 +551,7 @@ Unit.prototype.evaluate = function (position) {
 
                 if (action === 'attack') {
 
+                    app.hud.show();
                     this.setTargets(actions.attack);
                     app.target.activate(action);
 

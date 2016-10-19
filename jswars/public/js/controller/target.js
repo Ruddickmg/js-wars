@@ -1,10 +1,12 @@
 DamageDisplay = require('../objects/damageDisplay.js');
+Fader = require('../effects/fade.js');
 
 module.exports = function() {
 
 	var position, action, target, setElement, damage, active, newTarget = true, index = 0, 
-	keys = ['left', 'right', 'up', 'down'], cursors = {attack:'target', drop:'pointer'};
+	dd, keys = ['left', 'right', 'up', 'down'], cursors = {attack:'target', drop:'pointer'};
 	var refresh = function () {app.animate(['cursor']);};
+
 	
 	return {
 		deactivate: function () { 
@@ -19,18 +21,16 @@ module.exports = function() {
 		},
 		active: function () { return active; },
 		position: function () { return position; },
-		cursor: function () { 
-			console.log("cursor..");
-			console.log(action);
-			console.log(cursors[action]);
-			return cursors[action]; },
+		cursor: function () { return cursors[action]; },
 		chose: function (element) {
 
 			if(app.key.pressed(app.key.esc()) && app.key.undo(app.key.esc())) {
+				if (dd) dd.remove();
 				newTarget = true;
 	        	active = false;
-	        	action = false;				
+	        	action = false;	
 	        	element.displayActions();
+	        	app.hud.hide();
 				return refresh();
 			}
 
@@ -54,7 +54,7 @@ module.exports = function() {
 		            damage = element.target(index);
 
 		            // calcualte damage percentage for each targets unit
-		            new DamageDisplay(Math.round(damage));
+		            dd = new DamageDisplay(Math.round(damage));
 
 	        	}
 
@@ -66,6 +66,7 @@ module.exports = function() {
 	        // if the target has been selected return it
 	        if (app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter())){
 	        	element[action](target, damage, true);
+	        	if (dd) dd.remove();
 	        	newTarget = true;
 	        	active = false;
 	        	action = false;

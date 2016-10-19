@@ -10,13 +10,18 @@ Hud.prototype.show = function () {
     this.element.style.display = null;
     this.setElements(app.cursor.hovered());
 };
+Hud.prototype.position = function () { return new Position(this.l, this.element.offsetTop); };
 Hud.prototype.hide = function () { this.element.style.display = 'none'; };
 Hud.prototype.resize = function (canvas) {
+    
     var screenWidth = app.screen.width();
     var width = app.settings.hudWidth * this.number;
-    var left = app.settings.hudLeft + 120 - width;
-    if (app.cursor.side('x') === 'right' && app.cursor.side('y') === 'bottom')
-        left = screenWidth - (screenWidth - app.settings.hudWidth) + 150;
+
+    // check what side of the screen were on and adjust position accordingly
+    this.l = left = app.cursor.side('x') === 'right' && app.cursor.side('y') === 'bottom' ?
+        screenWidth - (screenWidth - app.settings.hudWidth) + 150:
+        app.settings.hudLeft + 120 - width;
+
     this.element.style.height = app.settings.hudHeight.toString() + 'px';
     this.element.style.left = left.toString() + 'px';
     this.element.style.width = width.toString() + 'px';
