@@ -24,7 +24,7 @@ Unit = require('../map/unit.js');
 Teams = require('../menu/teams.js');
 
 var validate = new Validator('sockets');
-var socket = io.connect("http://127.0.0.1:8080") || io.connect("http://jswars-jswars.rhcloud.com:8000");
+var socket = io.connect("http://127.0.0.1:8080");
 
 // all in game commands
 socket.on('confirmSave', function (player) {app.confirm.save(app.players.get(player));});

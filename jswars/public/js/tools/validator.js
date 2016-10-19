@@ -129,6 +129,4 @@ Validator.prototype.turn = function (player) {
 	return app.players.get(isNaN(player) ? player : {id:player}).turn();
 };
 
-console.log(Validator);
-
 module.exports = Validator;
