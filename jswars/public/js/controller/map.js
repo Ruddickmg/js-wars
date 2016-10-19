@@ -2,13 +2,13 @@ app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
 app.units = require('../definitions/units.js');
-app.animate = require('../game/animate.js');
+app.animate = require('../animation/animate.js');
 
 Validator = require('../tools/validator.js');
 Matrix = require('../tools/matrix.js');
-Terrain = require('../objects/terrain.js');
-Building = require('../objects/building.js');
-Unit = require('../objects/unit.js');
+Terrain = require('../map/terrain.js');
+Building = require('../map/building.js');
+Unit = require('../map/unit.js');
 Position = require('../objects/position.js');
 
 module.exports = function () {

@@ -1,12 +1,12 @@
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
 app.options = require('../menu/options/optionsMenu.js');
-app.calculate = require('../game/calculate.js');
-app.effect = require('../game/effects.js');
-app.animate = require('../game/animate.js');
+app.calculate = require('../tools/calculate.js');
+app.animate = require('../animation/animate.js');
 app.key = require('../input/keyboard.js');
+app.highlight = require('../effects/highlight.js');
 app.game = require('../game/game.js');
-app.feature = require('../objects/featureHud.js');
+app.feature = require('../huds/featureHud.js');
 
 module.exports = function () {
 
@@ -112,8 +112,7 @@ module.exports = function () {
                         active = active.showAttackRange();
                     } else {
                         active = active.displayingRange = false;
-                        app.attackRange.clear();
-                        app.effect.refresh(); 
+                        app.highlight.clear().refresh(); 
                     }
                 }
             }

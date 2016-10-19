@@ -6,7 +6,7 @@
 
 ModesElement = require('../menu/elements/modesElement.js');
 ScrollText = require('../effects/scrollText.js');
-Menu = require('../objects/menu.js');
+Menu = require('../menu/elements/menu.js');
 List = require('../menu/elements/list.js');
 Ulist = require('../menu/elements/ul.js');
 Fader = require('../effects/fade.js');

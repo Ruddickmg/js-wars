@@ -1,4 +1,4 @@
-Terrain = require('../objects/terrain.js');
+Terrain = require('../map/terrain.js');
 
 Matrix = function(dimensions){
 	this.dimensions = dimensions;
@@ -7,6 +7,11 @@ Matrix = function(dimensions){
 	for (var i = 0; i <= dimensions.x; i += 1)
 		this.matrix.push([]);
 };
+/* ----------------------------------------------------------------------------------- *\
+
+	Matrix holds map elements in a matrix for quick access during map analysis
+
+\* ----------------------------------------------------------------------------------- */
 
 Matrix.prototype.insert = function (element) {
 	var p = element.position();
@@ -39,8 +44,9 @@ Matrix.prototype.position = function (p, init) {
 Matrix.prototype.clean = function () {
 	for (var p, e, i = 0; i < this.dummies.length; i += 1){
 		var p = this.dummies[i];
-		if((e = this.matrix[p.x][p.y]) && e.type() !== "unit" && e.type !== "building")
+		if((e = this.matrix[p.x][p.y]) && e.type() !== "unit" && e.type() !== "building") {
 			this.matrix[p.x][p.y] = undefined;
+		}
 	}
 	this.dummies = [];
 };

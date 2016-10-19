@@ -4,22 +4,21 @@
    
 \* ------------------------------------------------------------------------------------------------------*/
 
-StatusHud = require('../objects/coStatusHud.js');
+StatusHud = require('../huds/coStatusHud.js');
 Score = require('../definitions/score.js');
 Counter = require('../tools/counter.js');
 Exit = require('../menu/options/exit.js');
-Hud = require('../objects/hud.js');
+Hud = require('../huds/hud.js');
 
 app = require('../settings/app.js');
 app.menu = require('../controller/menu.js');
-app.animate = require('../game/animate.js');
-app.effect = require('../game/effects.js');
+app.animate = require('../animation/animate.js');
 app.key = require('../input/keyboard.js');
-app.target = require('../objects/target.js');
-app.user = require('../objects/user.js');
+app.target = require('../controller/target.js');
+app.user = require('../user/user.js');
 app.players = require('../controller/players.js');
 app.cursor = require('../controller/cursor.js');
-app.background = require('../controller/background.js');
+app.background = require('../map/background.js');
 app.options = require('../menu/options/optionsMenu.js');
 app.confirm = require('../controller/confirmation.js');
 app.exit = new Exit();
@@ -226,6 +225,7 @@ module.exports = function () {
             else window.requestAnimationFrame(app.game.loop);
         },
         end: function (saved) { 
+            // create game screen
             if (!saved) alert('player ' + app.players.first().number() + ' wins!  with a score of ' + app.players.first().score.calculate() + '!');
             else alert('ending game');
             end = true; 

@@ -1,9 +1,8 @@
 socket = require('../tools/sockets.js');
 app.game = require('../game/game.js');
-app.screens = require('../objects/screens.js');
-app.user = require('../objects/user.js');
-app.input = require('../objects/input.js');
-Menu = require('../objects/menu.js');
+app.user = require('../user/user.js');
+app.input = require('../input/input.js');
+Menu = require('../menu/elements/menu.js');
 
 Login = Object.create(Menu);
 Login.testAPI = function () {

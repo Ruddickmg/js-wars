@@ -4,7 +4,7 @@
 
 \* ---------------------------------------------------------------------- */
 
-app.property = require('../objects/property.js');
+app.property = require('../map/property.js');
 app.obsticles = require('../definitions/obsticles.js');
 Validator = require('../tools/validator.js');
 

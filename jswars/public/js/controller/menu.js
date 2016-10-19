@@ -6,10 +6,10 @@
 
 app = require('../settings/app.js');
 app.maps = require('../controller/maps.js');
-app.user = require('../objects/user.js');
+app.user = require('../user/user.js');
 app.settings = require('../settings/game.js');
 app.key = require('../input/keyboard.js');
-app.testMap = require('../objects/testMap.js');
+app.testMap = require('../map/testMap.js');
 app.editor = require('../game/mapEditor.js');
 app.join = require('../menu/join.js');
 Settings = require('../menu/settings.js');

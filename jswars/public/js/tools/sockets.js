@@ -6,7 +6,7 @@
 
 app = require('../settings/app.js');
 app.game = require('../game/game.js');
-app.chat = require('../tools/chat.js');
+app.chat = require('../controller/chat.js');
 app.menu = require('../controller/menu.js');
 app.options = require('../menu/options/optionsMenu.js');
 app.key = require('../input/keyboard.js');
@@ -14,13 +14,13 @@ app.maps = require('../controller/maps.js');
 app.map = require('../controller/map.js');
 app.players = require('../controller/players.js');
 app.cursor = require('../controller/cursor.js');
-app.background = require('../controller/background.js');
+app.background = require('../map/background.js');
 app.units = require('../definitions/units.js');
 app.confirm = require('../controller/confirmation.js');
 
 Validator = require('../tools/validator.js');
-Player = require('../objects/player.js');
-Unit = require('../objects/unit.js');
+Player = require('../user/player.js');
+Unit = require('../map/unit.js');
 Teams = require('../menu/teams.js');
 
 var validate = new Validator('sockets');

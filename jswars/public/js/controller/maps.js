@@ -10,7 +10,7 @@ app.request = require('../tools/request.js');
 app.game = require('../game/game.js');
 
 Validator = require('../tools/validator.js');
-Map = require('../objects/map.js')
+Map = require('../map/map.js');
 
 module.exports = function () {
 

@@ -1,76 +1,530 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------*\
+/* ----------------------------------------------------------------------------------------------------------*\
+
+    The animate functions insert the draw methods into the specified canvas for rendering and then make a 
+    call to the canvas to render those drawings with the render method. Calling the render method of an
+    initialized canvas object will render the animations once. If a loop is wanted ( for changing animations 
+    for example ), you may pass the parent function into the render function to be called recursively.
+
+\*-----------------------------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+
+module.exports = function (objectName, hide) {
+    window.requestAnimationFrame(function(){
+        if(typeof objectName === 'string')
+            app[objectName + 'Canvas'].setAnimations(app['draw' + objectName.uc_first()]).render(hide);
+        else for(var i = 0; i < objectName.length; i += 1) 
+            app[objectName[i] + 'Canvas'].setAnimations(app['draw' + objectName[i].uc_first()]).render(hide);
+    });
+};
+},{"../settings/app.js":75}],2:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------------------------*\
+
+    default object animation repo, the 'm' parameter is a method passed from 
+    app.draw that scales the coordinates of the drawings to fit any grid square size, as 
+    well as providing some functionality like random(), which generates random numbers within the specified 
+    range of numbers. 
+    'm' does not have to be used
+    default is a base of 64 ( 64 X 64 pixles ), the base is set as a perameter of initializing the 
+    app.draw();
+
+\*---------------------------------------------------------------------------------------------------------*/
+
+module.exports = function (width, height) {
+    var transparent = false;
+    return {
+        
+        hide: function () {transparent = 0.1;},
+        cursor: function (canv, m) {
+            // size of cursor corners
+            var size = 15;
+            canv.strokeStyle = "black";
+            canv.fillStyle = "#fff536";
+            canv.beginPath();
+            // bottom left
+            canv.moveTo(m.l(3), m.u(size));
+            canv.lineTo(m.l(3), m.d(3));
+            canv.lineTo(m.r(size), m.d(3));
+            canv.lineTo(m.l(3), m.u(size));
+            // bottem right
+            canv.moveTo(m.r(67), m.u(size));
+            canv.lineTo(m.r(67), m.d(3));
+            canv.lineTo(m.r(64 - size), m.d(3));
+            canv.lineTo(m.r(67), m.u(size));
+            // top right
+            canv.moveTo(m.r(67), m.u(64 - size));
+            canv.lineTo(m.r(67), m.u(67));
+            canv.lineTo(m.r(64 - size), m.u(67));
+            canv.lineTo(m.r(67), m.u(64 - size));
+            // bottem left
+            canv.moveTo(m.l(3), m.u(64 - size));
+            canv.lineTo(m.l(3), m.u(67));
+            canv.lineTo(m.r(size), m.u(67));
+            canv.lineTo(m.l(3), m.u(64 - size));
+            canv.fill();
+            canv.stroke();
+            return canv;
+        },
+
+        movementRange: function (canv, m) {
+            canv.fillStyle = "rgba(255,255,255,0.3)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            return canv;
+        },
+
+        attackRange: function (canv, m) {
+            canv.fillStyle = "rgba(240,5,0,0.4)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            return canv;
+        },
+
+        target: function (canv, m) {
+            canv.fillStyle = "rgba(0,255,0,0.3)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            return canv;
+        },
+
+        pointer: function (canv, m) {
+            canv.fillStyle = "rgba(255,143,30,0.3)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            return canv;
+        },
+
+        path: function (canv, m) {
+            canv.fillStyle = "rgba(255,0,0,0.5)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            return canv;
+        },
+
+        base: function (canv, m) {
+            canv.fillStyle = "rgba(0,0,200,0.9)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w - 5), m.y - 5);
+            canv.lineTo(m.r(m.w - 5), m.u(m.h + 5));
+            canv.lineTo(m.x - 5, m.u(m.h + 5));
+            canv.lineTo(m.x - 5, m.y - 5);
+            canv.fill();
+            return canv;
+        },
+
+        hq: function (canv, m) {
+            canv.fillStyle = "rgba(80,0,20,0.9)";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w - 5), m.y - 5);
+            canv.lineTo(m.r(m.w - 5), m.u(m.h + 5));
+            canv.lineTo(m.x - 5, m.u(m.h + 5));
+            canv.lineTo(m.x - 5, m.y - 5);
+            canv.fill();
+            return canv;
+        },
+
+        // dimensions 
+        plain: function (canv, m) {
+            canv.fillStyle = "#d6f71b";
+            //canv.strokeStyle = "black";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            canv.fill();
+            //canv.stroke();
+            canv.strokeStyle = "#f2ff00";
+            canv.beginPath();
+            for (var rand = 0; rand < width; rand += 1) {
+                var randomHeight = m.random(m.y, m.u(m.h));
+                var randomWidth = m.random(m.x, m.r(m.w));
+                canv.moveTo(randomWidth, randomHeight);
+                canv.lineTo(randomWidth + 4, randomHeight);
+            }
+            canv.stroke();
+            //canv.strokeStyle = "black";
+            canv.beginPath();
+            canv.lineTo(m.r(m.w), m.y);
+            canv.lineTo(m.r(m.w), m.u(m.h));
+            canv.lineTo(m.x, m.u(m.h));
+            canv.lineTo(m.x, m.y);
+            //canv.stroke();
+            return canv;
+        },
+
+        tallMountain: function (canv, m) {
+            canv.strokeStyle = "#41471d";
+            canv.fillStyle = "#ff8800";
+            canv.beginPath();
+            canv.moveTo(m.x, m.u(20));
+            canv.lineTo(m.x, m.u(30));
+            canv.lineTo(m.r(5), m.u(45));
+            canv.quadraticCurveTo(m.r(15), m.u(50), m.r(15), m.u(50));
+            canv.moveTo(m.r(10), m.u(35));
+            canv.lineTo(m.r(20), m.u(67));
+            canv.quadraticCurveTo(m.r(25), m.u(78), m.r(52), m.u(67));
+            canv.lineTo(m.r(62), m.u(34));
+            canv.quadraticCurveTo(m.r(68), m.u(20), m.r(38), m.y);
+            canv.quadraticCurveTo(m.r(22), m.y, m.x, m.u(20));
+            canv.fill();
+            canv.stroke();
+            return canv;
+        },
+
+        shortMountain: function (canv, m) {
+            canv.strokeStyle = "#41471d";
+            canv.fillStyle = "#ff8800";
+            canv.beginPath();
+            canv.moveTo(x, m.u(10));
+            canv.lineTo(m.r(20), m.u(m.h));
+            canv.lineTo(m.r(40), m.u(m.h));
+            canv.lineTo(m.r(m.w), m.u(10));
+            canv.quadraticCurveTo(m.r(31), m.d(9), m.r(5), m.u(10));
+            canv.quadraticCurveTo(m.r(20));
+            canv.fill();
+            canv.stroke();
+            return canv;
+        },
+
+        tree: function (canv, m) {
+            canv.strokeStyle = "black";
+            canv.fillStyle = "rgb(41,148,35)";
+            canv.beginPath();
+            //bottom
+            canv.moveTo(m.r(21), m.u(15));
+            canv.quadraticCurveTo(m.r(42), m.d(1), m.r(60), m.u(15));
+            canv.quadraticCurveTo(m.r(74), m.u(25), m.r(59), m.u(33));
+            canv.moveTo(m.r(21), m.u(15));
+            canv.quadraticCurveTo(m.r(16), m.u(20), m.r(29), m.u(30));
+            //middle
+            canv.moveTo(m.r(27), m.u(30));
+            canv.quadraticCurveTo(m.r(42), m.u(20), m.r(60), m.u(34));
+            canv.quadraticCurveTo(m.r(58), m.u(34), m.r(50), m.u(43));
+            //canv.quadraticCurveTo(m.r(58),m.u(38), m.r(50), m.u(43));
+            canv.moveTo(m.r(27), m.u(30));
+            canv.quadraticCurveTo(m.r(34), m.u(34), m.r(37), m.u(40));
+            //top
+            canv.moveTo(m.r(35), m.u(40));
+            canv.quadraticCurveTo(m.r(44), m.u(35), m.r(51), m.u(41));
+            canv.quadraticCurveTo(m.r(52), m.u(43), m.r(42), m.u(50));
+            canv.moveTo(m.r(35), m.u(40));
+            canv.quadraticCurveTo(m.r(40), m.u(42), m.r(42), m.u(50));
+            canv.fill();
+            canv.stroke();
+            return canv;
+        },
+
+        infantry: function (canv, m) {
+            canv.globalAlpha = transparent || 1;
+            canv.fillStyle = "blue";
+            canv.beginPath();
+            canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
+            canv.fill();
+            return canv;
+        },
+
+        apc: function (canv, m) {
+            canv.globalAlpha = transparent || 1;
+            canv.fillStyle = "orange";
+            canv.beginPath();
+            canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
+            canv.fill();
+            return canv;
+        }
+    };
+};
+},{}],3:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------------------------*\
+
+    app.draw provides a set of methods for interacting with, scaling, caching, coordinating  
+    and displaying the drawings/animations provided in the app.animations
+
+\*---------------------------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+app.animations = require('../animation/animations.js');
+app.settings = require('../settings/game.js');
+app.screen = require('../controller/screen.js');
+app.map = require('../controller/map.js');
+app.background = require('../map/background.js');
+
+module.exports = function (canvas, dimensions, base) {
     
-    Background.js controls the weather
+    var w, h, width, height;
+    var temp = {}; // holds temporary persistant variables that can be passed between functions ( similar to static variables / functions )
+
+    // base is the amount of pixles in each grid square, used to scale canvas elements if needed
+    base = base === null || base === undefined ? 64 : base;
+
+    // set/get width and height dimensions for the game map
+    if (dimensions === null || dimensions === undefined) {
+        w = 64;
+        h = 64;
+    } else {
+        width = dimensions.width;
+        height = dimensions.height;
+        w = width / 15;
+        h = height / 10;
+    }
+
+    var animationObjects = app.animations(width, height);
+
+    // creates a small canvas
+    var smallCanvas = function () {
+        var smallCanvas = document.createElement('canvas');
+        smallCanvas.width = w * 2;
+        smallCanvas.height = h * 2;
+        return smallCanvas;
+    };
+
+    // caches drawings so they can be recalled without redrawing ( performance boost in certain situations )
+    var cacheDrawing = function (name) {
+
+        // create a canvas
+        var canvas = smallCanvas();
+
+        // get context  
+        var cacheCanvas = canvas.getContext(app.ctx);
+
+        // set the position of the image to the center of the cached canvas                         
+        var position = setPosition((w / 2), (h / 2));
+
+        // draw image to cache to canvas
+        animationObjects[name](cacheCanvas, position);
+
+        // cache the canvas with drawing on it ( drawings cached by their class name )
+        app.cache[name] = canvas;
+    };
+
+    // calculates the base for scaling
+    var calcBase = function (d) {
+        return d / base;
+    };
+
+    // scales items by calculating their base size multplied by 
+    var scale = function (type, value) {
+        var multiple = type === 'w' ? calcBase(w) : calcBase(h);
+        return value === null || value === undefined ? multiple : multiple * value;
+    };
+
+    // creates a friendlier interface for drawing and automatically scales drawings etc for screen size
+    var setPosition = function (x, yAxis) {
+
+        var y = yAxis + h;
+
+        return {
+            
+            // u = right, will move right the amonut of pixles specified
+            r: function (number) {
+                return x + scale('w', number);
+            },
+            // u = left, will move left the amonut of pixles specified
+            l: function (number) {
+                return x - scale('w', number);
+            },
+            // u = down, will move down the amonut of pixles specified
+            d: function (number) {
+                return y + scale('h', number);
+            },
+            // u = up, will move up the amonut of pixles specified
+            u: function (number) {
+                return y - scale('h', number);
+            },
+            // x is the x axis
+            x: x,
+            // y is the y axis
+            y: y,
+            // width
+            w: w,
+            // height
+            h: h,
+            // random number generator, used for grass background texture
+            random: function (min, max) {
+                return (Math.random() * (max - min)) + min;
+            }
+        };
+    };
+
+    // offset of small canvas drawing ( since the drawing is larger then single grid square it needs to be centered )
+    var smallX = w / 2;
+    var smallY = h / 2;
+
+    return {
+
+        // cache all images for performant display ( one drawing to rule them all )
+        cache: function () {
+            this.cached = true;
+            return this;
+        },
+        hide: function () { animationObjects.hide(); },
+        
+        // place drawings where they belong on board based on coorinates
+        coordinate: function (objectClass, object, coordinet) {
+
+            var s = {}; // holder for scroll coordinates
+            var name; // holder for the name of an object to be drawn
+            var position = app.screen.position(); // scroll positoion ( map relative to display area )
+            var wid = (w * 16); // display range
+            var len = (h * 11);
+
+            // get the coordinates for objects to be drawn
+            var coordinate, coordinates = !coordinet ? app[objectClass][object]() : coordinet;
+
+            // for each coordinates
+            for (var i = 0; i < coordinates.length; i += 1) {
+
+                coordinate = coordinates[i].position ? coordinates[i].position() : coordinates[i];
+
+                // var s modifys the coordinates of the drawn objects to allow scrolling behavior
+                // subtract the amount that the cursor has moved beyond the screen width from the 
+                // coordinates x and y axis, making them appear to move in the opposite directon
+                s.x = (coordinate.x * w) - (position.x * w);
+                s.y = (coordinate.y * h) - (position.y * h);
+
+                // only display coordinates that are withing the visable screen
+                if (s.x >= 0 && s.y >= 0 && s.x <= wid && s.y <= len) {
+
+                    // get the name of the object to be drawn on the screen
+                    name = objectClass === 'map' && coordinet === undefined ? coordinates[i].draw() : object;
+
+                    // if it is specified to be cached
+                    if (this.cached) {
+
+                        // check if it has already been cached and cache the drawing if it has not yet been cached
+                        if (app.cache[name] === undefined) cacheDrawing(name);
+
+                        // draw the cached image to the canvas at the coordinates minus 
+                        // its offset to make sure its centered in the correct position
+                        canvas.drawImage(app.cache[name], s.x - smallX, s.y - smallY);
+
+                    } else {
+
+                        // if it is not cached then draw the image normally at its specified coordinates
+                        animationObjects[name](canvas, setPosition(s.x, s.y));
+                    }
+                }
+            }
+        },
+
+        // fills background
+        background: function () {
+            var dimensions = app.map.dimensions();
+            var type = app.background.type();
+            for (var x = 0; x < dimensions.x; x += 1)
+                for (var y = 0; y < dimensions.y; y += 1)
+                    animationObjects[type](canvas, setPosition(x * w, y * h))
+        },
+
+        hudCanvas: function (object, objectClass) {
+
+            // draw a background behind terrain and building elements
+            if (objectClass !== 'unit') animationObjects.plain(canvas, setPosition(smallX, smallY));
+
+            if (app.cache[object]) // use cached drawing if available
+                canvas.drawImage(app.cache[object], 0, 0);
+            else if(animationObjects[object])
+                animationObjects[object](canvas, setPosition(smallX, smallY));
+        }
+    };
+};
+},{"../animation/animations.js":2,"../controller/map.js":7,"../controller/screen.js":11,"../map/background.js":35,"../settings/app.js":75,"../settings/game.js":77}],4:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+
+    handle user to user chat
 
 \* --------------------------------------------------------------------------------------*/
 
-app.calcualte = require('../game/calculate.js');
-Terrain = require('../objects/terrain.js');
+app = require('../settings/app.js');
+app.user = require('../user/user.js');
 
 module.exports = {
-	pos:{x:0, y:0},
-	rand: false,
-	cat:'random',
-	background: new Terrain('plain', {x:0, y:0}),
-	category: function () { return this.cat; },
-	type: function () { return this.background.type(); },
-	defense: function () { return this.background.defense(); },
-	name: function () { return this.background.name(); },
-	alias: function (name) {
-		// var alias = {
-		// 	clear:'plain',
-		// 	rain:'plain',
-		// 	snow:'snow'
-		// } [name];
-		return name === 'snow' ? 'snow' : 'plain'; 
-	},
-	set: function (type) {
-		console.log(type);
+    // add message for display, input is message object containing a user name and id, or just a message
+    post: function (mo) {
 
-		this.cat = type;
+        // construct message with user name or if there is no user name just use the message
+        var message = mo.user ? mo.user + ': ' + mo.message : mo.message;
 
-		if (type === 'random') {
-			this.rand = true;
-			return this.change();
-		}
+        // if the message is a string then append it to the chat element
+        if(this.chat && typeof (message) === 'string') {
+            var chatMessage = document.createElement('li'); // create a list element to contain the message
+            chatMessage.setAttribute('class', 'message'); // set attribute for styling
+            chatMessage.innerHTML = message; // set text to message
+            this.chat.appendChild(chatMessage); // append the li element to the chat element
+            return message; // return the appended message
+        }
+        return false;
+    },
 
-		if (!app.game.started())
-			this.rand = false;
+    // send message, input is an object/element containing textual user input accessed by ".value"
+    send: function (element) {
 
-		if (type === 'rain') {
+        var player = app.user.player();
+        var text = this.input(); // user text input
+        var name = player.name(); // get user name of user sending message
 
-			// app.effects.rain();
-			return this.background = new Terrain('plain', this.pos);
-		}
-		return this.background = new Terrain(this.alias(type) || type, this.pos); 
-	},
-	random: function () { return this.rand; },
-	weighted: function (chance) { 
-		var calculated = app.calculate.random(chance);
-		console.log('uncomment this when weather graphics are set up and ready');
-		// if(calculated < 4)
-		// 	return 'snow';
-		// else if(calculated < 6)
-		// 	return 'rain';
-		return 'plain';
-	},
-	change: function () {
-		if(!app.game.started() && app.user.first() || app.user.turn()) {
-			var type = this.weighted(20);
-			if(app.game.started() && app.user.turn())
-				socket.emit('background', type);
-			if(type === 'rain') {
-				//app.effects.rain();
-				return background = new Terrain('plain', this.pos);
-			}
-			return this.background = new Terrain(this.alias(type), this.pos);
-		}
-	}
+        if (name && text){ // make sure there is user input and a user name
+            var message = { message:text, user:name }; // create message object containing user name and input text
+            socket.emit('gameReadyChat', message); // transmit message to chat room
+            element.value = ''; // reset the input box to empty for future input
+            return message; // return the input message
+        }
+        return false;
+    },
+
+    input: function () { return this.chatInput.value; },
+    display: function () {
+        var bb = 5;
+        this.chatScreen = document.getElementById('descriptionOrChatScreen');
+        this.chatScreen.style.height = this.chatScreen.offsetHeight * 1.8 + 'px';
+        this.chatBox = document.getElementById('descriptionOrChat');
+        this.chat = document.getElementById('chat');
+        this.chatBox.style.height = '77%';
+        this.chatBox.style.borderBottomWidth = bb + 'px';
+        this.chatInput = document.getElementById('chatInput');
+        document.getElementById('descriptions').innerHTML = '';
+        this.chatForm = document.getElementById('chatForm');
+        this.chatForm.style.display = 'block';
+        this.chatForm.style.height = '15%';
+        this.chatForm.style.borderBottomWidth = bb + 'px';
+        this.chat.style.display = 'block';
+        this.chatInput.focus();
+    },
+
+    remove: function () {
+        this.chatScreen.style.height = '20%';
+        var doc = this.chatBox;
+        doc.style.height = '83%';
+        doc.style.borderBottomWidth = '12px';
+        this.chat.style.display = 'none';
+        var form = this.chatForm;
+        form.style.height = '0px';
+        form.style.display = 'none';
+    }
 };
-},{"../game/calculate.js":22,"../objects/terrain.js":75}],2:[function(require,module,exports){
+},{"../settings/app.js":75,"../user/user.js":94}],5:[function(require,module,exports){
 app.maps = require ("../controller/maps.js");
-app.effect = require("../game/effects.js");
 app.click = require("../input/click.js");
 app.touch = require("../input/touch.js");
 app.type = require("../effects/typing.js");
@@ -150,16 +604,16 @@ module.exports = {
 	},
 	waiting: function (players) { app.input.message("Waiting for a response from " + app.players.names(players)); }
 };
-},{"../controller/maps.js":5,"../effects/typing.js":19,"../game/effects.js":24,"../input/click.js":27,"../input/touch.js":29}],3:[function(require,module,exports){
+},{"../controller/maps.js":8,"../effects/typing.js":23,"../input/click.js":30,"../input/touch.js":33}],6:[function(require,module,exports){
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
 app.options = require('../menu/options/optionsMenu.js');
-app.calculate = require('../game/calculate.js');
-app.effect = require('../game/effects.js');
-app.animate = require('../game/animate.js');
+app.calculate = require('../tools/calculate.js');
+app.animate = require('../animation/animate.js');
 app.key = require('../input/keyboard.js');
+app.highlight = require('../effects/highlight.js');
 app.game = require('../game/game.js');
-app.feature = require('../objects/featureHud.js');
+app.feature = require('../huds/featureHud.js');
 
 module.exports = function () {
 
@@ -265,8 +719,7 @@ module.exports = function () {
                         active = active.showAttackRange();
                     } else {
                         active = active.displayingRange = false;
-                        app.attackRange.clear();
-                        app.effect.refresh(); 
+                        app.highlight.clear().refresh(); 
                     }
                 }
             }
@@ -329,18 +782,18 @@ module.exports = function () {
         }
     };
 }();
-},{"../controller/map.js":4,"../game/animate.js":20,"../game/calculate.js":22,"../game/effects.js":24,"../game/game.js":25,"../input/keyboard.js":28,"../menu/options/optionsMenu.js":47,"../objects/featureHud.js":61,"../settings/app.js":79}],4:[function(require,module,exports){
+},{"../animation/animate.js":1,"../controller/map.js":7,"../effects/highlight.js":20,"../game/game.js":25,"../huds/featureHud.js":28,"../input/keyboard.js":32,"../menu/options/optionsMenu.js":64,"../settings/app.js":75,"../tools/calculate.js":79}],7:[function(require,module,exports){
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
 app.units = require('../definitions/units.js');
-app.animate = require('../game/animate.js');
+app.animate = require('../animation/animate.js');
 
 Validator = require('../tools/validator.js');
 Matrix = require('../tools/matrix.js');
-Terrain = require('../objects/terrain.js');
-Building = require('../objects/building.js');
-Unit = require('../objects/unit.js');
+Terrain = require('../map/terrain.js');
+Building = require('../map/building.js');
+Unit = require('../map/unit.js');
 Position = require('../objects/position.js');
 
 module.exports = function () {
@@ -718,7 +1171,7 @@ module.exports = function () {
         }
     };
 }();
-},{"../controller/players.js":7,"../definitions/units.js":13,"../game/animate.js":20,"../objects/building.js":57,"../objects/position.js":70,"../objects/terrain.js":75,"../objects/unit.js":77,"../settings/app.js":79,"../settings/game.js":81,"../tools/matrix.js":89,"../tools/validator.js":93}],5:[function(require,module,exports){
+},{"../animation/animate.js":1,"../controller/players.js":10,"../definitions/units.js":17,"../map/building.js":37,"../map/terrain.js":42,"../map/unit.js":44,"../objects/position.js":73,"../settings/app.js":75,"../settings/game.js":77,"../tools/matrix.js":85,"../tools/validator.js":90}],8:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Maps.js controls the saving and retrieving of maps
@@ -731,7 +1184,7 @@ app.request = require('../tools/request.js');
 app.game = require('../game/game.js');
 
 Validator = require('../tools/validator.js');
-Map = require('../objects/map.js')
+Map = require('../map/map.js');
 
 module.exports = function () {
 
@@ -894,7 +1347,7 @@ module.exports = function () {
         //getbyid: function (id) { app.request.get(id, 'maps/select', function (response) { app.map.set(response); }); },
 	};
 }();
-},{"../game/game.js":25,"../objects/map.js":65,"../settings/app.js":79,"../settings/game.js":81,"../tools/request.js":90,"../tools/validator.js":93}],6:[function(require,module,exports){
+},{"../game/game.js":25,"../map/map.js":38,"../settings/app.js":75,"../settings/game.js":77,"../tools/request.js":87,"../tools/validator.js":90}],9:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
 
     holds functions for the selection of game modes / logout etc.. <--- can be redone better
@@ -903,10 +1356,10 @@ module.exports = function () {
 
 app = require('../settings/app.js');
 app.maps = require('../controller/maps.js');
-app.user = require('../objects/user.js');
+app.user = require('../user/user.js');
 app.settings = require('../settings/game.js');
 app.key = require('../input/keyboard.js');
-app.testMap = require('../objects/testMap.js');
+app.testMap = require('../map/testMap.js');
 app.editor = require('../game/mapEditor.js');
 app.join = require('../menu/join.js');
 Settings = require('../menu/settings.js');
@@ -992,13 +1445,13 @@ module.exports = function () {
         deactivate: function() {active = false;}
     };
 }();
-},{"../controller/maps.js":5,"../game/mapEditor.js":26,"../input/keyboard.js":28,"../menu/join.js":43,"../menu/modes.js":45,"../menu/settings.js":50,"../menu/teams.js":51,"../objects/testMap.js":76,"../objects/user.js":78,"../settings/app.js":79,"../settings/game.js":81}],7:[function(require,module,exports){
+},{"../controller/maps.js":8,"../game/mapEditor.js":26,"../input/keyboard.js":32,"../map/testMap.js":43,"../menu/join.js":60,"../menu/modes.js":62,"../menu/settings.js":67,"../menu/teams.js":68,"../settings/app.js":75,"../settings/game.js":77,"../user/user.js":94}],10:[function(require,module,exports){
 app = require('../settings/app.js');
 app.map = require('../controller/map.js');
 app.dom = require('../tools/dom.js');
 app.key = require('../input/keyboard.js');
-Player = require('../objects/player.js');
-AiPlayer = require('../objects/aiPlayer.js');
+Player = require('../user/player.js');
+AiPlayer = require('../user/aiPlayer.js');
 Teams = require('../menu/teams.js');
 
 module.exports = function () {
@@ -1142,10 +1595,10 @@ module.exports = function () {
         }
     };
 }();
-},{"../controller/map.js":4,"../input/keyboard.js":28,"../menu/teams.js":51,"../objects/aiPlayer.js":52,"../objects/player.js":69,"../settings/app.js":79,"../tools/dom.js":85}],8:[function(require,module,exports){
+},{"../controller/map.js":7,"../input/keyboard.js":32,"../menu/teams.js":68,"../settings/app.js":75,"../tools/dom.js":81,"../user/aiPlayer.js":91,"../user/player.js":93}],11:[function(require,module,exports){
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
-app.animate = require('../game/animate.js');
+app.animate = require('../animation/animate.js');
 app.map = require('../controller/map.js');
 app.cursor = require('../controller/cursor.js');
 
@@ -1259,7 +1712,85 @@ module.exports = function () {
 	    }
     };
 }();
-},{"../controller/cursor.js":3,"../controller/map.js":4,"../game/animate.js":20,"../settings/app.js":79,"../settings/game.js":81}],9:[function(require,module,exports){
+},{"../animation/animate.js":1,"../controller/cursor.js":6,"../controller/map.js":7,"../settings/app.js":75,"../settings/game.js":77}],12:[function(require,module,exports){
+DamageDisplay = require('../objects/damageDisplay.js');
+
+module.exports = function() {
+
+	var position, action, target, setElement, damage, active, newTarget = true, index = 0, 
+	keys = ['left', 'right', 'up', 'down'], cursors = {attack:'target', drop:'pointer'};
+	var refresh = function () {app.animate(['cursor']);};
+	
+	return {
+		deactivate: function () { 
+			active = false; 
+			app.animate(['cursor']);
+		},
+		set: function (element) { setElement = element; },
+		activate: function (a) { 
+			if(!a) throw new Error ('no action input for target');
+			action = a;
+			active = true; 
+		},
+		active: function () { return active; },
+		position: function () { return position; },
+		cursor: function () { 
+			console.log("cursor..");
+			console.log(action);
+			console.log(cursors[action]);
+			return cursors[action]; },
+		chose: function (element) {
+
+			if(app.key.pressed(app.key.esc()) && app.key.undo(app.key.esc())) {
+				newTarget = true;
+	        	active = false;
+	        	action = false;				
+	        	element.displayActions();
+				return refresh();
+			}
+
+	        var i, k, pressed, length = element.targets().length;
+
+	        // move to  and from targets units
+	        if (length > 1)
+	        	for (i = 0; i < length; i += 1)
+	            	if ((k = keys[i]) && app.key.pressed(k) && app.key.undo(k) && (pressed = true)) 
+	               		index += k === 'left' || k === 'down' ? -1 : 1;
+
+	        if (pressed || newTarget) {
+
+	        	newTarget = false;
+	        	index = index < 0 ? length - 1 : index = index >= length ? 0 : index;
+	            target = element.targets(index);
+		        var pos = target.position();
+
+	            if (action === 'attack') {
+
+		            damage = element.target(index);
+
+		            // calcualte damage percentage for each targets unit
+		            new DamageDisplay(Math.round(damage));
+
+	        	}
+
+	            // create target for rendering at specified coordinates
+	            position = {x:pos.x, y:pos.y};
+	            refresh();
+	        }
+
+	        // if the target has been selected return it
+	        if (app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter())){
+	        	element[action](target, damage, true);
+	        	newTarget = true;
+	        	active = false;
+	        	action = false;
+	        	return target;
+	        }
+	        return false;
+	    }
+	};
+}();
+},{"../objects/damageDisplay.js":72}],13:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     a list of each building and the inits they are capable of producing
@@ -1296,14 +1827,14 @@ module.exports = {
         bShip:app.units.bShip
     }
 };
-},{"../definitions/units.js":13,"../settings/app.js":79}],10:[function(require,module,exports){
+},{"../definitions/units.js":17,"../settings/app.js":75}],14:[function(require,module,exports){
 /* ---------------------------------------------------------------------- *\
     
     Obsticles.js holds the each possible object for the map 
 
 \* ---------------------------------------------------------------------- */
 
-var obsticle = require('../objects/obsticle.js');
+var obsticle = require('../map/obsticle.js');
 
 module.exports = {
     mountain: new obsticle('mountain', 2),
@@ -1313,14 +1844,14 @@ module.exports = {
     snow: new obsticle('snow', 1),
     unit: new obsticle('unit', 0)
 };
-},{"../objects/obsticle.js":68}],11:[function(require,module,exports){
+},{"../map/obsticle.js":40}],15:[function(require,module,exports){
 /* ---------------------------------------------------------------------- *\
     
     Properties.js holds the properties of each map object
 
 \* ---------------------------------------------------------------------- */
 
-app.property = require('../objects/property.js');
+app.property = require('../map/property.js');
 app.obsticles = require('../definitions/obsticles.js');
 Validator = require('../tools/validator.js');
 
@@ -1337,7 +1868,7 @@ module.exports = function () {
     this.unit = new app.property('Unit', app.obsticles.unit);
     this.snow = new app.property('Snow', app.obsticles.snow);
 };
-},{"../definitions/obsticles.js":10,"../objects/property.js":71,"../tools/validator.js":93}],12:[function(require,module,exports){
+},{"../definitions/obsticles.js":14,"../map/property.js":41,"../tools/validator.js":90}],16:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Score.js calculates the game score
@@ -1424,7 +1955,7 @@ Score.prototype.calculate = function () {
 };
 
 module.exports = Score;
-},{"../objects/scoreElement.js":72}],13:[function(require,module,exports){
+},{"../objects/scoreElement.js":74}],17:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     app.units is a repo for the units that may be created on the map and their stats
@@ -2142,13 +2673,13 @@ module.exports = {
         cost: 28000
     }
 };
-},{"../settings/app.js":79,"../settings/game.js":81}],14:[function(require,module,exports){
+},{"../settings/app.js":75,"../settings/game.js":77}],18:[function(require,module,exports){
 module.exports = function (x, y, size) {
     this.x = x;
     this.y = y;
     this.size = size;
 };
-},{}],15:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Fader.js creates an object that controls color fading
@@ -2223,120 +2754,43 @@ Fader.prototype.fade = function (callback) {
 	}, scope.speed());
 };
 module.exports = Fader;
-},{}],16:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
-    
-    Path.js controls pathfinding
+
+    Effect.js holds the coordinates for effects
 
 \* --------------------------------------------------------------------------------------*/
 
-Position = require('../objects/position.js');
-Heap = require('../tools/binaryHeap.js');
+app = require('../settings/app.js');
+Path = require('../tools/path.js');
+app.confirm = require('../controller/confirmation.js');
+app.path = new Path();
+app.range = new Path();
+app.attackRange = new Path();
 
-var Path = function () {this._coordinates = [];};
+module.exports = function () {
 
-Path.prototype.size = function () { return this._coordinates.length; };
-Path.prototype.clear = function () { this._coordinates = []; return this; };
-Path.prototype.set = function (p) { return (this._coordinates = this._coordinates.concat(p)); };
-Path.prototype.get = function () { return this._coordinates; };
-Path.prototype.getNeighbors = function (position, check) {
+    var highlight = app.range;
+    var path = app.path;
+    var attackRange = app.attackRange;
 
-    var x = position.x, y = position.y,
-    neighbors = [],
-    positions = [
-        new Position(x - 1, y),
-        new Position(x + 1, y),
-        new Position(x, y - 1),
-        new Position(x, y + 1)
-    ];
-
-    for (var n, i = 0; i < 4; i += 1){
-
-        neighbor = app.map.top(positions[i]);
-
-        if(neighbor && !neighbor.closed)
-            neighbors.push(neighbor);
-    }
-
-    return neighbors;
-};
-
-Path.prototype.distance = function (position, target, origin) {
-    var dx1 = position.x - target.x;
-    var dy1 = position.y - target.y;
-    var dx2 = origin.x - target.x;
-    var dy2 = origin.y - target.y;
-    var cross = Math.abs((dx1 * dy2) - (dx2 * dy1));
-    var rand = Math.floor(Math.random()+1)/(1000);
-    return ((Math.abs(dx1) + Math.abs(dy1)) + (cross * rand));
-};
-
-Path.prototype.reachable = function (unit, clean, movement) {
-
-    var reachable = [unit], open = new Heap('f'), allowed = movement || unit.movement(), 
-    neighbor, neighbors, current, cost;
-    open.push(unit);
-    app.map.close(unit);
-
-    while (open.size()) {
-
-        current = open.pop();
-
-        this.getNeighbors(current.position(), unit).forEach(function (neighbor) {
-
-            cost = (current.f || 0) + unit.moveCost(neighbor);
-
-            if (cost <= allowed) {
-                neighbor.f = cost;
-                app.map.close(neighbor);
-                reachable.push(neighbor);
-                open.push(neighbor);
-            } 
-        });
-    }
-    return clean ? app.map.clean(reachable) : reachable;
-};
-
-Path.prototype.find = function (unit, target) {
-
-    var allowed = unit.movement(), clean = [unit], cost, neighbor, i, neighbors, position, current,
-    open = new Heap('f'), scope = this; 
-    app.map.close(unit);
-    open.push(unit);
- 
-    while (open.size()) {
-
-        current = open.pop();
-        position = current.position();
-
-        // if the targetination has been reached, return the array of values
-        if (target.x === position.x && target.y === position.y) {
-            var path = [current];
-            while (current.p) path.unshift((current = current.p));
-            app.map.clean(clean);
-            return this.set(path);
-        }
-
-        this.getNeighbors(position).forEach(function (neighbor) {
-            cost = (current.g || 0) + unit.moveCost(neighbor); 
-            if (cost <= allowed && (!neighbor.g || neighbor.g >= current.g)) {
-                neighbor.g = cost;
-                neighbor.f = cost + scope.distance(neighbor.position(), target, unit.position());
-                neighbor.p = current; //<--- keep reference to parent
-                app.map.close(neighbor);
-                clean.push(neighbor);
-                open.push(neighbor);
-            }
-        });
-    }
-    app.map.clean(clean);
-    return false;
-};
-
-Path.prototype.show = function (effect) { app.animate('effects'); };
-
-module.exports = Path;
-},{"../objects/position.js":70,"../tools/binaryHeap.js":82}],17:[function(require,module,exports){
+    return {
+        refresh: function () {app.animate('effects');},
+        clear: function () {
+            path.clear();
+            highlight.clear();
+            attackRange.clear();
+            return this;
+        },
+        movementRange: function () { return highlight.get(); },
+        path: function () { return path.get(); },
+        attackRange: function () {return attackRange.get(); },
+        setMovementRange: function (range) {highlight.set(range);},
+        setPath: function (path) {path.set(path);},
+        setAttackRange: function (range) {attackRange.set(range);}
+    };
+}();
+},{"../controller/confirmation.js":5,"../settings/app.js":75,"../tools/path.js":86}],21:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
    
    ScrollText.js handles scrolling of text accross the screen, requires the id of the containing element, which must be 
@@ -2388,7 +2842,7 @@ module.exports = function () {
     };
     return scrollText;
 }();
-},{}],18:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 app.settings = require('../settings/game.js');
 Origin = require('../effects/elements/origin.js');
 Sweller = function (element, min, max, speed) {
@@ -2492,7 +2946,7 @@ Sweller.prototype.setSpeed = function (speed) {this.s = speed;};
 Sweller.prototype.speed = function () {return this.s; };
 Sweller.prototype.element = function () {return this.e;};
 module.exports = Sweller;
-},{"../effects/elements/origin.js":14,"../settings/game.js":81}],19:[function(require,module,exports){
+},{"../effects/elements/origin.js":18,"../settings/game.js":77}],23:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Typing.js controls typing effect in game menus
@@ -2532,28 +2986,7 @@ module.exports = Sweller;
     },
     setSpeed: function (speed) { this.speed = speed * 10; }
 };
-},{}],20:[function(require,module,exports){
-/* ----------------------------------------------------------------------------------------------------------*\
-
-    The animate functions insert the draw methods into the specified canvas for rendering and then make a 
-    call to the canvas to render those drawings with the render method. Calling the render method of an
-    initialized canvas object will render the animations once. If a loop is wanted ( for changing animations 
-    for example ), you may pass the parent function into the render function to be called recursively.
-
-\*-----------------------------------------------------------------------------------------------------------*/
-
-app = require('../settings/app.js');
-
-module.exports = function (objectName, hide) {
-    window.requestAnimationFrame(function(){
-        if(typeof objectName === 'string')
-            app[objectName + 'Canvas'].setAnimations(app['draw' + objectName.uc_first()]).render(hide);
-        else for(var i = 0; i < objectName.length; i += 1) 
-            app[objectName[i] + 'Canvas'].setAnimations(app['draw' + objectName[i].uc_first()]).render(hide);
-    });
-};
-},{"../settings/app.js":79}],21:[function(require,module,exports){
-
+},{}],24:[function(require,module,exports){
 // ------------------------------------------ settings -----------------------------------------------------------------
 
 app = require('../settings/app.js'); // app holds all elements of the application 
@@ -2561,10 +2994,10 @@ app.settings = require('../settings/game.js'); // app.settings holds application
 
 // ------------------------------------------- tools --------------------------------------------------------------------
 
-app.chat = require('../tools/chat.js'); // handle chat interactions
 app.init = require('../tools/init.js'); // app.init creates a new canvas instance
 app.request = require('../tools/request.js'); //handles AJAJ calls where needed
 app.dom = require('../tools/dom.js'); // app.dom is a list of functions used to assist manipulating the dom
+app.calculate = require('../tools/calculate.js'); //app.calculate handles calculations like pathfinding etc
 app.increment = require('../tools/increment.js');
 
 // ------------------------------------------- input --------------------------------------------------------------------
@@ -2588,374 +3021,65 @@ app.properties = require('../definitions/properties.js'); // holds properties
 
 // ------------------------------------------- game ---------------------------------------------------------------------
 
-app.animate = require('../game/animate.js'); // app.animate triggers game animations
-app.draw = require('../game/draw.js'); // app.draw controls drawing of animations
 app.game = require('../game/game.js'); //controls the setting up and selection of games / game modes 
-app.effect = require('../game/effects.js'); // app.effect is holds the coordinates for effects
-app.calculate = require('../game/calculate.js'); //app.calculate handles calculations like pathfinding etc
 
-// ------------------------------------------ objects -------------------------------------------------------------------
+// ------------------------------------------ map -------------------------------------------------------------------
 
-app.animations = require('../objects/animations.js'); // app.animations is a collection of animations used in the game
-app.screens = require('../objects/screens.js'); // menu screen setups
-app.co = require('../objects/co.js'); // app.co holds all the co's, their skills and implimentation
-app.target = require('../objects/target.js');
-app.property = require('../objects/property.js');
-app.obsticle = require('../objects/obsticle.js');
-app.hud = require('../objects/hud.js');
-app.user = require('../objects/user.js');
+app.property = require('../map/property.js');
+app.obsticle = require('../map/obsticle.js');
+
+// ------------------------------------------ animation -------------------------------------------------------------------
+
+app.animations = require('../animation/animations.js'); // app.animations is a collection of animations used in the game
+app.draw = require('../animation/draw.js'); // app.draw controls drawing of animations
+app.animate = require('../animation/animate.js'); // app.animate triggers game animations
+
+// ------------------------------------------ effects -------------------------------------------------------------------
+
+app.highlight = require('../effects/highlight.js');
+
+// ------------------------------------------ hud -------------------------------------------------------------------
+
+app.hud = require('../huds/hud.js');
+
+// ------------------------------------------ user -------------------------------------------------------------------
+
+app.co = require('../user/co.js'); // app.co holds all the co's, their skills and implimentation
+app.user = require('../user/user.js');
 
 // ---------------------------------------- controllers -----------------------------------------------------------------
 
+app.target = require('../controller/target.js');
 app.players = require('../controller/players.js');
 app.map = require('../controller/map.js');
 app.maps = require('../controller/maps.js');
 app.cursor = require('../controller/cursor.js');
 app.screen = require('../controller/screen.js');
+app.chat = require('../controller/chat.js');
 
 module.exports = app;
-},{"../controller/cursor.js":3,"../controller/map.js":4,"../controller/maps.js":5,"../controller/players.js":7,"../controller/screen.js":8,"../definitions/buildings.js":9,"../definitions/obsticles.js":10,"../definitions/properties.js":11,"../definitions/units.js":13,"../game/animate.js":20,"../game/calculate.js":22,"../game/draw.js":23,"../game/effects.js":24,"../game/game.js":25,"../input/keyboard.js":28,"../input/touch.js":29,"../menu/login.js":44,"../menu/modes.js":45,"../menu/options/optionsMenu.js":47,"../menu/scroll.js":49,"../objects/animations.js":53,"../objects/co.js":59,"../objects/hud.js":63,"../objects/obsticle.js":68,"../objects/property.js":71,"../objects/screens.js":73,"../objects/target.js":74,"../objects/user.js":78,"../settings/app.js":79,"../settings/game.js":81,"../tools/chat.js":83,"../tools/dom.js":85,"../tools/increment.js":87,"../tools/init.js":88,"../tools/request.js":90}],22:[function(require,module,exports){
-/* ----------------------------------------------------------------------------------------------------------*\
-    
-    Calculate.js handles necessary game calculations 
-
-\* ----------------------------------------------------------------------------------------------------------*/
-
-app = require('../settings/app.js');
-app.settings = require('../settings/game.js');
-app.map = require('../controller/map.js');
-app.screen = require('../controller/screen.js');
-
-module.exports = function () {
-
-    var abs = Math.abs;
-    var floor = Math.floor;
-    var random = Math.random;
-    var round = Math.round;
-
-    var rand = function(){return floor((random() * 9) + 1)};
-
-    return {
-
-        arrayDifferance: function (array1, array2) {
-            var array = [];
-            for (var push, h = 0; h < array1.length; h += 1){
-                push = true;
-                for(var l = 0; l < array2.length; l += 1)
-                    if(array1[h] === array2[l])
-                        push = false;
-                if(push) array.push(array1[h]);
-            }
-            return array;
-        },
-
-        distance: function (a, b) { return abs(a.x - b.x) + abs(a.y - b.y); },
-
-        numberOfBuildings: function(map) {
-
-            // get selected maps building list
-            var type, all = map.buildings, buildings = {};
-
-            if (!all) return false;
-
-            // add one for each building type found  to the building display list
-            for (var n = 0; n < all.length; n += 1) {
-                type = all[n].type;
-                if (type !== 'hq') {
-                    if (isNaN(buildings[type])) buildings[type] = 1;
-                    else buildings[type] += 1; 
-                }
-            }
-            return buildings;
-        },
-
-        longestLength: function (arrays) {
-            var i, longest = arrays[0], length = arrays.length;
-            if(length > 1)
-                for (i = 1; i < length; i += 1)
-                    if(arrays[i].length > longest.length)
-                        longest = arrays[i];
-            return longest.length;
-        },
-
-        damage:  function (attacked, attacker) {
-
-            var r = rand();
-            var baseDamage = attacker.baseDamage()[attacked.name().toLowerCase()];
-            var coAttack = attacker.player().co.attack(attacker);
-            var coDefense = attacked.player().co.defense(attacked);
-            var terrainDefense = attacked.occupies().defense() || 1;
-
-            // return the health of the attacker, multiplied by
-            return round((attacker.showHealth()/10)
-
-                // absolute value of the amount of damage, multiplied by the co attack and a random number
-                * abs(baseDamage * coAttack/100 + r)
-
-                // absolute valye of the defense of co, plus the terrain defense bonus, 
-                // plus the health of the unit, subtracted from 200, all divided by one hundred
-                * abs((200-(coDefense + terrainDefense * attacked.showHealth()))/100));
-        },
-        
-        random: function(range) { return Math.floor(Math.random() * range); }
-    };
-}();
-},{"../controller/map.js":4,"../controller/screen.js":8,"../settings/app.js":79,"../settings/game.js":81}],23:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------------------------*\
-
-    app.draw provides a set of methods for interacting with, scaling, caching, coordinating  
-    and displaying the drawings/animations provided in the app.animations
-
-\*---------------------------------------------------------------------------------------------------------*/
-
-app = require('../settings/app.js');
-app.animations = require('../objects/animations.js');
-app.settings = require('../settings/game.js');
-app.screen = require('../controller/screen.js');
-app.map = require('../controller/map.js');
-app.background = require('../controller/background.js');
-app.effect = require('../game/effects.js');
-
-module.exports = function (canvas, dimensions, base) {
-    
-    var w, h, width, height;
-    var temp = {}; // holds temporary persistant variables that can be passed between functions ( similar to static variables / functions )
-
-    // base is the amount of pixles in each grid square, used to scale canvas elements if needed
-    base = base === null || base === undefined ? 64 : base;
-
-    // set/get width and height dimensions for the game map
-    if (dimensions === null || dimensions === undefined) {
-        w = 64;
-        h = 64;
-    } else {
-        width = dimensions.width;
-        height = dimensions.height;
-        w = width / 15;
-        h = height / 10;
-    }
-
-    var animationObjects = app.animations(width, height);
-
-    // creates a small canvas
-    var smallCanvas = function () {
-        var smallCanvas = document.createElement('canvas');
-        smallCanvas.width = w * 2;
-        smallCanvas.height = h * 2;
-        return smallCanvas;
-    };
-
-    // caches drawings so they can be recalled without redrawing ( performance boost in certain situations )
-    var cacheDrawing = function (name) {
-
-        // create a canvas
-        var canvas = smallCanvas();
-
-        // get context  
-        var cacheCanvas = canvas.getContext(app.ctx);
-
-        // set the position of the image to the center of the cached canvas                         
-        var position = setPosition((w / 2), (h / 2));
-
-        // draw image to cache to canvas
-        animationObjects[name](cacheCanvas, position);
-
-        // cache the canvas with drawing on it ( drawings cached by their class name )
-        app.cache[name] = canvas;
-    };
-
-    // calculates the base for scaling
-    var calcBase = function (d) {
-        return d / base;
-    };
-
-    // scales items by calculating their base size multplied by 
-    var scale = function (type, value) {
-        var multiple = type === 'w' ? calcBase(w) : calcBase(h);
-        return value === null || value === undefined ? multiple : multiple * value;
-    };
-
-    // creates a friendlier interface for drawing and automatically scales drawings etc for screen size
-    var setPosition = function (x, yAxis) {
-
-        var y = yAxis + h;
-
-        return {
-            
-            // u = right, will move right the amonut of pixles specified
-            r: function (number) {
-                return x + scale('w', number);
-            },
-            // u = left, will move left the amonut of pixles specified
-            l: function (number) {
-                return x - scale('w', number);
-            },
-            // u = down, will move down the amonut of pixles specified
-            d: function (number) {
-                return y + scale('h', number);
-            },
-            // u = up, will move up the amonut of pixles specified
-            u: function (number) {
-                return y - scale('h', number);
-            },
-            // x is the x axis
-            x: x,
-            // y is the y axis
-            y: y,
-            // width
-            w: w,
-            // height
-            h: h,
-            // random number generator, used for grass background texture
-            random: function (min, max) {
-                return (Math.random() * (max - min)) + min;
-            }
-        };
-    };
-
-    // offset of small canvas drawing ( since the drawing is larger then single grid square it needs to be centered )
-    var smallX = w / 2;
-    var smallY = h / 2;
-
-    return {
-
-        // cache all images for performant display ( one drawing to rule them all )
-        cache: function () {
-            this.cached = true;
-            return this;
-        },
-        hide: function () { animationObjects.hide(); },
-        // place drawings where they belong on board based on coorinates
-        coordinate: function (objectClass, object, coordinet) {
-
-            var s = {}; // holder for scroll coordinates
-            var name; // holder for the name of an object to be drawn
-            var position = app.screen.position(); // scroll positoion ( map relative to display area )
-            var wid = (w * 16); // display range
-            var len = (h * 11);
-
-            // get the coordinates for objects to be drawn
-            var coordinate, coordinates = !coordinet ? app[objectClass][object]() : coordinet;
-
-            // for each coordinates
-            for (var i = 0; i < coordinates.length; i += 1) {
-
-                coordinate = coordinates[i].position ? coordinates[i].position() : coordinates[i];
-
-                // var s modifys the coordinates of the drawn objects to allow scrolling behavior
-                // subtract the amount that the cursor has moved beyond the screen width from the 
-                // coordinates x and y axis, making them appear to move in the opposite directon
-                s.x = (coordinate.x * w) - (position.x * w);
-                s.y = (coordinate.y * h) - (position.y * h);
-
-                // only display coordinates that are withing the visable screen
-                if (s.x >= 0 && s.y >= 0 && s.x <= wid && s.y <= len) {
-
-                    // get the name of the object to be drawn on the screen
-                    name = objectClass === 'map' && coordinet === undefined ? coordinates[i].draw() : object;
-
-                    // if it is specified to be cached
-                    if (this.cached) {
-
-                        // check if it has already been cached and cache the drawing if it has not yet been cached
-                        if (app.cache[name] === undefined) cacheDrawing(name);
-
-                        // draw the cached image to the canvas at the coordinates minus 
-                        // its offset to make sure its centered in the correct position
-                        canvas.drawImage(app.cache[name], s.x - smallX, s.y - smallY);
-
-                    } else {
-
-                        // if it is not cached then draw the image normally at its specified coordinates
-                        animationObjects[name](canvas, setPosition(s.x, s.y));
-                    }
-                }
-            }
-        },
-
-        // fills background
-        background: function () {
-            var dimensions = app.map.dimensions();
-            var type = app.background.type();
-            for (var x = 0; x < dimensions.x; x += 1)
-                for (var y = 0; y < dimensions.y; y += 1)
-                    animationObjects[type](canvas, setPosition(x * w, y * h))
-        },
-
-        hudCanvas: function (object, objectClass) {
-
-            // draw a background behind terrain and building elements
-            if (objectClass !== 'unit') animationObjects.plain(canvas, setPosition(smallX, smallY));
-
-            if (app.cache[object]) // use cached drawing if available
-                canvas.drawImage(app.cache[object], 0, 0);
-            else if(animationObjects[object])
-                animationObjects[object](canvas, setPosition(smallX, smallY));
-        }
-    };
-};
-},{"../controller/background.js":1,"../controller/map.js":4,"../controller/screen.js":8,"../game/effects.js":24,"../objects/animations.js":53,"../settings/app.js":79,"../settings/game.js":81}],24:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------*\
-
-    Effect.js holds the coordinates for effects
-
-\* --------------------------------------------------------------------------------------*/
-
-app = require('../settings/app.js');
-Path = require('../effects/path.js');
-app.confirm = require('../controller/confirmation.js');
-app.path = new Path();
-app.range = new Path();
-app.attackRange = new Path();
-
-module.exports = function () {
-
-    var highlight = app.range;
-    var path = app.path;
-    var attackRange = app.attackRange;
-
-    return {
-
-        refresh: function () {app.animate('effects');},
-
-        undo: {
-            path: function () {path.clear();},
-            highlight: function () {highlight.clear();},
-            attackRange:function(){attackRange.clear();}
-        },
-
-        highlight: function () { return highlight.get(); },
-        path: function () { return path.get(); },
-        attackRange: function () {return attackRange.get(); },
-
-        setHighlight: function (range) {highlight.set(range);},
-        setPath: function (path) {path.set(path);},
-        setAttackRange: function (range) {attackRange.set(range);}
-    };
-}();
-},{"../controller/confirmation.js":2,"../effects/path.js":16,"../settings/app.js":79}],25:[function(require,module,exports){
+},{"../animation/animate.js":1,"../animation/animations.js":2,"../animation/draw.js":3,"../controller/chat.js":4,"../controller/cursor.js":6,"../controller/map.js":7,"../controller/maps.js":8,"../controller/players.js":10,"../controller/screen.js":11,"../controller/target.js":12,"../definitions/buildings.js":13,"../definitions/obsticles.js":14,"../definitions/properties.js":15,"../definitions/units.js":17,"../effects/highlight.js":20,"../game/game.js":25,"../huds/hud.js":29,"../input/keyboard.js":32,"../input/touch.js":33,"../map/obsticle.js":40,"../map/property.js":41,"../menu/login.js":61,"../menu/modes.js":62,"../menu/options/optionsMenu.js":64,"../menu/scroll.js":66,"../settings/app.js":75,"../settings/game.js":77,"../tools/calculate.js":79,"../tools/dom.js":81,"../tools/increment.js":83,"../tools/init.js":84,"../tools/request.js":87,"../user/co.js":92,"../user/user.js":94}],25:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
    
     Game.js controls the setting up and selection of games / game modes 
    
 \* ------------------------------------------------------------------------------------------------------*/
 
-StatusHud = require('../objects/coStatusHud.js');
+StatusHud = require('../huds/coStatusHud.js');
 Score = require('../definitions/score.js');
 Counter = require('../tools/counter.js');
 Exit = require('../menu/options/exit.js');
-Hud = require('../objects/hud.js');
+Hud = require('../huds/hud.js');
 
 app = require('../settings/app.js');
 app.menu = require('../controller/menu.js');
-app.animate = require('../game/animate.js');
-app.effect = require('../game/effects.js');
+app.animate = require('../animation/animate.js');
 app.key = require('../input/keyboard.js');
-app.target = require('../objects/target.js');
-app.user = require('../objects/user.js');
+app.target = require('../controller/target.js');
+app.user = require('../user/user.js');
 app.players = require('../controller/players.js');
 app.cursor = require('../controller/cursor.js');
-app.background = require('../controller/background.js');
+app.background = require('../map/background.js');
 app.options = require('../menu/options/optionsMenu.js');
 app.confirm = require('../controller/confirmation.js');
 app.exit = new Exit();
@@ -3162,13 +3286,14 @@ module.exports = function () {
             else window.requestAnimationFrame(app.game.loop);
         },
         end: function (saved) { 
+            // create game screen
             if (!saved) alert('player ' + app.players.first().number() + ' wins!  with a score of ' + app.players.first().score.calculate() + '!');
             else alert('ending game');
             end = true; 
         }
     };
 }();
-},{"../controller/background.js":1,"../controller/confirmation.js":2,"../controller/cursor.js":3,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/score.js":12,"../game/animate.js":20,"../game/effects.js":24,"../input/keyboard.js":28,"../menu/options/exit.js":46,"../menu/options/optionsMenu.js":47,"../objects/coStatusHud.js":60,"../objects/hud.js":63,"../objects/target.js":74,"../objects/user.js":78,"../settings/app.js":79,"../tools/counter.js":84}],26:[function(require,module,exports){
+},{"../animation/animate.js":1,"../controller/confirmation.js":5,"../controller/cursor.js":6,"../controller/menu.js":9,"../controller/players.js":10,"../controller/target.js":12,"../definitions/score.js":16,"../huds/coStatusHud.js":27,"../huds/hud.js":29,"../input/keyboard.js":32,"../map/background.js":35,"../menu/options/exit.js":63,"../menu/options/optionsMenu.js":64,"../settings/app.js":75,"../tools/counter.js":80,"../user/user.js":94}],26:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     MapEditor.js controls map creation
@@ -3179,18 +3304,18 @@ app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.players = require('../controller/players.js');
 app.units = require('../definitions/units.js');
-app.animate = require('../game/animate.js');
+app.animate = require('../animation/animate.js');
 app.options = require('../menu/options/optionsMenu.js');
 
 Validator = require('../tools/validator.js');
 Matrix = require('../tools/matrix.js');
-Terrain = require('../objects/terrain.js');
-Building = require('../objects/building.js');
-Unit = require('../objects/unit.js');
+Terrain = require('../map/terrain.js');
+Building = require('../map/building.js');
+Unit = require('../map/unit.js');
 Position = require('../objects/position.js');
 Counter = require('../tools/counter.js');
-Build = require('../objects/build.js');
-Feature = require('../objects/featureHud.js');
+Build = require('../map/build.js');
+Feature = require('../huds/featureHud.js');
 
 module.exports = function () {
 
@@ -3268,11 +3393,213 @@ module.exports = function () {
         }
 	};
 }();
-},{"../controller/players.js":7,"../definitions/units.js":13,"../game/animate.js":20,"../menu/options/optionsMenu.js":47,"../objects/build.js":56,"../objects/building.js":57,"../objects/featureHud.js":61,"../objects/position.js":70,"../objects/terrain.js":75,"../objects/unit.js":77,"../settings/app.js":79,"../settings/game.js":81,"../tools/counter.js":84,"../tools/matrix.js":89,"../tools/validator.js":93}],27:[function(require,module,exports){
+},{"../animation/animate.js":1,"../controller/players.js":10,"../definitions/units.js":17,"../huds/featureHud.js":28,"../map/build.js":36,"../map/building.js":37,"../map/terrain.js":42,"../map/unit.js":44,"../menu/options/optionsMenu.js":64,"../objects/position.js":73,"../settings/app.js":75,"../settings/game.js":77,"../tools/counter.js":80,"../tools/matrix.js":85,"../tools/validator.js":90}],27:[function(require,module,exports){
+app.dom = require('../tools/dom.js');
+
+StatusHud = function () {
+	this._context = undefined;
+    this._previous = undefined;
+    this._gold = undefined;
+};
+
+StatusHud.prototype.visibility = function (visibility) {return document.getElementById('coStatusHud').style.display = visibility;}
+StatusHud.prototype.show = function () {
+    this.visibility('');
+    this._previous = undefined;
+};
+StatusHud.prototype.hide = function () {this.visibility('none');};
+StatusHud.prototype.power = function () { return this._context; };
+StatusHud.prototype.display = function (player, location) {
+    
+    if (location !== this._previous || this._gold !== player.gold()) {
+
+        this._previous = location;
+
+        var coHud = document.getElementById('coStatusHud');
+
+        // create container section, for the whole hud
+        var hud = document.createElement('section');
+        hud.setAttribute('id', 'coStatusHud');
+
+        if (location === 'left') 
+            hud.style.left = '864px';
+
+        // create a ul, to be the gold display
+        var gold = document.createElement('ul');
+        gold.setAttribute('id', 'gold');
+
+        // create a canvas to animate the special level 
+        var power = document.createElement('canvas');
+        var context = power.getContext(app.ctx);
+        power.setAttribute('id', 'coPowerBar');
+        power.setAttribute('width', 310);
+        power.setAttribute('height', 128);
+
+        // create the g for  gold
+        var g = document.createElement('li');
+        g.setAttribute('id', 'g');
+        g.innerHTML = 'G.';
+        gold.appendChild(g);
+
+
+        // add the amount of gold the player currently has
+        var playerGold = document.createElement('li');
+        playerGold.setAttribute('id', 'currentGold');
+        playerGold.innerHTML = this._gold = app.user.turn() ? player.gold() : '?';
+        gold.appendChild(playerGold);
+
+        // put it all together and insert it into the dom
+        hud.appendChild(gold);
+        hud.appendChild(power);
+
+        if (coHud) {
+            coHud.parentNode.replaceChild(hud, coHud);
+        } else {
+            document.body.insertBefore(hud, app.dom.insertLocation);
+        }
+        // return the context for animation of the power bar
+        return this.context = context;
+    }
+    return false;
+};
+
+module.exports = StatusHud;
+},{"../tools/dom.js":81}],28:[function(require,module,exports){
+Feature = function (selected) {
+    this.element = document.createElement('div');
+    this.element.setAttribute('id', 'hud');
+    this.element.style.backgroundColor = 'yellow';
+    if (selected) this.set(selected);
+};
+
+Feature.prototype.clear = function () { while (this.element.firstChild) this.element.removeChild(this.element.firstChild); };
+Feature.prototype.hidden = function () { return this.element.style.display === 'none';};
+Feature.prototype.show = function () {
+    this.element.style.display = null;
+    this.setElement(app.cursor.selected());
+};
+
+Feature.prototype.hide = function () { this.element.style.display = 'none';};
+Feature.prototype.size = function (canvas) {
+    var screenWidth = app.screen.width();
+    var width = app.settings.hudWidth + 20;
+    var left = app.settings.hudLeft + 150 - width;
+    if (app.cursor.side('x') === 'right')
+        left = screenWidth - (screenWidth - width) + 100;
+    this.element.style.height = (app.settings.hudHeight + 20).toString() + 'px';
+    this.element.style.left = left.toString() + 'px';
+    this.element.style.width = width.toString() + 'px';
+    canvas.setAttribute('class', 'hudCanvas');
+    canvas.style.left = ((120 * (this.number - 1)) - 4).toString() + 'px';
+};
+
+Feature.prototype.addElement = function (element, type, attributes) {
+    var c = app.dom.createCanvas('hud', element, {width:128, height:128});
+    var canvas = app.dom.createElement('li', false, 'canvas');
+    canvas.appendChild(c.canvas);
+
+    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo);
+    list.appendChild(canvas);
+    this.size(canvas);
+    app.draw(c.context).hudCanvas(element.draw(), element.class());
+    this.element.appendChild(list);
+    return list;
+};
+
+Feature.prototype.set = function (element) {
+
+    this.clear();
+
+    var exists, e, show = ['name', 'canvas'];
+
+    // display unit and any unit being transported by that unit
+    if ((e = element.type()) === 'unit') 
+        this.addElement(e, 'unit', show);
+    else if (e === 'building') this.addElement(element, 'building', show);
+    else this.addElement (element, 'terrain', show);
+
+    if ((exists = document.getElementById('hud'))) 
+        exists.parentNode.replaceChild(this.element, exists);
+    else document.body.insertBefore(this.element, document.getElementById("before"));
+};
+
+module.exports = Feature;
+},{}],29:[function(require,module,exports){
+Hud = function (elements) {
+    this.element = document.createElement('div');
+    this.element.setAttribute('id', 'hud');
+    if (elements) this.setElements(elements);
+};
+
+Hud.prototype.clear = function () { while (this.element.firstChild) this.element.removeChild(this.element.firstChild); };
+Hud.prototype.hidden = function () { return this.element.style.display === 'none';};
+Hud.prototype.show = function () {
+    this.element.style.display = null;
+    this.setElements(app.cursor.hovered());
+};
+Hud.prototype.hide = function () { this.element.style.display = 'none'; };
+Hud.prototype.resize = function (canvas) {
+    var screenWidth = app.screen.width();
+    var width = app.settings.hudWidth * this.number;
+    var left = app.settings.hudLeft + 120 - width;
+    if (app.cursor.side('x') === 'right' && app.cursor.side('y') === 'bottom')
+        left = screenWidth - (screenWidth - app.settings.hudWidth) + 150;
+    this.element.style.height = app.settings.hudHeight.toString() + 'px';
+    this.element.style.left = left.toString() + 'px';
+    this.element.style.width = width.toString() + 'px';
+    canvas.setAttribute('class', 'hudCanvas');
+    canvas.style.left = ((120 * (this.number - 1)) - 4).toString() + 'px';
+};
+
+Hud.prototype.addElement = function (element, type, attributes) {
+
+    var c = app.dom.createCanvas('hud', element, {width:128, height:128});
+    var canvas = app.dom.createElement('li', false, 'canvas');
+    canvas.appendChild(c.canvas);
+
+    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo);
+    list.appendChild(canvas);
+    this.resize(canvas);
+    app.draw(c.context).hudCanvas(element.draw(), element.class());
+    this.element.appendChild(list);
+
+    if(type === 'unit') 
+        this.number += 1;
+    return list;
+};
+
+
+Hud.prototype.setElements = function (elements) {
+
+    this.clear();
+    this.number = 1;
+
+    var i, e, element, exists, loaded, unit, building, passanger;
+
+    // display unit and any unit being transported by that unit
+    if ((unit = elements.unit)) {
+        if ((loaded = unit.loaded())){
+            for (i = 0; i < loaded.length; i += 1)
+                this.addElement(loaded[i], 'unit', ['canvas'])
+                    .setAttribute('loaded', true);
+        }
+        this.addElement(unit, 'unit', ['ammo', 'showHealth', 'name', 'fuel', 'canvas']);
+    }
+
+    if (elements.building) this.addElement(elements.building, 'building');
+    else this.addElement (elements.terrain, 'terrain');
+
+    if ((exists = document.getElementById('hud'))) 
+        exists.parentNode.replaceChild(this.element, exists);
+    else document.body.insertBefore(this.element, document.getElementById("before"));
+};
+
+module.exports = Hud;
+},{}],30:[function(require,module,exports){
 app = require('../settings/app.js');
 app.key = require('../input/keyboard.js');
 app.scroll = require('../menu/scroll.js');
-app.user = require('../objects/user.js');
+app.user = require('../user/user.js');
 app.menu = require('../controller/menu.js');
 
 module.exports = function (element) {
@@ -3447,7 +3774,125 @@ module.exports = function (element) {
 		}
 	};
 };
-},{"../controller/menu.js":6,"../input/keyboard.js":28,"../menu/scroll.js":49,"../objects/user.js":78,"../settings/app.js":79}],28:[function(require,module,exports){
+},{"../controller/menu.js":9,"../input/keyboard.js":32,"../menu/scroll.js":66,"../settings/app.js":75,"../user/user.js":94}],31:[function(require,module,exports){
+/* ------------------------------------------------------------------------------- *\
+
+    Input handles user input (Generally displayed via the footer element)
+
+\* ------------------------------------------------------------------------------- */
+
+app.type = require('../effects/typing.js');
+module.exports = {
+    
+    // takes the name of the form, the element it is being inserted into and 
+    // a placeholder/words to be displayed in the form box before entry
+	form: function (name, element, placeHolder) {
+        
+        var input = document.createElement('p');
+        input.setAttribute('class', 'inputForm');
+        input.setAttribute('id', name + 'Form');
+
+        var text = document.createElement('input');
+        text.setAttribute('id', name + 'Input');
+        text.setAttribute('class','textInput');
+        text.setAttribute('autocomplete','off');
+        text.setAttribute('type','text');
+
+        if (placeHolder) text.setAttribute('placeholder', placeHolder);
+
+        text.style.width = element.offsetWidth;
+        input.appendChild(text);
+        return input;
+    },
+
+    // returns user input if it is found and adequate
+    entry: function () {
+        var name = this.value();
+
+        // inform the user that no input was detected
+        if (!name) app.type.letters (this.description, 'A name must be entered for the game.');
+
+        // inform the user that input must be over three charachtors long
+        else if (name.length < 3) app.type.letters (this.description, 'Name must be at least three letters long.');
+        
+        // return the input value
+        else if (name) {
+            this.val = name;
+            return name;
+        }
+        return false;
+    },
+
+    // create display screen for name input
+    name: function (parent, text) {
+
+        this.a = true;
+        var existing = document.getElementById('descriptionOrChatScreen');
+        var textField = this.text = app.footer.display();
+        var tfp = textField.parentNode;
+        this.parent = tfp;
+
+        if (existing) parent.replaceChild(tfp, existing);
+        else parent.appendChild(tfp);
+
+        this.description = document.getElementById('descriptions');
+        this.description.style.paddingTop = '2%';
+        this.description.style.paddingBottom = '1.5%';
+        this.description.parentNode.style.overflow = 'hidden';
+
+        this.addInput();
+        app.type.letters(this.description, text || 'Enter name for game.');
+
+        return tfp;
+    },
+
+    // remove the screen and deactivate input
+    remove: function () {
+        this.a = false;
+        app.confirm.deactivate();
+        app.type.reset();
+        delete this.val;
+        app.footer.remove();
+        app.screen.reset();
+    },
+    active: function () { return this.a; },
+
+    // remove input form from footer
+    clear: function () { 
+        if (this.a) {
+            this.description.style.paddingTop = null;
+            this.description.style.paddingBottom = null;
+            this.nameInput.style.display = null;
+            this.nameInput.style.height = null;
+            this.a = false;
+        }
+    },
+    removeInput: function () { 
+        this.text.removeChild(this.nameInput); 
+        //this.description.style.display = 'inline-block';
+        //this.text.style.display = 'inline-block';
+    },
+    addInput: function () {
+        this.text.appendChild(this.form('name', this.text, 'Enter name here.'));
+        this.nameInput = document.getElementById('nameForm');
+        this.nameInput.style.display = 'block';
+        this.nameInput.style.height = '30%';
+        // this.description.style.display = null;
+        document.getElementById('nameInput').focus();
+    },
+    value: function () { return this.val || document.getElementById('nameInput').value; },
+    goBack: function () {
+        this.a = true;
+        this.b = true;
+    },
+    a:false,
+    back: function () { return this.b; },
+    undoBack: function () { this.b = false; },
+    activate: function () { this.a = true; },
+    descriptions: function () { return document.getElementById('descriptions'); },
+    message: function (message) { return app.type.letters(this.descriptions(), message); }
+};
+},{"../effects/typing.js":23}],32:[function(require,module,exports){
 app.options = require('../menu/options/optionsMenu.js');
 app.game = require('../game/game.js');
 
@@ -3513,11 +3958,11 @@ module.exports = function () {
         copy: function(){ return keys.copy; }
     }
 }();
-},{"../game/game.js":25,"../menu/options/optionsMenu.js":47}],29:[function(require,module,exports){
+},{"../game/game.js":25,"../menu/options/optionsMenu.js":64}],33:[function(require,module,exports){
 app = require('../settings/app.js');
 app.key = require('../input/keyboard.js');
 app.scroll = require('../menu/scroll.js');
-app.user = require('../objects/user.js');
+app.user = require('../user/user.js');
 app.menu = require('../controller/menu.js');
 
 module.exports = function (element) {
@@ -3689,7 +4134,7 @@ module.exports = function (element) {
 		}
 	};
 };
-},{"../controller/menu.js":6,"../input/keyboard.js":28,"../menu/scroll.js":49,"../objects/user.js":78,"../settings/app.js":79}],30:[function(require,module,exports){
+},{"../controller/menu.js":9,"../input/keyboard.js":32,"../menu/scroll.js":66,"../settings/app.js":75,"../user/user.js":94}],34:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\   
     app
 \* ---------------------------------------------------------------------------------------------------------*/
@@ -3732,7 +4177,7 @@ Array.prototype.find = function (callback) { return this[this.findIndex(callback
     load dummy variables if/for testing locally 
 \* --------------------------------------------------------------------------------------*/
 
-gameMap = require('./objects/map.js');
+gameMap = require('./map/map.js');
 
 if (app.testing){
 
@@ -3783,9 +4228,9 @@ app.drawBackground = function (draw) {draw.background('background'); };
 app.drawUnit = function (draw) { draw.coordinate('map', 'units'); };
 app.drawWeather = function (draw) {};
 app.drawEffects = function (draw) {
-    draw.coordinate('effect', 'highlight'); // highlighting of movement range
-    draw.coordinate('effect', 'path'); // highlighting current path
-    draw.coordinate('effect', 'attackRange'); // highlight attack range
+    draw.coordinate('highlight', 'movementRange'); // highlighting of movement range
+    draw.coordinate('highlight', 'path'); // highlighting current path
+    draw.coordinate('highlight', 'attackRange'); // highlight attack range
 };
 app.drawCursor = function (draw) {
     if (!app.cursor.hidden() && app.user.turn())
@@ -3793,7 +4238,1053 @@ app.drawCursor = function (draw) {
     if (app.target.active()) 
         draw.coordinate('map', app.target.cursor(), [app.target.position()]);
 };
-},{"./game/app.js":21,"./objects/map.js":65}],31:[function(require,module,exports){
+},{"./game/app.js":24,"./map/map.js":38}],35:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Background.js controls the weather
+
+\* --------------------------------------------------------------------------------------*/
+
+app.calcualte = require('../tools/calculate.js');
+Terrain = require('../map/terrain.js');
+
+module.exports = {
+	pos:{x:0, y:0},
+	rand: false,
+	cat:'random',
+	background: new Terrain('plain', {x:0, y:0}),
+	category: function () { return this.cat; },
+	type: function () { return this.background.type(); },
+	defense: function () { return this.background.defense(); },
+	name: function () { return this.background.name(); },
+	alias: function (name) {
+		// var alias = {
+		// 	clear:'plain',
+		// 	rain:'plain',
+		// 	snow:'snow'
+		// } [name];
+		return name === 'snow' ? 'snow' : 'plain'; 
+	},
+	set: function (type) {
+		console.log(type);
+
+		this.cat = type;
+
+		if (type === 'random') {
+			this.rand = true;
+			return this.change();
+		}
+
+		if (!app.game.started())
+			this.rand = false;
+
+		if (type === 'rain') {
+
+			// app.effects.rain();
+			return this.background = new Terrain('plain', this.pos);
+		}
+		return this.background = new Terrain(this.alias(type) || type, this.pos); 
+	},
+	random: function () { return this.rand; },
+	weighted: function (chance) { 
+		var calculated = app.calculate.random(chance);
+		console.log('uncomment this when weather graphics are set up and ready');
+		// if(calculated < 4)
+		// 	return 'snow';
+		// else if(calculated < 6)
+		// 	return 'rain';
+		return 'plain';
+	},
+	change: function () {
+		if(!app.game.started() && app.user.first() || app.user.turn()) {
+			var type = this.weighted(20);
+			if(app.game.started() && app.user.turn())
+				socket.emit('background', type);
+			if(type === 'rain') {
+				//app.effects.rain();
+				return background = new Terrain('plain', this.pos);
+			}
+			return this.background = new Terrain(this.alias(type), this.pos);
+		}
+	}
+};
+},{"../map/terrain.js":42,"../tools/calculate.js":79}],36:[function(require,module,exports){
+Building = require('../map/building.js');
+//ListElement = require('../tools/dom/listElement.js');
+
+Build = function () {
+	this.element = document.createElement('section');
+	this.element.setAttribute('id', 'buildSelectionScreen');
+	// this.element.appendChild(this.mapElements);
+	// this.element.appendChild(this.units);
+	this.selecting = false;
+	this.player = 1;
+	this.selected = 'HQ';
+};
+
+Build.prototype.active = function () { return this.selecting; };
+Build.prototype.set = function (element) { this.selected = element.name(); };
+Build.prototype.select = function () { 
+	if (app.key.pressed(app.key.enter() && app.key.undo(app.key.enter()))){
+		this.down();
+		this.selecting = false;
+		//this.selected = this.selection[]
+	}
+};
+
+//Building.prototype.mapElements = new ListElement('buildings', ['hq','base']);
+//Building.prototype.units = new ListElement('buildings', ['infantry','apc']);
+
+module.exports = Build;
+},{"../map/building.js":37}],37:[function(require,module,exports){
+app = require("../settings/app.js");
+app.map = require("../controller/map.js");
+Terrain = require("../map/terrain.js");
+Unit = require("../map/unit.js");
+Position = require("../objects/position.js");
+
+Building = function (type, position, index, player) {
+    
+    this.healing = {
+        hq:["foot", "wheels"],
+        city:this.hq,
+        base:this.hq,
+        seaport:["boat"],
+        airport:["flight"]
+    } [type];
+
+    this.def = type.toLowerCase() === "hq" ? 4 : 3;
+
+	Terrain.call(this, type, position);
+    this.pos = new Position (position.x, position.y);
+	this.units = function () { return app.buildings[type]; };
+	this.canBuild = function (object) { return Object.keys(this.units()).indexOf(type) > -1; };
+    this.canHeal = function (object) { return this.healing.indexOf(object.transportation()) > -1; };
+    this.health = function () { return this._current.health; };
+    this.defense = function () { return this.def; };
+    this._current = {
+        name: type,
+    	player: player,
+    	position: position,
+    	health: 20,
+    	index: index
+    };
+};
+Building.prototype.properties = function () { 
+    var current = this._current;
+    return {
+        name: current.name,
+        player: current.player.number(),
+        position: current.position,
+        health: current.health,
+        index: current.index
+    }; 
+};
+Building.prototype.name = function (){ return this._current.name; };
+Building.prototype.defaults = { health: function () { return 20; } };
+Building.prototype.on = function (object) {
+    var objectPosition = object.position ? object.position() : object;
+    var position = this.position();
+    return position.x === objectPosition.x && position.y === objectPosition.y;
+};
+Building.prototype.type = function () { return "building";};
+Building.prototype.build = function (type) {
+
+    var player = this.player(), p = this.position();
+    var unit = new Unit(player, new Position(p.x, p.y), this.units()[type])
+
+    // create and add the new unit to the map
+    if(player.canPurchase(unit.cost())){
+        player.purchase(unit.cost());          
+        app.map.addUnit(unit);
+        if (app.user.turn()) socket.emit("addUnit", unit);
+        app.hud.setElements(app.cursor.hovered());
+        return this;
+    }
+    return false;
+};
+Building.prototype.position = function () {return new Position(this.pos.x, this.pos.y);};
+Building.prototype.occupied = function () { return app.map.top(this.position()).type() === "unit"; };
+Building.prototype.changeOwner = function(player) { app.map.changeOwner(this, player); };
+Building.prototype.setPlayer = function (player) {
+    this._current.player = player;
+    return this;
+};
+Building.prototype.player = function (){ return this._current.player; };
+Building.prototype.color = function () { return this.player() ? this.player().color() : "default"; };
+Building.prototype.capture = function (capture) {
+    return this.health() - capture > 0 ? (this._current.health -= capture) : false; 
+};
+Building.prototype.restore = function () { this._current.health = this.defaults.health(); };
+Building.prototype.class = function () { return "building"; };
+Building.prototype.index = function () { return this._current.index; };
+Building.prototype.get = function (unit) { return app.map.buildings()[this._current.index]; };
+
+// check if the unit is owned by the same player as the passed in object
+Building.prototype.owns = function (object) { 
+    return object.player && object.player() === this.player(); 
+}
+Building.prototype.select = function () {
+    this.unitScreen = new UList(app.dom.createMenu(app.buildings[this.name().toLowerCase()], ["name", "cost"], {
+        section: "buildUnitScreen",
+        div: "selectUnitScreen"
+    }).firstChild).setScroll(0, 6).highlight();
+    return this.selected = this.unitScreen.id();
+};
+Building.prototype.evaluate = function () {
+    if(!app.cursor.hidden) app.cursor.hide();
+
+    if (app.key.pressed(["up","down"]))
+        this.selected = Select.verticle(this.unitScreen.deHighlight()).highlight().id();
+
+    if (app.key.pressed(app.key.enter())) {
+        app.hud.show();
+        return this.build(this.selected);
+    }
+};
+Building.prototype.execute = function () {
+    app.hud.setElements(app.cursor.hovered());
+    app.screen.reset(); 
+    return true;
+};
+module.exports = Building;
+},{"../controller/map.js":7,"../map/terrain.js":42,"../map/unit.js":44,"../objects/position.js":73,"../settings/app.js":75}],38:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    creates map object
+
+\* --------------------------------------------------------------------------------------*/
+
+Validator = require('../tools/validator.js');
+
+module.exports = function (id, name, players, dimensions, terrain, buildings, units) {
+
+    var error, validate = new Validator('map');
+    var category = units.length ? 'preDeployed' : {
+        2:'two', 3:'three', 4:'four', 5:'five', 6:'six', 7:'seven', 8:'eight'
+    } [players];
+
+    this.id = id;
+    this.name = name;
+    this.players = players;
+    this.category = category;
+    this.dimensions = dimensions;
+    this.terrain = terrain;
+    this.buildings = buildings;
+    this.units = units;
+    if((error = validate.map(this)))
+        throw error;
+};
+},{"../tools/validator.js":90}],39:[function(require,module,exports){
+// map elements
+
+module.exports = function (type, x, y, player) {
+	this.type = type;
+	this.position = {x:x, y:y};
+	this.player = player;
+};
+},{}],40:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Obsticle.js is a generic object with methods common to all map obsticles
+
+\* --------------------------------------------------------------------------------------*/
+
+module.exports = function (type, defense) {
+    this.type = function () { return type };
+    this.defense = function () { return defense };
+};
+},{}],41:[function(require,module,exports){
+app = require('../settings/app.js');
+Validator = require('../tools/validator.js');
+
+module.exports = function (name, obsticle) {
+
+	var error, validate = new Validator('property');
+
+	if((error = validate.defined(name, 'name') || validate.hasElements(obsticle, ['type', 'defense'])))
+	 	throw error;
+
+	this.type = obsticle.type;
+	this.defense = obsticle.defense;
+    this.name = function () { return name };
+};
+},{"../settings/app.js":75,"../tools/validator.js":90}],42:[function(require,module,exports){
+/* ---------------------------------------------------------------------- *\
+    
+    Terrain.js holds the terrain object, defining specific map terrain
+
+\* ---------------------------------------------------------------------- */
+
+app = require('../settings/app.js');
+app.properties = require('../definitions/properties.js');
+Position = require('../objects/position.js');
+Validator = require('../tools/validator.js');
+
+Terrain = function (type, position) {
+
+	var error, properties = new app.properties();
+    var validate = new Validator('terrain');
+    var property = properties[type];
+    
+     if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
+		 throw error;
+
+    this.n = property.name();
+	this.t = property.type();
+    this.d = property.type();
+    this.pos = new Position(position.x, position.y);
+	this.defense = property.defense;
+    this.name = function () { return this.n; };
+	this.draw = function () { return type; };
+    this.position = function () { return new Position(this.pos.x, this.pos.y); };
+};
+
+Terrain.prototype.type = function () { return this.t; };
+Terrain.prototype.draw = function () { return this.d; };
+Terrain.prototype.class = function () { return 'terrain'; };
+Terrain.prototype.on = function (object) {
+    var objectPosition = object.position ? object.position() : object;
+    var position = this.position();
+    return position.x === objectPosition.x && position.y === objectPosition.y;
+};
+
+module.exports = Terrain;
+
+},{"../definitions/properties.js":15,"../objects/position.js":73,"../settings/app.js":75,"../tools/validator.js":90}],43:[function(require,module,exports){
+module.exports = function () {
+
+	var element = require('../map/mapElement.js'),
+	map = require('../map/map.js');
+	terrain = [
+		new element('tallMountain', 5, 6),
+		new element('tallMountain', 8, 9),
+		new element('tallMountain', 3, 15),
+		new element('tallMountain', 4, 20),
+		new element('tallMountain', 10, 4),
+		new element('tallMountain', 8, 12),
+		new element('tallMountain', 5, 12),
+		new element('tallMountain', 1, 15),
+		new element('tallMountain', 3, 9),
+		new element('tallMountain', 4, 6),
+		new element('tallMountain', 4, 16),
+		new element('tree', 2, 16),
+		new element('tree', 1, 18),
+		new element('tree', 3, 6),
+		new element('tree', 3, 5),
+		new element('tree', 15, 12),
+		new element('tree', 10, 10),
+		new element('tree', 11, 15),
+		new element('tree', 20, 3),
+		new element('tree', 19, 5)
+	],
+	buildings = [
+		new element('hq', 0, 9, 1),
+		new element('hq', 20, 9, 2),
+		new element('base', 4, 9, 1),
+		new element('base', 16, 9, 2)
+	];
+	return new map(null, 'test map #1', 2, {x:20, y:20}, terrain, buildings, []);
+}
+},{"../map/map.js":38,"../map/mapElement.js":39}],44:[function(require,module,exports){
+app = require('../settings/app.js');
+app.settings = require('../settings/game.js');
+app.game = require('../game/game.js');
+app.highlight = require('../effects/highlight.js');
+app.animate = require('../animation/animate.js');
+app.user = require('../user/user.js');
+app.map = require('../controller/map.js');
+app.players = require('../controller/players.js');
+
+Validator = require('../tools/validator.js');
+Position = require('../objects/position.js');
+Building = require('../map/building.js');
+
+Defaults = function (properties) {
+    this.properties = {
+        ammo:properties.ammo,
+        fuel:properties.fuel,
+        movement:properties.movement,
+        vision:properties.vision,
+    };
+};
+
+Defaults.prototype.ammo = function () { return this.properties.ammo; };
+Defaults.prototype.fuel = function () { return this.properties.fuel; };
+Defaults.prototype.movement = function () { return this.properties.movement; };
+Defaults.prototype.vision = function () { return this.properties.vision; };
+Defaults.prototype.health = function() { return 100; };
+
+Unit = function (player, position, info) {
+
+    this.validate = new Validator('unit'); 
+
+    if(!player) throw new Error('No player defined for unit');
+
+    var validProperties = [ 'transportaion' ];
+
+    if(info.properties.canAttack.length)
+        validProperties.unshift('baseDamage', 'damageType');
+
+    if((error = this.validate.hasElements(info.properties, validProperties)))
+        throw error;
+
+    Building.call(this, 'unit', new Position(position.x, position.y), app.players.length(), player);
+    this.id = app.increment.id();
+    this.properties = info.properties;
+    this.properties.cost = info.cost;
+    this.user = player;
+
+    this.player = function () { return this.user;};
+
+    this.position = function () { 
+        var pos = this._current.position;
+        return new Position(pos.x, pos.y);
+    };
+
+    this.setPosition = function (p) { this._current.position = new Position(p.x, p.y); };
+    this.type = function () { return 'unit'; };
+    this.name = function () { return this.properties.name; };
+    this.draw = function () { return this.name().toLowerCase(); };
+    this.maxLoad = function () { return this.properties.maxLoad; };
+    this.canLoad = function () { return this.properties.load };
+    this.rangeLimits = function() { return this.properties.range; };
+    this.damageType = function () { return this.properties.damageType; };
+    this.baseDamage = function () { return this.properties.baseDamage; };
+    this.movable = function () {return this.properties.movable;}; 
+    this.transportaion = function(){return  this.properties.transportaion;};
+    this.movementCost = function(obsticle){return this.properties.movementCosts[obsticle]; };
+    this.canAttack =  function(unit){ return !this.canLoad() && this.properties.canAttack.indexOf(unit.transportaion()) > -1;};
+    this.turn = function(){ return app.players.current().owns(this); };
+    this.weapon1 = function () {return this.properties.weapon1 };
+    this.weapon2 = function () { return this.properties.weapon2 };
+    this.cost = function () { return this.properties.cost };
+    this.defaults = new Defaults(this.properties);
+    this._current.name = this.properties.name;
+    this._current.actions = {};
+    this._current.targets = [];
+    this._current.damage = [];
+    this._current.health = this.defaults.health();
+    this._current.ammo = this.defaults.ammo();
+    this._current.fuel = this.defaults.fuel();
+    this._current.movement = 0;
+    this._current.vision = this.defaults.vision();
+    this._current.selectable = false;
+    this._current.position = new Position(position.x, position.y);
+    if(this.canLoad())
+        this._current.loaded = [];
+    this.moves = [];
+    this.mov = 0;
+    this.health = function () { return this._current.health; };
+    this.showHealth = function () { return Math.ceil(this._current.health / 10)};
+    this.ammo = function () { return this._current.ammo };
+    this.fuel = function () { return this._current.fuel };
+};
+
+Unit.prototype.movement = function () { return this._current.movement; };
+Unit.prototype.vision = function (){ return this._current.vision; };
+Unit.prototype.moveCost = function (obsticle) {
+    if(obsticle.type() === 'unit')
+        if(this.owns(obsticle))
+            obsticle = obsticle.occupies();
+        else return this.movement();
+    return this.movementCost(obsticle.type()); 
+};
+
+Unit.prototype.canBuildOn = function (landing) { return this.movementCost(landing) < this.movement(); };
+Unit.prototype.refuel = function () { this._current.fuel = this.defaults.fuel();};
+Unit.prototype.reload = function () { this._current.ammo = this.defaults.ammo();};
+Unit.prototype.inc = 0;
+Unit.prototype.incriment = function () {
+    this.inc += 1;
+    return {inc: this.inc}['inc'];
+};
+
+Unit.prototype.recover = function () {
+    this._current.actions = {};
+    this._current.movement = this.defaults.movement();
+    this._current.attacked = false;
+    this._current.captured = false;
+    this._current.targets = [];
+    this._current.damage = [];
+    this.mov = 0;
+    this._current.selectable = true;
+    this.repair();
+};
+
+Unit.prototype.class = function () { return 'unit'; };
+Unit.prototype.range = function (allowed) {
+
+    var position = this.position(),
+    dim = app.map.dimensions(),
+    range = (allowed * 2),
+    half = Math.ceil(range / 2),
+    right = position.x + allowed,
+    left = position.x - allowed,
+    array = [], abs = Math.abs;
+
+    // get the diamond pattern of squares
+    for(var i, y, t, b, obsticle, x = left, inc = 0; x <= right, inc <= range; x += 1, inc += 1) {
+
+        i = inc > half ? range - inc : inc;
+        t = (t = position.y - i) > 0 ? t : 0; // top
+        b = (b = position.y + i) < dim.y ? b : dim.y - 1; // bottom
+
+        // add all reachable squares to array
+        if(x >= 0 && x <= dim.x)
+            for (y = t; y <= b; y += 1)
+                array.push(app.map.top(new Position(x,y)));
+    }
+    return array;
+};
+
+Unit.prototype.ranged = function () { return this.rangeLimits().high > 1; };
+Unit.prototype.movementRange = function (distance) {
+    var allowed = distance !== undefined ? Math.min(distance, this.movement()) : this.movement();
+    var i, reachable, range = this.range(allowed), array = [];
+
+    for(var i = 0; i < range.length; i += 1)
+        if(this.on(range[i]))
+            range.unshift(range.splice(i,1)[0]);
+
+    reachable = (distance !== undefined) ? range : app.path.reachable(this, true);
+
+    for (i = 0; i < reachable.length; i += 1)
+        if(reachable[i].type() !== 'unit' || this.owns(reachable[i]))
+            array.push(reachable[i]);
+
+    return array;
+};
+
+Unit.prototype.showAttackRange = function () {
+
+    if(app.key.keyUp(app.key.range()) && app.key.undoKeyUp(app.key.range())) {
+
+        this.displayingRange = false;
+        app.highlight.clear().refresh();
+        return false;
+
+    } else if (!this.displayingRange && app.key.pressed(app.key.range()) && app.key.undo(app.key.range())) {
+        
+        if (this.ranged()) app.path.set(this.attackRange());
+        else {
+
+            var range = app.attackRange.reachable(this, false, this.defaults.movement());
+            var neighbor, neighbors, length = range.length;
+
+            for (var j, i = 0; i < length; i += 1) {
+                neighbors = app.map.getNeighbors(range[i].position());
+                for(j = 0; j < neighbors.length; j += 1){
+                    neighbor = neighbors[j];
+                    if (!neighbor.closed && app.map.close(neighbor))
+                        range.push(neighbor);
+                }
+            }
+            app.map.clean(range);
+            app.attackRange.set(range);
+        }
+        this.displayingRange = true;
+    }
+    app.highlight.refresh();
+    return this;
+};
+
+Unit.prototype.attackRange = function () {
+
+    var array = [];
+    var range = this.rangeLimits();
+    var high = this.range(range.high);
+    var low = this.range(range.low - 1);
+
+    for (var push, h = 0; h < high.length; h += 1){
+
+        push = true;
+
+        for(var l = 0; l < low.length; l += 1)
+            if(high[h].on(low[l]))
+                push = false;
+
+        if(push) array.push(high[h]);
+    }
+
+    return array;
+};
+
+Unit.prototype.attackable = function (position) {
+
+    // get list of units
+    var range = this.attackRange();
+    var array = [];
+
+    for (var element, i = 0; i < range.length; i += 1){
+        element = range[i];
+        if(element.type() === 'unit' && !this.owns(element) && this.canAttack(element))
+            array.push(element);
+    }
+
+    // if their are any units in the attackable array, then return it, otherwise return false
+    return array.length ? array : false;
+};
+
+Unit.prototype.inRange = function (unit, range) {
+    for(var i = 0; i < range.length; i += 1)
+        if(unit.on(range[i]))
+            return true;
+    return false;
+};
+
+Unit.prototype.inAttackRange = function (unit){ return this.inRange(unit, this.attackRange()); };
+Unit.prototype.inMovementRange = function (unit) { return this.inRange(unit, this.movementRange()); };
+
+// ------------------------------ abilities -------------------------------------------------------
+
+Unit.prototype.canCombine = function (unit) {
+
+    // if the unit being landed on belongs to the current player, is the same type of unit but is not the same unit
+    if(unit && unit.player().turn() && unit.index() !== this.index()){
+
+        // if is the same unit then unit units
+        if (unit.name() === this.name() && unit.health() < unit.defaults.health())
+            return true;
+
+        // if the unit is a transport and the unit being moved into can be loaded into that transport, then show the option to load into the transport
+        else if(unit.canTransport(this) && (!unit.loaded() || unit.loaded().length < unit.maxLoad()))
+            return true;
+    }
+    return false;
+};
+
+Unit.prototype.canTransport = function (unit) { return this.canLoad() ? this.canLoad().hasValue(unit.name().toLowerCase()) : false;};
+Unit.prototype.canMove = function (position) {
+    var i, range = this.movementRange();
+    for (i = 0; i < range.length; i += 1)
+        if (( r = range[i]).x === position.x && range.y === position.y)
+            return true;
+    return false;
+};
+
+// -------------------------------- self ---------------------------------------------------------
+
+
+Unit.prototype.get = function() { return app.map.getUnit(this); };
+Unit.prototype.index = function () { return app.map.getIndex(this, app.map.units()); };
+
+// ------------------------------ recovery --------------------------------------------------------------
+
+Unit.prototype.heal = function (health) { this._current.health += health || 1; };
+Unit.prototype.needsRepair = function () {
+    for(var rep, i = 0; i < 3; i += 1)
+        if(this._current[(rep = ['health', 'fuel', 'ammo'][i])] < this.defaults[rep]())
+            return true;
+    return false;
+};
+
+Unit.prototype.repair = function () {
+    var square = this.occupies();
+    if(this.needsRepair() && this.validate.building(square) && square.canHeal(this) && this.player().get().purchase(this.cost() / 10)){
+        if(this.health() < this.defaults.health()) this._current.health += 1;
+        this.reload();
+        this.refuel();
+    }
+};
+
+// --------------------------------location --------------------------------------------------------
+
+Unit.prototype.position = function () { 
+    var pos = this._current.position;
+    return new Position(pos.x, pos.y);
+};
+
+Unit.prototype.setPosition = function (p) { return this._current.position = this.pos = new Position(p.x, p.y); };
+Unit.prototype.distanceFrom = function (target) {
+    var position = this.position();
+    return Math.abs((position.x - target.x) + (position.y - target.y)); 
+};
+
+// ---------------------------- work out inheritance -----------------------------------------
+
+Unit.prototype.on = function (object) {
+    var objectPosition = object.position ? object.position() : object;
+    var position = this.position();
+    return position.x === objectPosition.x && position.y === objectPosition.y;
+};
+
+Unit.prototype.owns = function (object) { return object.player && object.player().id() === this.player().id(); };
+Unit.prototype.compare = function (unit) { 
+    return {
+        vision: this.vision() - unit.vision(),
+        danger: unit.inAttackRange(this) ? 1 : 0,
+        range: this.inAttackRange(unit) ? 1 : 0,
+        fuel: this.fuel - unit.fuel(),
+        ammo: this.ammo() - unit.ammo(),
+        health: this.health() - unit.health()
+    };
+};
+
+// ---------------------------------- actions ----------------------------------------------------------
+
+Unit.prototype.wait = function () {
+    this.deselect();
+    app.dom.remove('actionHud');
+};
+
+Unit.prototype.canCapture = function (position) {
+
+    // get the building that the unit is on
+    var building = this.occupies(position || this.position());
+
+    // if the selected unit can capture buildings then continue
+    if (this.properties.capture && this.validate.building(building) && !this.owns(building) && this.on(building)) 
+        return building;
+    return false;
+};
+
+Unit.prototype.capture = function (building) { 
+
+    if(this.canCapture(building.position())){
+
+        var player = this.player();
+        var capture = player.co.capture ? player.co.capture(this.showHealth()) : this.showHealth();
+
+        // if the building has not been captured all the way
+        if (building.health() - capture > 0) {
+
+            // subtract the amount of capture dealt by the unit from the buildings capture level
+            building.capture(capture);
+
+        // if the building is done being captured and is not a headquarters
+        } else if (building.name().toLowerCase() !== 'hq') {
+
+            // assign the building to the capturing player
+            player.score.capture();
+            building.changeOwner(player);
+            building.restore();
+
+        } else player.defeat(building.player(), true);
+
+        this.deselect();
+        this.captured = true;
+        if(app.user.turn()) socket.emit('captured', {unit:this, building:building});
+    }
+};
+
+Unit.prototype.targets = function (index) { 
+    if (this.loaded() && !this._current.targets.length) {
+        var i, neighbors = app.map.getNeighbors(this.position());
+        for (i = 0; i < neighbors.length; i += 1)
+            if ((neighbor = neighbors[i]).type() !== 'unit' || neighbor.canLoad())
+                this._current.targets.push(neighbor);
+    }
+    return index === undefined ? this._current.targets : this._current.targets[index]; 
+};
+
+Unit.prototype.target = function (index) { return this._current.damage[index] !== undefined ? this._current.damage[index] : (this._current.damage[index] = app.calculate.damage(this.targets(index), this));};
+
+Unit.prototype.selectable = function () { return this._current.selectable; };
+Unit.prototype.select = function () {
+
+    if(!this.selectable())
+        return false;
+
+    // set the range highlight to the calculated range
+    app.highlight.setMovementRange(this.movementRange());
+
+    // animate changes
+    app.animate('effects');
+
+    return true;
+};
+
+Unit.prototype.previous = function () {return this.moves[this.moves.length - 1]; };
+Unit.prototype.attack = function(unit, damage, attacking){
+
+    if (damage === undefined) 
+        damage = app.calculate.damage(unit, this);
+
+    var attacker = this.player();
+    var attacked = unit.player();
+
+    if (unit.health() - damage > 0){
+        unit.takeDamage(damage);
+        attacker.score.damageDealt(damage);
+        attacked.score.damageTaken(damage);
+    } else {
+        attacker.score.destroyedUnit();
+        attacked.score.lostUnit();
+        app.map.removeUnit(unit);
+        if (!attacked.units())
+            attacker.defeat(attacked);
+    }
+
+    if(app.user.owns(this) && !this.attacked()){
+        app.cursor.show();
+        this.deselect();    
+        app.dom.remove('damageDisplay');
+        socket.emit('attack', { attacker:this, attacked:unit, damage:damage });
+    }
+    this.refresh();
+    if (attacking) this._current.attacked = true;
+    return this._current.selectable = false;
+};
+
+Unit.prototype.takeDamage = function (damage) { return this._current.health - damage > 0 ? this._current.health -= damage : app.map.removeUnit(this); };
+Unit.prototype.attacked = function () { return this._current.attacked; };
+
+Unit.prototype.moved = function (position) {
+    var i, move = 0; path = app.path.get();
+    for (i = 1; i < path.length; i += 1){
+        move += this.moveCost(path[i]);
+        if (path[i].on(position))
+            return move;
+    }
+    return move;
+};
+
+Unit.prototype.move = function (position, moved) {
+    
+    var pos = this.position();
+
+    // subtract movement
+    this._current.movement -= (this.mov = moved);
+    this._current.targets = [];
+
+    // mark how much fuel has been used
+    this.player().score.fuel(moved);
+    this._current.fuel -= moved;
+
+    // save move
+    if (moved > 0) {
+        this.moves.push(new Position(pos.x, pos.y));
+    } else this.moves.pop();
+
+    // change selected units position to the specified location
+    app.map.moveUnit(this, new Position(position.x, position.y));
+
+    if(app.user.turn()) socket.emit('moveUnit', {id:this.id, position: position, moved: moved});
+
+    this.refresh();
+};
+
+Unit.prototype.properties = function () {return this._current;};
+Unit.prototype.action = function () { return this._current.action; };
+Unit.prototype.setAction = function (action) { this._current.action = action; };
+Unit.prototype.actions = function (position) {
+
+    var canAttack, canCapture, unit, 
+    actions = this._current.actions, 
+    position = position || this.position();
+
+    // may cause problems over time
+    if(position === this.previous())
+        return actions;
+
+    if((canAttack = this.attackable(position))) 
+        actions.attack = canAttack;
+
+    if((canCapture = this.canCapture(position))) 
+        actions.capture = canCapture;
+
+    if ((unit = app.map.occupantsOf(position).unit) && this.canCombine(unit))
+        if(unit.name() === this.name())
+            actions.join = unit;
+        else actions.load = unit;
+
+    if (!actions.load) actions.wait = true;
+
+    if (this.loaded()) actions.drop = this._current.loaded;
+
+    // if there are any actions that can be taken then return them
+    return actions;
+};
+Unit.prototype.displayActions = function (position) {
+
+    var actions = {}, options = this.actions(position);
+
+    Object.keys(options).forEach(function (action) {
+        if (action === "drop" && options.drop.isArray())
+            options.drop.forEach(function (unit, index) {
+                actions[index] = { name: action };
+            });
+        else actions[action] = { name: action };
+    });
+
+    app.coStatus.hide();
+
+    this.allActions = new UList(app.dom.createMenu(
+        actions, 
+        app.settings.actionsDisplay, 
+        {section: 'actionHud', div: 'actions'}
+    ).firstChild).highlight();
+
+    return this.selected = this.allActions.id();
+};
+Unit.prototype.refresh = function () {app.animate('unit');};
+
+Unit.prototype.evaluate = function (position) {
+
+    if(app.cursor.hidden() && !app.target.active()){
+        
+        if (app.key.pressed(app.key.esc())) {
+
+            this.moveBack();
+            this.escape();
+            this.deselect();
+
+        } else if ((actions = this.actions(position)) && this.selected) {
+
+            if (app.key.pressed(["up","down"]))
+                this.selected = Select.verticle(this.allActions.deHighlight()).highlight().id();
+
+            var action = this.selected;
+
+            if (app.key.pressed(app.key.enter())) {
+
+                if (action === 'attack') {
+
+                    this.setTargets(actions.attack);
+                    app.target.activate(action);
+
+                // if the action is a number it must be the index of a loaded unit 
+                } else if (!isNaN(action)) {
+                    this.unloading = actions.drop[action];
+                    app.target.activate('drop');
+
+                } else {
+
+                    this[action](actions[action]);
+                    app.cursor.show()
+                }
+                this.escape();
+            }
+        }
+    }
+};
+Unit.prototype.setTargets = function (targets) {this._current.targets = targets;};
+Unit.prototype.moveBack = function () { if (this.mov) this.move(this.previous(), -this.mov); };
+Unit.prototype.execute = function (p) {
+
+    // and remove the range and path highlights
+    this.move(new Position(p.x, p.y), this.moved(p));
+
+    // display path to cursor
+    app.path.clear();
+    app.range.clear();
+
+    // if there are actions that can be taken then display the necessary options
+    if (!this.displayActions(p)) app.screen.reset();
+
+    app.cursor.hide();
+};
+
+Unit.prototype.join = function (unit) {
+
+    var max, property, properties = app.settings.combinableProperties;
+
+    // emit units to be combined to other players games for syncronization
+    if (app.user.turn()) socket.emit('joinUnits', {unit:unit, selected:this});
+
+    // combine properties of the selected unit with the target unit
+    for (var property, u = 0; u < properties.length; u += 1){
+        property = properties[u];
+        max = unit.defaults[property]();
+        if( unit[property]() + this[property]() < max )
+            unit._current[property] += this[property]();
+        else  unit._current[property] = max;
+    }
+
+    // remove selected unit  
+    app.map.removeUnit(this);
+    this.deselect();
+    return unit;
+};
+
+Unit.prototype.loaded = function () { return this._current.loaded && this._current.loaded.length ? this._current.loaded : false; };
+Unit.prototype.getIndexOfLoaded = function (unit) {
+    var loaded = this._current.loaded;
+    for (var i = 0; i < loaded.length; i += 1)
+        if(loaded[i].id === unit.id)
+            return i;
+    return false;
+};
+
+Unit.prototype.load = function (unit) {
+    unit._current.loaded.push(app.map.removeUnit(this));
+    if (app.user.turn()){
+        socket.emit('loadUnit', { transport: unit.id, passanger: this.id });
+        this.deselect();
+    }
+    return unit;
+};
+
+Unit.prototype.drop = function (u, i) { 
+    var p = u.pos;
+    var index = i !== undefined ? i : this.loaded().indexOf(this.unloading);
+    var unit = this.loaded().splice(index, 1)[0];
+    unit.setPosition(new Position(p.x, p.y));
+    unit._current.selectable = false;
+    app.map.addUnit(unit);
+    if (app.user.turn()) {
+        socket.emit('unload', {id:this.id, pos:p, index: index});
+        this._current.selectable = false;
+        this.deselect();
+    }
+};
+
+Unit.prototype.deselect = function () {
+    app.screen.reset();
+    app.hud.show();
+    app.cursor.show();
+    app.coStatus.show();
+    app.target.deactivate();
+    app.hud.setElements(app.cursor.hovered());
+};
+
+Unit.prototype.escape = function () {
+    app.key.undo();
+    app.coStatus.show();
+    // app.options.deactivate();    
+    app.dom.remove('actionHud');
+};
+
+Unit.prototype.occupies = function () {
+    var square = app.map.occupantsOf(this.position());
+    return square.building !== undefined ? square.building : square.terrain;
+};
+
+module.exports = Unit;
+},{"../animation/animate.js":1,"../controller/map.js":7,"../controller/players.js":10,"../effects/highlight.js":20,"../game/game.js":25,"../map/building.js":37,"../objects/position.js":73,"../settings/app.js":75,"../settings/game.js":77,"../tools/validator.js":90,"../user/user.js":94}],45:[function(require,module,exports){
+BuildingDisplay = function () {
+	var property = function (id) { return document.getElementById(id).firstChild; };
+	this.e = app.dom.createMenu({
+	        city:{ numberOf:0, type:'city' },
+	        base:{ numberOf:0, type:'base' },
+	        airport:{ numberOf:0, type:'airport' },
+	        seaport:{ numberOf:0, type:'seaport' },
+	    }, 
+	    ['numberOf', 'canvas'], 
+	    {section:'buildingsDisplay', div:'numberOfBuildings'}, 
+        app.dom.addCanvas
+    );
+	this.city = property('city');
+	this.base = property('base');
+	this.airport = property('airport');
+	this.seaport = property('seaport');
+};
+
+BuildingDisplay.prototype.element = function () { return this.e; };
+BuildingDisplay.prototype.cities = function (number) { this.city.innerHtml = number; };
+BuildingDisplay.prototype.bases = function (number) { this.base.innerHTML = number; };
+BuildingDisplay.prototype.airPorts = function (number) { this.airport.innerHtml = number; };
+BuildingDisplay.prototype.seaPorts = function (number) { this.seaport.innerHtml = number; };
+BuildingDisplay.prototype.set = function (numberOf) {
+	if (numberOf.city) this.cities(numberOf.city);
+	if (numberOf.base) this.bases(numberOf.base);
+	if (numberOf.seaport) this.seaPorts(numberOf.seaport);
+	if (numberOf.airport) this.airPorts(numberOf.airport);
+};
+
+module.exports = BuildingDisplay;
+},{}],46:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     CoElement.js defines the element that holds co selection information
@@ -3827,7 +5318,7 @@ CoElement.prototype.getStyle = function (parameter) {
     return Number(this.element().parentNode.style[parameter].replace('px',''));
 };
 module.exports = CoElement;
-},{"../../menu/elements/element.js":32}],32:[function(require,module,exports){
+},{"../../menu/elements/element.js":47}],47:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Element.js defines a generic menu element with methods common to all game menus
@@ -3866,7 +5357,7 @@ Element.width = function () {return this.getStyle('width') || this.element().off
 Element.setBorder = function (border) {this.b = border; return this};
 Element.border = function () {return this.b; };
 module.exports = Element;
-},{"../../menu/elements/ul.js":42}],33:[function(require,module,exports){
+},{"../../menu/elements/ul.js":58}],48:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     List.js creates an interface for iterating over a list of dom elements
@@ -3915,7 +5406,129 @@ List.prototype.limit = function (callback) {
     return this;
 };
 module.exports = List;
-},{}],34:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Menu.js is a generic object that contains methods common to all menus
+
+\* --------------------------------------------------------------------------------------*/
+
+app = require('../../settings/app.js');
+
+module.exports = {
+    // for co border color
+    color: app.settings.colors,
+    playerElement: [],
+    playerColor: app.settings.playerColor,
+    time: new Date(),
+    withArrows: function () { 
+        if (!this.arrows) this.arrows = new Arrows(); 
+        return this;
+    },
+    active: function () { return this.a; },
+    activate: function () { this.a = true; },
+    deactivate: function () { this.a = false; },
+    goBack: function () { this.bck = true; },
+    back: function () {
+        if (this.bck) {
+            this.bck = false;
+            return true;
+        }
+        return false;
+    },
+    exit: function (value, callback, exit) {
+        if (app.key.pressed(app.key.enter()) || app.key.pressed(app.key.esc()) || this.boot) {
+            if (callback) callback(value);
+            if(app.key.pressed(app.key.esc()) || this.boot){
+                app.key.undo();
+                if(this.boot) this.boot = false;
+                return exit ? exit : 'back';
+            }
+            app.key.undo();
+        }
+        return false;
+    },
+    moveElements: function (direction, callback, speed, index) {
+
+        var elements = this.element.childNodes;
+        var length = elements.length;
+        var scope = this;
+        var delay = speed || 5;
+        var timeout = delay * 100;
+        this.m = true;
+
+        if(!index) index = 0;
+        if (length > index) {
+            var offScreen = Number(app.offScreen);
+            setTimeout(function() { 
+                var elem = elements[index];
+                elem.style.transition = 'top .' + delay + 's ease';
+                setTimeout(function(){elem.style.transition = null}, timeout);
+                var position = Number(elem.style.top.replace('px',''));
+                if (position) {
+                    if (direction === 'up') target = position - offScreen;
+                    else if (direction === 'down') target = position + offScreen;
+                    else return false;
+                    elem.style.top = target + 'px';
+                }
+                scope.moveElements(direction, callback, speed, index + 1);
+            }, 30);
+        } else { 
+            this.m = false;
+            if (callback) setTimeout(callback, 80);
+        }
+    },
+    moving: function () {return this.m; },
+    screen: function () {return this._s;},
+    setScreen: function (s) {this._s = s;},
+    createTitle: function (title) {
+        var element = document.createElement('h1');
+        element.setAttribute('id', 'title');
+        element.innerHTML = title;
+        this.screen().appendChild(element);
+        return element;
+    },
+    percentage: function (height) {return Number(height.replace('%','')) / 100;},
+    screenHeight: function () {return this.screen().offsetHeight;},
+    removeScreen: function () {document.body.removeChild(this.screen());},
+    createScreen: function (name) {
+        var existing = document.getElementById(name);
+        var screen = document.createElement('article');
+        screen.setAttribute('id', name);
+        existing ? document.body.replaceChild(screen, existing) : document.body.appendChild(screen);
+        this.setScreen(screen);
+        app.touch(screen).swipeScreen();
+        app.click(screen).swipeScreen();
+        return screen;
+    },
+    resetDefaults: function (type) {
+
+        var element, previous, name, child, children, 
+        childrenLength, length = app.players.length();
+
+        for (var c, n = 1; n <= length; n += 1) {
+
+            element = document.getElementById('player' + n + type);
+            previous = app.players.number(n).property(type.toLowerCase());
+
+            if ((name = previous.name ? previous.name : previous)) {
+
+                children = element.childNodes;
+                childrenLength = children.length;
+
+                for (c = 0; c < childrenLength; c += 1)
+                    if ((child = children[c]).getAttribute('class').toLowerCase() === name.toLowerCase())
+                        child.setAttribute('default',true);
+                    else if (child.getAttribute('default'))
+                        child.removeAttribute('default');
+            }
+        }
+    },
+    changeTitle: function (name) {this.screen().firstChild.innerHTML = name;},
+    rise: function (callback, speed) {this.moveElements('up', callback, speed);},
+    fall: function (callback, speed) { this.moveElements('down', callback, speed);}
+};
+},{"../../settings/app.js":75}],50:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     ModeElement.js defines the element used for option selection on the mode menu
@@ -3946,7 +5559,7 @@ ModeElement.prototype.add = function (element) {
 };
 ModeElement.prototype.clearHeight = function () {this.current().style.height = '';};
 module.exports = ModeElement;
-},{}],35:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     ModesElement.js defines the element that is used in game mode selection
@@ -4046,7 +5659,7 @@ ModesElement.prototype.deselect = function () {
     return this;
 };
 module.exports = ModesElement;
-},{"../../menu/elements/modeElement.js":34,"../../menu/elements/optionElement.js":36,"../../menu/elements/textElement.js":41,"../../menu/elements/ul.js":42,"../../tools/hsl.js":86}],36:[function(require,module,exports){
+},{"../../menu/elements/modeElement.js":50,"../../menu/elements/optionElement.js":52,"../../menu/elements/textElement.js":57,"../../menu/elements/ul.js":58,"../../tools/hsl.js":82}],52:[function(require,module,exports){
 UList = require('../../menu/elements/ul.js');
 OptionElement = function (c) {
     this.setElement(document.createElement('ul'));
@@ -4068,7 +5681,7 @@ OptionElement.prototype.deactivate = function () {
 	this.a = false;
 };
 module.exports = OptionElement;
-},{"../../menu/elements/ul.js":42}],37:[function(require,module,exports){
+},{"../../menu/elements/ul.js":58}],53:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     PlayerElement.js creates an element and interface for interacting with co selection
@@ -4109,7 +5722,7 @@ PlayerElement.prototype.show = function () {
 };
 PlayerElement.prototype.constructor = PlayerElement;
 module.exports = PlayerElement;
-},{"../../menu/elements/element.js":32}],38:[function(require,module,exports){
+},{"../../menu/elements/element.js":47}],54:[function(require,module,exports){
 Element = require('../../menu/elements/element.js');
 PlayerNumber = function (number, size, init) {
 	var fontSize = size / 4, properties = {
@@ -4140,7 +5753,7 @@ PlayerNumber.prototype.getStyle = function (parameter) {
 	return parameter === 'top' || parameter === 'left' ? parent + element : element;
 };
 module.exports = PlayerNumber;
-},{"../../menu/elements/element.js":32}],39:[function(require,module,exports){
+},{"../../menu/elements/element.js":47}],55:[function(require,module,exports){
 Element = require('../../menu/elements/element.js');
 SettingElement = function (property, parameters) {
     var def, list = app.dom.createList(this.rule(property), property + 'Settings', this.allowed);
@@ -4268,7 +5881,7 @@ SettingElement.prototype.settings = {
     }
 };
 module.exports = SettingElement;
-},{"../../menu/elements/element.js":32}],40:[function(require,module,exports){
+},{"../../menu/elements/element.js":47}],56:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     TeamElement.js defines the element that is used in team selection
@@ -4306,7 +5919,7 @@ TeamElement.prototype.getStyle = function (parameter) {
 }
 TeamElement.prototype.constructor = TeamElement;
 module.exports = TeamElement;
-},{"../../menu/elements/element.js":32}],41:[function(require,module,exports){
+},{"../../menu/elements/element.js":47}],57:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     TextElement.js controls the text element on the mode screen
@@ -4374,7 +5987,7 @@ TextElement.prototype.deselect = function () {
     this.setBackgroundColor('white');
 };
 module.exports = TextElement;
-},{}],42:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Ul.js creates an interface for iterating over ul list items
@@ -4473,9 +6086,90 @@ Ul.prototype.prepHorizontal = function () {
 };
 Ul.prototype.constructor = Ul;
 module.exports = Ul;
-},{"../../menu/elements/list.js":33}],43:[function(require,module,exports){
-Menu = require('../objects/menu.js');
-BuildingsDisplay = require('../objects/buildingsDisplay.js');
+},{"../../menu/elements/list.js":48}],59:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Footer.js controls the creation and coordination of footer elements
+
+\* --------------------------------------------------------------------------------------*/
+
+module.exports = {
+    display: function () {
+
+        var footer = app.dom.createMenu([], [], {section:'descriptionOrChatScreen', div:'descriptionOrChat'});
+        this.setElement(footer);
+        var textField = footer.children[0];
+
+        var chat = document.createElement('ul');
+        var description = document.createElement('h1');
+
+        chat.setAttribute('id','chat');
+        description.setAttribute('id','descriptions');
+
+        textField.appendChild(chat);
+        textField.appendChild(description);
+
+        return textField;
+    },
+    setElement: function (element) {this.e = element;},
+    element: function () { return this.e; }, // could cause problems
+    remove: function () { 
+        var element = this.element();
+        if (element) element.parentNode.removeChild(element); 
+    },
+    scrolling: function () {
+        var footer = document.createElement('footer');
+        var info = document.createElement('p');
+        var footSpan = document.createElement('span');
+        footSpan.setAttribute('id','footerText');
+        info.appendChild(footSpan);
+        info.setAttribute('id', 'scrollingInfo');
+        footer.setAttribute('id','footer');
+        footer.appendChild(info);
+        this.setElement(footer);
+        this.setScrollBar(info);
+        this.setSpan(footSpan);
+        return footer;
+    },
+    hide: function () { this.element().display = 'none'; },
+    show: function () { this.element().display = null; },
+    setScrollBar: function (bar) {this.s = bar;},
+    scrollBar: function () {return this.s;},
+    setText: function (text) {
+        this.t = text;
+        this.scrollBar().innerHTML = text;
+    },
+    setSpan: function (span) {this.sp = span;},
+    span: function () {return this.sp;},
+    text: function () {return this.t;},
+    width: function () {return this.element().offsetWidth;},
+    textWidth: function () {return this.span().offsetWidth;},
+    incriment: function () {return this.scrollBar().offsetWidth; },
+    increase: function () {this.move(1);},
+    decrease: function () {this.move(-1);},
+    move: function (move) {this.setPosition(this.position() + move);},
+    setPosition: function (position) {
+        this.setLeft(position);
+        this.p = position;
+    },
+    position: function () {return this.p;},
+    reset:function () {this.setPosition(-(this.incriment() * 4));},
+    setLeft: function (left) {this.scrollBar().style.left = left + 'px';},
+    increase: function () {return this.setPosition(this.position() + 1);},
+    scroll: function(message) {
+        var scope = this, position = this.position();
+        if (message) {
+            if (this.scroller) clearTimeout(this.scroller);
+            if (!position) this.setPosition(-this.incriment());
+            this.setText(message);
+        }
+        this.position() <= this.width() ? this.increase() : this.reset();
+        this.scroller = setTimeout(function(){ scope.scroll(); }, 8);
+    }
+};
+},{}],60:[function(require,module,exports){
+Menu = require('../menu/elements/menu.js');
+BuildingsDisplay = require('../menu/elements/buildingsDisplay.js');
 Ulist = require('../menu/elements/ul.js');
 app.select = require('../tools/selection.js');
 
@@ -4583,13 +6277,12 @@ Join.remove = function () {
     app.maps.clear();
 };
 module.exports = Join;
-},{"../menu/elements/ul.js":42,"../objects/buildingsDisplay.js":58,"../objects/menu.js":67,"../tools/selection.js":91}],44:[function(require,module,exports){
+},{"../menu/elements/buildingsDisplay.js":45,"../menu/elements/menu.js":49,"../menu/elements/ul.js":58,"../tools/selection.js":88}],61:[function(require,module,exports){
 socket = require('../tools/sockets.js');
 app.game = require('../game/game.js');
-app.screens = require('../objects/screens.js');
-app.user = require('../objects/user.js');
-app.input = require('../objects/input.js');
-Menu = require('../objects/menu.js');
+app.user = require('../user/user.js');
+app.input = require('../input/input.js');
+Menu = require('../menu/elements/menu.js');
 
 Login = Object.create(Menu);
 Login.testAPI = function () {
@@ -4708,7 +6401,7 @@ Login.display = function () {
     }
 };
 module.exports = Login;
-},{"../game/game.js":25,"../objects/input.js":64,"../objects/menu.js":67,"../objects/screens.js":73,"../objects/user.js":78,"../tools/sockets.js":92}],45:[function(require,module,exports){
+},{"../game/game.js":25,"../input/input.js":31,"../menu/elements/menu.js":49,"../tools/sockets.js":89,"../user/user.js":94}],62:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Modes.js controls game mode selection 
@@ -4717,7 +6410,7 @@ module.exports = Login;
 
 ModesElement = require('../menu/elements/modesElement.js');
 ScrollText = require('../effects/scrollText.js');
-Menu = require('../objects/menu.js');
+Menu = require('../menu/elements/menu.js');
 List = require('../menu/elements/list.js');
 Ulist = require('../menu/elements/ul.js');
 Fader = require('../effects/fade.js');
@@ -4851,7 +6544,7 @@ Modes.display = function () {
     return screen;
 };
 module.exports = Modes;
-},{"../effects/fade.js":15,"../effects/scrollText.js":17,"../menu/elements/list.js":33,"../menu/elements/modesElement.js":35,"../menu/elements/ul.js":42,"../objects/menu.js":67}],46:[function(require,module,exports){
+},{"../effects/fade.js":19,"../effects/scrollText.js":21,"../menu/elements/list.js":48,"../menu/elements/menu.js":49,"../menu/elements/modesElement.js":51,"../menu/elements/ul.js":58}],63:[function(require,module,exports){
 //Select = require("../");
 Exit = function (callback) {
 	this.leave = callback || function () {
@@ -4900,7 +6593,7 @@ Exit.prototype.active = function () { return this.a };
 Exit.prototype.deactivate = function () {this.a = false;};
 
 module.exports = Exit;
-},{}],47:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 /* ----------------------------------------------------------------------------------------------------------*\
     
     app.options handles the in game options selection, end turn, save etc.
@@ -5106,11 +6799,11 @@ Options.rules = function () {
     }
 };
 module.exports = Options;
-},{"../../controller/players.js":7,"../../game/game.js":25,"../../input/keyboard.js":28,"../../settings/app.js":79,"../../settings/game.js":81,"../../tools/sockets.js":92,"../elements/ul.js":42,"../settings.js":50,"./exit.js":46,"./save.js":48}],48:[function(require,module,exports){
+},{"../../controller/players.js":10,"../../game/game.js":25,"../../input/keyboard.js":32,"../../settings/app.js":75,"../../settings/game.js":77,"../../tools/sockets.js":89,"../elements/ul.js":58,"../settings.js":67,"./exit.js":63,"./save.js":65}],65:[function(require,module,exports){
 // save
 app.key = require('../../input/keyboard.js');
 app.cursor = require('../../controller/cursor.js');
-app.input = require('../../objects/input.js');
+app.input = require('../../input/input.js');
 app.confirm = require('../../controller/confirmation.js');
 
 module.exports = {
@@ -5144,7 +6837,7 @@ module.exports = {
     },
     deactivate: function () {this.a = false;}
 };
-},{"../../controller/confirmation.js":2,"../../controller/cursor.js":3,"../../input/keyboard.js":28,"../../objects/input.js":64}],49:[function(require,module,exports){
+},{"../../controller/confirmation.js":5,"../../controller/cursor.js":6,"../../input/input.js":31,"../../input/keyboard.js":32}],66:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     handles scrolling of menu elements etc..
@@ -5208,8 +6901,8 @@ module.exports = function () {
         }
     };
 }();
-},{"../input/keyboard.js":28,"../settings/app.js":79}],50:[function(require,module,exports){
-Menu = require('../objects/menu.js');
+},{"../input/keyboard.js":32,"../settings/app.js":75}],67:[function(require,module,exports){
+Menu = require('../menu/elements/menu.js');
 Arrows = require('../objects/arrows.js');
 Teams = require('../menu/teams.js');
 Select = require('../tools/selection.js');
@@ -5376,7 +7069,7 @@ Settings.display = function () {
     return element;
 };
 module.exports = Settings;
-},{"../effects/swell.js":18,"../menu/elements/settingElement.js":39,"../menu/teams.js":51,"../objects/arrows.js":55,"../objects/menu.js":67,"../settings/default.js":80,"../tools/selection.js":91}],51:[function(require,module,exports){
+},{"../effects/swell.js":22,"../menu/elements/menu.js":49,"../menu/elements/settingElement.js":55,"../menu/teams.js":68,"../objects/arrows.js":70,"../settings/default.js":76,"../tools/selection.js":88}],68:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Teams.js controls co and team selection
@@ -5387,20 +7080,20 @@ app = require('../settings/app.js');
 socket = require('../tools/sockets.js');
 app.key = require('../input/keyboard.js');
 app.maps = require('../controller/maps.js'); 
-app.screens = require('../objects/screens.js');
 app.dom = require('../tools/dom.js');
-app.background = require("../controller/background.js");
-app.footer = require('../objects/footer.js');
+app.background = require("../map/background.js");
+app.footer = require('../menu/footer.js');
 app.arrows = require('../objects/arrows');
 
-Menu = require ('../objects/menu.js');
+Menu = require ('../menu/elements/menu.js');
 Settings = require('../menu/settings.js');
 Select = require('../tools/selection.js');
 PlayerNumber = require('../menu/elements/playerNumber.js');
 CoElement = require('../menu/elements/coElement.js');
 PlayerElement = require('../menu/elements/playerElement.js');
 TeamElement = require('../menu/elements/teamElement.js');
-AiPlayer = require('../objects/aiPlayer.js');
+AiPlayer = require('../user/aiPlayer.js');
+Button = require('../objects/button.js');
 
 Teams = Object.create(Menu);
 Teams.speed = 1.5;
@@ -5423,11 +7116,17 @@ Teams.init = function () {
     var scope = this;
     this.display();
     this.activate();
-    app.players.all().map(function (player, index) {
+
+    // initialize plzyer properties
+    app.players.all().forEach(function (player, index) {
         var element = scope.playerElement(index + 1);
         player.setProperty('mode', element.mode().value());
         player.setProperty('co', element.co().value());
     });
+
+    // create start button
+    this.button = new Button('setupScreen', function () { app.game.start(); });
+
     if (this.arrows) this.rise();
     app.game.started() ? this.toTeam() : this.toCo();
 };
@@ -5524,7 +7223,6 @@ Teams.toReady = function () {
     socket.emit('ready', player);
     this.playersHeight('20%');
     if (this.arrows) this.arrows.setSpace(10).setPosition(this.elements.current()).hide();
-    this.button = app.screens.startButton('setupScreen');
     app.chat.display();
     return this;
 };
@@ -5715,269 +7413,7 @@ Teams.display = function () {
     return this.element = element;
 };
 module.exports = Teams;
-},{"../controller/background.js":1,"../controller/maps.js":5,"../input/keyboard.js":28,"../menu/elements/coElement.js":31,"../menu/elements/playerElement.js":37,"../menu/elements/playerNumber.js":38,"../menu/elements/teamElement.js":40,"../menu/settings.js":50,"../objects/aiPlayer.js":52,"../objects/arrows":55,"../objects/footer.js":62,"../objects/menu.js":67,"../objects/screens.js":73,"../settings/app.js":79,"../tools/dom.js":85,"../tools/selection.js":91,"../tools/sockets.js":92}],52:[function(require,module,exports){
-Player = require('../objects/player.js');
-Score = require('../definitions/score.js');
-AiPlayer = function (number) {
-	this._current = {
-        id: 'AI#'+number,
-        gold: 0,
-        special: 0,
-        ready: true,
-        number:number
-    };
-	this.name = function () { return 'HAL #'+ this.number();};
-    this.fullName = function () { return 'Mr. Robot'; };
-    this.lastName = function () { return 'Robot'; };
-    this.id = function () { return this._current.id; };
-    this.score = new Score(true);
-    this.co = null;
-    this.mode = 'cp';
-    this.isComputer = true;
-    if (app.user.first()) socket.emit('addAiPlayer', this);
-};
-AiPlayer.prototype = Object.create(Player.prototype);
-AiPlayer.prototype.constructor = AiPlayer;
-AiPlayer.prototype.setNumber = function (number) {this._current.number = number;};
-module.exports = AiPlayer;
-},{"../definitions/score.js":12,"../objects/player.js":69}],53:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------------------------*\
-
-    default object animation repo, the 'm' parameter is a method passed from 
-    app.draw that scales the coordinates of the drawings to fit any grid square size, as 
-    well as providing some functionality like random(), which generates random numbers within the specified 
-    range of numbers. 
-    'm' does not have to be used
-    default is a base of 64 ( 64 X 64 pixles ), the base is set as a perameter of initializing the 
-    app.draw();
-
-\*---------------------------------------------------------------------------------------------------------*/
-
-module.exports = function (width, height) {
-    var transparent = false;
-    return {
-        
-        hide: function () {transparent = 0.1;},
-        cursor: function (canv, m) {
-            // size of cursor corners
-            var size = 15;
-            canv.strokeStyle = "black";
-            canv.fillStyle = "#fff536";
-            canv.beginPath();
-            // bottom left
-            canv.moveTo(m.l(3), m.u(size));
-            canv.lineTo(m.l(3), m.d(3));
-            canv.lineTo(m.r(size), m.d(3));
-            canv.lineTo(m.l(3), m.u(size));
-            // bottem right
-            canv.moveTo(m.r(67), m.u(size));
-            canv.lineTo(m.r(67), m.d(3));
-            canv.lineTo(m.r(64 - size), m.d(3));
-            canv.lineTo(m.r(67), m.u(size));
-            // top right
-            canv.moveTo(m.r(67), m.u(64 - size));
-            canv.lineTo(m.r(67), m.u(67));
-            canv.lineTo(m.r(64 - size), m.u(67));
-            canv.lineTo(m.r(67), m.u(64 - size));
-            // bottem left
-            canv.moveTo(m.l(3), m.u(64 - size));
-            canv.lineTo(m.l(3), m.u(67));
-            canv.lineTo(m.r(size), m.u(67));
-            canv.lineTo(m.l(3), m.u(64 - size));
-            canv.fill();
-            canv.stroke();
-            return canv;
-        },
-
-        highlight: function (canv, m) {
-            canv.fillStyle = "rgba(255,255,255,0.3)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            return canv;
-        },
-
-        attackRange: function (canv, m) {
-            canv.fillStyle = "rgba(240,5,0,0.4)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            return canv;
-        },
-
-        target: function (canv, m) {
-            canv.fillStyle = "rgba(0,255,0,0.3)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            return canv;
-        },
-
-        pointer: function (canv, m) {
-            canv.fillStyle = "rgba(255,143,30,0.3)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            return canv;
-        },
-
-        path: function (canv, m) {
-            canv.fillStyle = "rgba(255,0,0,0.5)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            return canv;
-        },
-
-        base: function (canv, m) {
-            canv.fillStyle = "rgba(0,0,200,0.9)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w - 5), m.y - 5);
-            canv.lineTo(m.r(m.w - 5), m.u(m.h + 5));
-            canv.lineTo(m.x - 5, m.u(m.h + 5));
-            canv.lineTo(m.x - 5, m.y - 5);
-            canv.fill();
-            return canv;
-        },
-
-        hq: function (canv, m) {
-            canv.fillStyle = "rgba(80,0,20,0.9)";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w - 5), m.y - 5);
-            canv.lineTo(m.r(m.w - 5), m.u(m.h + 5));
-            canv.lineTo(m.x - 5, m.u(m.h + 5));
-            canv.lineTo(m.x - 5, m.y - 5);
-            canv.fill();
-            return canv;
-        },
-
-        // dimensions 
-        plain: function (canv, m) {
-            canv.fillStyle = "#d6f71b";
-            //canv.strokeStyle = "black";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            canv.fill();
-            //canv.stroke();
-            canv.strokeStyle = "#f2ff00";
-            canv.beginPath();
-            for (var rand = 0; rand < width; rand += 1) {
-                var randomHeight = m.random(m.y, m.u(m.h));
-                var randomWidth = m.random(m.x, m.r(m.w));
-                canv.moveTo(randomWidth, randomHeight);
-                canv.lineTo(randomWidth + 4, randomHeight);
-            }
-            canv.stroke();
-            //canv.strokeStyle = "black";
-            canv.beginPath();
-            canv.lineTo(m.r(m.w), m.y);
-            canv.lineTo(m.r(m.w), m.u(m.h));
-            canv.lineTo(m.x, m.u(m.h));
-            canv.lineTo(m.x, m.y);
-            //canv.stroke();
-            return canv;
-        },
-
-        tallMountain: function (canv, m) {
-            canv.strokeStyle = "#41471d";
-            canv.fillStyle = "#ff8800";
-            canv.beginPath();
-            canv.moveTo(m.x, m.u(20));
-            canv.lineTo(m.x, m.u(30));
-            canv.lineTo(m.r(5), m.u(45));
-            canv.quadraticCurveTo(m.r(15), m.u(50), m.r(15), m.u(50));
-            canv.moveTo(m.r(10), m.u(35));
-            canv.lineTo(m.r(20), m.u(67));
-            canv.quadraticCurveTo(m.r(25), m.u(78), m.r(52), m.u(67));
-            canv.lineTo(m.r(62), m.u(34));
-            canv.quadraticCurveTo(m.r(68), m.u(20), m.r(38), m.y);
-            canv.quadraticCurveTo(m.r(22), m.y, m.x, m.u(20));
-            canv.fill();
-            canv.stroke();
-            return canv;
-        },
-
-        shortMountain: function (canv, m) {
-            canv.strokeStyle = "#41471d";
-            canv.fillStyle = "#ff8800";
-            canv.beginPath();
-            canv.moveTo(x, m.u(10));
-            canv.lineTo(m.r(20), m.u(m.h));
-            canv.lineTo(m.r(40), m.u(m.h));
-            canv.lineTo(m.r(m.w), m.u(10));
-            canv.quadraticCurveTo(m.r(31), m.d(9), m.r(5), m.u(10));
-            canv.quadraticCurveTo(m.r(20));
-            canv.fill();
-            canv.stroke();
-            return canv;
-        },
-
-        tree: function (canv, m) {
-            canv.strokeStyle = "black";
-            canv.fillStyle = "rgb(41,148,35)";
-            canv.beginPath();
-            //bottom
-            canv.moveTo(m.r(21), m.u(15));
-            canv.quadraticCurveTo(m.r(42), m.d(1), m.r(60), m.u(15));
-            canv.quadraticCurveTo(m.r(74), m.u(25), m.r(59), m.u(33));
-            canv.moveTo(m.r(21), m.u(15));
-            canv.quadraticCurveTo(m.r(16), m.u(20), m.r(29), m.u(30));
-            //middle
-            canv.moveTo(m.r(27), m.u(30));
-            canv.quadraticCurveTo(m.r(42), m.u(20), m.r(60), m.u(34));
-            canv.quadraticCurveTo(m.r(58), m.u(34), m.r(50), m.u(43));
-            //canv.quadraticCurveTo(m.r(58),m.u(38), m.r(50), m.u(43));
-            canv.moveTo(m.r(27), m.u(30));
-            canv.quadraticCurveTo(m.r(34), m.u(34), m.r(37), m.u(40));
-            //top
-            canv.moveTo(m.r(35), m.u(40));
-            canv.quadraticCurveTo(m.r(44), m.u(35), m.r(51), m.u(41));
-            canv.quadraticCurveTo(m.r(52), m.u(43), m.r(42), m.u(50));
-            canv.moveTo(m.r(35), m.u(40));
-            canv.quadraticCurveTo(m.r(40), m.u(42), m.r(42), m.u(50));
-            canv.fill();
-            canv.stroke();
-            return canv;
-        },
-
-        infantry: function (canv, m) {
-            canv.globalAlpha = transparent || 1;
-            canv.fillStyle = "blue";
-            canv.beginPath();
-            canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
-            canv.fill();
-            return canv;
-        },
-
-        apc: function (canv, m) {
-            canv.globalAlpha = transparent || 1;
-            canv.fillStyle = "orange";
-            canv.beginPath();
-            canv.arc(m.r(32), m.u(32), 10, 0, 2 * Math.PI);
-            canv.fill();
-            return canv;
-        }
-    };
-};
-},{}],54:[function(require,module,exports){
+},{"../controller/maps.js":8,"../input/keyboard.js":32,"../map/background.js":35,"../menu/elements/coElement.js":46,"../menu/elements/menu.js":49,"../menu/elements/playerElement.js":53,"../menu/elements/playerNumber.js":54,"../menu/elements/teamElement.js":56,"../menu/footer.js":59,"../menu/settings.js":67,"../objects/arrows":70,"../objects/button.js":71,"../settings/app.js":75,"../tools/dom.js":81,"../tools/selection.js":88,"../tools/sockets.js":89,"../user/aiPlayer.js":91}],69:[function(require,module,exports){
 Arrow = function (d) {
     this.direction = d;
     this.arrowBackground = document.createElement('div');
@@ -6049,7 +7485,7 @@ Arrow.prototype.setSize = function (size) {
     }
     return this;
 };
-},{}],55:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 arrow = require('../objects/arrow.js');
 Fader = require('../effects/fade.js');
 
@@ -6125,1111 +7561,56 @@ Arrows.prototype.up = function () { return this.u; };
 Arrows.prototype.down = function () { return this.d; };
 
 module.exports = Arrows;
-},{"../effects/fade.js":15,"../objects/arrow.js":54}],56:[function(require,module,exports){
-Building = require('../objects/building.js');
-//ListElement = require('../tools/dom/listElement.js');
-
-Build = function () {
-	this.element = document.createElement('section');
-	this.element.setAttribute('id', 'buildSelectionScreen');
-	// this.element.appendChild(this.mapElements);
-	// this.element.appendChild(this.units);
-	this.selecting = false;
-	this.player = 1;
-	this.selected = 'HQ';
+},{"../effects/fade.js":19,"../objects/arrow.js":69}],71:[function(require,module,exports){
+Button = function (id, action) {
+    this.screen = document.getElementById(id);
+    var button = document.createElement('div');
+    button.setAttribute('class', 'button');
+    button.setAttribute('id', 'startButton');
+    button.style.display = 'none';
+    button.addEventListener("click", function(event){
+    	event.preventDefault();
+    	if (action) action();
+    });
+    this.button = button;
+    this.screen.appendChild(button);
 };
-
-Build.prototype.active = function () { return this.selecting; };
-Build.prototype.set = function (element) { this.selected = element.name(); };
-Build.prototype.select = function () { 
-	if (app.key.pressed(app.key.enter() && app.key.undo(app.key.enter()))){
-		this.down();
-		this.selecting = false;
-		//this.selected = this.selection[]
-	}
-};
-
-//Building.prototype.mapElements = new ListElement('buildings', ['hq','base']);
-//Building.prototype.units = new ListElement('buildings', ['infantry','apc']);
-
-module.exports = Build;
-},{"../objects/building.js":57}],57:[function(require,module,exports){
-app = require("../settings/app.js");
-app.map = require("../controller/map.js");
-
-Terrain = require("../objects/terrain.js");
-Unit = require("../objects/unit.js");
-Position = require("../objects/position.js");
-
-Building = function (type, position, index, player) {
-    
-    this.healing = {
-        hq:["foot", "wheels"],
-        city:this.hq,
-        base:this.hq,
-        seaport:["boat"],
-        airport:["flight"]
-    } [type];
-
-    this.def = type.toLowerCase() === "hq" ? 4 : 3;
-
-	Terrain.call(this, type, position);
-    this.pos = new Position (position.x, position.y);
-	this.units = function () { return app.buildings[type]; };
-	this.canBuild = function (object) { return Object.keys(this.units()).indexOf(type) > -1; };
-    this.canHeal = function (object) { return this.healing.indexOf(object.transportation()) > -1; };
-    this.health = function () { return this._current.health; };
-    this.defense = function () { return this.def; };
-    this._current = {
-        name: type,
-    	player: player,
-    	position: position,
-    	health: 20,
-    	index: index
-    };
-};
-Building.prototype.properties = function () { 
-    var current = this._current;
-    return {
-        name: current.name,
-        player: current.player.number(),
-        position: current.position,
-        health: current.health,
-        index: current.index
-    }; 
-};
-Building.prototype.name = function (){ return this._current.name; };
-Building.prototype.defaults = { health: function () { return 20; } };
-Building.prototype.on = function (object) {
-    var objectPosition = object.position ? object.position() : object;
-    var position = this.position();
-    return position.x === objectPosition.x && position.y === objectPosition.y;
-};
-Building.prototype.type = function () { return "building";};
-Building.prototype.build = function (type) {
-
-    var player = this.player(), p = this.position();
-    var unit = new Unit(player, new Position(p.x, p.y), this.units()[type])
-
-    // create and add the new unit to the map
-    if(player.canPurchase(unit.cost())){
-        player.purchase(unit.cost());          
-        app.map.addUnit(unit);
-        if (app.user.turn()) socket.emit("addUnit", unit);
-        app.hud.setElements(app.cursor.hovered());
-        return this;
-    }
-    return false;
-};
-Building.prototype.position = function () {return new Position(this.pos.x, this.pos.y);};
-Building.prototype.occupied = function () { return app.map.top(this.position()).type() === "unit"; };
-Building.prototype.changeOwner = function(player) { app.map.changeOwner(this, player); };
-Building.prototype.setPlayer = function (player) {
-    this._current.player = player;
-    return this;
-};
-Building.prototype.player = function (){ return this._current.player; };
-Building.prototype.color = function () { return this.player() ? this.player().color() : "default"; };
-Building.prototype.capture = function (capture) {
-    return this.health() - capture > 0 ? (this._current.health -= capture) : false; 
-};
-Building.prototype.restore = function () { this._current.health = this.defaults.health(); };
-Building.prototype.class = function () { return "building"; };
-Building.prototype.index = function () { return this._current.index; };
-Building.prototype.get = function (unit) { return app.map.buildings()[this._current.index]; };
-
-// check if the unit is owned by the same player as the passed in object
-Building.prototype.owns = function (object) { 
-    return object.player && object.player() === this.player(); 
-}
-Building.prototype.select = function () {
-    this.unitScreen = new UList(app.dom.createMenu(app.buildings[this.name().toLowerCase()], ["name", "cost"], {
-        section: "buildUnitScreen",
-        div: "selectUnitScreen"
-    }).firstChild).setScroll(0, 6).highlight();
-    return this.selected = this.unitScreen.id();
-};
-Building.prototype.evaluate = function () {
-    if(!app.cursor.hidden) app.cursor.hide();
-
-    if (app.key.pressed(["up","down"]))
-        this.selected = Select.verticle(this.unitScreen.deHighlight()).highlight().id();
-
-    if (app.key.pressed(app.key.enter())) {
-        app.hud.show();
-        return this.build(this.selected);
-    }
-};
-Building.prototype.execute = function () {
-    app.hud.setElements(app.cursor.hovered());
-    app.screen.reset(); 
-    return true;
-};
-module.exports = Building;
-},{"../controller/map.js":4,"../objects/position.js":70,"../objects/terrain.js":75,"../objects/unit.js":77,"../settings/app.js":79}],58:[function(require,module,exports){
-BuildingDisplay = function () {
-	var property = function (id) { return document.getElementById(id).firstChild; };
-	this.e = app.dom.createMenu({
-	        city:{ numberOf:0, type:'city' },
-	        base:{ numberOf:0, type:'base' },
-	        airport:{ numberOf:0, type:'airport' },
-	        seaport:{ numberOf:0, type:'seaport' },
-	    }, 
-	    ['numberOf', 'canvas'], 
-	    {section:'buildingsDisplay', div:'numberOfBuildings'}, 
-        app.dom.addCanvas
-    );
-	this.city = property('city');
-	this.base = property('base');
-	this.airport = property('airport');
-	this.seaport = property('seaport');
-};
-
-BuildingDisplay.prototype.element = function () { return this.e; };
-BuildingDisplay.prototype.cities = function (number) { this.city.innerHtml = number; };
-BuildingDisplay.prototype.bases = function (number) { this.base.innerHTML = number; };
-BuildingDisplay.prototype.airPorts = function (number) { this.airport.innerHtml = number; };
-BuildingDisplay.prototype.seaPorts = function (number) { this.seaport.innerHtml = number; };
-BuildingDisplay.prototype.set = function (numberOf) {
-	if (numberOf.city) this.cities(numberOf.city);
-	if (numberOf.base) this.bases(numberOf.base);
-	if (numberOf.seaport) this.seaPorts(numberOf.seaport);
-	if (numberOf.airport) this.airPorts(numberOf.airport);
-};
-
-module.exports = BuildingDisplay;
-},{}],59:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------*\
-    
-    holds all co's, their skills and implimentation
-
-\* --------------------------------------------------------------------------------------*/
-
+Button.prototype.show = function () {this.button.style.display = '';};
+Button.prototype.hide = function () {this.button.style.display = 'none';};
+Button.prototype.remove = function (){this.screen.removeChild(this.button);};
+module.exports = Button;
+},{}],72:[function(require,module,exports){
 app = require('../settings/app.js');
-
-module.exports = function () {
-
-    var percent = function (amount) {
-        return amount / 100;
-    };
-
-    var addToEach = function(player, funk, property, amount, parameter1, parameter2, parameter3) {
-        if(!parameter) parameter = 100;
-        var units = app.map.unit;
-        for ( var u = 0; u < units.length; u += 1 ){
-            if( units[u].player === player.id ){
-                app.map.unit[u][property] = funk( unit[u], property, amount, parameter1, parameter2, parameter3 );
-            }
-        }
-    };
-
-    var editProperty = function(unit, property, amount, parameter){
-        if( unit[property] + amount > parameter ){
-            return parameter;
-        }else{
-            return unit[property] + amount;
-        }
-    };
-
-    var filter = function (unit, property, amount, max, parameter1, parameter2){
-        if(unit[parameter1] === parameter2){
-            if(unit[property] + amount > max){
-                return max;
-            }else{
-                return unit[property] + amount;
-            }
-        }
-    };
-
-    var editRange = function (unit, property, amount){
-        if(unit.damageType === 'ranged'){
-            unit.range.hi += amount;
-            return unit.range;
-        }
-    };
-
-    var editArray = function (unit, property, amount, parameter1, parameter2){
-        var baseDamage = {};
-        var damage = Object.keys(unit[property]);
-        for(var d = 0; d < damage.length; d += 1 ){
-
-            // if there is no perameter then simply find the percentage added to all units
-            if(!parameter1){
-                var dam = unit[property][damage[d]];
-
-                // add the damage plus the percent of increase
-                baseDamage[damage[d]] *= amount;
-
-            // if there is a parameter then only add to the damage type specified in the perameter
-            }else if ( unit[parameter1] === parameter2 ){
-
-                var dam = unit[property][damage[d]];
-                baseDamage[damage[d]] *= amount
-            }
-        }
-        return baseDamage;
-    };
-
-    return {
-
-        andy: function (player) {
-
-            var image = 'red';
-            var special = 100;
-            var powerActive = false;
-            var superPowerActive = false;
-            var damage = 100;
-
-            return {
-                image: image,
-                name:'Andy',
-                power:function(){
-                    addToEach(player, editProperty(), 'health', 2, 10);
-                },
-                superPower:function(){
-                    superPowerActive = true;
-                    addToEach(player, editProperty(),'health', 5, 10);
-                    addToEach(player, editProperty(),'movement', 1);
-                    special = 130;
-                },
-                attack:function(){
-                    return damage * percent(special);
-                },
-                defense:function(){
-                    return 100;
-                },
-                endPower:function(){
-                    if(superPowerActive){
-                        addToEach(player, editProperty(),'movement', -1);
-                        special = 100;
-                        superPowerActive = false;
-                    }
-                }
-            }
-        },
-        max: function (player) {
-            var image = 'blue';
-            var damage = 100;
-            var special = 120;
-            var powerActive = false;
-            var superPowerActive = false;  
-
-            return {
-                image:image,
-                name:'Max',     
-                power:function(){
-                    powerActive = true;
-                    special = 140;
-                },
-                superPower:function(){
-                    powerActive = true;
-                    special = 170;
-                },
-                attack:function(unit){
-                    if( unit.damageType === 'direct' ){
-                        return damage * percent(special);
-                    }else{
-                        return damage;
-                    }
-                },
-                defense:function(){
-                    return 100;
-                },
-                endPower:function(){
-                    if(powerActive){
-                        special = 120;
-                        powerActive = false;
-                    }
-                },
-                build:function(unit){
-                    unit.range.hi -= 1;
-                    return unit;
-                }
-            }
-        },
-        sami: function (player) {
-
-            var image = 'green';
-            var damage = 100;
-            var special = 120;
-            var powerActive = false;
-            var superPowerActive = false;  
-            var capSpecial = 150;
-            var penalty = 90;
-
-            return {
-                image:image,
-                name:'Sami',
-                power: function (){
-                    powerActive = true;
-                    addToEach(player, filter(), 'movement', 1, 20, 'transportaion', 'foot');
-                    special = 170;
-                },
-                superPower: function(){
-                   superPowerActive = true;
-                    addToEach(player, filter(), 'movement', 2, 20, 'transportaion', 'foot');
-                    special = 200;
-                    capSpecial = 2000;
-                },
-                attack: function(unit){
-                    if(unit.transportaion === 'foot'){
-                        return damage * percent(special);
-                    }else if(unit.damageType === direct){
-                        return damage * percent(penalty);
-                    }
-                    return damage;
-                },
-                defense:function(){
-                    return 100;
-                },
-                endPower:function(){
-                    if(powerActive){
-                        addToEach(player, filter(), 'movement', -1, 20, 'transportaion', 'foot');
-                    }else if(superPowerActive){
-                        addToEach(player, filter(), 'movement', -2, 20, 'transportaion', 'foot');
-                    }
-                    special = 120;
-                },
-                capture: function (capture){
-                    return capture * percent(capSpecial);
-                }
-            };
-        }
-    };
-}();
-},{"../settings/app.js":79}],60:[function(require,module,exports){
 app.dom = require('../tools/dom.js');
+app.touch = require('../input/touch.js');
+app.click = require('../input/click.js');
 
-StatusHud = function () {
-	this._context = undefined;
-    this._previous = undefined;
-    this._gold = undefined;
+// display damage percentage
+DamageDisplay = function (percentage){
+
+    var exists = document.getElementById('damageDisplay');
+    var damageDisp = document.createElement('div');
+    var damageDiv = document.createElement('div');
+
+    damageDisp.setAttribute('id', 'damageDisplay'); 
+    damageDiv.setAttribute('id', 'damage');
+
+    var heading = document.createElement('h1');
+    var percent = document.createElement('h2');
+
+    heading.innerHTML = 'DAMAGE';
+    percent.innerHTML = percentage + '%';
+
+    damageDisp.appendChild(heading);
+    damageDiv.appendChild(percent);
+    damageDisp.appendChild(damageDiv);
+
+    if (exists) exists.parentNode.replaceChild(damageDisp, exists);
+    else document.body.insertBefore(damageDisp, app.dom.insertLocation);
 };
 
-StatusHud.prototype.visibility = function (visibility) {return document.getElementById('coStatusHud').style.display = visibility;}
-StatusHud.prototype.show = function () {
-    this.visibility('');
-    this._previous = undefined;
-};
-StatusHud.prototype.hide = function () {this.visibility('none');};
-StatusHud.prototype.power = function () { return this._context; };
-StatusHud.prototype.display = function (player, location) {
-    
-    if (location !== this._previous || this._gold !== player.gold()) {
-
-        this._previous = location;
-
-        var coHud = document.getElementById('coStatusHud');
-
-        // create container section, for the whole hud
-        var hud = document.createElement('section');
-        hud.setAttribute('id', 'coStatusHud');
-
-        if (location === 'left') 
-            hud.style.left = '864px';
-
-        // create a ul, to be the gold display
-        var gold = document.createElement('ul');
-        gold.setAttribute('id', 'gold');
-
-        // create a canvas to animate the special level 
-        var power = document.createElement('canvas');
-        var context = power.getContext(app.ctx);
-        power.setAttribute('id', 'coPowerBar');
-        power.setAttribute('width', 310);
-        power.setAttribute('height', 128);
-
-        // create the g for  gold
-        var g = document.createElement('li');
-        g.setAttribute('id', 'g');
-        g.innerHTML = 'G.';
-        gold.appendChild(g);
-
-
-        // add the amount of gold the player currently has
-        var playerGold = document.createElement('li');
-        playerGold.setAttribute('id', 'currentGold');
-        playerGold.innerHTML = this._gold = app.user.turn() ? player.gold() : '?';
-        gold.appendChild(playerGold);
-
-        // put it all together and insert it into the dom
-        hud.appendChild(gold);
-        hud.appendChild(power);
-
-        if (coHud) {
-            coHud.parentNode.replaceChild(hud, coHud);
-        } else {
-            document.body.insertBefore(hud, app.dom.insertLocation);
-        }
-        // return the context for animation of the power bar
-        return this.context = context;
-    }
-    return false;
-};
-
-module.exports = StatusHud;
-},{"../tools/dom.js":85}],61:[function(require,module,exports){
-Feature = function (selected) {
-    this.element = document.createElement('div');
-    this.element.setAttribute('id', 'hud');
-    this.element.style.backgroundColor = 'yellow';
-    if (selected) this.set(selected);
-};
-
-Feature.prototype.clear = function () { while (this.element.firstChild) this.element.removeChild(this.element.firstChild); };
-Feature.prototype.hidden = function () { return this.element.style.display === 'none';};
-Feature.prototype.show = function () {
-    this.element.style.display = null;
-    this.setElement(app.cursor.selected());
-};
-
-Feature.prototype.hide = function () { this.element.style.display = 'none';};
-Feature.prototype.size = function (canvas) {
-    var screenWidth = app.screen.width();
-    var width = app.settings.hudWidth + 20;
-    var left = app.settings.hudLeft + 150 - width;
-    if (app.cursor.side('x') === 'right')
-        left = screenWidth - (screenWidth - width) + 100;
-    this.element.style.height = (app.settings.hudHeight + 20).toString() + 'px';
-    this.element.style.left = left.toString() + 'px';
-    this.element.style.width = width.toString() + 'px';
-    canvas.setAttribute('class', 'hudCanvas');
-    canvas.style.left = ((120 * (this.number - 1)) - 4).toString() + 'px';
-};
-
-Feature.prototype.addElement = function (element, type, attributes) {
-    var c = app.dom.createCanvas('hud', element, {width:128, height:128});
-    var canvas = app.dom.createElement('li', false, 'canvas');
-    canvas.appendChild(c.canvas);
-
-    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo);
-    list.appendChild(canvas);
-    this.size(canvas);
-    app.draw(c.context).hudCanvas(element.draw(), element.class());
-    this.element.appendChild(list);
-    return list;
-};
-
-Feature.prototype.set = function (element) {
-
-    this.clear();
-
-    var exists, e, show = ['name', 'canvas'];
-
-    // display unit and any unit being transported by that unit
-    if ((e = element.type()) === 'unit') 
-        this.addElement(e, 'unit', show);
-    else if (e === 'building') this.addElement(element, 'building', show);
-    else this.addElement (element, 'terrain', show);
-
-    if ((exists = document.getElementById('hud'))) 
-        exists.parentNode.replaceChild(this.element, exists);
-    else document.body.insertBefore(this.element, document.getElementById("before"));
-};
-
-module.exports = Feature;
-},{}],62:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------*\
-    
-    Footer.js controls the creation and coordination of footer elements
-
-\* --------------------------------------------------------------------------------------*/
-
-module.exports = {
-    display: function () {
-
-        var footer = app.dom.createMenu([], [], {section:'descriptionOrChatScreen', div:'descriptionOrChat'});
-        this.setElement(footer);
-        var textField = footer.children[0];
-
-        var chat = document.createElement('ul');
-        var description = document.createElement('h1');
-
-        chat.setAttribute('id','chat');
-        description.setAttribute('id','descriptions');
-
-        textField.appendChild(chat);
-        textField.appendChild(description);
-
-        return textField;
-    },
-    setElement: function (element) {this.e = element;},
-    element: function () { return this.e; }, // could cause problems
-    remove: function () { 
-        var element = this.element();
-        if (element) element.parentNode.removeChild(element); 
-    },
-    scrolling: function () {
-        var footer = document.createElement('footer');
-        var info = document.createElement('p');
-        var footSpan = document.createElement('span');
-        footSpan.setAttribute('id','footerText');
-        info.appendChild(footSpan);
-        info.setAttribute('id', 'scrollingInfo');
-        footer.setAttribute('id','footer');
-        footer.appendChild(info);
-        this.setElement(footer);
-        this.setScrollBar(info);
-        this.setSpan(footSpan);
-        return footer;
-    },
-    hide: function () { this.element().display = 'none'; },
-    show: function () { this.element().display = null; },
-    setScrollBar: function (bar) {this.s = bar;},
-    scrollBar: function () {return this.s;},
-    setText: function (text) {
-        this.t = text;
-        this.scrollBar().innerHTML = text;
-    },
-    setSpan: function (span) {this.sp = span;},
-    span: function () {return this.sp;},
-    text: function () {return this.t;},
-    width: function () {return this.element().offsetWidth;},
-    textWidth: function () {return this.span().offsetWidth;},
-    incriment: function () {return this.scrollBar().offsetWidth; },
-    increase: function () {this.move(1);},
-    decrease: function () {this.move(-1);},
-    move: function (move) {this.setPosition(this.position() + move);},
-    setPosition: function (position) {
-        this.setLeft(position);
-        this.p = position;
-    },
-    position: function () {return this.p;},
-    reset:function () {this.setPosition(-(this.incriment() * 4));},
-    setLeft: function (left) {this.scrollBar().style.left = left + 'px';},
-    increase: function () {return this.setPosition(this.position() + 1);},
-    scroll: function(message) {
-        var scope = this, position = this.position();
-        if (message) {
-            if (this.scroller) clearTimeout(this.scroller);
-            if (!position) this.setPosition(-this.incriment());
-            this.setText(message);
-        }
-        this.position() <= this.width() ? this.increase() : this.reset();
-        this.scroller = setTimeout(function(){ scope.scroll(); }, 8);
-    }
-};
-},{}],63:[function(require,module,exports){
-Hud = function (elements) {
-    this.element = document.createElement('div');
-    this.element.setAttribute('id', 'hud');
-    if (elements) this.setElements(elements);
-};
-
-Hud.prototype.clear = function () { while (this.element.firstChild) this.element.removeChild(this.element.firstChild); };
-Hud.prototype.hidden = function () { return this.element.style.display === 'none';};
-Hud.prototype.show = function () {
-    this.element.style.display = null;
-    this.setElements(app.cursor.hovered());
-};
-Hud.prototype.hide = function () { this.element.style.display = 'none'; };
-Hud.prototype.resize = function (canvas) {
-    var screenWidth = app.screen.width();
-    var width = app.settings.hudWidth * this.number;
-    var left = app.settings.hudLeft + 120 - width;
-    if (app.cursor.side('x') === 'right' && app.cursor.side('y') === 'bottom')
-        left = screenWidth - (screenWidth - app.settings.hudWidth) + 150;
-    this.element.style.height = app.settings.hudHeight.toString() + 'px';
-    this.element.style.left = left.toString() + 'px';
-    this.element.style.width = width.toString() + 'px';
-    canvas.setAttribute('class', 'hudCanvas');
-    canvas.style.left = ((120 * (this.number - 1)) - 4).toString() + 'px';
-};
-
-Hud.prototype.addElement = function (element, type, attributes) {
-
-    var c = app.dom.createCanvas('hud', element, {width:128, height:128});
-    var canvas = app.dom.createElement('li', false, 'canvas');
-    canvas.appendChild(c.canvas);
-
-    var exists, list = app.dom.createList(element, element.type(), attributes ? attributes : app.settings.hoverInfo);
-    list.appendChild(canvas);
-    this.resize(canvas);
-    app.draw(c.context).hudCanvas(element.draw(), element.class());
-    this.element.appendChild(list);
-
-    if(type === 'unit') 
-        this.number += 1;
-    return list;
-};
-
-
-Hud.prototype.setElements = function (elements) {
-
-    this.clear();
-    this.number = 1;
-
-    var i, e, element, exists, loaded, unit, building, passanger;
-
-    // display unit and any unit being transported by that unit
-    if ((unit = elements.unit)) {
-        if ((loaded = unit.loaded())){
-            for (i = 0; i < loaded.length; i += 1)
-                this.addElement(loaded[i], 'unit', ['canvas'])
-                    .setAttribute('loaded', true);
-        }
-        this.addElement(unit, 'unit', ['ammo', 'showHealth', 'name', 'fuel', 'canvas']);
-    }
-
-    if (elements.building) this.addElement(elements.building, 'building');
-    else this.addElement (elements.terrain, 'terrain');
-
-    if ((exists = document.getElementById('hud'))) 
-        exists.parentNode.replaceChild(this.element, exists);
-    else document.body.insertBefore(this.element, document.getElementById("before"));
-};
-
-module.exports = Hud;
-},{}],64:[function(require,module,exports){
-/* ------------------------------------------------------------------------------- *\
-
-    Input handles user input (Generally displayed via the footer element)
-
-\* ------------------------------------------------------------------------------- */
-
-app.type = require('../effects/typing.js');
-module.exports = {
-    
-    // takes the name of the form, the element it is being inserted into and 
-    // a placeholder/words to be displayed in the form box before entry
-	form: function (name, element, placeHolder) {
-        
-        var input = document.createElement('p');
-        input.setAttribute('class', 'inputForm');
-        input.setAttribute('id', name + 'Form');
-
-        var text = document.createElement('input');
-        text.setAttribute('id', name + 'Input');
-        text.setAttribute('class','textInput');
-        text.setAttribute('autocomplete','off');
-        text.setAttribute('type','text');
-
-        if (placeHolder) text.setAttribute('placeholder', placeHolder);
-
-        text.style.width = element.offsetWidth;
-        input.appendChild(text);
-        return input;
-    },
-
-    // returns user input if it is found and adequate
-    entry: function () {
-        var name = this.value();
-
-        // inform the user that no input was detected
-        if (!name) app.type.letters (this.description, 'A name must be entered for the game.');
-
-        // inform the user that input must be over three charachtors long
-        else if (name.length < 3) app.type.letters (this.description, 'Name must be at least three letters long.');
-        
-        // return the input value
-        else if (name) {
-            this.val = name;
-            return name;
-        }
-        return false;
-    },
-
-    // create display screen for name input
-    name: function (parent, text) {
-
-        this.a = true;
-        var existing = document.getElementById('descriptionOrChatScreen');
-        var textField = this.text = app.footer.display();
-        var tfp = textField.parentNode;
-        this.parent = tfp;
-
-        if (existing) parent.replaceChild(tfp, existing);
-        else parent.appendChild(tfp);
-
-        this.description = document.getElementById('descriptions');
-        this.description.style.paddingTop = '2%';
-        this.description.style.paddingBottom = '1.5%';
-        this.description.parentNode.style.overflow = 'hidden';
-
-        this.addInput();
-        app.type.letters(this.description, text || 'Enter name for game.');
-
-        return tfp;
-    },
-
-    // remove the screen and deactivate input
-    remove: function () {
-        this.a = false;
-        app.confirm.deactivate();
-        app.type.reset();
-        delete this.val;
-        app.footer.remove();
-        app.screen.reset();
-    },
-    active: function () { return this.a; },
-
-    // remove input form from footer
-    clear: function () { 
-        if (this.a) {
-            this.description.style.paddingTop = null;
-            this.description.style.paddingBottom = null;
-            this.nameInput.style.display = null;
-            this.nameInput.style.height = null;
-            this.a = false;
-        }
-    },
-    removeInput: function () { 
-        this.text.removeChild(this.nameInput); 
-        //this.description.style.display = 'inline-block';
-        //this.text.style.display = 'inline-block';
-    },
-    addInput: function () {
-        this.text.appendChild(this.form('name', this.text, 'Enter name here.'));
-        this.nameInput = document.getElementById('nameForm');
-        this.nameInput.style.display = 'block';
-        this.nameInput.style.height = '30%';
-        // this.description.style.display = null;
-        document.getElementById('nameInput').focus();
-    },
-    value: function () { return this.val || document.getElementById('nameInput').value; },
-    goBack: function () {
-        this.a = true;
-        this.b = true;
-    },
-    a:false,
-    back: function () { return this.b; },
-    undoBack: function () { this.b = false; },
-    activate: function () { this.a = true; },
-    descriptions: function () { return document.getElementById('descriptions'); },
-    message: function (message) { return app.type.letters(this.descriptions(), message); }
-};
-},{"../effects/typing.js":19}],65:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------*\
-    
-    creates map object
-
-\* --------------------------------------------------------------------------------------*/
-
-Validator = require('../tools/validator.js');
-
-module.exports = function (id, name, players, dimensions, terrain, buildings, units) {
-
-    var error, validate = new Validator('map');
-    var category = units.length ? 'preDeployed' : {
-        2:'two', 3:'three', 4:'four', 5:'five', 6:'six', 7:'seven', 8:'eight'
-    } [players];
-
-    this.id = id;
-    this.name = name;
-    this.players = players;
-    this.category = category;
-    this.dimensions = dimensions;
-    this.terrain = terrain;
-    this.buildings = buildings;
-    this.units = units;
-    if((error = validate.map(this)))
-        throw error;
-};
-},{"../tools/validator.js":93}],66:[function(require,module,exports){
-// map elements
-
-module.exports = function (type, x, y, player) {
-	this.type = type;
-	this.position = {x:x, y:y};
-	this.player = player;
-};
-},{}],67:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------*\
-    
-    Menu.js is a generic object that contains methods common to all menus
-
-\* --------------------------------------------------------------------------------------*/
-
-app = require('../settings/app.js');
-app.effect = require('../game/effects.js');
-
-module.exports = {
-    // for co border color
-    color: app.settings.colors,
-    playerElement: [],
-    playerColor: app.settings.playerColor,
-    time: new Date(),
-    withArrows: function () { 
-        if (!this.arrows) this.arrows = new Arrows(); 
-        return this;
-    },
-    active: function () { return this.a; },
-    activate: function () { this.a = true; },
-    deactivate: function () { this.a = false; },
-    goBack: function () { this.bck = true; },
-    back: function () {
-        if (this.bck) {
-            this.bck = false;
-            return true;
-        }
-        return false;
-    },
-    exit: function (value, callback, exit) {
-        if (app.key.pressed(app.key.enter()) || app.key.pressed(app.key.esc()) || this.boot) {
-            if (callback) callback(value);
-            if(app.key.pressed(app.key.esc()) || this.boot){
-                app.key.undo();
-                if(this.boot) this.boot = false;
-                return exit ? exit : 'back';
-            }
-            app.key.undo();
-        }
-        return false;
-    },
-    moveElements: function (direction, callback, speed, index) {
-
-        var elements = this.element.childNodes;
-        var length = elements.length;
-        var scope = this;
-        var delay = speed || 5;
-        var timeout = delay * 100;
-        this.m = true;
-
-        if(!index) index = 0;
-        if (length > index) {
-            var offScreen = Number(app.offScreen);
-            setTimeout(function() { 
-                var elem = elements[index];
-                elem.style.transition = 'top .' + delay + 's ease';
-                setTimeout(function(){elem.style.transition = null}, timeout);
-                var position = Number(elem.style.top.replace('px',''));
-                if (position) {
-                    if (direction === 'up') target = position - offScreen;
-                    else if (direction === 'down') target = position + offScreen;
-                    else return false;
-                    elem.style.top = target + 'px';
-                }
-                scope.moveElements(direction, callback, speed, index + 1);
-            }, 30);
-        } else { 
-            this.m = false;
-            if (callback) setTimeout(callback, 80);
-        }
-    },
-    moving: function () {return this.m; },
-    screen: function () {return this._s;},
-    setScreen: function (s) {this._s = s;},
-    createTitle: function (title) {
-        var element = document.createElement('h1');
-        element.setAttribute('id', 'title');
-        element.innerHTML = title;
-        this.screen().appendChild(element);
-        return element;
-    },
-    percentage: function (height) {return Number(height.replace('%','')) / 100;},
-    screenHeight: function () {return this.screen().offsetHeight;},
-    removeScreen: function () {document.body.removeChild(this.screen());},
-    createScreen: function (name) {
-        var existing = document.getElementById(name);
-        var screen = document.createElement('article');
-        screen.setAttribute('id', name);
-        existing ? document.body.replaceChild(screen, existing) : document.body.appendChild(screen);
-        this.setScreen(screen);
-        app.touch(screen).swipeScreen();
-        app.click(screen).swipeScreen();
-        return screen;
-    },
-    resetDefaults: function (type) {
-
-        var element, previous, name, child, children, 
-        childrenLength, length = app.players.length();
-
-        for (var c, n = 1; n <= length; n += 1) {
-
-            element = document.getElementById('player' + n + type);
-            previous = app.players.number(n).property(type.toLowerCase());
-
-            if ((name = previous.name ? previous.name : previous)) {
-
-                children = element.childNodes;
-                childrenLength = children.length;
-
-                for (c = 0; c < childrenLength; c += 1)
-                    if ((child = children[c]).getAttribute('class').toLowerCase() === name.toLowerCase())
-                        child.setAttribute('default',true);
-                    else if (child.getAttribute('default'))
-                        child.removeAttribute('default');
-            }
-        }
-    },
-    changeTitle: function (name) {this.screen().firstChild.innerHTML = name;},
-    rise: function (callback, speed) {this.moveElements('up', callback, speed);},
-    fall: function (callback, speed) { this.moveElements('down', callback, speed);}
-};
-},{"../game/effects.js":24,"../settings/app.js":79}],68:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------*\
-    
-    Obsticle.js is a generic object with methods common to all map obsticles
-
-\* --------------------------------------------------------------------------------------*/
-
-module.exports = function (type, defense) {
-    this.type = function () { return type };
-    this.defense = function () { return defense };
-};
-},{}],69:[function(require,module,exports){
-// create a new player object
-app = require('../settings/app.js');
-app.game = require('../game/game.js')
-app.co = require('../objects/co.js');
-app.map = require('../controller/map.js');
-app.players = require('../controller/players.js');
-app.screen = require('../controller/screen.js');
-Score = require('../definitions/score.js');
-
-var Player = function (user) {
-    this.name = function () { return user.first_name; };
-    this.fullName = function () { return user.name; };
-    this.lastName = function () { return user.last_name; };
-    this.id = function () { return user.id; };
-    this.score = new Score(true);
-    this.co = user.co || null;
-    this._current = {
-        id: user.id,
-        gold: 0,
-        special: 0,
-        ready: user.ready || false,
-        number:user.number
-    };
-};
-Player.prototype.setCo = function (co) {this.co = co;};
-Player.prototype.setProperty = function (property, value) {
-    this[property] = (property === 'co') ? app.co[value](this) : value;
-    if (app.user.number() === this.number())
-        socket.emit('setUserProperties', {property: property, value: value, player:this});
-};
-Player.prototype.property = function (property) {return this[property];};
-Player.prototype.color = function () { return this.number(); }; // <-------------- figure out color system at some point
-Player.prototype.number = function () { return this._current.number; };
-Player.prototype.index = function () { return app.players.indexOf(this); };
-Player.prototype.setNumber = function (number) { this._current.number = number; return this; };
-Player.prototype.endTurn = function () {
-
-    // update score
-    if((current = app.players.current()) === app.user.player())
-        app.user.score.update(current.score);
-
-    app.map.clean();
-
-    // get the next player
-    var player = app.players.next();
-
-    // reset this turns score
-    player.score = new Score(true);
-
-    // end power if it is active
-    player.co.endPower();
-
-    // refresh the movement points of the previous (still current) players units
-    player.recover();
-
-    // move the screen to the next players headquarters
-    app.screen.to(player.hq().position());
-
-    // add this turns income
-    player.collectIncome();
-
-    // assign the next player as the current player
-    app.players.setCurrent(player);
-
-    // if the player is ai then send the games current state 
-    if (player.isCompuer) socket.emit('aiTurn', {map:app.map.get(), player:player});
-};
-
-Player.prototype.recover = function () {
-
-    // check for units that belong to the current player
-    app.map.units().forEach(function (unit) {unit.recover();});
-
-    app.map.buildings().forEach(function (building) {
-        var unit = building.occupied();
-        if (!unit || building.owns(unit))
-            building.restore();
-    });
-    return true;
-};
-
-Player.prototype.isReady = function (state) { 
-    this._current.ready = state; 
-    app.players.checkReady();
-};
-
-Player.prototype.ready = function () { return this._current.ready; };
-Player.prototype.income = function () {
-
-    var scope = this, funds = app.game.settings().funds;
-    var income = app.map.buildings().reduce(function (money, building) {
-        return (isNaN(money) ? 0 : money)  + (scope.owns(building) ? funds : 0);
-    });
-
-    // add income to score
-    this.score.income(income);
-
-    return income;
-};
-
-Player.prototype.collectIncome = function () {
-    var gold = this.setGold(this.gold() + this.income());
-    if (gold) this.score.income(gold);
-    return gold;
-};
-
-Player.prototype.defeat = function (player, capturing) {
-
-    if (app.user.owns(this)) { socket.emit('defeat', {defeated: player, conqueror: this, capturing: capturing});};
-    this.score.conquer();
-    player.score.defeat();
-    app.players.defeat(player);
-
-    var buildings = app.map.buildings();
-
-    // assign all the buildings belonging to the owner of the captured hq to the capturing player
-    for(var b = 0; b < buildings.length; b += 1)
-        if (player.owns((building = buildings[b]))) {
-            player.lostBuilding();
-            this.score.capture();
-            if(building.name().toLowerCase() === 'hq')
-                app.map.takeHQ(building);
-            building.changeOwner(capturing ? this : capturing);
-        }
-
-    app.animate('building');
-};
-
-Player.prototype.get = function () { return app.players.get(this); };
-Player.prototype.turn = function () { return this === app.players.current(); };
-Player.prototype.first = function () { return this === app.players.first(); };
-Player.prototype.special = function () { return this._current.special; };
-Player.prototype.gold = function () { return this._current.gold; };
-Player.prototype.canPurchase = function (cost) { return this.gold() - cost >= 0; };
-Player.prototype.purchase = function (cost) {
-    this.score.expenses(cost);
-    return this.setGold(this.gold() - cost);
-};
-Player.prototype.setGold = function (gold) { return gold >= 0 ? (this._current.gold = gold) + 1 : false; };
-Player.prototype.owns = function (object) { return object.player && this.get() === object.player(); };
-Player.prototype.units = function () {
-    var units = app.map.units();
-    for (var i = 0; i < units.length; i += 1)
-        if(this.owns(units[i]))
-            return true;
-    return false;
-};
-
-Player.prototype.confirm = function () { this._current.confirmation = true; };
-Player.prototype.confirmed = function () { return this._current.confirmation; };
-Player.prototype.unconfirm = function () { delete this._current.confirmation; };
-Player.prototype.hq = function () {
-
-    // list off all buildings on map
-    var b = 0, buildings = app.map.buildings();
-
-    while ((building = buildings[b++]))
-        if (building.name().toLowerCase() === 'hq' && this.owns(building))
-            return building;
-};
-module.exports = Player;
-},{"../controller/map.js":4,"../controller/players.js":7,"../controller/screen.js":8,"../definitions/score.js":12,"../game/game.js":25,"../objects/co.js":59,"../settings/app.js":79}],70:[function(require,module,exports){
+module.exports = DamageDisplay;
+},{"../input/click.js":30,"../input/touch.js":33,"../settings/app.js":75,"../tools/dom.js":81}],73:[function(require,module,exports){
 Position = function (x, y, relativePosition) {
 	this.x = x;
 	this.y = y;
@@ -7281,22 +7662,7 @@ Position.prototype.log = function () {
 };
 
 module.exports = Position;
-},{}],71:[function(require,module,exports){
-app = require('../settings/app.js');
-Validator = require('../tools/validator.js');
-
-module.exports = function (name, obsticle) {
-
-	var error, validate = new Validator('property');
-
-	if((error = validate.defined(name, 'name') || validate.hasElements(obsticle, ['type', 'defense'])))
-	 	throw error;
-
-	this.type = obsticle.type;
-	this.defense = obsticle.defense;
-    this.name = function () { return name };
-};
-},{"../settings/app.js":79,"../tools/validator.js":93}],72:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 ScoreElement = function (name, worth) {
 	this.name = name;
 	this.worth = worth;
@@ -7304,885 +7670,7 @@ ScoreElement = function (name, worth) {
 };
 
 module.exports = ScoreElement;
-},{}],73:[function(require,module,exports){
-app = require('../settings/app.js');
-app.game = require('../game/game.js');
-app.dom = require('../tools/dom.js');
-app.touch = require('../input/touch.js');
-app.click = require('../input/click.js');
-
-module.exports = {
-
-	startButton: function (id) {
-
-        var screen = document.getElementById(id);
-        button = document.createElement('div');
-        button.setAttribute('class', 'button');
-        button.setAttribute('id', 'startButton');
-        button.style.display = 'none';
-        button.addEventListener("click", function(event){
-            event.preventDefault();
-            app.game.start();
-        });
-        screen.appendChild(button);
-
-        return {
-            show: function () {button.style.display = '';},
-            hide: function () {button.style.display = 'none';},
-            remove: function (){screen.removeChild(button);}
-        };
-    },
-
-	// display damage percentage
-    damage: function (percentage){
-
-        var exists = document.getElementById('damageDisplay');
-        var damageDisp = document.createElement('div');
-        var damageDiv = document.createElement('div');
-
-        damageDisp.setAttribute('id', 'damageDisplay'); 
-        damageDiv.setAttribute('id', 'damage');
-
-        var heading = document.createElement('h1');
-        var percent = document.createElement('h2');
-
-        heading.innerHTML = 'DAMAGE';
-        percent.innerHTML = percentage + '%';
-
-        damageDisp.appendChild(heading);
-        damageDiv.appendChild(percent);
-        damageDisp.appendChild(damageDiv);
-        if(exists){
-            exists.parentNode.replaceChild(damageDisp, exists);
-        }else{
-            document.body.insertBefore(damageDisp, app.dom.insertLocation);
-        }
-    }
-};
-},{"../game/game.js":25,"../input/click.js":27,"../input/touch.js":29,"../settings/app.js":79,"../tools/dom.js":85}],74:[function(require,module,exports){
-module.exports = function() {
-
-	var position, action, target, setElement, damage, active, newTarget = true, index = 0, 
-	keys = ['left', 'right', 'up', 'down'], cursors = {attack:'target', drop:'pointer'};
-	var refresh = function () {app.animate(['cursor']);};
-	
-	return {
-		deactivate: function () { 
-			active = false; 
-			app.animate(['cursor']);
-		},
-		set: function (element) { setElement = element; },
-		activate: function (a) { 
-			if(!a) throw new Error ('no action input for target');
-			action = a;
-			active = true; 
-		},
-		active: function () { return active; },
-		position: function () { return position; },
-		cursor: function () { return cursors[action]; },
-		chose: function (element) {
-
-			if(app.key.pressed(app.key.esc()) && app.key.undo(app.key.esc())) {
-				newTarget = true;
-	        	active = false;
-	        	action = false;				
-	        	element.displayActions();
-				return refresh();
-			}
-
-	        var i, k, pressed, length = element.targets().length;
-
-	        // move to  and from targets units
-	        if (length > 1)
-	        	for (i = 0; i < length; i += 1)
-	            	if ((k = keys[i]) && app.key.pressed(k) && app.key.undo(k) && (pressed = true)) 
-	               		index += k === 'left' || k === 'down' ? -1 : 1;
-
-	        if (pressed || newTarget) {
-
-	        	newTarget = false;
-	        	index = index < 0 ? length - 1 : index = index >= length ? 0 : index;
-	            target = element.targets(index);
-		        var pos = target.position();
-
-	            if (action === 'attack') {
-
-		            damage = element.target(index);
-
-		            // calcualte damage percentage for each targets unit
-		            app.screens.damage(Math.round(damage));
-	        	}
-	            // create target for rendering at specified coordinates
-	            position = {x:pos.x, y:pos.y};
-	            refresh();
-	        }
-
-	        // if the target has been selected return it
-	        if (app.key.pressed(app.key.enter()) && app.key.undo(app.key.enter())){
-	        	element[action](target, damage, true);
-	        	newTarget = true;
-	        	active = false;
-	        	action = false;
-	        	return target;
-	        }
-	        return false;
-	    }
-	};
-}();
 },{}],75:[function(require,module,exports){
-/* ---------------------------------------------------------------------- *\
-    
-    Terrain.js holds the terrain object, defining specific map terrain
-
-\* ---------------------------------------------------------------------- */
-
-app = require('../settings/app.js');
-app.properties = require('../definitions/properties.js');
-Position = require('../objects/position.js');
-Validator = require('../tools/validator.js');
-
-Terrain = function (type, position) {
-
-	var error, properties = new app.properties();
-    var validate = new Validator('terrain');
-    var property = properties[type];
-    
-     if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense'])))
-		 throw error;
-
-    this.n = property.name();
-	this.t = property.type();
-    this.d = property.type();
-    this.pos = new Position(position.x, position.y);
-	this.defense = property.defense;
-    this.name = function () { return this.n; };
-	this.draw = function () { return type; };
-    this.position = function () { return new Position(this.pos.x, this.pos.y); };
-};
-
-Terrain.prototype.type = function () { return this.t; };
-Terrain.prototype.draw = function () { return this.d; };
-Terrain.prototype.class = function () { return 'terrain'; };
-Terrain.prototype.on = function (object) {
-    var objectPosition = object.position ? object.position() : object;
-    var position = this.position();
-    return position.x === objectPosition.x && position.y === objectPosition.y;
-};
-
-module.exports = Terrain;
-
-},{"../definitions/properties.js":11,"../objects/position.js":70,"../settings/app.js":79,"../tools/validator.js":93}],76:[function(require,module,exports){
-module.exports = function () {
-
-	var element = require('../objects/mapElement.js'),
-	map = require('../objects/map.js');
-	terrain = [
-		new element('tallMountain', 5, 6),
-		new element('tallMountain', 8, 9),
-		new element('tallMountain', 3, 15),
-		new element('tallMountain', 4, 20),
-		new element('tallMountain', 10, 4),
-		new element('tallMountain', 8, 12),
-		new element('tallMountain', 5, 12),
-		new element('tallMountain', 1, 15),
-		new element('tallMountain', 3, 9),
-		new element('tallMountain', 4, 6),
-		new element('tallMountain', 4, 16),
-		new element('tree', 2, 16),
-		new element('tree', 1, 18),
-		new element('tree', 3, 6),
-		new element('tree', 3, 5),
-		new element('tree', 15, 12),
-		new element('tree', 10, 10),
-		new element('tree', 11, 15),
-		new element('tree', 20, 3),
-		new element('tree', 19, 5)
-	],
-	buildings = [
-		new element('hq', 0, 9, 1),
-		new element('hq', 20, 9, 2),
-		new element('base', 4, 9, 1),
-		new element('base', 16, 9, 2)
-	];
-	return new map(null, 'test map #1', 2, {x:20, y:20}, terrain, buildings, []);
-}
-},{"../objects/map.js":65,"../objects/mapElement.js":66}],77:[function(require,module,exports){
-app = require('../settings/app.js');
-app.settings = require('../settings/game.js');
-app.game = require('../game/game.js');
-app.effect = require('../game/effects.js');
-app.animate = require('../game/animate.js');
-app.user = require('../objects/user.js');
-app.map = require('../controller/map.js');
-app.players = require('../controller/players.js');
-
-Validator = require('../tools/validator.js');
-Position = require('../objects/position.js');
-Building = require('../objects/building.js');
-
-Defaults = function (properties) {
-    this.properties = {
-        ammo:properties.ammo,
-        fuel:properties.fuel,
-        movement:properties.movement,
-        vision:properties.vision,
-    };
-};
-
-Defaults.prototype.ammo = function () { return this.properties.ammo; };
-Defaults.prototype.fuel = function () { return this.properties.fuel; };
-Defaults.prototype.movement = function () { return this.properties.movement; };
-Defaults.prototype.vision = function () { return this.properties.vision; };
-Defaults.prototype.health = function() { return 100; };
-
-Unit = function (player, position, info) {
-
-    this.validate = new Validator('unit'); 
-
-    if(!player) throw new Error('No player defined for unit');
-
-    var validProperties = [ 'transportaion' ];
-
-    if(info.properties.canAttack.length)
-        validProperties.unshift('baseDamage', 'damageType');
-
-    if((error = this.validate.hasElements(info.properties, validProperties)))
-        throw error;
-
-    Building.call(this, 'unit', new Position(position.x, position.y), app.players.length(), player);
-    this.id = app.increment.id();
-    this.properties = info.properties;
-    this.properties.cost = info.cost;
-    this.user = player;
-
-    this.player = function () { return this.user;};
-
-    this.position = function () { 
-        var pos = this._current.position;
-        return new Position(pos.x, pos.y);
-    };
-
-    this.setPosition = function (p) { this._current.position = new Position(p.x, p.y); };
-    this.type = function () { return 'unit'; };
-    this.name = function () { return this.properties.name; };
-    this.draw = function () { return this.name().toLowerCase(); };
-    this.maxLoad = function () { return this.properties.maxLoad; };
-    this.canLoad = function () { return this.properties.load };
-    this.rangeLimits = function() { return this.properties.range; };
-    this.damageType = function () { return this.properties.damageType; };
-    this.baseDamage = function () { return this.properties.baseDamage; };
-    this.movable = function () {return this.properties.movable;}; 
-    this.transportaion = function(){return  this.properties.transportaion;};
-    this.movementCost = function(obsticle){return this.properties.movementCosts[obsticle]; };
-    this.canAttack =  function(unit){ return !this.canLoad() && this.properties.canAttack.indexOf(unit.transportaion()) > -1;};
-    this.turn = function(){ return app.players.current().owns(this); };
-    this.weapon1 = function () {return this.properties.weapon1 };
-    this.weapon2 = function () { return this.properties.weapon2 };
-    this.cost = function () { return this.properties.cost };
-    this.defaults = new Defaults(this.properties);
-    this._current.name = this.properties.name;
-    this._current.actions = {wait:true};
-    this._current.targets = [];
-    this._current.damage = [];
-    this._current.health = this.defaults.health();
-    this._current.ammo = this.defaults.ammo();
-    this._current.fuel = this.defaults.fuel();
-    this._current.movement = 0;
-    this._current.vision = this.defaults.vision();
-    this._current.selectable = false;
-    this._current.position = new Position(position.x, position.y);
-    if(this.canLoad())
-        this._current.loaded = [];
-    this.moves = [];
-    this.mov = 0;
-    this.health = function () { return this._current.health; };
-    this.showHealth = function () { return Math.ceil(this._current.health / 10)};
-    this.ammo = function () { return this._current.ammo };
-    this.fuel = function () { return this._current.fuel };
-};
-
-Unit.prototype.movement = function () { return this._current.movement; };
-Unit.prototype.vision = function (){ return this._current.vision; };
-Unit.prototype.moveCost = function (obsticle) {
-    if(obsticle.type() === 'unit')
-        if(this.owns(obsticle))
-            obsticle = obsticle.occupies();
-        else return this.movement();
-    return this.movementCost(obsticle.type()); 
-};
-
-Unit.prototype.canBuildOn = function (landing) { return this.movementCost(landing) < this.movement(); };
-Unit.prototype.refuel = function () { this._current.fuel = this.defaults.fuel();};
-Unit.prototype.reload = function () { this._current.ammo = this.defaults.ammo();};
-Unit.prototype.inc = 0;
-Unit.prototype.incriment = function () {
-    this.inc += 1;
-    return {inc: this.inc}['inc'];
-};
-
-Unit.prototype.recover = function () {
-    this._current.actions = {wait:true};
-    this._current.movement = this.defaults.movement();
-    this._current.attacked = false;
-    this._current.captured = false;
-    this._current.targets = [];
-    this._current.damage = [];
-    this.mov = 0;
-    this._current.selectable = true;
-    this.repair();
-};
-
-Unit.prototype.class = function () { return 'unit'; };
-Unit.prototype.range = function (allowed) {
-
-    var position = this.position(),
-    dim = app.map.dimensions(),
-    range = (allowed * 2),
-    half = Math.ceil(range / 2),
-    right = position.x + allowed,
-    left = position.x - allowed,
-    array = [], abs = Math.abs;
-
-    // get the diamond pattern of squares
-    for(var i, y, t, b, obsticle, x = left, inc = 0; x <= right, inc <= range; x += 1, inc += 1) {
-
-        i = inc > half ? range - inc : inc;
-        t = (t = position.y - i) > 0 ? t : 0; // top
-        b = (b = position.y + i) < dim.y ? b : dim.y - 1; // bottom
-
-        // add all reachable squares to array
-        if(x >= 0 && x <= dim.x)
-            for (y = t; y <= b; y += 1)
-                array.push(app.map.top(new Position(x,y)));
-    }
-    return array;
-};
-
-Unit.prototype.ranged = function () { return this.rangeLimits().high > 1; };
-Unit.prototype.movementRange = function (distance) {
-    var allowed = distance !== undefined ? Math.min(distance, this.movement()) : this.movement();
-    var i, reachable, range = this.range(allowed), array = [];
-
-    for(var i = 0; i < range.length; i += 1)
-        if(this.on(range[i]))
-            range.unshift(range.splice(i,1)[0]);
-
-    reachable = (distance !== undefined) ? range : app.path.reachable(this, true);
-
-    for (i = 0; i < reachable.length; i += 1)
-        if(reachable[i].type() !== 'unit' || this.owns(reachable[i]))
-            array.push(reachable[i]);
-
-    return array;
-};
-
-Unit.prototype.showAttackRange = function () {
-
-    if(app.key.keyUp(app.key.range()) && app.key.undoKeyUp(app.key.range())) {
-
-        this.displayingRange = false;
-        app.attackRange.clear();
-        app.effect.refresh();
-        return false;
-
-    } else if (!this.displayingRange && app.key.pressed(app.key.range()) && app.key.undo(app.key.range())) {
-        
-        if (this.ranged()) app.path.set(this.attackRange());
-        else {
-
-            var range = app.attackRange.reachable(this, false, this.defaults.movement());
-            var neighbor, neighbors, length = range.length;
-
-            for (var j, i = 0; i < length; i += 1) {
-                neighbors = app.map.getNeighbors(range[i].position());
-                for(j = 0; j < neighbors.length; j += 1){
-                    neighbor = neighbors[j];
-                    if (!neighbor.closed && app.map.close(neighbor))
-                        range.push(neighbor);
-                }
-            }
-            app.map.clean(range);
-            app.attackRange.set(range);
-        }
-        this.displayingRange = true;
-    }
-    app.effect.refresh();
-    return this;
-};
-
-Unit.prototype.attackRange = function () {
-
-    var array = [];
-    var range = this.rangeLimits();
-    var high = this.range(range.high);
-    var low = this.range(range.low - 1);
-
-    for (var push, h = 0; h < high.length; h += 1){
-
-        push = true;
-
-        for(var l = 0; l < low.length; l += 1)
-            if(high[h].on(low[l]))
-                push = false;
-
-        if(push) array.push(high[h]);
-    }
-
-    return array;
-};
-
-Unit.prototype.attackable = function (position) {
-
-    // get list of units
-    var range = this.attackRange();
-    var array = [];
-
-    for (var element, i = 0; i < range.length; i += 1){
-        element = range[i];
-        if(element.type() === 'unit' && !this.owns(element) && this.canAttack(element))
-            array.push(element);
-    }
-
-    // if their are any units in the attackable array, then return it, otherwise return false
-    return array.length ? array : false;
-};
-
-Unit.prototype.inRange = function (unit, range) {
-    for(var i = 0; i < range.length; i += 1)
-        if(unit.on(range[i]))
-            return true;
-    return false;
-};
-
-Unit.prototype.inAttackRange = function (unit){ return this.inRange(unit, this.attackRange()); };
-Unit.prototype.inMovementRange = function (unit) { return this.inRange(unit, this.movementRange()); };
-
-// ------------------------------ abilities -------------------------------------------------------
-
-Unit.prototype.canCombine = function (unit) {
-
-    // if the unit being landed on belongs to the current player, is the same type of unit but is not the same unit
-    if(unit && unit.player().turn() && unit.index() !== this.index()){
-
-        // if is the same unit then unit units
-        if (unit.name() === this.name() && unit.health() < unit.defaults.health())
-            return true;
-
-        // if the unit is a transport and the unit being moved into can be loaded into that transport, then show the option to load into the transport
-        else if(unit.canTransport(this) && (!unit.loaded() || unit.loaded().length < unit.maxLoad()))
-            return true;
-    }
-    return false;
-};
-
-Unit.prototype.canTransport = function (unit) { return this.canLoad() ? this.canLoad().hasValue(unit.name().toLowerCase()) : false;};
-Unit.prototype.canMove = function (position) {
-    var i, range = this.movementRange();
-    for (i = 0; i < range.length; i += 1)
-        if (( r = range[i]).x === position.x && range.y === position.y)
-            return true;
-    return false;
-};
-
-// -------------------------------- self ---------------------------------------------------------
-
-
-Unit.prototype.get = function() { return app.map.getUnit(this); };
-Unit.prototype.index = function () { return app.map.getIndex(this, app.map.units()); };
-
-// ------------------------------ recovery --------------------------------------------------------------
-
-Unit.prototype.heal = function (health) { this._current.health += health || 1; };
-Unit.prototype.needsRepair = function () {
-    for(var rep, i = 0; i < 3; i += 1)
-        if(this._current[(rep = ['health', 'fuel', 'ammo'][i])] < this.defaults[rep]())
-            return true;
-    return false;
-};
-
-Unit.prototype.repair = function () {
-    var square = this.occupies();
-    if(this.needsRepair() && this.validate.building(square) && square.canHeal(this) && this.player().get().purchase(this.cost() / 10)){
-        if(this.health() < this.defaults.health()) this._current.health += 1;
-        this.reload();
-        this.refuel();
-    }
-};
-
-// --------------------------------location --------------------------------------------------------
-
-Unit.prototype.position = function () { 
-    var pos = this._current.position;
-    return new Position(pos.x, pos.y);
-};
-
-Unit.prototype.setPosition = function (p) { return this._current.position = this.pos = new Position(p.x, p.y); };
-Unit.prototype.distanceFrom = function (target) {
-    var position = this.position();
-    return Math.abs((position.x - target.x) + (position.y - target.y)); 
-};
-
-// ---------------------------- work out inheritance -----------------------------------------
-
-Unit.prototype.on = function (object) {
-    var objectPosition = object.position ? object.position() : object;
-    var position = this.position();
-    return position.x === objectPosition.x && position.y === objectPosition.y;
-};
-
-Unit.prototype.owns = function (object) { return object.player && object.player().id() === this.player().id(); };
-Unit.prototype.compare = function (unit) { 
-    return {
-        vision: this.vision() - unit.vision(),
-        danger: unit.inAttackRange(this) ? 1 : 0,
-        range: this.inAttackRange(unit) ? 1 : 0,
-        fuel: this.fuel - unit.fuel(),
-        ammo: this.ammo() - unit.ammo(),
-        health: this.health() - unit.health()
-    };
-};
-
-// ---------------------------------- actions ----------------------------------------------------------
-
-Unit.prototype.wait = function () {
-    this.deselect();
-    app.dom.remove('actionHud');
-};
-
-Unit.prototype.canCapture = function (position) {
-
-    // get the building that the unit is on
-    var building = this.occupies(position || this.position());
-
-    // if the selected unit can capture buildings then continue
-    if (this.properties.capture && this.validate.building(building) && !this.owns(building) && this.on(building)) 
-        return building;
-    return false;
-};
-
-Unit.prototype.capture = function (building) { 
-
-    if(this.canCapture(building.position())){
-
-        var player = this.player();
-        var capture = player.co.capture ? player.co.capture(this.showHealth()) : this.showHealth();
-
-        // if the building has not been captured all the way
-        if (building.health() - capture > 0) {
-
-            // subtract the amount of capture dealt by the unit from the buildings capture level
-            building.capture(capture);
-
-        // if the building is done being captured and is not a headquarters
-        } else if (building.name().toLowerCase() !== 'hq') {
-
-            // assign the building to the capturing player
-            player.score.capture();
-            building.changeOwner(player);
-            building.restore();
-
-        } else player.defeat(building.player(), true);
-
-        this.deselect();
-        this.captured = true;
-        if(app.user.turn()) socket.emit('captured', {unit:this, building:building});
-    }
-};
-
-Unit.prototype.targets = function (index) { 
-    if (this.loaded() && !this._current.targets.length) {
-        var i, neighbors = app.map.getNeighbors(this.position());
-        for (i = 0; i < neighbors.length; i += 1)
-            if ((neighbor = neighbors[i]).type() !== 'unit' || neighbor.canLoad())
-                this._current.targets.push(neighbor);
-    }
-    return index === undefined ? this._current.targets : this._current.targets[index]; 
-};
-
-Unit.prototype.target = function (index) { return this._current.damage[index] !== undefined ? this._current.damage[index] : (this._current.damage[index] = app.calculate.damage(this.targets(index), this));};
-
-Unit.prototype.selectable = function () { return this._current.selectable; };
-Unit.prototype.select = function () {
-
-    if(!this.selectable())
-        return false;
-
-    // set the range highlight to the calculated range
-    app.effect.setHighlight(this.movementRange());
-
-    // animate changes
-    app.animate('effects');
-
-    return true;
-};
-
-Unit.prototype.previous = function () {return this.moves[this.moves.length - 1]; };
-Unit.prototype.attack = function(unit, damage, attacking){
-
-    if (damage === undefined) 
-        damage = app.calculate.damage(unit, this);
-
-    var attacker = this.player();
-    var attacked = unit.player();
-
-    if (unit.health() - damage > 0){
-        unit.takeDamage(damage);
-        attacker.score.damageDealt(damage);
-        attacked.score.damageTaken(damage);
-    } else {
-        attacker.score.destroyedUnit();
-        attacked.score.lostUnit();
-        app.map.removeUnit(unit);
-        if (!attacked.units())
-            attacker.defeat(attacked);
-    }
-
-    if(app.user.owns(this) && !this.attacked()){
-        app.cursor.show();
-        this.deselect();    
-        app.dom.remove('damageDisplay');
-        socket.emit('attack', { attacker:this, attacked:unit, damage:damage });
-    }
-    this.refresh();
-    if (attacking) this._current.attacked = true;
-    return this._current.selectable = false;
-};
-
-Unit.prototype.takeDamage = function (damage) { return this._current.health - damage > 0 ? this._current.health -= damage : app.map.removeUnit(this); };
-Unit.prototype.attacked = function () { return this._current.attacked; };
-
-Unit.prototype.moved = function (position) {
-    var i, move = 0; path = app.path.get();
-    for (i = 1; i < path.length; i += 1){
-        move += this.moveCost(path[i]);
-        if (path[i].on(position))
-            return move;
-    }
-    return move;
-};
-
-Unit.prototype.move = function (position, moved) {
-    
-    var pos = this.position();
-
-    // subtract movement
-    this._current.movement -= (this.mov = moved);
-    this._current.targets = [];
-
-    // mark how much fuel has been used
-    this.player().score.fuel(moved);
-    this._current.fuel -= moved;
-
-    // save move
-    if (moved > 0) {
-        this.moves.push(new Position(pos.x, pos.y));
-    } else this.moves.pop();
-
-    // change selected units position to the specified location
-    app.map.moveUnit(this, new Position(position.x, position.y));
-
-    if(app.user.turn()) socket.emit('moveUnit', {id:this.id, position: position, moved: moved});
-
-    this.refresh();
-};
-
-Unit.prototype.properties = function () {return this._current;};
-Unit.prototype.action = function () { return this._current.action; };
-Unit.prototype.setAction = function (action) { this._current.action = action; };
-Unit.prototype.actions = function (position) {
-
-    var canAttack, canCapture, unit, 
-    actions = this._current.actions, 
-    position = position || this.position();
-
-    // may cause problems over time
-    if(position === this.previous())
-        return actions;
-
-    if((canAttack = this.attackable(position))) 
-        actions.attack = canAttack;
-
-    if((canCapture = this.canCapture(position))) 
-        actions.capture = canCapture;
-
-    if ((unit = app.map.occupantsOf(position).unit) && this.canCombine(unit))
-        if(unit.name() === this.name())
-            actions.join = unit;
-        else actions.load = unit;
-
-    if (this.loaded()) actions.drop = this._current.loaded;
-
-    // if there are any actions that can be taken then return them
-    return actions;
-};
-Unit.prototype.displayActions = function (position) {
-
-    var actions = {}, options = this.actions(position);
-
-    Object.keys(options).forEach(function (action) {
-        if (action === "drop" && options.drop.isArray())
-            options.drop.forEach(function (unit, index) {
-                actions[index] = { name: action };
-            });
-        else actions[action] = { name: action };
-    });
-
-    app.coStatus.hide();
-
-    this.allActions = new UList(app.dom.createMenu(
-        actions, 
-        app.settings.actionsDisplay, 
-        {section: 'actionHud', div: 'actions'}
-    ).firstChild).highlight();
-
-    return this.selected = this.allActions.id();
-};
-Unit.prototype.refresh = function () {app.animate('unit');};
-
-Unit.prototype.evaluate = function (position) {
-
-    if(app.cursor.hidden() && !app.target.active()){
-        
-        if (app.key.pressed(app.key.esc())) {
-
-            this.moveBack();
-            this.escape();
-            this.deselect();
-
-        } else if ((actions = this.actions(position)) && this.selected) {
-
-            if (app.key.pressed(["up","down"]))
-                this.selected = Select.verticle(this.allActions.deHighlight()).highlight().id();
-
-            var action = this.selected;
-
-            if (app.key.pressed(app.key.enter())) {
-                if (action === 'attack') {
-                    this.setTargets(actions.attack);
-                    app.target.activate(action);
-                } else if (action === 'drop') {
-                    app.target.activate((this.unloading = actions[action]));
-                } else {
-                    this[action](actions[action]);
-                    app.cursor.show()
-                }
-                this.escape();
-            }
-        }
-    }
-};
-Unit.prototype.setTargets = function (targets) {this._current.targets = targets;};
-Unit.prototype.moveBack = function () { if (this.mov) this.move(this.previous(), -this.mov); };
-Unit.prototype.execute = function (p) {
-
-    // and remove the range and path highlights
-    this.move(new Position(p.x, p.y), this.moved(p));
-
-    // display path to cursor
-    app.path.clear();
-    app.range.clear();
-
-    // if there are actions that can be taken then display the necessary options
-    if (!this.displayActions(p)) app.screen.reset();
-
-    app.cursor.hide();
-};
-
-Unit.prototype.join = function (unit) {
-
-    var max, property, properties = app.settings.combinableProperties;
-
-    // emit units to be combined to other players games for syncronization
-    if (app.user.turn()) socket.emit('joinUnits', {unit:unit, selected:this});
-
-    // combine properties of the selected unit with the target unit
-    for (var property, u = 0; u < properties.length; u += 1){
-        property = properties[u];
-        max = unit.defaults[property]();
-        if( unit[property]() + this[property]() < max )
-            unit._current[property] += this[property]();
-        else  unit._current[property] = max;
-    }
-
-    // remove selected unit  
-    app.map.removeUnit(this);
-    this.deselect();
-    return unit;
-};
-
-Unit.prototype.loaded = function () { return this._current.loaded && this._current.loaded.length ? this._current.loaded : false; };
-Unit.prototype.getIndexOfLoaded = function (unit) {
-    var loaded = this._current.loaded;
-    for (var i = 0; i < loaded.length; i += 1)
-        if(loaded[i].id === unit.id)
-            return i;
-    return false;
-};
-
-Unit.prototype.load = function (unit) {
-    unit._current.loaded.push(app.map.removeUnit(this));
-    if (app.user.turn()){
-        socket.emit('loadUnit', { transport: unit.id, passanger: this.id });
-        this.deselect();
-    }
-    return unit;
-};
-
-Unit.prototype.drop = function (u, i) { 
-    var p = u.pos;
-    var index = i !== undefined ? i : this.unloading;
-    var unit = this._current.loaded.splice(index, 1)[0];
-    unit.setPosition(new Position(p.x, p.y));
-    app.map.addUnit(unit);
-    if(app.user.turn()){
-        socket.emit('unload', {id:this.id, pos:p, index:index});
-        this.deselect();
-    }
-};
-
-Unit.prototype.deselect = function () {
-    app.screen.reset();
-    app.hud.show();
-    app.cursor.show();
-    app.coStatus.show();
-    app.target.deactivate();
-    app.hud.setElements(app.cursor.hovered());
-};
-
-Unit.prototype.escape = function () {
-    app.key.undo();
-    app.coStatus.show();
-    // app.options.deactivate();    
-    app.dom.remove('actionHud');
-};
-
-Unit.prototype.occupies = function () {
-    var square = app.map.occupantsOf(this.position());
-    return square.building !== undefined ? square.building : square.terrain;
-};
-
-module.exports = Unit;
-},{"../controller/map.js":4,"../controller/players.js":7,"../game/animate.js":20,"../game/effects.js":24,"../game/game.js":25,"../objects/building.js":57,"../objects/position.js":70,"../objects/user.js":78,"../settings/app.js":79,"../settings/game.js":81,"../tools/validator.js":93}],78:[function(require,module,exports){
-Score = require('../definitions/score.js');
-
-module.exports = function (info) {
-	this.name = function () { return info.name; };
-	this.first_name = function () { return info.first_name; };
-	this.last_name = function () { return info.last_name; };
-	this.email = function () { return info.email; };
-	this.id = function () { return info.id; };
-	this.gender = function () { return info.gender; };
-	this.link = function () { return info.link; };
-	this.location = function () { return info.locale; };
-	this.turn = function () { return this.player().turn(); };
-	this.player = function () { return app.players.get(this); };
-	this.first = function () { return !(player = this.player()) || player === app.players.first(); };
-	this.owns = function (object) { return this.player().owns(object); };
-	this.number = function () { return this.player().number(); };
-	this.raw = function () { return info };
-	this.score = new Score();
-};
-},{"../definitions/score.js":12}],79:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\
     
     App.js is a container and holds variables for all elements of the application 
@@ -8234,7 +7722,7 @@ module.exports = {
         return this;
     }
 };
-},{"../settings/app.js":79}],80:[function(require,module,exports){
+},{"../settings/app.js":75}],76:[function(require,module,exports){
 /* ------------------------------------------------------------------------------- *\
 
     Default values for game settings
@@ -8250,7 +7738,7 @@ module.exports = function () {
     this.power = 'on';
     this.visuals = 'off';
 };
-},{}],81:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     settings consolidates all the customizable options and rules for the game into
@@ -8509,7 +7997,7 @@ app.settings = {
 };
 
 module.exports = app.settings;
-},{"../settings/app.js":79}],82:[function(require,module,exports){
+},{"../settings/app.js":75}],78:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
     
     takes a string as an optional argument, this string is used as the name of a property 
@@ -8586,81 +8074,93 @@ Heap.prototype.min = function () {return this.heap.slice(0,1)[0];},
 Heap.prototype.size = function () {return this.heap.length;}
 
 module.exports = Heap;
-},{}],83:[function(require,module,exports){
-/* --------------------------------------------------------------------------------------*\
+},{}],79:[function(require,module,exports){
+/* ----------------------------------------------------------------------------------------------------------*\
+    
+    Calculate.js handles necessary game calculations 
 
-    handle user to user chat
-
-\* --------------------------------------------------------------------------------------*/
+\* ----------------------------------------------------------------------------------------------------------*/
 
 app = require('../settings/app.js');
-app.user = require('../objects/user.js');
+app.settings = require('../settings/game.js');
+app.map = require('../controller/map.js');
+app.screen = require('../controller/screen.js');
 
-module.exports = {
-    // add message for display, input is message object containing a user name and id, or just a message
-    post: function (mo) {
+module.exports = function () {
 
-        // construct message with user name or if there is no user name just use the message
-        var message = mo.user ? mo.user + ': ' + mo.message : mo.message;
+    var abs = Math.abs;
+    var floor = Math.floor;
+    var random = Math.random;
+    var round = Math.round;
 
-        // if the message is a string then append it to the chat element
-        if(this.chat && typeof (message) === 'string') {
-            var chatMessage = document.createElement('li'); // create a list element to contain the message
-            chatMessage.setAttribute('class', 'message'); // set attribute for styling
-            chatMessage.innerHTML = message; // set text to message
-            this.chat.appendChild(chatMessage); // append the li element to the chat element
-            return message; // return the appended message
-        }
-        return false;
-    },
+    var rand = function(){return floor((random() * 9) + 1)};
 
-    // send message, input is an object/element containing textual user input accessed by ".value"
-    send: function (element) {
+    return {
 
-        var player = app.user.player();
-        var text = this.input(); // user text input
-        var name = player.name(); // get user name of user sending message
+        arrayDifferance: function (array1, array2) {
+            var array = [];
+            for (var push, h = 0; h < array1.length; h += 1){
+                push = true;
+                for(var l = 0; l < array2.length; l += 1)
+                    if(array1[h] === array2[l])
+                        push = false;
+                if(push) array.push(array1[h]);
+            }
+            return array;
+        },
 
-        if (name && text){ // make sure there is user input and a user name
-            var message = { message:text, user:name }; // create message object containing user name and input text
-            socket.emit('gameReadyChat', message); // transmit message to chat room
-            element.value = ''; // reset the input box to empty for future input
-            return message; // return the input message
-        }
-        return false;
-    },
+        distance: function (a, b) { return abs(a.x - b.x) + abs(a.y - b.y); },
 
-    input: function () { return this.chatInput.value; },
-    display: function () {
-        var bb = 5;
-        this.chatScreen = document.getElementById('descriptionOrChatScreen');
-        this.chatScreen.style.height = this.chatScreen.offsetHeight * 1.8 + 'px';
-        this.chatBox = document.getElementById('descriptionOrChat');
-        this.chat = document.getElementById('chat');
-        this.chatBox.style.height = '77%';
-        this.chatBox.style.borderBottomWidth = bb + 'px';
-        this.chatInput = document.getElementById('chatInput');
-        document.getElementById('descriptions').innerHTML = '';
-        this.chatForm = document.getElementById('chatForm');
-        this.chatForm.style.display = 'block';
-        this.chatForm.style.height = '15%';
-        this.chatForm.style.borderBottomWidth = bb + 'px';
-        this.chat.style.display = 'block';
-        this.chatInput.focus();
-    },
+        numberOfBuildings: function(map) {
 
-    remove: function () {
-        this.chatScreen.style.height = '20%';
-        var doc = this.chatBox;
-        doc.style.height = '83%';
-        doc.style.borderBottomWidth = '12px';
-        this.chat.style.display = 'none';
-        var form = this.chatForm;
-        form.style.height = '0px';
-        form.style.display = 'none';
-    }
-};
-},{"../objects/user.js":78,"../settings/app.js":79}],84:[function(require,module,exports){
+            // get selected maps building list
+            var type, all = map.buildings, buildings = {};
+
+            if (!all) return false;
+
+            // add one for each building type found  to the building display list
+            for (var n = 0; n < all.length; n += 1) {
+                type = all[n].type;
+                if (type !== 'hq') {
+                    if (isNaN(buildings[type])) buildings[type] = 1;
+                    else buildings[type] += 1; 
+                }
+            }
+            return buildings;
+        },
+
+        longestLength: function (arrays) {
+            var i, longest = arrays[0], length = arrays.length;
+            if(length > 1)
+                for (i = 1; i < length; i += 1)
+                    if(arrays[i].length > longest.length)
+                        longest = arrays[i];
+            return longest.length;
+        },
+
+        damage:  function (attacked, attacker) {
+
+            var r = rand();
+            var baseDamage = attacker.baseDamage()[attacked.name().toLowerCase()];
+            var coAttack = attacker.player().co.attack(attacker);
+            var coDefense = attacked.player().co.defense(attacked);
+            var terrainDefense = attacked.occupies().defense() || 1;
+
+            // return the health of the attacker, multiplied by
+            return round((attacker.showHealth()/10)
+
+                // absolute value of the amount of damage, multiplied by the co attack and a random number
+                * abs(baseDamage * coAttack/100 + r)
+
+                // absolute valye of the defense of co, plus the terrain defense bonus, 
+                // plus the health of the unit, subtracted from 200, all divided by one hundred
+                * abs((200-(coDefense + terrainDefense * attacked.showHealth()))/100));
+        },
+        
+        random: function(range) { return Math.floor(Math.random() * range); }
+    };
+}();
+},{"../controller/map.js":7,"../controller/screen.js":11,"../settings/app.js":75,"../settings/game.js":77}],80:[function(require,module,exports){
 Counter = function (limit) {
 	this.limit = limit;
 	this.frames = 0;
@@ -8671,7 +8171,7 @@ Counter.prototype.reached = function (limit) { return this.frames > (limit ? lim
 Counter.prototype.reset = function () { if (this.reached()) this.frames = 0; };
 
 module.exports = Counter;
-},{}],85:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------*\
     
     list of functions used to assist manipulating the dom
@@ -8918,7 +8418,7 @@ module.exports = {
         return display;
     }
 };
-},{}],86:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
     
     Hsl.js creates an object for interaction with hsl color values
@@ -8933,9 +8433,9 @@ Hsl = function (h, s, l) {
 Hsl.prototype.get = function () {return {h:this.hue, s:this.saturation, l:this.lightness};};
 Hsl.prototype.format = function () {return 'hsl('+this.hue+','+this.saturation+'%,'+this.lightness+'%)';};
 module.exports = Hsl;
-},{}],87:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 module.exports = function () { var id = 0; return { id: function () {id += 1; return id;}};}();
-},{}],88:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 /* ------------------------------------------------------------------------------------------------------------*\
     
     app.init creates a new canvas instance, taking the name of the target canvas id and optionally the context
@@ -8945,7 +8445,7 @@ module.exports = function () { var id = 0; return { id: function () {id += 1; re
 \* ------------------------------------------------------------------------------------------------------------*/
 
 app = require('../settings/app.js');
-app.draw = require('../game/draw.js');
+app.draw = require('../animation/draw.js');
 
 module.exports = function (element, context) {
 
@@ -9013,8 +8513,8 @@ module.exports = function (element, context) {
         throw new Error("browser does not support canvas element. canvas support required for animations");
     }
 };
-},{"../game/draw.js":23,"../settings/app.js":79}],89:[function(require,module,exports){
-Terrain = require('../objects/terrain.js');
+},{"../animation/draw.js":3,"../settings/app.js":75}],85:[function(require,module,exports){
+Terrain = require('../map/terrain.js');
 
 Matrix = function(dimensions){
 	this.dimensions = dimensions;
@@ -9023,6 +8523,11 @@ Matrix = function(dimensions){
 	for (var i = 0; i <= dimensions.x; i += 1)
 		this.matrix.push([]);
 };
+/* ----------------------------------------------------------------------------------- *\
+
+	Matrix holds map elements in a matrix for quick access during map analysis
+
+\* ----------------------------------------------------------------------------------- */
 
 Matrix.prototype.insert = function (element) {
 	var p = element.position();
@@ -9055,8 +8560,9 @@ Matrix.prototype.position = function (p, init) {
 Matrix.prototype.clean = function () {
 	for (var p, e, i = 0; i < this.dummies.length; i += 1){
 		var p = this.dummies[i];
-		if((e = this.matrix[p.x][p.y]) && e.type() !== "unit" && e.type !== "building")
+		if((e = this.matrix[p.x][p.y]) && e.type() !== "unit" && e.type() !== "building") {
 			this.matrix[p.x][p.y] = undefined;
+		}
 	}
 	this.dummies = [];
 };
@@ -9074,7 +8580,120 @@ Matrix.prototype.log = function () {
 	console.log(' ');
 };
 module.exports = Matrix;
-},{"../objects/terrain.js":75}],90:[function(require,module,exports){
+},{"../map/terrain.js":42}],86:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    Path.js controls pathfinding
+
+\* --------------------------------------------------------------------------------------*/
+
+Position = require('../objects/position.js');
+Heap = require('../tools/binaryHeap.js');
+
+var Path = function () {this._coordinates = [];};
+
+Path.prototype.size = function () { return this._coordinates.length; };
+Path.prototype.clear = function () { this._coordinates = []; return this; };
+Path.prototype.set = function (p) { return (this._coordinates = this._coordinates.concat(p)); };
+Path.prototype.get = function () { return this._coordinates; };
+Path.prototype.getNeighbors = function (position, check) {
+
+    var x = position.x, y = position.y,
+    neighbors = [],
+    positions = [
+        new Position(x - 1, y),
+        new Position(x + 1, y),
+        new Position(x, y - 1),
+        new Position(x, y + 1)
+    ];
+
+    for (var n, i = 0; i < 4; i += 1){
+
+        neighbor = app.map.top(positions[i]);
+
+        if(neighbor && !neighbor.closed)
+            neighbors.push(neighbor);
+    }
+
+    return neighbors;
+};
+
+Path.prototype.distance = function (position, target, origin) {
+    var dx1 = position.x - target.x;
+    var dy1 = position.y - target.y;
+    var dx2 = origin.x - target.x;
+    var dy2 = origin.y - target.y;
+    var cross = Math.abs((dx1 * dy2) - (dx2 * dy1));
+    var rand = Math.floor(Math.random()+1)/(1000);
+    return ((Math.abs(dx1) + Math.abs(dy1)) + (cross * rand));
+};
+
+Path.prototype.reachable = function (unit, clean, movement) {
+
+    var reachable = [unit], open = new Heap('f'), allowed = movement || unit.movement(), 
+    neighbor, neighbors, current, cost;
+    open.push(unit);
+    app.map.close(unit);
+
+    while (open.size()) {
+
+        current = open.pop();
+
+        this.getNeighbors(current.position(), unit).forEach(function (neighbor) {
+
+            cost = (current.f || 0) + unit.moveCost(neighbor);
+
+            if (cost <= allowed) {
+                neighbor.f = cost;
+                app.map.close(neighbor);
+                reachable.push(neighbor);
+                open.push(neighbor);
+            } 
+        });
+    }
+    return clean ? app.map.clean(reachable) : reachable;
+};
+
+Path.prototype.find = function (unit, target) {
+
+    var allowed = unit.movement(), clean = [unit], cost, neighbor, i, neighbors, position, current,
+    open = new Heap('f'), scope = this; 
+    app.map.close(unit);
+    open.push(unit);
+ 
+    while (open.size()) {
+
+        current = open.pop();
+        position = current.position();
+
+        // if the targetination has been reached, return the array of values
+        if (target.x === position.x && target.y === position.y) {
+            var path = [current];
+            while (current.p) path.unshift((current = current.p));
+            app.map.clean(clean);
+            return this.set(path);
+        }
+
+        this.getNeighbors(position).forEach(function (neighbor) {
+            cost = (current.g || 0) + unit.moveCost(neighbor); 
+            if (cost <= allowed && (!neighbor.g || neighbor.g >= current.g)) {
+                neighbor.g = cost;
+                neighbor.f = cost + scope.distance(neighbor.position(), target, unit.position());
+                neighbor.p = current; //<--- keep reference to parent
+                app.map.close(neighbor);
+                clean.push(neighbor);
+                open.push(neighbor);
+            }
+        });
+    }
+    app.map.clean(clean);
+    return false;
+};
+
+Path.prototype.show = function (effect) { app.animate('effects'); };
+
+module.exports = Path;
+},{"../objects/position.js":73,"../tools/binaryHeap.js":78}],87:[function(require,module,exports){
 /* ---------------------------------------------------------------------------------------------------------*\
     
     handle AJAJ calls
@@ -9132,7 +8751,7 @@ module.exports = function () {
         }
     };
 }();
-},{}],91:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 module.exports = {
     describe: function (selected) {
         if (selected.description && selected.description()) 
@@ -9165,7 +8784,7 @@ module.exports = {
         delete this.hElement;
     }
 };
-},{}],92:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 /* --------------------------------------------------------------------------------------*\
 
     handle socket connections
@@ -9174,7 +8793,7 @@ module.exports = {
 
 app = require('../settings/app.js');
 app.game = require('../game/game.js');
-app.chat = require('../tools/chat.js');
+app.chat = require('../controller/chat.js');
 app.menu = require('../controller/menu.js');
 app.options = require('../menu/options/optionsMenu.js');
 app.key = require('../input/keyboard.js');
@@ -9182,13 +8801,13 @@ app.maps = require('../controller/maps.js');
 app.map = require('../controller/map.js');
 app.players = require('../controller/players.js');
 app.cursor = require('../controller/cursor.js');
-app.background = require('../controller/background.js');
+app.background = require('../map/background.js');
 app.units = require('../definitions/units.js');
 app.confirm = require('../controller/confirmation.js');
 
 Validator = require('../tools/validator.js');
-Player = require('../objects/player.js');
-Unit = require('../objects/unit.js');
+Player = require('../user/player.js');
+Unit = require('../map/unit.js');
 Teams = require('../menu/teams.js');
 
 var validate = new Validator('sockets');
@@ -9304,7 +8923,7 @@ socket.on('back', function () { Teams.boot(); });
 socket.on('updatePlayerStates', function (players) {app.players.add(players);});
 
 module.exports = socket;
-},{"../controller/background.js":1,"../controller/confirmation.js":2,"../controller/cursor.js":3,"../controller/map.js":4,"../controller/maps.js":5,"../controller/menu.js":6,"../controller/players.js":7,"../definitions/units.js":13,"../game/game.js":25,"../input/keyboard.js":28,"../menu/options/optionsMenu.js":47,"../menu/teams.js":51,"../objects/player.js":69,"../objects/unit.js":77,"../settings/app.js":79,"../tools/chat.js":83,"../tools/validator.js":93}],93:[function(require,module,exports){
+},{"../controller/chat.js":4,"../controller/confirmation.js":5,"../controller/cursor.js":6,"../controller/map.js":7,"../controller/maps.js":8,"../controller/menu.js":9,"../controller/players.js":10,"../definitions/units.js":17,"../game/game.js":25,"../input/keyboard.js":32,"../map/background.js":35,"../map/unit.js":44,"../menu/options/optionsMenu.js":64,"../menu/teams.js":68,"../settings/app.js":75,"../tools/validator.js":90,"../user/player.js":93}],90:[function(require,module,exports){
 /* --------------------------------------------------------------------------- *\
     
     Validator.js is a tool to verify the correctness of data within the game
@@ -9313,7 +8932,7 @@ module.exports = socket;
 
 app = require('../settings/app.js');
 app.players = require('../controller/players.js');
-Building = require('../objects/building.js');
+Building = require('../map/building.js');
 
 Validator = function (fileName) {this.fileName = fileName;};
 Validator.prototype.defined = function (element, name) {
@@ -9433,10 +9052,416 @@ Validator.prototype.build = function (unit) {
 };
 
 Validator.prototype.turn = function (player) {
-	return app.players.get(player).turn();
+	return app.players.get(isNaN(player) ? player : {id:player}).turn();
 };
 
 console.log(Validator);
 
 module.exports = Validator;
-},{"../controller/players.js":7,"../objects/building.js":57,"../settings/app.js":79}]},{},[30]);
+},{"../controller/players.js":10,"../map/building.js":37,"../settings/app.js":75}],91:[function(require,module,exports){
+Player = require('../user/player.js');
+Score = require('../definitions/score.js');
+AiPlayer = function (number) {
+	this._current = {
+        id: 'AI#'+number,
+        gold: 0,
+        special: 0,
+        ready: true,
+        number:number
+    };
+	this.name = function () { return 'HAL #'+ this.number();};
+    this.fullName = function () { return 'Mr. Robot'; };
+    this.lastName = function () { return 'Robot'; };
+    this.id = function () { return this._current.id; };
+    this.score = new Score(true);
+    this.co = null;
+    this.mode = 'cp';
+    this.isComputer = true;
+    if (app.user.first()) socket.emit('addAiPlayer', this);
+};
+AiPlayer.prototype = Object.create(Player.prototype);
+AiPlayer.prototype.constructor = AiPlayer;
+AiPlayer.prototype.setNumber = function (number) {this._current.number = number;};
+module.exports = AiPlayer;
+},{"../definitions/score.js":16,"../user/player.js":93}],92:[function(require,module,exports){
+/* --------------------------------------------------------------------------------------*\
+    
+    holds all co's, their skills and implimentation
+
+\* --------------------------------------------------------------------------------------*/
+
+app = require('../settings/app.js');
+
+module.exports = function () {
+
+    var percent = function (amount) {
+        return amount / 100;
+    };
+
+    var addToEach = function(player, funk, property, amount, parameter1, parameter2, parameter3) {
+        if(!parameter) parameter = 100;
+        var units = app.map.unit;
+        for ( var u = 0; u < units.length; u += 1 ){
+            if( units[u].player === player.id ){
+                app.map.unit[u][property] = funk( unit[u], property, amount, parameter1, parameter2, parameter3 );
+            }
+        }
+    };
+
+    var editProperty = function(unit, property, amount, parameter){
+        if( unit[property] + amount > parameter ){
+            return parameter;
+        }else{
+            return unit[property] + amount;
+        }
+    };
+
+    var filter = function (unit, property, amount, max, parameter1, parameter2){
+        if(unit[parameter1] === parameter2){
+            if(unit[property] + amount > max){
+                return max;
+            }else{
+                return unit[property] + amount;
+            }
+        }
+    };
+
+    var editRange = function (unit, property, amount){
+        if(unit.damageType === 'ranged'){
+            unit.range.hi += amount;
+            return unit.range;
+        }
+    };
+
+    var editArray = function (unit, property, amount, parameter1, parameter2){
+        var baseDamage = {};
+        var damage = Object.keys(unit[property]);
+        for(var d = 0; d < damage.length; d += 1 ){
+
+            // if there is no perameter then simply find the percentage added to all units
+            if(!parameter1){
+                var dam = unit[property][damage[d]];
+
+                // add the damage plus the percent of increase
+                baseDamage[damage[d]] *= amount;
+
+            // if there is a parameter then only add to the damage type specified in the perameter
+            }else if ( unit[parameter1] === parameter2 ){
+
+                var dam = unit[property][damage[d]];
+                baseDamage[damage[d]] *= amount
+            }
+        }
+        return baseDamage;
+    };
+
+    return {
+
+        andy: function (player) {
+
+            var image = 'red';
+            var special = 100;
+            var powerActive = false;
+            var superPowerActive = false;
+            var damage = 100;
+
+            return {
+                image: image,
+                name:'Andy',
+                power:function(){
+                    addToEach(player, editProperty(), 'health', 2, 10);
+                },
+                superPower:function(){
+                    superPowerActive = true;
+                    addToEach(player, editProperty(),'health', 5, 10);
+                    addToEach(player, editProperty(),'movement', 1);
+                    special = 130;
+                },
+                attack:function(){
+                    return damage * percent(special);
+                },
+                defense:function(){
+                    return 100;
+                },
+                endPower:function(){
+                    if(superPowerActive){
+                        addToEach(player, editProperty(),'movement', -1);
+                        special = 100;
+                        superPowerActive = false;
+                    }
+                }
+            }
+        },
+        max: function (player) {
+            var image = 'blue';
+            var damage = 100;
+            var special = 120;
+            var powerActive = false;
+            var superPowerActive = false;  
+
+            return {
+                image:image,
+                name:'Max',     
+                power:function(){
+                    powerActive = true;
+                    special = 140;
+                },
+                superPower:function(){
+                    powerActive = true;
+                    special = 170;
+                },
+                attack:function(unit){
+                    if( unit.damageType === 'direct' ){
+                        return damage * percent(special);
+                    }else{
+                        return damage;
+                    }
+                },
+                defense:function(){
+                    return 100;
+                },
+                endPower:function(){
+                    if(powerActive){
+                        special = 120;
+                        powerActive = false;
+                    }
+                },
+                build:function(unit){
+                    unit.range.hi -= 1;
+                    return unit;
+                }
+            }
+        },
+        sami: function (player) {
+
+            var image = 'green';
+            var damage = 100;
+            var special = 120;
+            var powerActive = false;
+            var superPowerActive = false;  
+            var capSpecial = 150;
+            var penalty = 90;
+
+            return {
+                image:image,
+                name:'Sami',
+                power: function (){
+                    powerActive = true;
+                    addToEach(player, filter(), 'movement', 1, 20, 'transportaion', 'foot');
+                    special = 170;
+                },
+                superPower: function(){
+                   superPowerActive = true;
+                    addToEach(player, filter(), 'movement', 2, 20, 'transportaion', 'foot');
+                    special = 200;
+                    capSpecial = 2000;
+                },
+                attack: function(unit){
+                    if(unit.transportaion === 'foot'){
+                        return damage * percent(special);
+                    }else if(unit.damageType === direct){
+                        return damage * percent(penalty);
+                    }
+                    return damage;
+                },
+                defense:function(){
+                    return 100;
+                },
+                endPower:function(){
+                    if(powerActive){
+                        addToEach(player, filter(), 'movement', -1, 20, 'transportaion', 'foot');
+                    }else if(superPowerActive){
+                        addToEach(player, filter(), 'movement', -2, 20, 'transportaion', 'foot');
+                    }
+                    special = 120;
+                },
+                capture: function (capture){
+                    return capture * percent(capSpecial);
+                }
+            };
+        }
+    };
+}();
+},{"../settings/app.js":75}],93:[function(require,module,exports){
+// create a new player object
+app = require('../settings/app.js');
+app.game = require('../game/game.js')
+app.co = require('../user/co.js');
+app.map = require('../controller/map.js');
+app.players = require('../controller/players.js');
+app.screen = require('../controller/screen.js');
+Score = require('../definitions/score.js');
+
+var Player = function (user) {
+    this.name = function () { return user.first_name; };
+    this.fullName = function () { return user.name; };
+    this.lastName = function () { return user.last_name; };
+    this.id = function () { return user.id; };
+    this.score = new Score(true);
+    this.co = user.co || null;
+    this._current = {
+        id: user.id,
+        gold: 0,
+        special: 0,
+        ready: user.ready || false,
+        number:user.number
+    };
+};
+Player.prototype.setCo = function (co) {this.co = co;};
+Player.prototype.setProperty = function (property, value) {
+    this[property] = (property === 'co') ? app.co[value](this) : value;
+    if (app.user.number() === this.number())
+        socket.emit('setUserProperties', {property: property, value: value, player:this});
+};
+Player.prototype.property = function (property) {return this[property];};
+Player.prototype.color = function () { return this.number(); }; // <-------------- figure out color system at some point
+Player.prototype.number = function () { return this._current.number; };
+Player.prototype.index = function () { return app.players.indexOf(this); };
+Player.prototype.setNumber = function (number) { this._current.number = number; return this; };
+Player.prototype.endTurn = function () {
+
+    // update score
+    if((current = app.players.current()) === app.user.player())
+        app.user.score.update(current.score);
+
+    app.map.clean();
+
+    // get the next player
+    var player = app.players.next();
+
+    // reset this turns score
+    player.score = new Score(true);
+
+    // end power if it is active
+    player.co.endPower();
+
+    // refresh the movement points of the previous (still current) players units
+    player.recover();
+
+    // move the screen to the next players headquarters
+    app.screen.to(player.hq().position());
+
+    // add this turns income
+    player.collectIncome();
+
+    // assign the next player as the current player
+    app.players.setCurrent(player);
+
+    // if the player is ai then send the games current state 
+    if (player.isCompuer) socket.emit('aiTurn', {map:app.map.get(), player:player});
+};
+
+Player.prototype.recover = function () {
+
+    // check for units that belong to the current player
+    app.map.units().forEach(function (unit) {unit.recover();});
+
+    app.map.buildings().forEach(function (building) {
+        var unit = building.occupied();
+        if (!unit || building.owns(unit))
+            building.restore();
+    });
+    return true;
+};
+
+Player.prototype.isReady = function (state) { 
+    this._current.ready = state; 
+    app.players.checkReady();
+};
+
+Player.prototype.ready = function () { return this._current.ready; };
+Player.prototype.income = function () {
+
+    var scope = this, funds = app.game.settings().funds;
+    var income = app.map.buildings().reduce(function (money, building) {
+        return (isNaN(money) ? 0 : money)  + (scope.owns(building) ? funds : 0);
+    });
+
+    // add income to score
+    this.score.income(income);
+
+    return income;
+};
+
+Player.prototype.collectIncome = function () {
+    var gold = this.setGold(this.gold() + this.income());
+    if (gold) this.score.income(gold);
+    return gold;
+};
+
+Player.prototype.defeat = function (player, capturing) {
+
+    if (app.user.owns(this)) { socket.emit('defeat', {defeated: player, conqueror: this, capturing: capturing});};
+    this.score.conquer();
+    player.score.defeat();
+    app.players.defeat(player);
+
+    var buildings = app.map.buildings();
+
+    // assign all the buildings belonging to the owner of the captured hq to the capturing player
+    for(var b = 0; b < buildings.length; b += 1)
+        if (player.owns((building = buildings[b]))) {
+            player.lostBuilding();
+            this.score.capture();
+            if(building.name().toLowerCase() === 'hq')
+                app.map.takeHQ(building);
+            building.changeOwner(capturing ? this : capturing);
+        }
+
+    app.animate('building');
+};
+
+Player.prototype.get = function () { return app.players.get(this); };
+Player.prototype.turn = function () { return this === app.players.current(); };
+Player.prototype.first = function () { return this === app.players.first(); };
+Player.prototype.special = function () { return this._current.special; };
+Player.prototype.gold = function () { return this._current.gold; };
+Player.prototype.canPurchase = function (cost) { return this.gold() - cost >= 0; };
+Player.prototype.purchase = function (cost) {
+    this.score.expenses(cost);
+    return this.setGold(this.gold() - cost);
+};
+Player.prototype.setGold = function (gold) { return gold >= 0 ? (this._current.gold = gold) + 1 : false; };
+Player.prototype.owns = function (object) { return object.player && this.get() === object.player(); };
+Player.prototype.units = function () {
+    var units = app.map.units();
+    for (var i = 0; i < units.length; i += 1)
+        if(this.owns(units[i]))
+            return true;
+    return false;
+};
+
+Player.prototype.confirm = function () { this._current.confirmation = true; };
+Player.prototype.confirmed = function () { return this._current.confirmation; };
+Player.prototype.unconfirm = function () { delete this._current.confirmation; };
+Player.prototype.hq = function () {
+
+    // list off all buildings on map
+    var b = 0, buildings = app.map.buildings();
+
+    while ((building = buildings[b++]))
+        if (building.name().toLowerCase() === 'hq' && this.owns(building))
+            return building;
+};
+module.exports = Player;
+},{"../controller/map.js":7,"../controller/players.js":10,"../controller/screen.js":11,"../definitions/score.js":16,"../game/game.js":25,"../settings/app.js":75,"../user/co.js":92}],94:[function(require,module,exports){
+Score = require('../definitions/score.js');
+
+module.exports = function (info) {
+	this.name = function () { return info.name; };
+	this.first_name = function () { return info.first_name; };
+	this.last_name = function () { return info.last_name; };
+	this.email = function () { return info.email; };
+	this.id = function () { return info.id; };
+	this.gender = function () { return info.gender; };
+	this.link = function () { return info.link; };
+	this.location = function () { return info.locale; };
+	this.turn = function () { return this.player().turn(); };
+	this.player = function () { return app.players.get(this); };
+	this.first = function () { return !(player = this.player()) || player === app.players.first(); };
+	this.owns = function (object) { return this.player().owns(object); };
+	this.number = function () { return this.player().number(); };
+	this.raw = function () { return info };
+	this.score = new Score();
+};
+},{"../definitions/score.js":16}]},{},[34]);

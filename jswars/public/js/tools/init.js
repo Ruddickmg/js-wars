@@ -7,7 +7,7 @@
 \* ------------------------------------------------------------------------------------------------------------*/
 
 app = require('../settings/app.js');
-app.draw = require('../game/draw.js');
+app.draw = require('../animation/draw.js');
 
 module.exports = function (element, context) {
 

@@ -4,7 +4,7 @@
 
 \* ---------------------------------------------------------------------- */
 
-var obsticle = require('../objects/obsticle.js');
+var obsticle = require('../map/obsticle.js');
 
 module.exports = {
     mountain: new obsticle('mountain', 2),

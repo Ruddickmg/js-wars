@@ -8,20 +8,20 @@ app = require('../settings/app.js');
 socket = require('../tools/sockets.js');
 app.key = require('../input/keyboard.js');
 app.maps = require('../controller/maps.js'); 
-app.screens = require('../objects/screens.js');
 app.dom = require('../tools/dom.js');
-app.background = require("../controller/background.js");
-app.footer = require('../objects/footer.js');
+app.background = require("../map/background.js");
+app.footer = require('../menu/footer.js');
 app.arrows = require('../objects/arrows');
 
-Menu = require ('../objects/menu.js');
+Menu = require ('../menu/elements/menu.js');
 Settings = require('../menu/settings.js');
 Select = require('../tools/selection.js');
 PlayerNumber = require('../menu/elements/playerNumber.js');
 CoElement = require('../menu/elements/coElement.js');
 PlayerElement = require('../menu/elements/playerElement.js');
 TeamElement = require('../menu/elements/teamElement.js');
-AiPlayer = require('../objects/aiPlayer.js');
+AiPlayer = require('../user/aiPlayer.js');
+Button = require('../objects/button.js');
 
 Teams = Object.create(Menu);
 Teams.speed = 1.5;
@@ -44,11 +44,17 @@ Teams.init = function () {
     var scope = this;
     this.display();
     this.activate();
-    app.players.all().map(function (player, index) {
+
+    // initialize plzyer properties
+    app.players.all().forEach(function (player, index) {
         var element = scope.playerElement(index + 1);
         player.setProperty('mode', element.mode().value());
         player.setProperty('co', element.co().value());
     });
+
+    // create start button
+    this.button = new Button('setupScreen', function () { app.game.start(); });
+
     if (this.arrows) this.rise();
     app.game.started() ? this.toTeam() : this.toCo();
 };
@@ -145,7 +151,6 @@ Teams.toReady = function () {
     socket.emit('ready', player);
     this.playersHeight('20%');
     if (this.arrows) this.arrows.setSpace(10).setPosition(this.elements.current()).hide();
-    this.button = app.screens.startButton('setupScreen');
     app.chat.display();
     return this;
 };

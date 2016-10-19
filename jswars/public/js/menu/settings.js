@@ -1,4 +1,4 @@
-Menu = require('../objects/menu.js');
+Menu = require('../menu/elements/menu.js');
 Arrows = require('../objects/arrows.js');
 Teams = require('../menu/teams.js');
 Select = require('../tools/selection.js');

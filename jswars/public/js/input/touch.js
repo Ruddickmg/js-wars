@@ -1,7 +1,7 @@
 app = require('../settings/app.js');
 app.key = require('../input/keyboard.js');
 app.scroll = require('../menu/scroll.js');
-app.user = require('../objects/user.js');
+app.user = require('../user/user.js');
 app.menu = require('../controller/menu.js');
 
 module.exports = function (element) {

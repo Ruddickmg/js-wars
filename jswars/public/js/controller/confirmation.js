@@ -1,5 +1,4 @@
 app.maps = require ("../controller/maps.js");
-app.effect = require("../game/effects.js");
 app.click = require("../input/click.js");
 app.touch = require("../input/touch.js");
 app.type = require("../effects/typing.js");

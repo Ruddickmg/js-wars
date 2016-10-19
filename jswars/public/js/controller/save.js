@@ -1,7 +1,7 @@
 // save
 app.key = require('../../input/keyboard.js');
 app.cursor = require('../../controller/cursor.js');
-app.input = require('../../objects/input.js');
+app.input = require('../../input/input.js');
 
 module.exports = {
     display: function () {  

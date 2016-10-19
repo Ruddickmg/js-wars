@@ -2,8 +2,8 @@ app = require('../settings/app.js');
 app.map = require('../controller/map.js');
 app.dom = require('../tools/dom.js');
 app.key = require('../input/keyboard.js');
-Player = require('../objects/player.js');
-AiPlayer = require('../objects/aiPlayer.js');
+Player = require('../user/player.js');
+AiPlayer = require('../user/aiPlayer.js');
 Teams = require('../menu/teams.js');
 
 module.exports = function () {

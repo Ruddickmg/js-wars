@@ -6,7 +6,7 @@
 
 app = require('../settings/app.js');
 app.players = require('../controller/players.js');
-Building = require('../objects/building.js');
+Building = require('../map/building.js');
 
 Validator = function (fileName) {this.fileName = fileName;};
 Validator.prototype.defined = function (element, name) {
@@ -126,7 +126,7 @@ Validator.prototype.build = function (unit) {
 };
 
 Validator.prototype.turn = function (player) {
-	return app.players.get(player).turn();
+	return app.players.get(isNaN(player) ? player : {id:player}).turn();
 };
 
 console.log(Validator);

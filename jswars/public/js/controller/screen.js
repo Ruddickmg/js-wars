@@ -1,6 +1,6 @@
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
-app.animate = require('../game/animate.js');
+app.animate = require('../animation/animate.js');
 app.map = require('../controller/map.js');
 app.cursor = require('../controller/cursor.js');
 

@@ -40,7 +40,7 @@ Array.prototype.find = function (callback) { return this[this.findIndex(callback
     load dummy variables if/for testing locally 
 \* --------------------------------------------------------------------------------------*/
 
-gameMap = require('./objects/map.js');
+gameMap = require('./map/map.js');
 
 if (app.testing){
 
@@ -91,9 +91,9 @@ app.drawBackground = function (draw) {draw.background('background'); };
 app.drawUnit = function (draw) { draw.coordinate('map', 'units'); };
 app.drawWeather = function (draw) {};
 app.drawEffects = function (draw) {
-    draw.coordinate('effect', 'highlight'); // highlighting of movement range
-    draw.coordinate('effect', 'path'); // highlighting current path
-    draw.coordinate('effect', 'attackRange'); // highlight attack range
+    draw.coordinate('highlight', 'movementRange'); // highlighting of movement range
+    draw.coordinate('highlight', 'path'); // highlighting current path
+    draw.coordinate('highlight', 'attackRange'); // highlight attack range
 };
 app.drawCursor = function (draw) {
     if (!app.cursor.hidden() && app.user.turn())

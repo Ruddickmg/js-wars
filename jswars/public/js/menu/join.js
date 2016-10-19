@@ -1,5 +1,5 @@
-Menu = require('../objects/menu.js');
-BuildingsDisplay = require('../objects/buildingsDisplay.js');
+Menu = require('../menu/elements/menu.js');
+BuildingsDisplay = require('../menu/elements/buildingsDisplay.js');
 Ulist = require('../menu/elements/ul.js');
 app.select = require('../tools/selection.js');
 
