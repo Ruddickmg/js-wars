@@ -171,7 +171,7 @@ module.exports = function () {
         	 	throw error;
 
             app.request.post({
-			    creator: app.user.email(),
+			    creator: app.user.id(),
 			    name: name || map.name,
 			    players: map.players,
 			    category: map.category,

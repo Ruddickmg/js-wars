@@ -50,6 +50,9 @@ module.exports = function () {
         },
         get:function (input, url, callback) {
             return ajaj(input, 'GET', callback, url + '/' + input);
+        },
+        del: function (input, url, callback) {
+            return ajaj(input, 'DELETE', callback, url + '/' + input);
         }
     };
 }();

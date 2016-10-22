@@ -28,8 +28,9 @@ module.exports = function (res, url) {
         } else console.log("  * No response recieved from database - in request.js");
         res.end();
     };
-
-    var api_get = function (path, input) { return request(url + path + "/" + input, handle);};
+    var format = function (path, input) {return url + path + "/" + input;};
+    var api_get = function (path, input) { return request(format(path, input), handle);};
+    var api_del = function (path, input) { return request.del(format(path, input), handle);};
     var api_post = function (path, input) {
         return request.post({
             headers: {"content-type" : "application/json"},
@@ -47,5 +48,8 @@ module.exports = function (res, url) {
         get_login: function (email, password) {return api_get("/users/login", (email+"/"+password));},
         get_games: function (id) {return api_get("/games/saved", id)},
         save_game: function (game) {return api_post("/games/save", game);},
+        del_user: function (id) {return api_delete("/users/remove", id);},
+        del_game: function (id) {return api_delete("/games/remove", id);},
+        del_map: function (id) {return api_delete("/maps/remove", id);}
     };
 };

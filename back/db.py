@@ -1,36 +1,45 @@
 import os, datetime, logging, json
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy import BigInteger, Integer, String, DateTime, Column, create_engine
+from sqlalchemy import BigInteger, Integer, String, DateTime, Column, Table, ForeignKey, create_engine
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 app = Flask(__name__)
 
-logging.basicConfig(filename='/var/lib/openshift/55f8fbf90c1e665752000019/app-root/logs/python.log',level=logging.DEBUG)
+logging.basicConfig(filename="/var/lib/openshift/55f8fbf90c1e665752000019/app-root/logs/python.log",level=logging.DEBUG)
 
-if 'OPENSHIFT_POSTGRESQL_DB_URL' in os.environ:
-	db_url = os.environ['OPENSHIFT_POSTGRESQL_DB_URL']
+if "OPENSHIFT_POSTGRESQL_DB_URL" in os.environ:
+	db_url = os.environ["OPENSHIFT_POSTGRESQL_DB_URL"]
 else:
-	db_url = 'postgresql://username:password@localhost:5432/back.db'
+	db_url = "postgresql://username:password@localhost:5432/back.db"
 
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 
 engine = create_engine(db_url, convert_unicode=True)
-Session = sessionmaker(bind=engine)
-db_session = scoped_session(Session)
+Session = scoped_session(sessionmaker(bind=engine))
 Base = declarative_base()
-Base.query = db_session.query_property()
+Base.query = Session.query_property()
+
+saved_games = Table("saved_games", Base.metadata,
+    Column("user_id", Integer, ForeignKey("user.id")),
+    Column("game_id", Integer, ForeignKey("games.id"))
+)
 
 class User(Base):
 
-	__tablename__ = 'user'
+	__tablename__ = "user"
 	id = Column(BigInteger, primary_key=True)
 	facebook = Column(BigInteger, unique=True)
 	google = Column(BigInteger, unique=True)
 	twitter = Column(BigInteger, unique=True)
 	email = Column(String(120), unique=True)
+	savedGames = relationship(
+        "Games",
+        secondary=saved_games,
+        back_populates="users")
+	savedMaps = relationship("Maps", cascade="all,delete")
 	lastName = Column(String(80))
 	firstName = Column(String(80))
 	name = Column(String(80))
@@ -38,23 +47,21 @@ class User(Base):
 	password = Column(String(120))
 
 	def __init__(self, email, lastName, firstName, name):
-		self.facebook = None
-		self.google = None
-		self.twitter = None
 		self.email = email
 		self.lastName = lastName
 		self.firstName = firstName
 		self.name = name
 		self.saved = json.dumps([])
-		self.password = None
 
 	def __repr__(self):
-		return "<User(name='%r', email='%r', saved='%r')>" % (self.name, self.email, self.saved)
+		return "<User(name='%r', email='%r')>" % (self.name, self.email)
 
 class Maps(Base):
 
-	__tablename__ = 'maps'
+	__tablename__ = "maps"
 	id = Column(Integer, primary_key=True)
+	creator_id = Column(Integer, ForeignKey('user.id'))
+	creator = relationship("User", back_populates="savedMaps")
 	name = Column(String(80), unique=True)
 	players = Column(Integer)
 	category = Column(String(20))
@@ -62,10 +69,9 @@ class Maps(Base):
 	terrain = Column(JSON)
 	buildings = Column(JSON)
 	units = Column(JSON)
-	creator = Column(String(254))
 	date = Column(DateTime, default=datetime.datetime.utcnow())
 
-	def __init__(self, name, category, players, dimensions, terrain, buildings, units, creator):
+	def __init__(self, name, category, players, dimensions, terrain, buildings, units):
 		self.name = name
 		self.category = category
 		self.players = players
@@ -73,15 +79,18 @@ class Maps(Base):
 		self.terrain = terrain
 		self.buildings = buildings
 		self.units = units
-		self.creator = creator
 
 	def __repr__(self):
 		return "<Maps(name='%s')>" % (self.name)
 
 class Games(Base):
 
-	__tablename__ = 'games'
+	__tablename__ = "games"
 	id = Column(Integer, primary_key=True)
+	users = relationship(
+        "User",
+        secondary=saved_games,
+        back_populates="savedGames")
 	gameId = Column(Integer)
 	name = Column(String(120), unique=True)
 	map = Column(JSON)
@@ -94,6 +103,7 @@ class Games(Base):
 		self.map = map
 		self.settings = settings
 		self.players = players
+		self.saved = True
 
 	def __repr__(self):
 		return "<Games(name='%r', map='%r', settings='%r', players='%r')>" % (self.name, self.map, self.settings, self.players)
@@ -130,15 +140,12 @@ def Migrate():
 def DropAll():
 	try:
 		session = Session()
-		logging.debug('dropping...')
 		Base.metadata.reflect(engine)
-		logging.debug('reflect...')
 		Base.metadata.drop_all(engine)
-		logging.debug('done..')
 
 	except Exception as e:
 		Teardown(e, False)
-		return 'not dropped'
+		return "not dropped"
 
 	finally:
 		session.close()
