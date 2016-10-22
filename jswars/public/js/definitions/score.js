@@ -40,7 +40,6 @@ Score = function (turn) {
 	this.defeated = new ScoreElement('defeated', -70);
 	this.conquered = new ScoreElement('conquered', 50);
 	this.turns = [];
-
 };
 
 Score.prototype.income = function (money) { this.moneyMade.amount += (money / 1000); };
@@ -61,26 +60,37 @@ Score.prototype.defeat = function () { this.defeated.amount += 1; };
 Score.prototype.conquer = function () { this.conquered.amount += 1; };
 
 Score.prototype.amount = function (parameter) {return this[parameter].amount; };
+Score.prototype.setAmount = function (parameter, amount) {this[parameter].amount = amount;};
+Score.prototype.add = function (parameter, amount) {this[parameter].amount += amount;}
 Score.prototype.worth = function (parameter) {return this[parameter].worth; };
 Score.prototype.turn = function () { return this.turns.length; };
 Score.prototype.allTurns = function () { return this.turns };
-
 Score.prototype.update = function(turn) {
-	var parameters = this.parameters;
-	
-	for(var i = 0; i < parameters.length; i += 1)
-		this[parameters[i]].amount += turn.amount(parameters[i]);
-
+	var scope = this;
+	this.parameters.forEach(function (parameter) {
+		scope.add(parameter, turn.amount(parameter));
+	});
 	this.turns.push(turn);
 };
-
 Score.prototype.calculate = function () {
-	var parameter, parameters = this.parameters;
-	for(var i = 0, total = 0; i < parameters.length; i += 1){
-		parameter = this[parameters[i]];
-		total += parameter.amount * parameter.worth;
-	}
-	return Math.ceil(total);
+	var scope = this;
+	return Math.ceil(this.parameters.reduce(function (prev, parameter) {
+		return prev + scope.amount(parameter) * scope.worth(parameter);
+	}));
+};
+Score.prototype.raw = function () {
+	var scope = this, score = {};
+	this.parameters.forEach(function (parameter) {
+		score[parameter] = scope.amount(parameter);
+	});
+	score.turns = this.turns;
+	return score;
+};
+Score.prototype.init = function (score) {
+	this.parameters.forEach(function (parameter) {
+		this.setAmount(parameter, score[parameter]);
+	});
+	this.turns = score.turns;
 };
 
 module.exports = Score;

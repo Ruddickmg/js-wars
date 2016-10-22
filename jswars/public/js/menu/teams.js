@@ -161,7 +161,7 @@ Teams.fromReady = function () {
     if (this.arrows) this.arrows.hide();
     app.chat.remove();
     app.key.undo();
-    this.button.remove();
+    this.button.hide();
     return this;
 };
 Teams.setMode = function (mode) {this.mode = mode;};
@@ -214,12 +214,8 @@ Teams.choseTeam = function () {
     }
 };
 Teams.playerReady = function (from) {
-    app.players.ready() && app.user.first() ? this.button.show() : this.button.hide();
 
-    if (app.game.started()) {
-        this.remove();
-        return app.players.all();
-    }
+    app.players.ready() && app.user.first() ? this.button.show() : this.button.hide();
 
     if (app.key.pressed(app.key.enter())) 
         app.chat.post(app.chat.send(app.chat.input()));

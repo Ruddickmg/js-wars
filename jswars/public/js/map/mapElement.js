@@ -1,7 +1,7 @@
 // map elements
 
-module.exports = function (type, x, y, player) {
+module.exports = function (type, position, player) {
 	this.type = type;
-	this.position = {x:x, y:y};
+	this.position = position;
 	this.player = player;
 };

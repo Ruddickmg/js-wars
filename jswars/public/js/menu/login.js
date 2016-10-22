@@ -1,8 +1,8 @@
 socket = require('../tools/sockets.js');
 app.game = require('../game/game.js');
-app.user = require('../user/user.js');
 app.input = require('../input/input.js');
 Menu = require('../menu/elements/menu.js');
+User = require('../user/user.js');
 
 Login = Object.create(Menu);
 Login.testAPI = function () {
@@ -24,10 +24,11 @@ Login.statusChangeCallback = function (response) {
 };
 
 // format is where the login is coming from, allowing different actions for different login sources
-Login.loginToSetup = function (user, format) {
+Login.loginToSetup = function (user, origin) {
     if(user && user.id) {
-       	app.user = new app.user(user);
-        socket.emit('addUser', user);
+       	app.user = new User(user, origin);
+        socket.emit('addUser', app.user.raw());
+        app.user.get();
         if(!app.testing) this.loginScreen.parentNode.removeChild(this.loginScreen);
         app.game.setup();
         return true;

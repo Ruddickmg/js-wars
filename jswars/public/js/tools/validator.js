@@ -25,7 +25,7 @@ Validator.prototype.hasElements = function (elements, needed) {
 };
 
 Validator.prototype.isCoordinate = function (coordinate) {
-	if(!coordinate) throw new Error('No coordinate found');
+	if(!coordinate) return new Error('No coordinate found');
 	var x = coordinate.x, y = coordinate.y;
     if (isNaN(x) || isNaN(y) || x < 0 || y < 0)
     	return new Error('Invalid coordinate: x:'+ x +', y:'+ y, this.fileName);
@@ -52,6 +52,7 @@ Validator.prototype.building = function (object) {
 Validator.prototype.map = function (map) {
 
 	this.defined(map, 'map')
+
 	this.isCoordinate(map.dimensions);
 
 	for(element in map)
@@ -60,7 +61,7 @@ Validator.prototype.map = function (map) {
 
 	this.inRange(map.terrain, map.dimensions);
 	this.inRange(map.buildings, map.dimensions);
-	this.inRange(map.units, map.dimensions);
+	if (map.units) this.inRange(map.units, map.dimensions);
 
 	if(typeof map.name !== 'string')
 		return new Error('Map name must be a string', this.fileName);

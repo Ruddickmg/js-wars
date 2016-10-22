@@ -1,5 +1,6 @@
-Room = function (id, game) {
+Room = function (id, game, index) {
     this.id = id;
+    this.index = index;
     this.players = [];
     if (game && game.name) {
         this.name = game.name;

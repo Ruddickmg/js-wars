@@ -67,14 +67,13 @@ module.exports = {
 		return waiting.length ? this.waiting(waiting, message) : this.yes();                                   
 	},
 	yes: function () { 
-		alert("Save the game!!: "+app.input.value()); 
-		app.save.recieved();
-		app.game.end(true);
+		app.players.unconfirm();
+		app.save.recieved(true);
 	},
 	no: function (player) { 
 		app.input.message(player.name().uc_first() + " wants to finish the game.");
 		app.players.unconfirm(); 
-		app.save.recieved();
+		app.save.recieved(false);
 	},
 	waiting: function (players) { app.input.message("Waiting for a response from " + app.players.names(players)); }
 };

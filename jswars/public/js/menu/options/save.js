@@ -13,17 +13,32 @@ module.exports = {
         this.a = true;
     },
     evaluate: function () {
+        var save = false;
     	if (!this.sent() && app.key.pressed(app.key.enter()) && app.input.entry()) {
             this.s = true;
             socket.emit('confirmSave', app.user.player());
             app.input.removeInput();
             app.confirm.waiting(app.players.other());
-    	} else if ((this.r && app.key.pressed(app.key.enter())) || app.key.pressed(app.key.esc())) {
-            this.remove();
-            return true;
+
+    	} else if (this.r) { 
+            if (app.key.pressed(app.key.enter())) {
+                if (this.canSave){
+                    app.game.save();
+                    this.canSave = false;
+                }
+                this.remove();
+                return true;
+            } else if (app.key.pressed(app.key.esc())) {
+                socket.emit('saveCancelled', app.user.player().raw());
+                this.remove();
+                return true;
+            }
         }
     },
-    recieved: function () {this.r = true;},
+    recieved: function (answer) {
+        this.r = true;
+        this.canSave = answer;
+    },
     active: function () { return this.a; },
     sent: function () { return this.s; },
     remove: function () {

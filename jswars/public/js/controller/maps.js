@@ -4,47 +4,48 @@
 
 \* --------------------------------------------------------------------------------------*/
 
-app = require('../settings/app.js');
-app.settings = require('../settings/game.js');
-app.request = require('../tools/request.js');
-app.game = require('../game/game.js');
+app = require("../settings/app.js");
+app.settings = require("../settings/game.js");
+app.request = require("../tools/request.js");
+app.game = require("../game/game.js");
 
-Validator = require('../tools/validator.js');
-Map = require('../map/map.js');
+Validator = require("../tools/validator.js");
+Map = require("../map/map.js");
 
 module.exports = function () {
 
-	var error, maps, keys, change, index, type = 'map', category;
-	var validate = new Validator('maps'), categories = ['two'];
+	var error, maps, keys, change, index, type = "map", category;
+	var validate = new Validator("maps"), categories = ["two"], which = "open";
 
 	var types = {
 		map:{
-			url:'maps/type',
+			url:"maps/type",
 			items:[],
 			elements:{
-	            section: 'mapSelectScreen',
-	            div:'selectMapScreen',
-	            li:'mapSelectionIndex',
-	            type:'map'
+	            section: "mapSelectScreen",
+	            div:"selectMapScreen",
+	            li:"mapSelectionIndex",
+	            type:"map"
 	        }
 		},
 		game:{
-			url:'games/open',
+			url:"games/open",
 			items:[],
 			elements: {
-	            section: 'gameSelectScreen',
-	            div:'selectGameScreen',
-	            li:'mapSelectionIndex',
-	            type:'game',
-	            index:'Index',
-	            attribute:'class',
-	            url:'games/open',
+	            section: "gameSelectScreen",
+	            div:"selectGameScreen",
+	            li:"mapSelectionIndex",
+	            type:"game",
+	            index:"Index",
+	            attribute:"class",
+	            url:"games/open",
 	            properties: app.settings.categories
 	        }
         }
 	},
 
 	byCategory = function (cat, callback) {
+		if (which === "saved") cat = app.user.id();
 		if (cat && cat !== category) {
 			maps = [], keys = [], category = cat;
 	        app.request.get(category, types[type].url, function (response) {
@@ -59,7 +60,7 @@ module.exports = function () {
        	return this;
     },
 
-    format = function (map) { 
+    format = function (map) {
     	if(map) 
 	    	return map.map ? map :
 	    	new Map(
@@ -91,7 +92,7 @@ module.exports = function () {
         }
     };
 
-    var buildingElements = {section:'buildingsDisplay', div:'numberOfBuildings'}
+    var buildingElements = {section:"buildingsDisplay", div:"numberOfBuildings"}
 
     byCategory(categories[0]);
 
@@ -101,8 +102,22 @@ module.exports = function () {
 			if (type !== t) {
 				type = t;
 				category = false;
-				byCategory('two');
+				byCategory("two");
 			}
+			return this;
+		},
+		running: function () {
+			this.setGameUrl((which = "running")); 
+			return this;
+		},
+		open: function () {
+			this.setGameUrl((which = "open")); 
+			return this;
+		},
+		setGameUrl: function (type) {types.game.url = "games/"+type;},
+		saved: function () {
+			console.log("which: "+which);
+			this.setGameUrl((which = "saved"));
 			return this;
 		},
 		empty: function () { return !maps.length; },
@@ -142,7 +157,7 @@ module.exports = function () {
         	}
         },
         random: function () {
-        	byCategory('two' || categories[app.calculate.random(categories.length - 1)], function (maps) {
+        	byCategory("two" || categories[app.calculate.random(categories.length - 1)], function (maps) {
         		app.map.set([app.calculate.random(maps.length - 1)]);
         	});
         },
@@ -152,7 +167,7 @@ module.exports = function () {
         screen: function () { return types[type].elements; },
         save: function (map, name) {
 
-        	 if((error = validate.defined (app.user.email(), 'email') || (error = validate.map(map))))
+        	if((error = validate.defined (app.user.email(), "email") || (error = validate.map(map))))
         	 	throw error;
 
             app.request.post({
@@ -165,11 +180,11 @@ module.exports = function () {
 			    buildings: map.buildings,
 			    background: map.background,
 			    units: map.units
-            }, 'maps/save', function (response) {
+            }, "maps/save", function (response) {
 				console.log(response);
             	change = true;
             });
         }
-        //getbyid: function (id) { app.request.get(id, 'maps/select', function (response) { app.map.set(response); }); },
+        //getbyid: function (id) { app.request.get(id, "maps/select", function (response) { app.map.set(response); }); },
 	};
 }();

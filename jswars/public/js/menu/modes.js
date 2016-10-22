@@ -10,6 +10,7 @@ Menu = require('../menu/elements/menu.js');
 List = require('../menu/elements/list.js');
 Ulist = require('../menu/elements/ul.js');
 Fader = require('../effects/fade.js');
+Select = require('../tools/selection.js');
 
 Modes = Object.create(Menu);
 Modes.positions = ['twoAbove','oneAbove','selected','oneBelow','twoBelow'];
@@ -60,7 +61,7 @@ Modes.selectMode = function () {
     if (app.key.pressed(['up','down'])) {
         this.mode().deselect();
         this.fader.changeElement(
-            app.select.verticle(this.list()).current().select().background()
+            Select.verticle(this.list()).current().select().background()
         ).setColor(this.mode().color.get());
         app.footer.scroll(this.message(this.mode().id()));
         this.rotate();
@@ -80,7 +81,7 @@ Modes.selectMode = function () {
 Modes.selectOption = function () {
     if (app.key.pressed(['up','down'])) {
         this.fader.changeElement(
-            app.select.verticle(this.options()).current());
+            Select.verticle(this.options()).current());
         app.footer.scroll(this.message(this.option().id));
     }
 

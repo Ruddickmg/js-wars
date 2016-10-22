@@ -1,37 +1,33 @@
-Menu = require('../menu/elements/menu.js');
-BuildingsDisplay = require('../menu/elements/buildingsDisplay.js');
-Ulist = require('../menu/elements/ul.js');
-app.select = require('../tools/selection.js');
+Menu = require("../menu/elements/menu.js");
+BuildingsDisplay = require("../menu/elements/buildingsDisplay.js");
+Ulist = require("../menu/elements/ul.js");
+Select = require("../tools/selection.js");
 
 Join = Object.create(Menu);
-Join.map = function () { 
+Join.map = function (category) { 
     this.h = true;
-    return this.chose('map'); 
+    return this.chose("map", category); 
 };
-Join.game = function () { 
+Join.game = function (category) { 
     this.h = false;
-    return this.chose('game'); 
+    return this.chose("game", category); 
 };
 Join.host = function () { return this.h; };
 Join.update = function (type) {
-    var elements = app.dom.createMenu(app.maps.all(), ['name'], this.element);
+    var elements = app.dom.createMenu(app.maps.all(), ["name"], this.element);
     var replace = document.getElementById(this.element.section);
     replace.parentNode.replaceChild(elements, replace);
     this.buildings.set(app.maps.info());
     this.maps.setElement(elements.firstChild);
     this.maps.highlight();
 };
-Join.chose = function (type) {
+Join.chose = function (type, category) {
     var map;
-    if (!this.active()) this.init(type);
-    if (app.key.pressed(['left','right']) && app.key.undo()) this.selectCategory();
+    if (!this.active()) this.init(type, category);
+    if (app.key.pressed(["left","right"]) && app.key.undo()) this.selectCategory();
     if (app.maps.updated()) this.update(type);
-    if (app.key.pressed(['up','down']) && app.key.undo()) {
-        // needs testing
-        var haha = app.select.verticle(this.maps.deHighlight()).highlight().current();
-        console.log(haha);
-        this.buildings.set(haha);
-    }
+    if (app.key.pressed(["up","down"]) && app.key.undo())
+        this.buildings.set(Select.verticle(this.maps.deHighlight()).highlight().current());
     if (app.key.pressed(app.key.enter()) && (map = app.maps.byId(this.maps.id())) || app.key.pressed(app.key.esc())) {
         app.key.undo();
         this.remove();
@@ -40,7 +36,7 @@ Join.chose = function (type) {
 };
 Join.selectCategory = function () {
     var categories = this.categories.hide();
-    app.select.horizontal(categories).show().prepHorizontal();
+    Select.horizontal(categories).show().prepHorizontal();
     app.maps.setCategory(categories.id());
     this.buildings.set(this.maps.current());
 };
@@ -48,32 +44,35 @@ Join.add = function (map) {
     app.game.name(map.name);
     map.players.push(app.user.raw());
     app.players.add(map.players);
-    socket.emit('join', map);
+    console.log(map);
+    console.log('adding map');
+    socket.emit("join", map);
 };
 Join.setup = function (map) {
     app.map.set(map.map ? map.map : map);
     if (!this.host()) this.add(map);
     return map;
 };
-Join.init = function (type) {
+Join.init = function (type, category) {
     this.activate();
-    this.element = app.maps.type(type).screen();
+    this.element = app.maps[category]().type(type).screen();
+    this.category = category;
     this.display(type);
 };
 Join.display = function (type) {
 
-    var screen = this.createScreen('setupScreen');
-    this.createTitle('Select*'+type);
+    var screen = this.createScreen("setupScreen");
+    this.createTitle("Select*"+type);
 
-    var categories, maps = app.dom.createMenu(app.maps.all(), ['name'], this.element, function (list) {
+    var categories, maps = app.dom.createMenu(app.maps.all(), ["name"], this.element, function (list) {
         var element = list.childNodes[0];
         app.touch(element).mapOrGame().doubleTap();
         app.click(element).mapOrGame().doubleClick();
     });
 
-    this.category = categories = app.dom.createMenu(app.settings.categories, '*', {
-        section: 'categorySelectScreen',
-        div:'selectCategoryScreen'
+    this.category = categories = app.dom.createMenu(app.settings.categories, "*", {
+        section: "categorySelectScreen",
+        div:"selectCategoryScreen"
     });
     
     this.maps = (new UList(maps.firstChild)).highlight();
@@ -97,8 +96,8 @@ Join.display = function (type) {
 Join.remove = function () {
     this.deactivate();
     var select = document.getElementById(this.element.section);
-    var buildings = document.getElementById('buildingsDisplay');
-    var categories = document.getElementById('categorySelectScreen');
+    var buildings = document.getElementById("buildingsDisplay");
+    var categories = document.getElementById("categorySelectScreen");
     var screen = this.screen();
     screen.removeChild(select);
     screen.removeChild(buildings);

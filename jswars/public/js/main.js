@@ -26,7 +26,7 @@ Array.prototype.filter = function (callback) {
 };
 Array.prototype.reduce = function (callback, initial) {
     var current, prev = initial || this[0];
-    for (var i = initial ? 1 : 0, length = this.length; i < length; ++i)
+    for (var i = (initial || initial === 0) ? 0 : 1, length = this.length; i < length; ++i)
         prev = callback(prev, this[i], i, this);
     return prev;
 };

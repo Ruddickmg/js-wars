@@ -8,11 +8,9 @@ module.exports = function () {
 
     var ajaj = function (input, action, callback, url) {
 
-      console.log(url);
-
         if ( !url ) throw new Error('No address specified for back end services');
 
-        try{
+        try {
             // Opera 8.0+, Firefox, Chrome, Safari
             var request = new XMLHttpRequest();
         } catch (e){
@@ -30,8 +28,8 @@ module.exports = function () {
             }
         }
 
-        request.onreadystatechange = function(){
-            if (request.readyState == 4 && request.status == 200)
+        request.onreadystatechange = function() {
+            if (request.readyState == 4 && request.status == 200 && request.responseText)
                 return callback ? callback(JSON.parse(request.responseText)):
                     JSON.parse(request.responseText);
         };

@@ -4,49 +4,69 @@
    
 \* ------------------------------------------------------------------------------------------------------*/
 
-StatusHud = require('../huds/coStatusHud.js');
-Score = require('../definitions/score.js');
-Counter = require('../tools/counter.js');
-Exit = require('../menu/options/exit.js');
-Hud = require('../huds/hud.js');
+StatusHud = require("../huds/coStatusHud.js");
+Score = require("../definitions/score.js");
+Counter = require("../tools/counter.js");
+Exit = require("../menu/options/exit.js");
+Hud = require("../huds/hud.js");
 
-app = require('../settings/app.js');
-app.menu = require('../controller/menu.js');
-app.animate = require('../animation/animate.js');
-app.key = require('../input/keyboard.js');
-app.target = require('../controller/target.js');
-app.user = require('../user/user.js');
-app.players = require('../controller/players.js');
-app.cursor = require('../controller/cursor.js');
-app.background = require('../map/background.js');
-app.options = require('../menu/options/optionsMenu.js');
-app.confirm = require('../controller/confirmation.js');
+app = require("../settings/app.js");
+app.menu = require("../controller/menu.js");
+app.animate = require("../animation/animate.js");
+app.key = require("../input/keyboard.js");
+app.target = require("../controller/target.js");
+app.user = require("../user/user.js");
+app.players = require("../controller/players.js");
+app.cursor = require("../controller/cursor.js");
+app.background = require("../map/background.js");
+app.options = require("../menu/options/optionsMenu.js");
+app.confirm = require("../controller/confirmation.js");
+app.request = require("../tools/request.js");
 app.exit = new Exit();
-
 app.coStatus = new StatusHud();
 
 module.exports = function () {
 
     var game, mode, name, joined, selected, actions, end = false, started = false, settings, 
-    players, map, menus = ['optionsMenu', 'options', 'intel', 'save', 'exit', 'yield'];
+    players, map, menus = ["optionsMenu", "options", "intel", "save", "exit", "yield"];
 
     // used for accessing the correct building array via what type of transportation the unit uses
     var ports = { 
-        air: 'airport', 
-        foot: 'base', 
-        wheels: 'base', 
-        boat: 'seaport' 
+        air: "airport", 
+        foot: "base", 
+        wheels: "base", 
+        boat: "seaport" 
     };
 
     var tick = new Counter(1000);
 
     var removeScreen = function () {
-        var screen = document.getElementById('setupScreen');
+        var screen = document.getElementById("setupScreen");
         screen.parentNode.removeChild(screen);
     };
-
     return {
         tick:tick.reached,
+        save:function () {
+            var raw = {user:app.user.raw(), game:this.raw()};
+            console.log('-- saving --');
+            console.log(raw);
+            app.request.post(raw, "games/save", function (response) {
+                if (response && !response.error){
+                    console.log(response);
+                    console.log('game saved!');
+                }
+            });
+        },
+        raw: function () {
+            var playas = players.map(function (player) {return player.raw();});
+            console.log(playas);
+            return {
+                name:name,
+                map:app.map.raw(),
+                settings:settings,
+                players:playas
+            };
+        },
         joined: function () {return joined;},
         started: function () {return started;},
         settings: function () {return settings;},
@@ -80,7 +100,7 @@ module.exports = function () {
         setMap: function (m) {return map = m;},
         logout: function () {
             // handle logout
-            alert('logout!!');
+            alert("logout!!");
         },
         create: function (n) {
             var room = {};
@@ -89,7 +109,7 @@ module.exports = function () {
             room.settings = settings;
             room.max = app.map.players();
             room.category = app.map.category();
-            socket.emit('newRoom', room);
+            socket.emit("newRoom", room);
         },
         setup: function (setupScreen){
 
@@ -100,10 +120,10 @@ module.exports = function () {
             // if a game has been set 
             if (game) {               
                 removeScreen();
-                return game === 'editor' && app.editor.start() || started ? true : app.game.reset();
+                return game === "editor" && app.editor.start() || started ? true : app.game.reset();
 
             // set up the game based on what mode is being selected
-            } else if (mode) mode === 'logout' ? app.game.logout() : game = app.menu[mode]();
+            } else if (mode) mode === "logout" ? app.game.logout() : game = app.menu[mode]();
 
             // loop
             window.requestAnimationFrame(app.game.setup);
@@ -143,7 +163,7 @@ module.exports = function () {
             app.screen.to(hq);
 
             // begin game animations
-            app.animate(['background', 'terrain', 'building', 'unit', 'cursor']);
+            app.animate(["background", "terrain", "building", "unit", "cursor"]);
             
             // mark the game as started
             return started = true;
@@ -181,7 +201,7 @@ module.exports = function () {
 
             // display co status hud
             else if (!options) {
-                app.coStatus.display(app.players.current(), app.cursor.side('x'));
+                app.coStatus.display(app.players.current(), app.cursor.side("x"));
                 app.map.focus();
             }
 
@@ -226,8 +246,8 @@ module.exports = function () {
         },
         end: function (saved) { 
             // create game screen
-            if (!saved) alert('player ' + app.players.first().number() + ' wins!  with a score of ' + app.players.first().score.calculate() + '!');
-            else alert('ending game');
+            if (!saved) alert("player " + app.players.first().number() + " wins!  with a score of " + app.players.first().score.calculate() + "!");
+            else alert("ending game");
             end = true; 
         }
     };

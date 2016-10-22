@@ -2,18 +2,14 @@
     set up and handle socket io
 \* ----------------------------------------------------------------------------------------------------------*/
 
-Room = require('./room.js');
 Rooms = require('./rooms.js');
 Player = require('./player.js');
-Identity = require('./tools/identity.js');
-AiPlayer = require('./ai/aiPlayer.js');
 AiController = require('./ai/controller.js');
 Clients = require('./clients.js');
 events = require('events'),
 
 module.exports = function (io) {
 
-    var inc = 0;
     var ai = new AiController();
     var rooms = new Rooms();
     var emitter = new events.EventEmitter();
@@ -28,7 +24,17 @@ module.exports = function (io) {
         open: function (category) { return rooms.open(category).open; },
 
         // get rooms that arent full but have started
-        running: function (category) { return rooms.open().running; },
+        running: function (category) { return rooms.open(category).running; },
+
+        updateUser: function (user, id) {
+            var socket = clients.remove(id);
+            if (socket) {
+                socket.player = new Player(user);
+                clients.add(socket);
+            }
+        },
+
+        saveGame: function (user) { return rooms.save(clients.get(user.id).room); },
 
         // listen for socket communication
         watch: function (socket) {
@@ -45,7 +51,7 @@ module.exports = function (io) {
 
             // add user to players
             socket.on('addUser', function (user) {
-                socket.player = rooms.disconnected(user) || new Player(user, socket);
+                socket.player = rooms.disconnected(user) || new Player(user);
                 clients.add(socket);
                 socket.joinRoom(rooms.lobby());
                 socket.emit('player', socket.player);
@@ -76,7 +82,6 @@ module.exports = function (io) {
                     socket.broadcast.to(socket.room.name).emit('background', type);
                 }
             });
-
             // going to have to change how rooms work.. socket room name must be unique (intigrate with id's)
 
             // all game menu and setup related commands
@@ -96,7 +101,9 @@ module.exports = function (io) {
             });
             
             socket.on('setUserProperties', function (p) {
-                socket.room.getPlayer(p.player)[p.property] = p.value;
+                var player = socket.room.getPlayer(p.player);
+                if (player) player[p.property] = p.value;
+                else p = {error:'Player not found.'};
                 socket.broadcast.to(socket.room.name).emit('propertyChange', p);
             });
 
@@ -151,7 +158,7 @@ module.exports = function (io) {
             });
 
             socket.on('disconnect', function () {
-                var room = socket.room;
+                var removed, room = socket.room;
                 if (socket.player) clients.remove(socket);
                 if (room) {
 
@@ -169,7 +176,8 @@ module.exports = function (io) {
                         socket.player.clear();
                         rooms.disconnect(socket.player);
                     }
-                    if (room.remove(socket)) ai.remove(rooms.remove(room).aiPlayers());
+                    if (room.remove(socket) && (removed = rooms.remove(room)))
+                        ai.remove(removed.aiPlayers());
                 }
             });
         }

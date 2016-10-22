@@ -14,6 +14,8 @@ Desktop.ini
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
+js-wars.js
+
 # Windows Installer files
 *.cab
 *.msi

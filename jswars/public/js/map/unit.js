@@ -475,7 +475,7 @@ Unit.prototype.move = function (position, moved) {
     this.refresh();
 };
 
-Unit.prototype.properties = function () {return this._current;};
+Unit.prototype.raw = function () {return this._current;};
 Unit.prototype.action = function () { return this._current.action; };
 Unit.prototype.setAction = function (action) { this._current.action = action; };
 Unit.prototype.actions = function (position) {

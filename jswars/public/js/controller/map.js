@@ -379,8 +379,13 @@ module.exports = function () {
         raw: function (player) {
             return {
                 player: player,
-                buildings: buildings.map(function (building) {return building.properties();}),
-                units: units.map(function (unit) {return unit.properties();}),
+                name: map.name,
+                players: map.players,
+                category: map.category,
+                dimensions: map.dimensions,
+                terrain: app.map.terrain().map(function (terrain) {return terrain.raw();}),
+                buildings: app.map.buildings().map(function (building) {return building.properties();}),
+                units: app.map.units().map(function (unit) {return unit.raw();}),
                 background: background
             };
         }

@@ -22,6 +22,12 @@ var Player = function (user) {
         number:user.number
     };
 };
+Player.prototype.raw = function () {
+    var player = this._current;
+    player.co = this.co.name;
+    player.score = this.score.raw();
+    return player;
+};
 Player.prototype.setCo = function (co) {this.co = co;};
 Player.prototype.setProperty = function (property, value) {
     this[property] = (property === 'co') ? app.co[value](this) : value;

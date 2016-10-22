@@ -45,4 +45,28 @@ List.prototype.limit = function (callback) {
     this.setIndex(this.limited.indexOf(current));
     return this;
 };
+List.prototype.describe = function (selected) {
+    if (selected.description && selected.description()) 
+        app.input.message(selected.description());
+},
+List.prototype.getHorizontal = function () { return this.hElement; },
+List.prototype.getVerticle = function () { return this.vElement; },
+List.prototype.verticle = function (elements) { return this.changeElement(elements, ["up", "down"]); },
+List.prototype.horizontal = function (elements) { return this.changeElement(elements, ["left","right"]);},
+List.prototype.changeElement = function (elements, keys) { return app.key.pressed(keys[1]) ? elements.next() : elements.prev(); },
+List.prototype.setHorizontal = function (e) {
+    var selected = e.current();
+    this.describe(selected);
+    this.hElement = selected;
+    return this;
+},
+List.prototype.setVerticle = function (e) {
+    if (e.descriptions()) this.describe(e);
+    this.vElement = e;
+    return this;   
+},
+List.prototype.clear = function () {
+    delete this.vElement;
+    delete this.hElement;
+}
 module.exports = List;
