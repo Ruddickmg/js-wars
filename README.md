@@ -29,7 +29,7 @@ The headquarters is a purple square
 
 The escape key will escape out of any menu in the game. 
 
-If pressed while no unit or building is selected "esc" will bring up the options menu, you may end your turn by selecting "end" from the options menu.
+If pressed while no unit or building is selected "esc" will bring up the options menu. You may end your turn by selecting "end" from the options menu.
 
 Units are selected by pressing enter while the cursor is over them. After  a unit is selected, moving the cursor to the desired location within the highlighted movement range then pressing enter will move the unit to that location.
 
