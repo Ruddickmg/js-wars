@@ -6,7 +6,7 @@ Lacal:
 
 this repo is a bit behind, but you can see the game functioning @ http://www.jswars.com/
 
-I havent put allot of work into the login ui so it may be a bit buggy, I have experienced it not reroute me back to the site after loggin in, it also lags on the first attempt in a long time to access the page (i think do to free hosting). if any of this occurs simply refresh, click the button (only button), which will take you to a fb login, login with test credentials. if you are not rerouted to www.jswars.com, then simply go to it manually and it should work (will work on ui more extensively  after game is completed)
+I havent put allot of work into the login UI so it may be a bit buggy, it not re-routes to localhost after loggin in (development env), it also lags on the first attempt in a long time to access the page (i think do to free hosting). if this occurs simply refresh till the page shows up, click the button (only button), which will take you to a fb login then login with test credentials. if you are routed to localhost then simply go to www.jswars.com manually (I will work on login UI more extensively after game is completed)
 
 login with facebook test users (there are two in since at least two players are required to play): 
 
