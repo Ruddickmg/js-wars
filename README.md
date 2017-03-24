@@ -1,7 +1,7 @@
 # js-wars
 Work in progress, a take on the Advance Wars game for Gameboy Avance, run on NodeJS, written in Javascript (logic), python (database access), CSS and Html (canvas for animations) using a postgresql database.
 
-Lacal:
+Location:
 ========
 
 this repo is a bit behind, but you can see the game functioning @ http://www.jswars.com/
