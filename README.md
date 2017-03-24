@@ -1,10 +1,12 @@
 # js-wars
-Work in progress, a take on the Advance Wars game for Gameboy Avance, run on NodeJS, written in Javascript, python, CSS and Html and using a postgresql database
+Work in progress, a take on the Advance Wars game for Gameboy Avance, run on NodeJS, written in Javascript (logic), python (database access), CSS and Html (canvas for animations) using a postgresql database.
 
 Lacal:
 ========
 
 this repo is a bit behind, but you can see the game functioning @ http://www.jswars.com/
+
+I havent put allot of work into the login ui so it may be a bit buggy, I have experienced it not reroute me back to the site after loggin in, it also lags on the first attempt in a long time to access the page (i think do to free hosting). if any of this occurs simply refresh, click the button (only button), which will take you to a fb login, login with test credentials. if you are not rerouted to www.jswars.com, then simply go to it manually and it should work (will work on ui more extensively  after game is completed)
 
 login with facebook test users (there are two in since at least two players are required to play): 
 
