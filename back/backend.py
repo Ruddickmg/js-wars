@@ -1,26 +1,36 @@
-from flask import Flask, jsonify, request, g
-import json, logging, db
+from flask import Flask, jsonify, request
+from datetime import datetime, timedelta
+import json, logging, db, os
 from db import Maps, User, Games, Teardown, Rollback, Migrate, DropAll, Session
 
-app = Flask(__name__)
+app = Flask(__name__) 
 
-logging.basicConfig(filename="/var/lib/openshift/55f8fbf90c1e665752000019/app-root/logs/python.log",level=logging.DEBUG)
+app.config["SQLALCHEMY_DATABASE_URI"] = db.GetUrl()
 
 def user_byEmail (email):
+
 	try:
+
 		return User.query.filter_by(email=email).first()
 
 	except Exception as error:
+
 		Teardown(error, session);
+
 		return jsonify({"success":"false"})
 
 def addOriginId (user, origin, id):
+
 	if not getattr(user, origin) and ["facebook", "google", "twitter"].index(origin) >= 0:
+		
 		setattr(user, origin, id)
 
 def user_toDict(user):
+
 	try:
+
 		if user:
+
 			return {
 				"id":user.id,
 				"email":user.email,
@@ -28,22 +38,27 @@ def user_toDict(user):
 				"first_name":user.firstName,
 				"name":user.name
 			}
+
 	except Exception as e:
+
 		return e
 
 def games_toDict(game):
+
 	try:
 		if game:
 			return {
-				"id":game.id,
+				"id":game.gameId,
+				"db":game.id,
 				"name":game.name,
 				"map":game.map,
 				"settings":game.settings,
-				"players":game.players,
-				"saved":True
+				"players":[],
+				"saved":game.players
 			}
 
 	except Exception as e:
+		
 		return e
 
 
@@ -62,6 +77,9 @@ def maps_toDict(maps):
 	except Exception as e:
 		return e
 
+def weeksAgo(number):
+	return datetime.utcnow() - timedelta(weeks=number)
+
 @app.route("/")
 def hello():
 	return "Hello world!"
@@ -72,10 +90,8 @@ def rollback():
 	return "rolling back..."
 
 @app.route("/migrate")
-def migrate():
-	if Migrate():
-		return "migrated"
-	return "error"
+def migrate():	
+	return jsonify({"success":True if Migrate() else False})
 
 @app.route("/drop")
 def drop():
@@ -137,17 +153,24 @@ def add_map():
 @app.route("/maps/remove/<int:id>", methods=["DELETE"])
 def maps_remove(id):
 	session = Session()
+
 	try:
+
 		maps = Maps.query.get(id)
+
 		if maps:
+
 			session.delete(maps)
+
 		session.commit()
 
 	except Exception as error:
+
 		Teardown(error, session);
 		return jsonify({"success":"false"})
 
 	finally:
+
 		session.close()
 
 @app.route("/users/<string:origin>/<int:id>", methods=["GET"])
@@ -156,18 +179,26 @@ def user_byId(origin, id):
 
 @app.route("/users/remove/<int:id>", methods=["DELETE"])
 def user_remove(id):
+
 	session = Session()
+
 	try:
+
 		user = User.query.get(id)
+
 		if (user):
+
 			session.delete(user)
+			
 		session.commit()
 
 	except Exception as error:
+
 		Teardown(error, session);
 		return jsonify({"success":"false"})
 
 	finally:
+
 		session.close()
 
 @app.route("/users/login/<string:email>/<string:password>", methods=["GET"])
@@ -194,11 +225,12 @@ def user_save():
 				user["last_name"],
 				user["first_name"],
 				user["name"]
-			)
+			) 
 
 		addOriginId(entry, user["origin"], user["id"])
 		session.merge(entry)
 		session.commit()
+		return 	json.dumps(user_toDict(entry))
 
 	except Exception as error:
 		Teardown(error, session);
@@ -207,9 +239,15 @@ def user_save():
 	finally:
 		session.close()
 
-	result = json.dumps(user_toDict(entry))
+@app.route ("/sync", methods=["GET"])
+def sync():
+	session = Session()
+	try:
+		return jsonify(results = [s[0] for s in session.query(Games.gameId).all()]);
 
-	return result
+	except Exception as error:
+		Teardown(error, False);
+		return jsonify({"error":"db error"})
 
 @app.route ("/games/saved/<string:userId>", methods=["GET"])
 def get_games(userId):
@@ -223,7 +261,6 @@ def get_games(userId):
 		return jsonify({"error":"db error"})
 
 	return jsonify({"error":"Not found"})
-
 
 @app.route("/games/save", methods=["POST"])
 def save_game():
@@ -246,14 +283,19 @@ def save_game():
 			if (user):
 				newGame.users.append(user)
 
-		if 'saved' in game and game['saved']:
-			previous = Games.query.filter(Games.gameId, newGame.gameId).first()
-			if previous:
-				newGame.id = previous.id
-				session.merge(newGame)
-		else:
-			session.add(newGame)
+		if newGame.users:
+			if 'saved' in game and game['saved']:
 
+				previous = Games.query.filter(Games.gameId, newGame.gameId).first()
+
+				if previous:
+					newGame.id = previous.id
+					session.merge(newGame)
+			else:
+				session.add(newGame) 
+		
+		# remove saved games that havent been touched in 3 weeks
+		session.query(Games).filter(Games.date < weeksAgo(3)).delete()
 		session.commit()
 
 	except Exception as error:
@@ -285,6 +327,3 @@ def games_remove(id):
 @app.errorhandler(404)
 def not_found(error):
 	return app.make_response(jsonify({"error": 404}))
-
-if __name__ == "__main__":
-	app.run()

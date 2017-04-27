@@ -3,12 +3,18 @@ Validator = require('../tools/validator.js');
 
 module.exports = function (name, obsticle) {
 
-	var error, validate = new Validator('property');
+	// var validate = new Validator("property.js");
+	
+	// var error = validate.isString(name) || validate.hasElements(obsticle, ['type', 'defense']);
+	
+	// if (error) {
+	//
+	//  	throw error;
+	// }
 
-	if((error = validate.defined(name, 'name') || validate.hasElements(obsticle, ['type', 'defense'])))
-	 	throw error;
-
-	this.type = obsticle.type;
-	this.defense = obsticle.defense;
-    this.name = function () { return name };
+	return {
+		type: obsticle.type,
+		defense: obsticle.defense,
+	    name: name
+	};
 };

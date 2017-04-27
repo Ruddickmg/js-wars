@@ -1,21 +1,37 @@
 app.dom = require('../tools/dom.js');
+playerController = require("../controller/player.js");
 
 StatusHud = function () {
+    
 	this._context = undefined;
     this._previous = undefined;
     this._gold = undefined;
 };
 
-StatusHud.prototype.visibility = function (visibility) {return document.getElementById('coStatusHud').style.display = visibility;}
+StatusHud.prototype.visibility = function (visibility) {
+
+    return document.getElementById('coStatusHud').style.display = visibility;
+};
+
 StatusHud.prototype.show = function () {
+
     this.visibility('');
     this._previous = undefined;
 };
-StatusHud.prototype.hide = function () {this.visibility('none');};
-StatusHud.prototype.power = function () { return this._context; };
+
+StatusHud.prototype.hide = function () {
+
+    this.visibility('none');
+};
+
+StatusHud.prototype.power = function () { 
+
+    return this._context; 
+};
+
 StatusHud.prototype.display = function (player, location) {
     
-    if (location !== this._previous || this._gold !== player.gold()) {
+    if (location !== this._previous || this._gold !== playerController.gold(player)) {
 
         this._previous = location;
 
@@ -25,8 +41,10 @@ StatusHud.prototype.display = function (player, location) {
         var hud = document.createElement('section');
         hud.setAttribute('id', 'coStatusHud');
 
-        if (location === 'left') 
+        if (location === 'left') {
+
             hud.style.left = '864px';
+        }
 
         // create a ul, to be the gold display
         var gold = document.createElement('ul');
@@ -49,7 +67,7 @@ StatusHud.prototype.display = function (player, location) {
         // add the amount of gold the player currently has
         var playerGold = document.createElement('li');
         playerGold.setAttribute('id', 'currentGold');
-        playerGold.innerHTML = this._gold = app.user.turn() ? player.gold() : '?';
+        playerGold.innerHTML = this._gold = app.user.turn() ? playerController.gold(player) : '?';
         gold.appendChild(playerGold);
 
         // put it all together and insert it into the dom
@@ -57,10 +75,14 @@ StatusHud.prototype.display = function (player, location) {
         hud.appendChild(power);
 
         if (coHud) {
+
             coHud.parentNode.replaceChild(hud, coHud);
+
         } else {
+
             document.body.insertBefore(hud, app.dom.insertLocation);
         }
+
         // return the context for animation of the power bar
         return this.context = context;
     }

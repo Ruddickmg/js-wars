@@ -1,5 +1,5 @@
 app.options = require('../menu/options/optionsMenu.js');
-app.game = require('../game/game.js');
+app.game = require('../controller/game.js');
 
 module.exports = function () {
 

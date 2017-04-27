@@ -1,66 +1,102 @@
+terrainController = require("../controller/terrain.js");
+unitController = require("../controller/unit.js");
 Terrain = require('../map/terrain.js');
 
-Matrix = function(dimensions){
-	this.dimensions = dimensions;
-	this.matrix = [];
-	this.dummies = [];
-	for (var i = 0; i <= dimensions.x; i += 1)
-		this.matrix.push([]);
-};
 /* ----------------------------------------------------------------------------------- *\
 
 	Matrix holds map elements in a matrix for quick access during map analysis
 
 \* ----------------------------------------------------------------------------------- */
 
-Matrix.prototype.insert = function (element) {
-	var p = element.position();
-    return this.matrix[p.x][p.y] = element;
-};
+module.exports = function (dimensions) {
 
-Matrix.prototype.remove = function (element) {
-	var existing = this.get(element);
-	if(existing.type() !== 'building') {
-		if (element.type() === 'unit') {
-			if(existing === element)
-				this.insert(element.occupies());
-		} else this.insert(new Terrain('plain', element.position()));
-	}
-	return element;
-};
+	matrix = {};
+	dummies = [];
 
-Matrix.prototype.position = function (p, init) {
-	var e, d = this.dimensions;
-	if (p.x <= d.x && p.x >= 0 && p.y <= d.y && p.y >= 0){
-		if(!this.matrix[p.x][p.y] && !init) {
-			this.dummies.push(p);
-			this.insert(new Terrain('plain', p));
+	return {
+
+		/*
+		*	insert takes a map element and inserts it into the matrix 
+		*	position representing its location on a grid
+		*/
+
+		insert: function (element) {
+
+			var p = terrainController.position(element);
+
+			if (!matrix[p.x]) {
+
+				matrix[p.x] = {};
+			}
+
+			matrix[p.x][p.y] = element;
+
+		    return matrix[p.x][p.y];
+		},
+
+		remove: function (element) {
+
+			var existing = this.get(element);
+
+			if (!terrainController.isBuilding(existing)) {
+
+				if (terrainController.isUnit(element)) {
+
+					if (unitController.isSame(existing, element)) {
+
+						this.insert(unitController.occupies(element));
+					}
+
+				} else {
+
+					this.insert(new Terrain('plain', terrainController.position(element)));
+				}
+			}
+
+			return element;
+		},
+
+		position: function (p, init) {
+
+			var e, d = dimensions, x = matrix[p.x];
+
+			if (p.x <= d.x && p.x >= 0 && p.y <= d.y && p.y >= 0) {
+
+				if ((!x || !x[p.y]) && !init) {
+
+					dummies.push(p);
+
+					this.insert(new Terrain('plain', p));
+				}
+
+				return matrix[p.x][p.y];
+			}
+
+			return false;
+		},
+
+		clean: function () {
+
+			var x, p, e, l = dummies.length;
+
+			while (l--) {
+
+				p = dummies[l];
+				x = matrix[p.x];
+				e = x ? x[p.y] : false;
+
+				if (e && !terrainController.isUnit(e) && !terrainController.isBuilding(e)) {
+
+					delete matrix[p.x][p.y];
+				}
+			}
+
+			dummies = [];
+		},
+
+		get: function (element) {
+
+			return this.position(terrainController.position(element));
 		}
-		return this.matrix[p.x][p.y];
-	}
-	return false;
+	};
 };
-
-Matrix.prototype.clean = function () {
-	for (var p, e, i = 0; i < this.dummies.length; i += 1){
-		var p = this.dummies[i];
-		if((e = this.matrix[p.x][p.y]) && e.type() !== "unit" && e.type() !== "building") {
-			this.matrix[p.x][p.y] = undefined;
-		}
-	}
-	this.dummies = [];
-};
-
-Matrix.prototype.close = function (p) { this.matrix[p.x][p.y].closed = true; };
-Matrix.prototype.get = function (element) {return this.position(element.position());};
-Matrix.prototype.log = function () {
-	console.log(' ');
-	console.log('------- matrix --------');
-	console.log(' ');
-	for (var arr, x = 0; x < this.matrix.length; x += 1)
-		for (var y = 0; y < this.matrix[x].length; y += 1)
-			if(this.matrix[x][y]) console.log(this.matrix[x][y]);
-	console.log('--------- end ---------');
-	console.log(' ');
-};
-module.exports = Matrix;

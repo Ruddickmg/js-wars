@@ -104,6 +104,7 @@ module.exports = function (canvas, dimensions, base) {
             h: h,
             // random number generator, used for grass background texture
             random: function (min, max) {
+
                 return (Math.random() * (max - min)) + min;
             }
         };
@@ -120,7 +121,11 @@ module.exports = function (canvas, dimensions, base) {
             this.cached = true;
             return this;
         },
-        hide: function () { animationObjects.hide(); },
+
+        hide: function () { 
+
+            animationObjects.hide(); 
+        },
         
         // place drawings where they belong on board based on coorinates
         coordinate: function (objectClass, object, coordinet) {
@@ -133,11 +138,11 @@ module.exports = function (canvas, dimensions, base) {
 
             // get the coordinates for objects to be drawn
             var coordinate, coordinates = !coordinet ? app[objectClass][object]() : coordinet;
-
+            
             // for each coordinates
             for (var i = 0; i < coordinates.length; i += 1) {
 
-                coordinate = coordinates[i].position ? coordinates[i].position() : coordinates[i];
+                coordinate = coordinates[i].position ? terrainController.position(coordinates[i]) : coordinates[i];
 
                 // var s modifys the coordinates of the drawn objects to allow scrolling behavior
                 // subtract the amount that the cursor has moved beyond the screen width from the 
@@ -149,13 +154,16 @@ module.exports = function (canvas, dimensions, base) {
                 if (s.x >= 0 && s.y >= 0 && s.x <= wid && s.y <= len) {
 
                     // get the name of the object to be drawn on the screen
-                    name = objectClass === 'map' && coordinet === undefined ? coordinates[i].draw() : object;
+                    name = objectClass === 'map' && coordinet === undefined ? terrainController.draw(coordinates[i]) : object;
 
                     // if it is specified to be cached
                     if (this.cached) {
 
                         // check if it has already been cached and cache the drawing if it has not yet been cached
-                        if (app.cache[name] === undefined) cacheDrawing(name);
+                        if (app.cache[name] === undefined) {
+                            
+                            cacheDrawing(name);
+                        }
 
                         // draw the cached image to the canvas at the coordinates minus 
                         // its offset to make sure its centered in the correct position
@@ -172,22 +180,35 @@ module.exports = function (canvas, dimensions, base) {
 
         // fills background
         background: function () {
+
             var dimensions = app.map.dimensions();
-            var type = app.background.type();
-            for (var x = 0; x < dimensions.x; x += 1)
-                for (var y = 0; y < dimensions.y; y += 1)
+            var type = app.background.drawing();
+
+            for (var x = 0; x < dimensions.x; x += 1) {
+
+                for (var y = 0; y < dimensions.y; y += 1) {
+
                     animationObjects[type](canvas, setPosition(x * w, y * h))
+                }
+            }
         },
 
         hudCanvas: function (object, objectClass) {
 
             // draw a background behind terrain and building elements
-            if (objectClass !== 'unit') animationObjects.plain(canvas, setPosition(smallX, smallY));
+            if (objectClass !== 'unit') {
 
-            if (app.cache[object]) // use cached drawing if available
+                animationObjects.plain(canvas, setPosition(smallX, smallY));
+            }
+
+            if (app.cache[object]) { // use cached drawing if available
+
                 canvas.drawImage(app.cache[object], 0, 0);
-            else if(animationObjects[object])
+
+            } else if(animationObjects[object]) {
+
                 animationObjects[object](canvas, setPosition(smallX, smallY));
+            }
         }
     };
 };

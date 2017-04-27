@@ -1,48 +1,40 @@
-/* ---------------------------------------------------------------------------------------------------------*\   
-    app
-\* ---------------------------------------------------------------------------------------------------------*/
+"use strict";
 
-app = require("./game/app.js");
+const
+    app = require("./game/app.js"),
+    gameMap = require('./map/map.js');
 
-/* ---------------------------------------------------------------------------------------------------------*\   
-    add useful methods to prototypes
-\* ---------------------------------------------------------------------------------------------------------*/
+function isBoolean(object) {
+    
+    return object === false || object === true
+}
 
-// add first letter capitalization funcitonality
-Object.prototype.isArray = function () { return this.constructor === Array };
-String.prototype.uc_first = function () { return this.charAt(0).toUpperCase() + this.slice(1); };
-Array.prototype.hasValue = function (value) { return this.indexOf(value) > -1; };
-Array.prototype.map = function (callback) {
-    var mapped = [], i = this.length;
-    while (i--) mapped[i] = callback(this[i], i, this);
-    return mapped;
+function isArray(object) {
+
+    return object && object.constructor === Array; 
+}
+
+function isFunction(object) {
+
+    return object && object.constructor === Function;
+}
+
+function isString(object) {
+
+    return object && object.constructor === String;
+}
+
+String.prototype.uc_first = function () { 
+
+    return this.charAt(0).toUpperCase() + this.slice(1); 
 };
-Array.prototype.filter = function (callback) {
-    var filtered = [], len = this.length;
-    for (var i = 0; i < len; i += 1) 
-        if (callback(this[i], i, this)) 
-            filtered.push(this[i]);
-    return filtered;
-};
-Array.prototype.reduce = function (callback, initial) {
-    var current, prev = initial || this[0];
-    for (var i = (initial || initial === 0) ? 0 : 1, length = this.length; i < length; ++i)
-        prev = callback(prev, this[i], i, this);
-    return prev;
-};
-Array.prototype.findIndex = function (callback) {
-    var i = this.length;
-    while (i--) if (callback(this[i], i, this)) return i;
-};
-Array.prototype.find = function (callback) { return this[this.findIndex(callback)];};
 
-/* --------------------------------------------------------------------------------------*\ 
-    load dummy variables if/for testing locally 
-\* --------------------------------------------------------------------------------------*/
+Array.prototype.hasValue = function (value) { 
 
-gameMap = require('./map/map.js');
+    return this.indexOf(value) > -1; 
+};
 
-if (app.testing){
+if (app.testing) {
 
     app.games.push({
         category: gameMap.category,
@@ -65,7 +57,7 @@ if (app.testing){
     event listeners
 \* ---------------------------------------------------------------------------------------------------------*/
 
-window.addEventListener("wheel", function(e){app.scroll.wheel(e.deltaY, new Date());});
+window.addEventListener("wheel", (e) => app.scroll.wheel(e.deltaY, new Date()));
 
 /* --------------------------------------------------------------------------------------------------------*\
     app.init sets up a working canvas instance to the specified canvas dom element id, it is passed the id
@@ -85,19 +77,44 @@ app.screen.setDimensions(app.cursorCanvas.dimensions());
     animation instructions
 \*-----------------------------------------------------------------------------------------------------------*/
 
-app.drawTerrain = function (draw) { draw.cache().coordinate('map', 'terrain'); };
-app.drawBuilding = function (draw) { draw.coordinate('map', 'buildings'); };
-app.drawBackground = function (draw) {draw.background('background'); };
-app.drawUnit = function (draw) { draw.coordinate('map', 'units'); };
+app.drawTerrain = function (draw) { 
+
+    draw.cache().coordinate('map', 'terrain'); 
+};
+
+app.drawBuilding = function (draw) { 
+
+    draw.coordinate('map', 'buildings'); 
+};
+
+app.drawBackground = function (draw) {
+
+    draw.background('background'); 
+};
+
+app.drawUnit = function (draw) { 
+
+    draw.coordinate('map', 'units'); 
+};
+
 app.drawWeather = function (draw) {};
+
 app.drawEffects = function (draw) {
+
     draw.coordinate('highlight', 'movementRange'); // highlighting of movement range
     draw.coordinate('highlight', 'path'); // highlighting current path
     draw.coordinate('highlight', 'attackRange'); // highlight attack range
 };
+
 app.drawCursor = function (draw) {
-    if (!app.cursor.hidden() && app.user.turn())
+
+    if (!app.cursor.hidden() && app.user.turn()) {
+
         draw.coordinate('map', 'cursor', [app.cursor.position()]);
-    if (app.target.active()) 
+    }
+
+    if (app.target.active()) {
+
         draw.coordinate('map', app.target.cursor(), [app.target.position()]);
+    }
 };

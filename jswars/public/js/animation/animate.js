@@ -10,10 +10,16 @@
 app = require('../settings/app.js');
 
 module.exports = function (objectName, hide) {
+
     window.requestAnimationFrame(function(){
-        if(typeof objectName === 'string')
+
+        if (typeof objectName === 'string') {
+
             app[objectName + 'Canvas'].setAnimations(app['draw' + objectName.uc_first()]).render(hide);
-        else for(var i = 0; i < objectName.length; i += 1) 
+        
+        } else for(var i = 0; i < objectName.length; i += 1) {
+
             app[objectName[i] + 'Canvas'].setAnimations(app['draw' + objectName[i].uc_first()]).render(hide);
+        }
     });
 };

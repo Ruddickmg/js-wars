@@ -144,8 +144,8 @@ app.settings = {
     },
 
     optionsMenu: {
-        unit: {
-            name: 'Unit'
+        co: {
+            name: 'Co'
         },
         intel: {
             name: 'Intel'

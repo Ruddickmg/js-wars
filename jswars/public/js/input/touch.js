@@ -121,7 +121,7 @@ module.exports = function (element) {
 				var touched = target.id.indexOf(label) > -1 ? target: target.parentNode;
 				var type = touched.id.indexOf('map') ? 'map' : 'game';
 	        	var index = touched.attributes[type + label].value;
-	        	// // app.display.setIndex(index);
+	        	// Game.element.setIndex(index);
 	        });
 			return this;
 		},
@@ -168,7 +168,10 @@ module.exports = function (element) {
 			return this;
 		},
 		esc: function (elem) {
-			input(elem).addEventListener('touchstart', function() {if(app.user.player().ready()) app.key.press(app.key.esc());});
+			input(elem).addEventListener('touchstart', function() {
+				if (app.user.player().ready()) 
+					app.key.press(app.key.esc());
+			});
 			return this;
 		}
 	};

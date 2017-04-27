@@ -1,19 +1,34 @@
-//Select = require("../");
+/* --------------------------------------------------------------------------------------*\
+    
+    exit.js controls exiting a game
+
+\* --------------------------------------------------------------------------------------*/
+
+Select = require('../../tools/selection.js');
+transmit = require("../../sockets/transmitter.js");
+
 Exit = function (callback) {
+
 	this.leave = callback || function () {
-		this.game.end(); 
+
+		app.game.end(); 
+		app.game.remove();
 		this.a = false;
-		socket.emit("exit", app.user.player());
+
+		transmit.exit(app.user.player());
+
 		return this;
 	};
 };
 
 Exit.prototype.prompt = function (message) { 
+
     app.hud.hide();
     app.coStatus.hide();
     app.cursor.hide();
 	this.a = true;
 	app.confirm.display(message, true);
+
 	return this; 
 };
 
@@ -23,8 +38,10 @@ Exit.prototype.evaluate = function () {
 
 	if (response) {
 
-		if (app.key.pressed(["left","right"]))
+		if (app.key.pressed(["left","right"])) {
+
 			Select.horizontal(response.deHighlight()).highlight();
+		}
 
 		if (app.key.pressed(['enter', 'esc'])) {
 
@@ -42,7 +59,14 @@ Exit.prototype.evaluate = function () {
 	}
 };
 
-Exit.prototype.active = function () { return this.a };
-Exit.prototype.deactivate = function () {this.a = false;};
+Exit.prototype.active = function () { 
+
+	return this.a 
+};
+
+Exit.prototype.deactivate = function () {
+
+	this.a = false;
+};
 
 module.exports = Exit;

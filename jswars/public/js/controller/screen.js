@@ -1,3 +1,9 @@
+/* --------------------------------------------------------------------------------------*\
+    
+    screen.js handles screen movement
+
+\* --------------------------------------------------------------------------------------*/
+
 app = require('../settings/app.js');
 app.settings = require('../settings/game.js');
 app.animate = require('../animation/animate.js');
@@ -6,12 +12,17 @@ app.cursor = require('../controller/cursor.js');
 
 module.exports = function () {
 
-	var screenDimensions, dimensions, position = { x:0, y:0 }, axis = ['x','y'];
+	var screenDimensions, dimensions, focused, position = { x:0, y:0 }, axis = ['x','y'];
 
 	var scale = function (dimension) { return (dimension / 64) - 1; };
 
 	// screenRefresh the postions on the screen of all the units/terrain/buildings/etc
     var screenRefresh = function () { app.animate(['terrain', 'cursor', 'building', 'unit', 'effects']); };
+
+    var refreshMap = function () {
+
+        app.animate(["unit","building"]);
+    };
 
     var move = function (distance, view, limit, sign, axis) {
 
@@ -26,21 +37,52 @@ module.exports = function () {
     };
 
 	return {
+
 		setDimensions: function (dim) { 
+
 			screenDimensions = dim;
+
 			dimensions = { x: scale(dim.width), y: scale(dim.height) }; 
 		},
-		width: function () { return screenDimensions.width; },
-		dimensions: function () { return dimensions; },
-		position: function () { return position; },
-		top: function () { return position.y; },
-		bottom: function (){ return position.y + dimensions.y; },
-		left: function () { return position.x; },
-		right: function () { return position.x + dimensions.x; },
 
+		width: function () { 
+
+			return screenDimensions.width; 
+		},
+
+		dimensions: function () { 
+
+			return dimensions; 
+		},
+
+		position: function () { 
+
+			return position; 
+		},
+
+		top: function () { 
+
+			return position.y; 
+		},
+
+		bottom: function (){ 
+
+			return position.y + dimensions.y; 
+		},
+
+		left: function () { 
+
+			return position.x; 
+		},
+
+		right: function () { 
+
+			return position.x + dimensions.x; 
+		},
 
 		// deactivate all menus/selections and display screen in its initial state
 		reset: function () {
+
             ['actionHud', 'damageDisplay', 'buildUnitScreen', 'unitInfoScreen', 'optionsMenu']
                 .forEach(function (screen) { app.dom.remove(screen); });
 
@@ -52,35 +94,41 @@ module.exports = function () {
             app.range.clear();
             app.cursor.show();
             app.animate(['cursor', 'unit','effects']);
+
             return this;
         },
 
 		// creates scrolling effect allowing movement and map dimensions beyond screen dimensions
-    	scroll: function () {
+    	scroll: function (map) {
+
 	        var mapDimensions = app.map.dimensions();
 	        var a, cursor = app.cursor.position();
 
-	        for (var p, i = 0; i < 2; i += 1){
+	        for (var p, i = 0; i < 2; i += 1) {
+
 	        	a = axis[i];
 
-		        if(cursor[a] >= 0 && cursor[a] < (p = position[a]) + 2 && p > 0) {
+		        if (cursor[a] >= 0 && cursor[a] < (p = position[a]) + 2 && p > 0) {
+
 		        	position[a] -= 1;
 		        }
 
-		        if(cursor[a] < mapDimensions[a] && cursor[a] > (p = position[a] + dimensions[a]) - 2 && p < mapDimensions[a] - 1) 
+		        if (cursor[a] < mapDimensions[a] && cursor[a] > (p = position[a] + dimensions[a]) - 2 && p < mapDimensions[a] - 1) {
+
 		        	position[a] += 1;
+		        }
 		    }
+
 	        screenRefresh();
 	    },
 
 	    // move screen to target position
-        to: function (coordinates) {
+        to: function (coordinates, map) {
 
        		app.cursor.setPosition(coordinates);
 
+	        var a, target, limit, distance, view, sign, beginning, end, middle;
 	        var mapDimensions = app.map.dimensions();
-	        var a, target, limit, distance, view, sign,
-	        beginning, end, middle;
 
 			for (var i = 0; i < 2; i += 1) {
 
@@ -96,21 +144,51 @@ module.exports = function () {
 		        middle = end - Math.ceil(dimensions[a] / 2);
 
 		        // if the hq is located to the right or below the center of the screen then move there
-		        if(target > middle){
+		        if (target > middle) {
+
 		            sign = 1;
 		            distance = target - middle;
 		            limit = mapDimensions[a];
 		            view = end;
-		        }else{
+
+		        } else {
+
 		            sign = -1;
 		            distance = middle - target;
 		            limit = -1;
 		            view = beginning;
 		        }
-
-		        // create the effect of moving the screen rather then immediately jumping to the hq
-		        move (distance, view, limit, sign, a);
 		    }
-	    }
+
+	        // create the effect of moving the screen rather then immediately jumping to the hq
+	        move (distance, view, limit, sign, a);
+		},
+
+        focus: function () {
+
+            if (app.key.keyUp(app.key.map()) && app.key.undoKeyUp(app.key.map())) {
+
+                app.hud.show();
+                app.coStatus.show();
+                app.cursor.show();
+                refresh();
+                focused = false;
+
+            } else if (app.key.pressed(app.key.map()) && app.key.undo(app.key.map()) && !focused) {
+
+                app.hud.hide();
+                app.coStatus.hide();
+                app.cursor.hide();
+                refresh(true);
+                focused = true;
+            }
+
+            refreshMap();
+        },
+
+        focused: function () { 
+
+            return focused; 
+        }
     };
 }();

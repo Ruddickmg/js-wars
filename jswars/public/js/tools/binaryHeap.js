@@ -1,76 +1,142 @@
-/* ------------------------------------------------------------------------------------------------------*\
-    
-    takes a string as an optional argument, this string is used as the name of a property 
-    in a potential object to be compared when assessing its value in relation to the 
-    other heap elements
+"use strict";
 
-\* ------------------------------------------------------------------------------------------------------*/
+function binaryHeap(getValue = (number) => number) {
 
-Heap = function (property) { 
-    // create the heap
-    this.heap = []; 
-    this.property = property;
+    let
+        heap = [],
+        isMaxHeap = false;
 
-};
-// make a max heap instead of a min heap;
-Heap.prototype.setToMax = function () {this.max = true; return this;};
+    const
+        valueAtIndex = (currentHeap, index) => getValue(currentHeap[index - 1]),
+        parent = (index) => Math.floor(index / 2),
+        leftChild = (index) => index * 2,
+        rightChild = (index) => leftChild(index) + 1,
+        swapChildWithParent = (currentHeap, child=2, parent=1) => {
 
-// swaps the parent index with the child, returns child's new index (parent index)
-// subtract one from each input to compensate for the array starting at 0 rather then 1
-Heap.prototype.swap = function (index, parentIndex) {
-    this.heap[index - 1] = this.heap.splice(parentIndex - 1, 1, this.heap[index - 1])[0]; 
-    return parentIndex;
-};
+            const
+                childIndex = child - 1,
+                parentIndex = parent - 1,
+                modifiedHeap = currentHeap.slice();
 
-// get the value at the input index, compensate for whether there is a property being accessed or not
-Heap.prototype.value = function (index) { return this.property ? this.heap[index - 1][this.property] : this.heap[index - 1];};
+            modifiedHeap[childIndex] = currentHeap[parentIndex];
+            modifiedHeap[parentIndex] = currentHeap[childIndex];
 
-// calculate the parent index
-Heap.prototype.parent = function (index) {return Math.floor(index/2)};
+            return modifiedHeap;
+        },
+        inequality = (heap, leftChildIndex, rightChildIndex) => {
 
-// calculate the indexes of the left and right
-Heap.prototype.left = function (i) {return i * 2;};
-Heap.prototype.right = function (i) {return this.left(i) + 1;};
+            const
+                valueOfLeftChild = valueAtIndex(heap, leftChildIndex),
+                valueOfRightChild = valueAtIndex(heap, rightChildIndex);
 
-// compare the values at the two supplied indexes, return the result of whether input l is greater then input r
-Heap.prototype.lt = function(l,r) {return this.value(l) < this.value(r);};
-Heap.prototype.gt = function(l,r) {return this.value(l) > this.value(r);};
-Heap.prototype.inequality = function (l,r) {return this.max ? this.gt(l,r) : this.lt(l,r);};
+            return isMaxHeap ?
+                valueOfLeftChild > valueOfRightChild:
+                valueOfLeftChild < valueOfRightChild;
+        },
+        moveElementToPositionInHeap = (value, currentHeap, index) => {
 
-// if we are at the start of the array or the current nodes value is greater then its parent then return the current 
-// index (compensate for 0), otherwise swap the parent and child then repeat from the childs new position
-Heap.prototype.bubble = function (index) {
-    while (index >= 2 && !this.inequality (this.parent(index), index))
-        index = this.swap(index, this.parent(index));
-    return index - 1;
-};
+            let
+                boundary = 1,
+                childIndex = index,
+                modifiedHeap = currentHeap.slice(),
+                parentIndex = parent(childIndex),
+                inBounds = (index) => index > boundary;
 
-Heap.prototype.sort = function (index) {
+            while (inBounds(childIndex) && inequality(modifiedHeap, childIndex, parentIndex)) {
 
-    var l, r, length = this.heap.length;
+                modifiedHeap = swapChildWithParent(modifiedHeap, childIndex, parentIndex);
+                childIndex = parentIndex;
+                parentIndex = parent(childIndex);
+            }
 
-    while (length > (l = this.left(index)))
-        index = this.swap(index, length > (r = this.right(index)) && this.inequality(r,l) ? r : l)
+            return modifiedHeap;
+        },
+        choseIndex = (currentHeap, rightChildIndex, leftChildIndex) => {
 
-    this.swap(index, length); 
-    this.bubble(index);
+            const isInBounds = currentHeap.length > rightChildIndex;
 
-    return this.heap.pop();
-};
+            if (isInBounds && inequality(currentHeap, leftChildIndex, rightChildIndex)) {
 
-// add a value to the heap
-Heap.prototype.push = function (value) {
-    this.heap.push(value); 
-    return this.bubble(this.heap.length);
-},
+                return rightChildIndex;
+            }
 
-// remove and return the top item from the heap
-Heap.prototype.pop = function () {return this.sort(1);},
+            return leftChildIndex;
+        },
+        sortHeap = (currentHeap, index) => {
 
-// return the first value of the heap (lowest)
-Heap.prototype.min = function () {return this.heap.slice(0,1)[0];},
+            const bounds = currentHeap.length;
 
-// return the amount of elements in the heap (array)
-Heap.prototype.size = function () {return this.heap.length;}
+            let
+                parentIndex = index,
+                childIndex = parentIndex,
+                modifiedHeap = currentHeap.slice(),
+                leftChildIndex = leftChild(parentIndex);
 
-module.exports = Heap;
+            while (leftChildIndex < bounds) {
+
+                childIndex = choseIndex(modifiedHeap, leftChild(parentIndex), rightChild(parentIndex));
+                modifiedHeap = swapChildWithParent(modifiedHeap, childIndex, parentIndex);
+                parentIndex = childIndex;
+            }
+
+            if (childIndex <= bounds) {
+
+                return modifiedHeap;
+            }
+
+            modifiedHeap = swapChildWithParent(modifiedHeap, childIndex, bounds);
+
+            return moveElementToPositionInHeap(modifiedHeap[bounds], modifiedHeap, bounds);
+        },
+        removeAndReturnTopElement = () => sortHeap(heap, 1).pop(),
+        toSortedArray = (heap) => {
+
+            const sortedArray = heap.map(() => removeAndReturnTopElement());
+
+            sortedArray.forEach((element) => heap.push(element));
+
+            return sortedArray;
+        };
+
+    return {
+
+        size: () => heap.length,
+        top: () => heap[0],
+        pop: () => removeAndReturnTopElement(),
+        forEach: (callback) => toSortedArray(heap).forEach((element) => callback(element)),
+        map(callback) {
+
+            const newHeap = binaryHeap(getValue);
+
+            heap.forEach((element) => newHeap.push(callback(element)));
+
+            return newHeap;
+        },
+        push(value) {
+
+            heap = moveElementToPositionInHeap(value, heap, heap.length);
+
+            return this;
+        },
+        setToMax() {
+
+            isMaxHeap = true;
+
+            return this;
+        },
+        setToMin() {
+
+            isMaxHeap = false;
+
+            return this;
+        },
+        clear() {
+
+            heap = [];
+
+            return this;
+        }
+    };
+}
+
+module.exports = binaryHeap;

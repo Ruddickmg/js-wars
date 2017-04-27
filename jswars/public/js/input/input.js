@@ -112,6 +112,7 @@ module.exports = {
     back: function () { return this.b; },
     undoBack: function () { this.b = false; },
     activate: function () { this.a = true; },
+    deactivate: function () {this.a = false;},
     descriptions: function () { return document.getElementById('descriptions'); },
     message: function (message) { return app.type.letters(this.descriptions(), message); }
 };

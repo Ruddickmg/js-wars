@@ -5,108 +5,190 @@
 \* --------------------------------------------------------------------------------------*/
 
 Position = require('../objects/position.js');
-Heap = require('../tools/binaryHeap.js');
+matrixTracker = require("../tools/matrixTracking.js");
+heap = require('../tools/binaryHeap.js');
+unitController = require("../controller/unit.js");
+terrainController = require("../controller/terrain.js");
+composer = require("../tools/composition.js");
+curry = require("../tools/curry.js");
 
-var Path = function () {this._coordinates = [];};
+module.exports = function (map) {
+    
+    var coordinates = [];
+    var visited = matrixTracker();
+    
+    var getNeighbors = function (position) {
 
-Path.prototype.size = function () { return this._coordinates.length; };
-Path.prototype.clear = function () { this._coordinates = []; return this; };
-Path.prototype.set = function (p) { return (this._coordinates = this._coordinates.concat(p)); };
-Path.prototype.get = function () { return this._coordinates; };
-Path.prototype.getNeighbors = function (position, check) {
+        var x = position.x;
+        var y = position.y;
 
-    var x = position.x, y = position.y,
-    neighbors = [],
-    positions = [
-        new Position(x - 1, y),
-        new Position(x + 1, y),
-        new Position(x, y - 1),
-        new Position(x, y + 1)
-    ];
+        return [
 
-    for (var n, i = 0; i < 4; i += 1){
+            new Position(x - 1, y),
+            new Position(x + 1, y),
+            new Position(x, y - 1),
+            new Position(x, y + 1)
 
-        neighbor = app.map.top(positions[i]);
+        ].reduce(function (neighbors, position) {
 
-        if(neighbor && !neighbor.closed)
-            neighbors.push(neighbor);
-    }
+            var neighbor = app.map.top(position);
 
-    return neighbors;
-};
+            if (neighbor && !visited.element(neighbor)) {
 
-Path.prototype.distance = function (position, target, origin) {
-    var dx1 = position.x - target.x;
-    var dy1 = position.y - target.y;
-    var dx2 = origin.x - target.x;
-    var dy2 = origin.y - target.y;
-    var cross = Math.abs((dx1 * dy2) - (dx2 * dy1));
-    var rand = Math.floor(Math.random()+1)/(1000);
-    return ((Math.abs(dx1) + Math.abs(dy1)) + (cross * rand));
-};
-
-Path.prototype.reachable = function (unit, clean, movement) {
-
-    var reachable = [unit], open = new Heap('f'), allowed = movement || unit.movement(), 
-    neighbor, neighbors, current, cost;
-    open.push(unit);
-    app.map.close(unit);
-
-    while (open.size()) {
-
-        current = open.pop();
-
-        this.getNeighbors(current.position(), unit).forEach(function (neighbor) {
-
-            cost = (current.f || 0) + unit.moveCost(neighbor);
-
-            if (cost <= allowed) {
-                neighbor.f = cost;
-                app.map.close(neighbor);
-                reachable.push(neighbor);
-                open.push(neighbor);
-            } 
-        });
-    }
-    return clean ? app.map.clean(reachable) : reachable;
-};
-
-Path.prototype.find = function (unit, target) {
-
-    var allowed = unit.movement(), clean = [unit], cost, neighbor, i, neighbors, position, current,
-    open = new Heap('f'), scope = this; 
-    app.map.close(unit);
-    open.push(unit);
- 
-    while (open.size()) {
-
-        current = open.pop();
-        position = current.position();
-
-        // if the targetination has been reached, return the array of values
-        if (target.x === position.x && target.y === position.y) {
-            var path = [current];
-            while (current.p) path.unshift((current = current.p));
-            app.map.clean(clean);
-            return this.set(path);
-        }
-
-        this.getNeighbors(position).forEach(function (neighbor) {
-            cost = (current.g || 0) + unit.moveCost(neighbor); 
-            if (cost <= allowed && (!neighbor.g || neighbor.g >= current.g)) {
-                neighbor.g = cost;
-                neighbor.f = cost + scope.distance(neighbor.position(), target, unit.position());
-                neighbor.p = current; //<--- keep reference to parent
-                app.map.close(neighbor);
-                clean.push(neighbor);
-                open.push(neighbor);
+                neighbors.push(neighbor);
             }
-        });
-    }
-    app.map.clean(clean);
-    return false;
+
+            return neighbors;
+
+        }, []);
+    };
+
+    var distance = function (position, origin, target) {
+
+        var dx1 = position.x - target.x;
+        var dy1 = position.y - target.y;
+        var dx2 = origin.x - target.x;
+        var dy2 = origin.y - target.y;
+
+        var cross = Math.abs((dx1 * dy2) - (dx2 * dy1));
+        var rand = Math.floor(Math.random()+1) / 1000;
+
+        return ((Math.abs(dx1) + Math.abs(dy1)) + (cross * rand));
+    };
+
+    var getF = function (element) {
+
+        return visited.getF(element);
+    };
+
+    return {
+
+        show: function (effect) { 
+
+            app.animate('effects'); 
+        },
+        
+        size: function () { 
+
+            return coordinates.length; 
+        },
+
+        clear: function () { 
+
+            coordinates = []; 
+
+            return this; 
+        },
+
+        set: function (p) { 
+
+            return (coordinates = coordinates.concat(p)); 
+        },
+        
+        get: function () { 
+
+            return coordinates; 
+        },
+
+        reachable: function (unit, movement) {
+
+            var open = heap(getF);
+            var reachable = [unit];
+            var allowed = movement || unitController.movement(unit);
+            var neighbor, neighbors, current, cost;
+
+            visited.close(unit);
+            open.push(visited.element(unit));
+
+            while ((current = open.pop())) {
+
+                getNeighbors(unitController.position(current)).forEach(function (neighbor) {
+
+                    cost = (visited.getF(current) || 0) + unitController.moveCost(neighbor, unit);
+
+                    if (cost <= allowed) {
+
+                        visited.close(neighbor).setF(neighbor, cost);
+
+                        open.push(visited.element(neighbor));
+
+                        reachable.push(neighbor);
+                    }
+                });
+            }
+
+            return reachable;
+        },
+
+        find: function (unit, target) {
+
+            var open = heap(getF);
+            var current, cost, neighbor, g;
+            var position = unitController.position(unit);
+            var allowed = unitController.movement(unit);
+            var getElement = composer.functions([app.map.top, unitController.position]);
+            var scope = this;
+
+            visited.close(unit).setF(unit, distance(position, position, target));
+            open.push(visited.close(unit).element(unit));
+
+            while ((current = open.pop())) {
+
+                position = unitController.position(current);
+
+                // if the targetination has been reached, return the array of values
+                if (position.on(target)) {
+
+                    var path = [getElement(current)];
+
+                    while ((current = visited.getParent(current))) {
+
+                        path.unshift(getElement(current));
+                    }
+
+                    visited.clear();
+
+                    return this.set(path);
+                }
+
+                getNeighbors(position).forEach(function (neighbor) {
+
+                    var currentG = (visited.getG(current) || 0);
+                    var moveCost = unitController.moveCost(neighbor, unit);
+ 
+                    cost = currentG + moveCost;
+
+                    g = visited.getG(neighbor);
+
+                    if (cost <= allowed && !g || g >= visited.getG(current)) {
+
+                        visited.close(neighbor)
+                            .setG(neighbor, cost)
+                            .setF(neighbor, cost + distance(
+                                unitController.position(neighbor),
+                                unitController.position(unit),
+                                target
+                            ))
+                            .setParent(neighbor, current);
+
+                        open.push(visited.element(neighbor));
+                    }
+                });
+            }
+
+            visited.clear();
+
+            return false;
+        },
+
+        visited: function () {
+
+            return visited;
+        },
+
+        clean: function () {
+
+            visited.clear();
+        }
+    };
 };
-
-Path.prototype.show = function (effect) { app.animate('effects'); };
-
-module.exports = Path;

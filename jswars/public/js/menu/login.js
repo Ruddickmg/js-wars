@@ -1,13 +1,17 @@
-socket = require('../tools/sockets.js');
-app.game = require('../game/game.js');
+app.game = require('../controller/game.js');
 app.input = require('../input/input.js');
 Menu = require('../menu/elements/menu.js');
 User = require('../user/user.js');
+transmit = require("../sockets/transmitter.js");
 
 Login = Object.create(Menu);
+
 Login.testAPI = function () {
+
 	var scope = this;
+
 	FB.api('/me', function(response) { 
+
 		return scope.loginToSetup(response, 'facebook');
 	});
 };
@@ -15,22 +19,44 @@ Login.testAPI = function () {
 // allow login through fb ---- fb sdk
 // This is called with the results from from FB.getLoginStatus().
 Login.statusChangeCallback = function (response) {
-    if (response.status === 'connected') return this.testAPI();
-    else {
+
+    if (response.status === 'connected') {
+
+        return this.testAPI();
+    
+    } else {
+
     	this.loginScreen.style.display = null;
-    	if (response.status === 'not_authorized') document.getElementById('status').innerHTML = 'Log in to play JS-WARS!';
-   		else document.getElementById('status').innerHTML = 'Please log in';
+
+    	if (response.status === 'not_authorized') {
+
+            document.getElementById('status').innerHTML = 'Log in to play JS-WARS!';
+        
+        } else {
+
+            document.getElementById('status').innerHTML = 'Please log in';
+        }
     }
 };
 
 // format is where the login is coming from, allowing different actions for different login sources
 Login.loginToSetup = function (user, origin) {
-    if(user && user.id) {
+
+    if (user && user.id) {
+
        	app.user = new User(user, origin);
-        socket.emit('addUser', app.user.raw());
+
+        transmit.addUser(app.user.raw());
+
         app.user.get();
-        if(!app.testing) this.loginScreen.parentNode.removeChild(this.loginScreen);
+
+        if (!app.testing) {
+
+            this.loginScreen.parentNode.removeChild(this.loginScreen);
+        }
+
         app.game.setup();
+
         return true;
     }
 };
@@ -43,6 +69,7 @@ Login.setup = function () {
     // login form
     loginForm = document.createElement('section');
     loginForm.setAttribute('id', 'loginForm');
+    
     var form = app.input.form('loginText', loginForm,'Guest name input.');
     loginForm.appendChild(form);
 
@@ -66,50 +93,75 @@ Login.setup = function () {
 };
 
 Login.send = function () {
+
     // if login is successful go to game setup, otherwise the user has declined
     var paramsLocation=window.location.toString().indexOf('?');
     var params="";
-    if (paramsLocation>=0)
-    params=window.location.toString().slice(paramsLocation);
+
+    if (paramsLocation>=0) {
+
+        params=window.location.toString().slice(paramsLocation);
+    }
+
     top.location = 'https://graph.facebook.com/oauth/authorize?client_id=1481194978837888&scope=public_profile&email&redirect_uri=http://localhost/'+params;
 };
+
 Login.verify = function () {
+
 	var scope = this;
+
 	FB.getLoginStatus(function(response) {
+
 		scope.statusChangeCallback(response);
 	});
 };
+
 Login.display = function () {
 
     if(!app.testing) {
+
     	var scope = this;
+
     	window.fbAsyncInit = function() {
+
             FB.init({
+
                 appId     : '1481194978837888',
                 oauth     : true,
                 cookie    : true,  // enable cookies to allow the server to access 
                 xfbml     : true,  // parse social plugins on this page
                 version   : 'v2.3' // use version 2.2
             });
+
             FB.getLoginStatus(function(response) {scope.statusChangeCallback(response);});
         };
 
         (function(d, s, id) {
+
             var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) return;
+
+            if (d.getElementById(id)) {
+
+                return;
+            }
+
             js = d.createElement(s); js.id = id;
             js.src = "//connect.facebook.net/en_US/sdk.js";
             fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));
+
+        } (document, 'script', 'facebook-jssdk'));
 
         this.loginScreen = this.setup();
+
         document.body.appendChild(this.loginScreen, app.dom.insertLocation);
 
         // hide the login screen, only show if someone has logged in
         this.loginScreen.style.display = 'none';
 
     } else {
+
         this.loginToSetup({
+
             email: "testUser@test.com",
             first_name: "Testy",
             gender: "male",
@@ -121,4 +173,5 @@ Login.display = function () {
         });
     }
 };
+
 module.exports = Login;

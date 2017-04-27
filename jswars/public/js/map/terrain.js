@@ -9,34 +9,31 @@ app.properties = require('../definitions/properties.js');
 Position = require('../objects/position.js');
 Validator = require('../tools/validator.js');
 MapElement = require('../map/mapElement.js');
+terrainDefaults = require("../definitions/properties.js");
+buildingDefaults = require("../definitions/buildings.js");
+unitDefaults = require("../definitions/units.js");
+createDefaults = require("../definitions/defaults.js");
 
-Terrain = function (type, position) {
-	var error, properties = new app.properties();
-    var validate = new Validator('terrain');
-    var property = properties[type];
+module.exports = function (type, position) {
+
+    var defaults = createDefaults(unitDefaults, buildingDefaults, terrainDefaults);
+
+	var error, validate = new Validator("terrain.js");
     
-    if((error = validate.defined('type', type) || validate.isCoordinate(position) || validate.hasElements(property, ['name', 'type', 'defense']))){
-        throw error;
-    }
+    // if ((error = (validate.mapElementType(type) || validate.isCoordinate(position)))) {
 
-    this.n = property.name();
-	this.t = property.type();
-    this.d = property.type();
-    this.pos = position;
-	this.defense = property.defense;
-    this.name = function () { return this.n; };
-	this.draw = function () { return type; };
+    //     console.log(position);
+    //     console.log("type: "+type);
+
+    //     throw error;
+    // }
+
+    return {
+        
+        type: "terrain",
+        orientation:"",
+        name: defaults.name(type),
+        draw: type,
+        position: new Position(position.x, position.y)
+    };
 };
-
-Terrain.prototype.raw = function () {return new MapElement(this.type(), this.position()); };
-Terrain.prototype.type = function () { return this.t; };
-Terrain.prototype.draw = function () { return this.d; };
-Terrain.prototype.position = function () { return new Position(this.pos.x, this.pos.y); };
-Terrain.prototype.class = function () { return 'terrain'; };
-Terrain.prototype.on = function (object) {
-    var objectPosition = object.position ? object.position() : object;
-    var position = this.position();
-    return position.x === objectPosition.x && position.y === objectPosition.y;
-};
-
-module.exports = Terrain;

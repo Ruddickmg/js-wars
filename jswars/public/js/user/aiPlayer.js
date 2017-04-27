@@ -1,24 +1,28 @@
-Player = require('../user/player.js');
-Score = require('../definitions/score.js');
-AiPlayer = function (number) {
-	this._current = {
-        id: 'AI#'+number,
-        gold: 0,
-        special: 0,
+createPlayer = require("../user/player.js");
+Score = require("../definitions/score.js");
+composer = require("../tools/composition.js");
+transmit = require("../sockets/transmitter.js");
+
+module.exports = function (number) {
+    
+    var player = composer.exclude("isComputer").compose({
+
+        mode: "cp",
+        isComputer: true
+
+    }, createPlayer({
+
+        first_name: "HAL #" + number,
+        id: "AI#"+number,
         ready: true,
-        number:number
-    };
-	this.name = function () { return 'HAL #'+ this.number();};
-    this.fullName = function () { return 'Mr. Robot'; };
-    this.lastName = function () { return 'Robot'; };
-    this.id = function () { return this._current.id; };
-    this.score = new Score(true);
-    this.co = null;
-    this.mode = 'cp';
-    this.isComputer = true;
-    if (app.user.first()) socket.emit('addAiPlayer', this);
+        number: number
+
+    }));
+
+    if (app.user.first()) {
+
+        transmit.addAi(player);
+    }
+
+    return player;
 };
-AiPlayer.prototype = Object.create(Player.prototype);
-AiPlayer.prototype.constructor = AiPlayer;
-AiPlayer.prototype.setNumber = function (number) {this._current.number = number;};
-module.exports = AiPlayer;

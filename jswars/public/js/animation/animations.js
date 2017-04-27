@@ -11,7 +11,9 @@
 \*---------------------------------------------------------------------------------------------------------*/
 
 module.exports = function (width, height) {
+
     var transparent = false;
+    
     return {
         
         hide: function () {transparent = 0.1;},

@@ -1,260 +1,536 @@
-app = require('../settings/app.js');
-app.settings = require('../settings/game.js');
-app.players = require('../controller/players.js');
-app.units = require('../definitions/units.js');
-app.animate = require('../animation/animate.js');
+/* ------------------------------------------------------------------------------------------------------*\
 
-Validator = require('../tools/validator.js');
-Matrix = require('../tools/matrix.js');
-Terrain = require('../map/terrain.js');
-Building = require('../map/building.js');
-Unit = require('../map/unit.js');
-Position = require('../objects/position.js');
+    controller/map.js controls the setting up and modification of the map
 
-module.exports = function () {
+\* ------------------------------------------------------------------------------------------------------*/
 
-    var error, focused, longestLength, map = {},
-    matrix, buildings = [], terrain = [], units = [],
-    color = app.settings.playerColor, allowedUnits, allowedBuildings;
-    // var validate = new Validator('map');
+"use strict";
 
-    var restricted = {
-        sea: ['sea', 'reef', 'shoal'],
-        reef: this.sea,
-        shoal: this.sea,
-        road:['road'],
-        pipe:['pipe'],
-        bridge: ['bridge'],
-        river:['river']
-    };
+const
+    calculate = require("../tools/calculate.js"),
+    // Validator = require("../tools/validator.js"),
+    Matrix = require("../tools/matrix.js"),
+    createTerrain = require("../map/terrain.js"),
+    createBuilding = require("../map/building.js"),
+    createUnit = require("../map/unit.js"),
+    Position = require("../objects/position.js"),
+    unitController = require("../controller/unit.js"),
+    terrainController = require("../controller/terrain.js"),
+    buildingController = require("../controller/building.js"),
+    app = require("../settings/app.js");
 
-    var occupants = function (position) {
+app.settings = require("../settings/game.js");
+app.players = require("../controller/players.js");
+app.units = require("../definitions/units.js");
+app.animate = require("../animation/animate.js");
 
-        var on = {}, building, unit, t, length = app.calculate.longestLength([terrain, buildings, units]);
+function mapController() {
 
-        // look through arrays and check if they are at the current or passed grid point
-        for (var i = 0; i < length; i += 1) {
-            
-            building = buildings[i], unit = units[i], t = terrain[i];
-            
-            // if an object is found at the same grid point return it 
-            if (unit && unit.on(position)) on.unit = unit;
-            if (building && building.on(position)) on.building = building;
-            if (t && t.on(position)) on.terrain = t;
-        }
+    let
+        focused,
+        matrix,
+        allowedUnits,
+        allowedBuildings,
+        map = {},
+        buildings = [],
+        terrain = [],
+        units = [];
 
-        if (!on.terrain) on.terrain = new Terrain('plain', new Position(position.x, position.y));
-        return on;
-    };
+    // const validate = new Validator("map");
 
-    var detectIndex = function (element) {
-        var elements;
-        switch (element.type()) {
-            case 'unit': elements = units;
-                break;
-            case 'building': elements = buildings;
-                break;
-            default: elements = terrain;
-        }
-        return getIndex(element, elements);
-    };
+    const
+        restricted = {
 
-    var getIndex = function (element, elements) {
-        var id = element.id !== undefined;
-        if (element) for (var i = 0; i < elements.length; i += 1)
-            if (((compare = elements[i]) && id && compare.id === element.id) || !id && compare.on(element.position()))
-                return i;
-        return false;
-    };
+            sea: ["sea", "reef", "shoal"],
+            reef: this.sea,
+            shoal: this.sea,
+            road: ["road"],
+            pipe: ["pipe"],
+            bridge: ["bridge"],
+            river: ["river"]
+        },
+        occupants = ({x,y}) => {
 
-    var refresh = function (hide) { app.animate('unit', hide); };
+            const
+                onSamePosition = terrainController.on,
+                type = terrainController.type,
+                mapElements = [units, buildings, terrain],
+                terrain = createTerrain("plain", new Position(x, y));
 
-    var neighbors = function (position) {
+            return mapElements.reduce((occupants, elements) => {
 
-        var neighbors = [];
-        var positions = position.neighbors();
+                const occupant = elements.find((element) => onSamePosition(terrain, element));
 
-        for (var neighbor, i = 0; i < 4; i += 1) {
-            neighbor = matrix.position(positions[i]);
-            if (neighbor) neighbors.push(neighbor);
-        }
-        return neighbors;
-    };
+                if (occupant) {
 
-    var addUnit = function (unit) { 
-        units.push(matrix.insert(unit));
-        refresh();
-    };
+                    occupants[type(occupant)] = occupant;
+                }
 
-    var deleteElement = function (element) {
+                return occupants;
 
-        if (element.type() == 'unit') {
-            allowedUnits += 1;
-            app.map.removeUnit(element);
-        
-        } else if (element.type() == 'building') {
-            allowedBuildings += 1;
-            buildings.splice(detectIndex(element), 1, matrix.remove(element));
-        
-        } else if (isSea(element))
-            terrain.splice(detectIndex(element), 1, matrix.insert(adjustOrientation(new Terrain('sea', element.position()))));
+            }, {});
+        },
+        detectIndex = (element) => {
 
-        else matrix.remove(position);
-    };
+            const
+                type = terrainController.type(element),
+                mapElements = {
+                    unit: units,
+                    building: buildings,
+                    terrain: terrain
+                } [type];
+
+            return getIndex(element, mapElements);
+        },
+        getIndex = (element, elements) => {
+
+            const
+                elementId = unitController.id(element),
+                position = terrainController.position(element);
+
+            return elements.findIndex((comparison) => {
+
+                const
+                    comparisonId = unitController.id(comparison),
+                    onSamePosition = terrainController.on(position, comparison);
+
+                return elementId === comparisonId || onSamePosition;
+            });
+        },
+        refresh = (hide) => app.animate("unit", hide),
+        neighbors = (position) => {
+
+            const positions = position.neighbors();
+
+            return positions.reduce((neighbors, neighbor) => {
+
+                const element = matrix.position(neighbor);
+
+                if (element) {
+
+                    neighbors.push(element);
+                }
+
+                return neighbors;
+            });
+        },
+        remove = {
+
+            unit(element) {
+
+                allowedUnits += 1;
+
+                app.map.removeUnit(element);
+            },
+            building(element) {
+
+                const
+                    index = detectIndex(element),
+                    storedBuilding = matrix.remove(element);
+
+                allowedBuildings += 1;
+
+                buildings.splice(index, 1, storedBuilding);
+            },
+            sea(element) {
+
+                const
+                    index = detectIndex(element),
+                    position = element.position(),
+                    seaTerrain = createTerrain("sea", position),
+                    orientedTerrain = adjustOrientation(seaTerrain),
+                    storedSeaTerrain = matrix.insert(orientedTerrain);
+
+                terrain.splice(index, 1, storedSeaTerrain);
+            }
+        },
+        addUnit = (unit) => {
+
+            units.push(matrix.insert(unit));
+
+            refresh();
+        },
+        deleteElement = (element) => {
+
+            const
+                type = terrainController.type(element),
+                removeElement = remove[type];
+
+            if (removeElement) {
+
+                removeElement(element);
+
+            } else {
+
+                matrix.remove(element.position());
+            }
+        };
 
     var facing = function (element) {
 
-        var allowed, position = element.position();
-        var neighbors = position.neighbors();
-        var elem, i, open = {};
+        let allowed, elem, i;
 
-        if (!(allowed = restricted[element.name().toLowerCase()])) 
-            return '';
+        const
+            position = element.position(),
+            neighbors = position.neighbors(),
+            name = terrainController.name(element),
+            allowed = restricted[name],
+            open = {};
 
-        for (i = 0; i < neighbors.length; i += 1) {
-            elem = app.map.top(neighbors[i]);
-            if (allowed.hasValue(elem.name().toLowerCase()))
-                open[neighbors[i].orientation] = true;
+        if (!allowed) {
+
+            return "";
         }
 
-        if (open.north && open.south && open.west && open.east)
-            return '';
+        for (i = 0; i < neighbors.length; i += 1) {
 
-        if(open.north){
-            if (open.south && !open.east && !open.west) return 'verticle';
-            if (open.west) return open.east ? 'north' : 'northWest';
-            else if (open.east) return 'northEast';
-            else return 'closedNorth';
+            elem = app.map.top(neighbors[i]);
+
+            if (allowed.hasValue(terrainController.name(elem))) {
+
+                open[neighbors[i].orientation] = true;
+            }
+        }
+
+        if (open.north && open.south && open.west && open.east) {
+
+            return "";
+        }
+
+        if (open.north) {
+
+            if (open.south && !open.east && !open.west) {
+
+                return "verticle";
+            }
+
+            if (open.west) {
+
+                return open.east ? "north" : "northWest";
+            }
+            else if (open.east) {
+
+                return "northEast";
+            }
+            else {
+
+                return "closedNorth";
+            }
+
         } else if(open.east) {
-            if (!open.south) return open.west ? 'horazontal' : 'closedEast';
-            return 'southEast';
-        } else if (open.south) return open.west ? 'southWest' : 'closedSouth';
-        else if (open.west) return 'closedWest'
-        else return 'single';
+
+            if (!open.south) {
+
+                return open.west ? "horazontal" : "closedEast";
+            }
+
+            return "southEast";
+
+        } else if (open.south) {
+
+            return open.west ? "southWest" : "closedSouth";
+        
+        } else if (open.west) {
+
+            return "closedWest"
+        }
+
+        return "single";
     };
     
     var adjustOrientation = function (element) {
-        element.d = facing(element) + element.name();
-        return element;
+
+        return terrainController.setDrawing(facing(element) + terrainController.name(element), element);
     };
 
     var adjustSurroundings = function (element) {
-        var position = element.position();
+
+        var position = terrainController.position(element);
         var surroundings = position.surrounding();
-        for (var neighbor, name, i = 0; i < surroundings.length; i += 1){
+
+        for (var adjusted, neighbor, name, i = 0; i < surroundings.length; i += 1) {
+
             neighbor = matrix.position(surroundings[i]);
-            if((name = neighbor.name().toLowerCase()) === 'shoal' || element.name === 'reef' && !isSea(neighbor))
-                deleteElement(neighbor, 'sea');
-            else if((adjusted = adjustOrientation(neighbor))){
+
+            if (terrainController.isShoal(neighbor) || terrainController.isReef(element) && !isSea(neighbor)) {
+
+                deleteElement(neighbor, "sea");
+            
+            } else if ((adjusted = adjustOrientation(neighbor))) {
+
                 terrain.splice(detectIndex(neighbor), 1, adjusted);
-                if(matrix.get(neighbor).type() !== 'unit')
+
+                if (terrainController.isUnit(matrix.get(neighbor))) {
+
                     matrix.insert(adjusted);
+                }
             }
         }
     };
 
-    var isSea = function (element) { return restricted.sea.hasValue(element.name().toLowerCase()); };
+    var isSea = function (element) { 
+
+        return restricted.sea.hasValue(terrainController.name(element)); 
+    };
+
     var isBeach = function (element) {
-        if (isSea(element))
-            var neighbors = element.position().neighbors();
-            for (var i = 0; i < neighbors.length; i += 1)
-                if (!isSea(neighbors[i]))
+
+        if (isSea(element)) {
+
+            var neighbors = terrainController.position(element).neighbors();
+
+            for (var i = 0; i < neighbors.length; i += 1) {
+
+                if (!isSea(neighbors[i])) {
+
                     return true;
+                }
+            }
+        }
+
         return false;
     };
 
-    var buildUnit = function (u, p, type, existing) {
-        var unit = new Unit(u.player(), new Position(p.x, p.y), u.name().toLowerCase());
-        if (existing.unit && unit.canBuildOn(existing.unit.occupies())){
+    var buildUnit = function (unit, position, existing) {
+
+        var element = existing.building || existing.terrain;
+
+        unit = createUnit(unitController.player(unit), new Position(position.x, position.y), unitController.name(unit));
+
+        if (existing.unit && unitController.canBuildOn(unitController.occupies(existing.unit), unit)) {
+
             allowedUnits -= 1;
+
             return units.splice(detectIndex(existing.unit), 1, matrix.insert(unit));
-        } else if (existing.building && unit.canBuildOn(existing.building) || existing.terrain && unit.canBuildOn(existing.terrain)) {
+
+        } else if (element && unitController.canBuildOn(element, unit)) {
+
             allowedUnits -= 1;
+
             return addUnit(unit);
-        } 
+        }
+
         return false;
     };
 
-    var indexOfExistingHq = function (hq) {
-        for (var i = 0; i < buildings.length; i += 1)
-            if(buildings[i].name().toLowerCase() === 'hq' && hq.owns(buildings[i]))
-                return i;
+    var indexOfHQ = function (hq) {
+
+        var building, l = buildings.length;
+
+        while (l--) {
+
+            building = buildings[l];
+
+            if (buildingController.isHQ(building) && hq.owns(building)) {
+
+                return l;
+            }
+        }
+
         return false;
     };
 
-    var buildBuilding = function (b, p, type, existing) {
+    var buildBuilding = function (building, position, existing) {
 
-        var hq, t, building = new Building(b.name().toLowerCase(), new Position(p.x, p.y), buildings.length, b.player());
+        var hq;
 
-        if (building.name().toLowerCase() === 'hq' && (hq = indexOfExistingHq(building)) !== false){
+        building = createBuilding(
+
+            buildingController.name(building), 
+            new Position(position.x, position.y), 
+            buildingController.player(building),
+            buildings.length
+        );
+
+        if (buildingController.isHQ(building) && (hq = indexOfHQ(building)) !== false) {
+
             matrix.remove(buildings[hq]);
             buildings.splice(hq, 1);
         }
 
-        if (existing.building)
-            buildings.splice(detectIndex(existing.building), 1, building);
-        else buildings.push(building);
+        if (existing.building) {
 
-        if (existing.terrain.type() !== 'plain') {
-            terrain.splice(detectIndex(existing.terrain), 1);
-            var i, n = neighbors(new Position(p.x,p.y));
-            for (i = 0; i < n.length; i += 1)
-                terrain.splice(detectIndex(n[i]), 1, adjustOrientation(n[i]));
+            buildings.splice(detectIndex(existing.building), 1, building);
+        
+        } else {
+
+            buildings.push(building);
         }
 
-        if (!existing.unit)
+        if (!terrainController.isPlain(existing.terrain)) {
+
+            terrain.splice(detectIndex(existing.terrain), 1);
+
+            var neighbor, neighbors = neighbors(new Position(p.x,p.y));
+            var l = n.length;
+
+            while (l--) {
+
+                neighbor = neighbors[l]
+
+                terrain.splice(detectIndex(neighbor), 1, adjustOrientation(neighbor));
+            }
+        }
+
+        if (!existing.unit) {
+
             matrix.insert(building);
+        }
 
         allowedBuildings -= 1;
+
         return building;
     };
 
-    var buildTerrain = function (e, p, type, existing) {
+    var buildTerrain = function (element, position, type, existing) {
 
-        if(type === 'river' && isSea(existing.terrain) || type === 'shoal' && !isBeach(existing.terrain))
+        if (type === "river" && isSea(existing.terrain) || type === "shoal" && !isBeach(existing.terrain)) {
+
             return false;
+        }
 
-        var element = adjustOrientation(new Terrain(e.draw(), new Position(p.x, p.y)));
+        element = adjustOrientation(createTerrain(element.draw(), new Position(position.x, position.y)));
+
         element.index = terrain.length;
+
         adjustSurroundings(element);
     
-        if(existing.terrain.type() !== 'plain')
+        if (!terrainController.isPlain(existing.terrain)) {
+
             terrain.splice(detectIndex(existing.terrain), 1, element);
-        else terrain.push(element);
+
+        } else {
+
+            terrain.push(element);
+        }
         
-        if (existing.building)
+        if (existing.building) {
+
             buildings.splice(detectIndex(existing.building), 1);
-        if (existing.unit && !existing.unit.canBuildOn(element)){
-            units.splice(detectIndex(existing.unit), 1);
+        }
+
+        if (existing.unit) {
+
+            if (!unitController.canBuildOn(element, existing.unit)) {
+
+                units.splice(detectIndex(existing.unit), 1);
+
+                return matrix.insert(element);
+            }
+
+        } else {
+
             return matrix.insert(element);
-        } else if (!existing.unit) 
-            return matrix.insert(element);
+        }
+
         return element;
     };
 
     return {
+
         getNeighbors: neighbors,
         detectIndex: detectIndex,
         getIndex: getIndex,
         occupantsOf: occupants,
         addUnit: addUnit,
-        id: function () { return map.id; },
-        name: function () { return map.name; },
-        players: function () { return map.players; },
-        getUnit: function (unit) { return units[getIndex(unit, units)]; },
-        category: function () { return map.category; },
-        dimensions: function () { return map.dimensions; },
-        background: function () { return background; },
-        setBackground: function (type) { background = new Terrain(type); },
-        buildings: function () { return buildings; },
-        terrain: function () { return terrain; },
-        insert: function (element) { return matrix.insert(element); },
-        units: function () { return units; },
-        top: function (position, replace) { 
+
+        id: function () { 
+
+            return map.id; 
+        },
+
+        name: function () { 
+
+            return map.name; 
+        },
+
+        players: function () { 
+
+            return map.players; 
+        },
+
+        setUnits: function (u) {
+
+            if (!isArray(u)) {
+
+                throw new Error("First argument of \"setUnits\" must be an array.");
+            }
+
+            units = u;
+        },
+
+        getUnit: function (unit) { 
+
+            return units[getIndex(unit, units)]; 
+        },
+
+        category: function () { 
+
+            return map.category; 
+        },
+
+        dimensions: function () { 
+
+            var dimensions = map.dimensions;
+
+            return  { x: dimensions.x, y: dimensions.y };
+        },
+
+        background: function () { 
+
+            return background; 
+        },
+
+        setBackground: function (type) { 
+
+            background = createTerrain(type); 
+        },
+
+        buildings: function () { 
+
+            return buildings; 
+        },
+
+        setBuildings: function (b) {
+
+            if (!b.isArray()) {
+
+                throw new Error("First argument of \"setBuildings\" must be an array.");
+            }
+
+            buildings = b;
+        },
+
+        terrain: function () { 
+
+            return terrain; 
+        },
+
+        insert: function (element) { 
+
+            return matrix.insert(element); 
+        },
+
+        units: function () {
+
+            return units; 
+        },
+
+        top: function (position, replace) {
+
             return matrix.position(position, replace); 
         },
-        get: function () { return map; },
-        set: function (selectedMap) { map = selectedMap; },
+
+        get: function () { 
+
+            return map; 
+        },
+
+        set: function (selectedMap) { 
+
+            map = selectedMap; 
+        },
+
         initialize: function (editor) {
 
             var dim = map.dimensions, product = (dim.x * dim.y);
@@ -265,129 +541,234 @@ module.exports = function () {
             allowedUnits = Math.ceil(product/12.5);
 
             terrain =  map.terrain.map(function (t) {
-                return matrix.insert(new Terrain(t.type, t.position));
+
+                return matrix.insert(createTerrain(terrainController.type(t), terrainController.position(t)));
             });
+
             buildings = map.buildings.map(function (b, index) {
+
+                var player = buildingController.player(b);
+
                 return matrix.insert(
-                    new Building(
-                        b.type,
-                        b.position,
-                        index,
-                        (editor ? b.player : app.players.number(b.player))
+                    createBuilding(
+                        buildingController.type(b) || buildingController.name(b), 
+                        buildingController.position(b), 
+                        (editor ? player : playerController.id(app.players.number(player))),
+                        index
                     )
                 );
             });
+
             units = map.units.map(function (u) {
-                return matrix.insert(
-                    new Unit(
-                        (editor ? u.player : app.players.number(u.player)), 
-                        u.position, 
-                        app.unit[u.type]
-                    )
+
+                var player = unitController.player(u);
+
+                var unit = createUnit(
+                    unitController.type(u) || unitController.name(u),
+                    (editor ? player : playerController.id(app.players.number(player))),
+                    unitController.position(u)
                 );
+
+                if (map.saved || app.game.started()) {
+
+                    unitController.update(unit, u);
+                }
+
+                return matrix.insert(unit);
             });
         },
+
         moveUnit: function (unit, target) {
-            var e, current = units[getIndex(unit, units)];
 
-            if (current) matrix.remove(current);
-            else current = unit;
+            console.log(unit);
 
-            current.setPosition(target);
+            var index = getIndex(unit, units);
+            var current = units[index];
+            var element = matrix.position(target);
 
-            if(!(e = matrix.position(target)) || e.type() !== 'unit')
+            if (current) {
+
+                matrix.remove(current);
+            
+            } else {
+
+                current = unit;
+            }
+
+            current = unitController.setPosition(target, current);
+
+            if (!element || !terrainController.isUnit(element)) {
+
                 matrix.insert(current);
+            }
 
+            units.splice(index, 1, current);
+            
             refresh();
+
             return current;
         },
-        removeUnit: function (unit){
-            var i = getIndex(unit, units);
-            if(i !== undefined) unit = units.splice(i, 1)[0];
-            if((e = matrix.get(unit)) && e.type() === 'unit' && e.id === unit.id)
+
+        removeUnit: function (unit) {
+
+            console.log("-- removing --");
+            console.log(unit);
+
+            var index = getIndex(unit, units);
+
+            if (!isNaN(index)) {
+
+                unit = units.splice(index, 1)[0];
+            }
+
+            if ((element = matrix.get(unit)) && terrainController.isUnit(element) && unitController.isSame(element, unit)) {
+
                 matrix.remove(unit);
+            }
+
             refresh();
+
             return unit;
         },
+
         attackUnit: function (unit, damage) {
-            units[getIndex(unit, units)].takeDamage(unit.health() - damage);
-            matrix.get(unit).takeDamage(unit.health() - damage);
+
+            var health = unitController.health(unit);
+
+            units[getIndex(unit, units)].takeDamage(health - damage);
+
+            matrix.get(unit).takeDamage(health - damage);
         },
-        changeOwner: function (building, player) {
-            building.setPlayer(player);
+
+        changeOwner: function (element, player) {
+
+            var element = matrix.get(element);
+
+            building = terrainController.isUnit(element) ? unitController.occupies(element) : element;
+
+            buildingController.setPlayer(player, building);
             building.restore();
-            var b = matrix.get(building)
-            b = b.type() === 'unit' ? b.occupies() : b;
-            if(b.type() === 'building')   
-                b.setPlayer(player).restore();
-            else throw new Error('Attempted capture on a non building map element');
+
+            if (!buildingController.isBuilding(b)) {
+
+                throw new Error("Attempted capture on a non building map element");
+            }
+
+            buildingController.setPlayer(player, building).restore(building);
+
             refresh();
         },
+
         takeHQ: function (hq) {
-            var building, index = hq.index();
-            buildings.splice(index, 1, (building = new Building('city', hq.position(), index, hq.player())));
+
+            var index = buildingController.indexOf(hq);
+
+            var building = createBuilding(
+                "city",
+                buildingController.position(hq),
+                buildingController.player(hq),
+                index
+            );
+
+            buildings.splice(index, 1, building);
+
             Matrix.insert(building);
         },
-        close: function(element) { 
-            element.closed = true;
-            return matrix.insert(element); 
+
+        printMatrix:function () {
+
+            matrix.log();
         },
-        printMatrix:function () {matrix.log();},
-        clean: function (elements) { 
-            if (elements) for (var element, i = 0; i < elements.length; i += 1) {
-                element = matrix.get(elements[i]);
-                element.p = undefined;
-                element.g = undefined;
-                element.f = undefined;
-                element.closed = false;
-                matrix.insert(element);
-            }
+
+        clean: function () { 
+
             matrix.clean();
-            return elements;
+
+            return this;
         },
+
         focus: function () {
-            if (app.key.keyUp(app.key.map()) && app.key.undoKeyUp(app.key.map())){
+
+            if (app.key.keyUp(app.key.map()) && app.key.undoKeyUp(app.key.map())) {
+
                 app.hud.show();
                 app.coStatus.show();
                 app.cursor.show();
                 refresh();
                 focused = false;
-            }else if(app.key.pressed(app.key.map()) && app.key.undo(app.key.map()) && !focused) {
+
+            } else if (app.key.pressed(app.key.map()) && app.key.undo(app.key.map()) && !focused) {
+
                 app.hud.hide();
                 app.coStatus.hide();
                 app.cursor.hide();
                 refresh(true);
                 focused = true;
             }
+
             refresh();
         },
-        focused: function () { return focused; },
-        refresh: function () {app.animate(['unit','building']);},
-        build: function (element, p) {
-            var position = new Position(p.x, p.y);
-            var type = element.type();
-            var existing = occupants(position);
-            switch (type) {
-                case 'unit': return buildUnit(element, position, type, existing);
-                case 'building': return buildBuilding(element, position, type, existing);
-                default: return buildTerrain(element, position, type, existing);
-            }
+
+        focused: function () { 
+
+            return focused; 
         },
-        surplus: function () { return { building: allowedBuildings, unit: allowedUnits }; },
+
+        refresh: function () {
+
+            app.animate(["unit","building"]);
+        },
+
+        build: function (element, p) {
+
+            var position = new Position(p.x, p.y);
+            var type = terrainController.type(element);
+            var existing = occupants(position);
+
+            return {
+                unit: buildUnit(element, position, existing),
+                building: buildBuilding(element, position, existing),
+                terrain: buildTerrain(element, position, type, existing)
+            }[type];
+        },
+
+        surplus: function () { 
+
+            return { building: allowedBuildings, unit: allowedUnits }; 
+        },
+
         displaySurplus: function (){},
         displayPlayers: function (){},
+
         raw: function (player) {
+
             return {
+
                 player: player,
                 name: map.name,
                 players: map.players,
                 category: map.category,
                 dimensions: map.dimensions,
-                terrain: app.map.terrain().map(function (terrain) {return terrain.raw();}),
-                buildings: app.map.buildings().map(function (building) {return building.properties();}),
-                units: app.map.units().map(function (unit) {return unit.raw();}),
+                terrain: app.map.terrain(),
+                buildings: app.map.buildings(),
+                units: app.map.units(),
                 background: background
             };
+        },
+
+        unitsInfo: function () {
+
+            return units.map(function (unit) {
+
+                return {
+                    unit: unitController.name(unit),
+                    hp: unitController.health(unit),
+                    gas: unitController.fuel(unit),
+                    rounds: unitController.ammo(unit)
+                };
+            });
         }
     };
-}();
+}
+
+module.exports = mapController();

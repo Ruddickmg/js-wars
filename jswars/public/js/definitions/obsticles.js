@@ -7,10 +7,10 @@
 var obsticle = require('../map/obsticle.js');
 
 module.exports = {
-    mountain: new obsticle('mountain', 2),
-    wood: new obsticle('wood', 3),
-    building: new obsticle('building', 2),
-    plain: new obsticle('plain', 1),
-    snow: new obsticle('snow', 1),
-    unit: new obsticle('unit', 0)
+    mountain: obsticle('mountain', 2),
+    wood: obsticle('wood', 3),
+    building: obsticle('building', 2),
+    plain: obsticle('plain', 1),
+    snow: obsticle('snow', 1),
+    unit: obsticle('unit', 0)
 };

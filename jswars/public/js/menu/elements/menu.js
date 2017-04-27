@@ -12,20 +12,20 @@ module.exports = {
     playerElement: [],
     playerColor: app.settings.playerColor,
     time: new Date(),
+    bck: false,
     withArrows: function () { 
-        if (!this.arrows) this.arrows = new Arrows(); 
+        if (!this.arrows && !app.players.saved()) 
+            this.arrows = new Arrows(); 
         return this;
     },
     active: function () { return this.a; },
     activate: function () { this.a = true; },
     deactivate: function () { this.a = false; },
-    goBack: function () { this.bck = true; },
-    back: function () {
-        if (this.bck) {
-            this.bck = false;
-            return true;
-        }
-        return false;
+    goBack: function () { this.setBack(true); },
+    back: function () {return this.bck ? this.setBack(false) : false;},
+    setBack: function (bool) {
+        this.bck = bool;
+        return this;
     },
     exit: function (value, callback, exit) {
         if (app.key.pressed(app.key.enter()) || app.key.pressed(app.key.esc()) || this.boot) {

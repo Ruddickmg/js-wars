@@ -1,4 +1,5 @@
-import os, datetime, logging, json
+import os, logging, json
+from datetime import datetime
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy import BigInteger, Integer, String, DateTime, Column, Table, ForeignKey, create_engine
@@ -6,18 +7,21 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
-app = Flask(__name__)
-
-logging.basicConfig(filename="/var/lib/openshift/55f8fbf90c1e665752000019/app-root/logs/python.log",level=logging.DEBUG)
-
 if "OPENSHIFT_POSTGRESQL_DB_URL" in os.environ:
-	db_url = os.environ["OPENSHIFT_POSTGRESQL_DB_URL"]
+
+	db_url = os.environ.get("OPENSHIFT_POSTGRESQL_DB_URL")
+	logging.basicConfig(filename="/var/lib/openshift/55f8fbf90c1e665752000019/app-root/logs/python.log",level=logging.DEBUG)
+
 else:
-	db_url = "postgresql://username:password@localhost:5432/back.db"
 
-app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+	user = os.environ.get('DB_USER','user')
+	password = os.environ.get('DB_PASSWORD','password')
+	address = os.environ.get('DB_ADDR','0.0.0.0')
+	port = os.environ.get('DB_PORT','')
+	name = os.environ.get('DB_NAME','')
+	db_url = "postgresql://%s:%s@%s:%s/%s" % (user, password, address, port, name) 
 
-engine = create_engine(db_url, convert_unicode=True)
+engine = create_engine(db_url, convert_unicode=True, client_encoding='utf8')
 Session = scoped_session(sessionmaker(bind=engine))
 Base = declarative_base()
 Base.query = Session.query_property()
@@ -69,7 +73,7 @@ class Maps(Base):
 	terrain = Column(JSON)
 	buildings = Column(JSON)
 	units = Column(JSON)
-	date = Column(DateTime, default=datetime.datetime.utcnow())
+	date = Column(DateTime, default=datetime.utcnow())
 
 	def __init__(self, name, category, players, dimensions, terrain, buildings, units):
 		self.name = name
@@ -96,6 +100,7 @@ class Games(Base):
 	map = Column(JSON)
 	settings = Column(JSON)
 	players = Column(JSON)
+	date = Column(DateTime, onupdate=datetime.utcnow())
 
 	def __init__(self, id, name, map, settings, players):
 		self.gameId = id
@@ -160,3 +165,7 @@ def Teardown(exception, session):
 
 	if session:	
 		session.close()
+
+def GetUrl ():
+
+	return db_url	

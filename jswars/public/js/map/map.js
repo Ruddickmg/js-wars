@@ -21,7 +21,11 @@ Map = function (id, name, players, dimensions, terrain, buildings, units) {
     this.terrain = terrain;
     this.buildings = buildings;
     this.units = units;
-    if((error = validate.map(this)))
+    
+    if((error = validate.map(this))) {
+
         throw error;
+    }
 };
+
 module.exports = Map;

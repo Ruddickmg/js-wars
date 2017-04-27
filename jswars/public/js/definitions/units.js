@@ -42,7 +42,7 @@ module.exports = {
                 building:1
             },
             movable: app.settings.movable.foot,
-            transportaion: 'foot',
+            transportation: 'foot',
             capture: true,
             canAttack: ['wheels', 'foot'],
             health: 10,
@@ -82,7 +82,7 @@ module.exports = {
                 pipe:15
             },
             movable: app.settings.movable.foot,
-            transportaion: 'foot',
+            transportation: 'foot',
             capture: true,
             health: 10,
             ammo: 10,
@@ -121,7 +121,7 @@ module.exports = {
                 pipe:1
             },
             movable: app.settings.movable.wheels,
-            transportaion: 'wheels',
+            transportation: 'wheels',
             health: 10,
             ammo: 10,
             fuel: 80,
@@ -152,7 +152,7 @@ module.exports = {
                 plain:1,
                 building:1
             },
-            transportaion: 'wheels',
+            transportation: 'wheels',
             health: 10,
             fuel: 70,
             weapon1: {},
@@ -191,7 +191,7 @@ module.exports = {
                 pipe:55
             },
             movable: app.settings.movable.wheels,
-            transportaion: 'wheels',
+            transportation: 'wheels',
             health: 10,
             ammo: 10,
             fuel: 60,
@@ -233,7 +233,7 @@ module.exports = {
                 pipe:15
             },
             movable: app.settings.movable.wheels,
-            transportaion: 'wheels',
+            transportation: 'wheels',
             health: 10,
             ammo: 10,
             fuel: 60,
@@ -275,7 +275,7 @@ module.exports = {
                 pipe:55
             },
             movable: app.settings.movable.wheels,
-            transportaion: 'wheels',
+            transportation: 'wheels',
             health: 10,
             ammo: 10,
             fuel: 50,
@@ -316,7 +316,7 @@ module.exports = {
                 pipe:45
             },
             movable: app.settings.movable.wheels,
-            transportaion: 'wheels',
+            transportation: 'wheels',
             health: 10,
             ammo: 10,
             fuel: 50,
@@ -356,7 +356,7 @@ module.exports = {
                 pipe:55
             },
             movable: app.settings.movable.wheels,
-            transportaion: 'wheels',
+            transportation: 'wheels',
             health: 10,
             ammo: 10,
             fuel: 50,
@@ -384,7 +384,7 @@ module.exports = {
                 tCopter:120
             },
             movable: app.settings.movable.wheels,
-            transportaion: 'wheels',
+            transportation: 'wheels',
             health: 10,
             ammo: 10,
             fuel: 50,
@@ -426,7 +426,7 @@ module.exports = {
                 pipe:75
             },
             movable: app.settings.movable.wheels,
-            transportaion: 'wheels',
+            transportation: 'wheels',
             health: 10,
             ammo: 10,
             fuel: 99,
@@ -450,7 +450,7 @@ module.exports = {
             loaded:[],
             transport:1,
             movable: app.settings.movable.flight,
-            transportaion: 'flight',
+            transportation: 'flight',
             health: 10,
             canAttack:[],
             fuel: 99,
@@ -493,7 +493,7 @@ module.exports = {
                 pipe:25
             },
             movable: app.settings.movable.flight,
-            transportaion: 'flight',
+            transportation: 'flight',
             health: 10,
             ammo: 10,
             fuel: 99,
@@ -522,7 +522,7 @@ module.exports = {
                 fighter:55
             },
             movable: app.settings.movable.flight,
-            transportaion: 'flight',
+            transportation: 'flight',
             health: 10,
             ammo: 10,
             fuel: 99,
@@ -563,7 +563,7 @@ module.exports = {
                 pipe:95
             },
             movable: app.settings.movable.flight,
-            transportaion: 'flight',
+            transportation: 'flight',
             health: 10,
             ammo: 10,
             fuel: 99,
@@ -600,7 +600,7 @@ module.exports = {
             ],
             loaded:[],
             movable: app.settings.movable.boat,
-            transportaion: 'boat',
+            transportation: 'boat',
             health: 10,
             fuel: 99,
             weapon1: {},
@@ -632,7 +632,7 @@ module.exports = {
             load:['tCopter', 'bCopter'],
             loaded:[],
             movable: app.settings.movable.boat,
-            transportaion: 'boat',
+            transportation: 'boat',
             health: 10,
             ammo: 10,
             fuel: 99,
@@ -661,7 +661,7 @@ module.exports = {
                 sub:55
             },
             movable: app.settings.movable.boat,
-            transportaion: 'boat',
+            transportation: 'boat',
             health: 10,
             ammo: 10,
             fuel: 60,
@@ -703,7 +703,7 @@ module.exports = {
                 pipe:55
             },
             movable: app.settings.movable.boat,
-            transportaion: 'boat',
+            transportation: 'boat',
             health: 10,
             ammo: 10,
             fuel: 99,
