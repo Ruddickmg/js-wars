@@ -1,0 +1,23 @@
+
+     /-> nn -> drop
+    /
+   | /-> nn -> attack
+   |/
+mdp ---> nn -> move/action
+    \
+     \-> nn -> purchase
+
+
+    train -> distance from hq
+
+    unit -> health + fuel + damage + movement + attackrange
+
+    113 outputs and inputs for attacking
+
+    4 outputs for dropping
+
+    r + l + u + d + current + attack + wait + capture + load + drop + dive + surface + join
+
+    11 ground \
+    4 air      > -> 19 total outputs for purchase
+    4 sea     /
