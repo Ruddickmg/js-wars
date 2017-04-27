@@ -1,12 +1,14 @@
 # js-wars
-Work in progress, a take on the Advance Wars game for Gameboy Avance, run on NodeJS, written in Javascript, python, CSS and Html and using a postgresql database
+Work in progress, a take on the Advance Wars game for Gameboy Avance, run on NodeJS, written in Javascript (logic), python (database access), CSS and Html (canvas for animations) using a postgresql database.
 
-Lacal:
+Location:
 ========
 
 this repo is a bit behind, but you can see the game functioning @ http://www.jswars.com/
 
-login with facebook test users (there are two in since at least two players are required to play): 
+I haven't put allot of work into the login UI so it may be a bit buggy, it re-routes to localhost after loggin in (development env), it also lags on the first attempt in a long time to access the page (i think due to free hosting). if this occurs simply refresh till the page shows up, click the button (only button), which will take you to a fb login then login with test credentials. if you are routed to localhost then simply go to www.jswars.com manually (I will work on login UI more extensively after game is completed)
+
+facebook test users. (there are two in since two players can play, you can also set the second player to "cp", which will allow you to start the game with a "computer player", but the computer player is not implimented yet, so it will not behave well)
 
 Email: testy_abhaawg_mctesterson@tfbnw.net  
 Password: testing321
@@ -19,12 +21,16 @@ Gameplay:
 
 The enter key selects a unit or building,
 
-at this point only infantry can be built and are represented by blue dots, you can build infantry using the base which is represented by a blue square, the headquarters is a purple square
+At this point only infantry and apc's can be built and are represented by blue and orange dots respectively. 
 
-The escape key will escape out of any menu in the game and if pressed while no unit or building is selected it will bring up the options menu, you may end your turn by selecting end from the options menu
+You can build units by pressing enter while the cursor hovers over your base (represented by a blue square).
 
-Units are moved by selecting them, moving the cursor to the desired location within the highlighted movement range and then pressing enter again
+The headquarters is a purple square
 
-at least two players are needed to start a game, there is still some work to be done coordinating menu's etc, so game creation and joining may be buggy under certain circumstances
+The escape key will escape out of any menu in the game. 
 
-the game is not yet animated, more units will be available as they are become animated
+If pressed while no unit or building is selected "esc" will bring up the options menu. You may end your turn by selecting "end" from the options menu.
+
+Units are selected by pressing enter while the cursor is over them. After  a unit is selected, moving the cursor to the desired location within the highlighted movement range then pressing enter will move the unit to that location.
+
+The game is not yet fully animated, more units will be available as they are animated.
