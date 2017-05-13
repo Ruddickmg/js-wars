@@ -60,9 +60,9 @@ export default function () {
 
         if (unit.damageType === "ranged") {
 
-            unit.range.hi += amount;
+            unit.inRange.hi += amount;
             
-            return unit.range;
+            return unit.inRange;
         }
     };
 
@@ -193,7 +193,7 @@ export default function () {
                 },
 
                 build:function(unit){
-                    unit.range.hi -= 1;
+                    unit.inRange.hi -= 1;
                     return unit;
                 }
             }

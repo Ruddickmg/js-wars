@@ -8,15 +8,14 @@ import {default as single} from "./singleton";
 export interface PubSub {
 
     publish(eventId: string, data: any): void;
-    subscribe(event: string, handler: Emitter): number;
+    subscribe(eventId: string, handler: Emitter): number;
     unsubscribe(id: number, event?: string): Subscriber;
 }
 
-interface Event {
+export interface Subscriber {
 
-    name: string;
-    subscribers: Subscriber[];
-    timeOfLastUpdate: Date;
+    id: number;
+    emit: Emitter;
 }
 
 interface Events {
@@ -24,10 +23,11 @@ interface Events {
     [index: string]: Event;
 }
 
-export interface Subscriber {
+interface Event {
 
-    id: number;
-    emit: Emitter;
+    name: string;
+    subscribers: Subscriber[];
+    timeOfLastUpdate: Date;
 }
 
 type Emitter = (data: any, timeSinceLastUpdate: number) => any;
@@ -133,9 +133,9 @@ function publishSubscribe(): PubSub {
 
     const getSubscribers = (name: string) => getEvent(name).subscribers;
 
-    const subscribe = (event: string, handler: Emitter): number => {
+    const subscribe = (eventId: string, handler: Emitter): number => {
 
-        return addSubscriber(getSubscribers(event), handler);
+        return addSubscriber(getSubscribers(eventId), handler);
     };
 
     const publish = (eventId: string, data: any): void => {

@@ -80,7 +80,7 @@ export default function(units, buildings, terrain) {
         movement: (unit: Element): number => property(unit).movement,
         vision: (unit: Element): number => property(unit).vision,
         canAttack: (unit: Element): boolean => property(unit).canAttack,
-        range: (unit: Element): number => property(unit).range,
+        inRange: (unit: Element): number => property(unit).inRange,
         damageType: (unit: Element): string => property(unit).damageType,
 		movable: (unit: Element): boolean => property(unit).movable,
 		transportation: (unit: Element): string => property(unit).transportation,

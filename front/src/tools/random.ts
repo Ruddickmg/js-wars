@@ -7,13 +7,13 @@ export default {
 
         while (l--) {
 
-            array.push(this.range(min, max));
+            array.push(this.inRange(min, max));
         }
 
         return array;
     },
 
-    range(min: number, max: number): number {
+    inRange(min: number, max: number): number {
 
         return Math.random() * (max - min) + min;
     },

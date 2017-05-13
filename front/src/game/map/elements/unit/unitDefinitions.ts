@@ -14,7 +14,7 @@ export default {
             name: 'Infantry',
             movement: 3,
             vision: 2,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -60,7 +60,7 @@ export default {
             name: 'Mech',
             movement: 2,
             vision: 2,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -99,7 +99,7 @@ export default {
             name: 'Recon',
             movement: 8,
             vision: 5,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -137,7 +137,7 @@ export default {
             name: 'APC',
             movement: 6,
             vision: 1,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             }, // steal supplies!
@@ -167,7 +167,7 @@ export default {
             name: 'Anti-Air',
             movement: 6,
             vision: 2,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -207,7 +207,7 @@ export default {
             name: 'Tank',
             movement: 6,
             vision: 3,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -249,7 +249,7 @@ export default {
             name: 'Mid Tank',
             movement: 5,
             vision: 1,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -292,7 +292,7 @@ export default {
             movement: 5,
             vision: 1,
             damageType:'ranged',
-            range: {
+            inRange: {
                 low: 2,
                 high: 3
             },
@@ -331,7 +331,7 @@ export default {
             name: 'Rockets',
             movement: 5,
             vision: 1,
-            range: {
+            inRange: {
                 low: 3,
                 high: 5
             },
@@ -371,7 +371,7 @@ export default {
             name: 'missiles',
             movement: 4,
             vision: 1,
-            range: {
+            inRange: {
                 low: 3,
                 high: 5
             },
@@ -399,7 +399,7 @@ export default {
             name: 'Neo Tank',
             movement: 6,
             vision: 1,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -441,7 +441,7 @@ export default {
             name: 'T-Copter',
             movement: 6,
             vision: 2,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -466,7 +466,7 @@ export default {
             name: 'B-Copter',
             movement: 6,
             vision: 3,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -509,7 +509,7 @@ export default {
             name: 'Fighter',
             movement: 9,
             vision: 2,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -538,7 +538,7 @@ export default {
             name: 'Bomber',
             movement: 7,
             vision: 2,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -579,7 +579,7 @@ export default {
             name: 'Lander',
             movement: 6,
             vision: 1,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -615,7 +615,7 @@ export default {
             name: 'Cruiser',
             movement: 6,
             vision: 3,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -648,7 +648,7 @@ export default {
             name: 'submarine',
             movement: 5,
             vision: 5,
-            range: {
+            inRange: {
                 low: 1,
                 high: 1
             },
@@ -678,7 +678,7 @@ export default {
             name: 'B-Ship',
             movement: 5,
             vision: 2,
-            range: {
+            inRange: {
                 low: 2,
                 high: 6
             },

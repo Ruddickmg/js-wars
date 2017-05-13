@@ -110,7 +110,7 @@ export default function(mapDimensions: Dimensions, animation: AnimationHandler):
             app.hud.show();
             app.options.deactivate();
             app.path.clear();
-            app.range.clear();
+            app.inRange.clear();
             cursor.deselect();
             cursor.show();
 

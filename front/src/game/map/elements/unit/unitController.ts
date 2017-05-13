@@ -82,7 +82,7 @@ module.exports = function () {
 
         ranged: function (unit) { 
 
-            return defaults.range(unit).high > 1;
+            return defaults.inRange(unit).high > 1;
         },
 
         /*
@@ -297,11 +297,11 @@ module.exports = function () {
 
             var array = [];
 
-            var range = defaults.range(unit);
+            var range = defaults.inRange(unit);
 
-            var high = this.range(range.high, unit);
+            var high = this.inRange(range.high, unit);
 
-            var low = this.range(range.low - 1, unit);
+            var low = this.inRange(range.low - 1, unit);
 
             var push, l, h = high.length;
 
@@ -913,7 +913,7 @@ module.exports = function () {
     
     }.bind(controller));
 
-    controller.range = curry(function (allowed, unit) {
+    controller.inRange = curry(function (allowed, unit) {
 
         var allowed = allowed || this.movement(unit);
         var position = this.position(unit);
