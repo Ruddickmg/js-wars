@@ -57,5 +57,6 @@ export default function(identity: RoomId): Lobby {
         getPlayer,
         id,
         name,
+        removePlayer,
     };
 }

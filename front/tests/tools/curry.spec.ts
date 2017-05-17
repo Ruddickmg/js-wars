@@ -19,6 +19,7 @@ describe("curry", () => {
             curriedFunction(first, second, third),
             suppliedFirstArg(second, third),
             suppliedFirstAndSecondArg(third),
+
         ].reduce((_: any, result: number) => expect(result).to.equal(testResult));
     });
 });

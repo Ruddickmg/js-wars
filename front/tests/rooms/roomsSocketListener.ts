@@ -5,7 +5,7 @@ import {AiController} from "../users/ai/aiController";
 import {default as createPlayer, Player} from "../users/players/player";
 import {default as createUser, User, UserId} from "../users/user";
 import {Lobby} from "./lobby";
-import {Room} from "./room";
+import {Room} from "./room.spec";
 import {isRoom, Rooms} from "./rooms.js";
 
 export default function(clients: ClientHandler, rooms: Rooms, aiHandler: AiController): Listener {

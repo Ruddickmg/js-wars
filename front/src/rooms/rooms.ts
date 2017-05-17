@@ -96,7 +96,7 @@ export default function(url: string): Rooms {
 
             if (canAdd(newRoom.name(), newRoom.id())) {
 
-                if (newRoom.hasBeenSaved()) {
+                if (newRoom.isSaved()) {
 
                     getOrCreateCategory(category)[id] = newRoom;
                 }
@@ -134,7 +134,7 @@ export default function(url: string): Rooms {
             const storedRoom: Room = get(roomBeingRemoved.id());
             const category: any = categories[storedRoom.category()];
             const roomId: RoomId = storedRoom.id();
-            const userHasStatedTheyDoNotWishToSave: boolean = !room.hasBeenSaved() && storedRoom.hasBeenSaved();
+            const userHasStatedTheyDoNotWishToSave: boolean = !room.isSaved() && storedRoom.isSaved();
 
             if (canEdit(roomBeingRemoved.name()) && storedRoom.isSameAs(roomBeingRemoved)) {
 
@@ -149,7 +149,7 @@ export default function(url: string): Rooms {
 
                     identity.remove(roomId);
                     backend.deleteGame(storedRoom.id())
-                        .catch((error: Error) => console.log(error));
+                        .catch((error: Error) => { throw error; });
                 }
             }
 

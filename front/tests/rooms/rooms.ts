@@ -2,7 +2,7 @@ import {Backend, default as connectToBackend} from "../connections/backend";
 import {Game} from "../game/game";
 import {default as identifier, Identifier} from "../tools/identity.spec.js";
 import {default as createLobby, Lobby} from "./lobby.js";
-import {default as createRoom, Room, RoomId} from "./room.js";
+import {default as createRoom, Room, RoomId} from "./room.spec.js";
 
 export type AnyRoom = Room | Lobby;
 

@@ -1,4 +1,4 @@
-import {Room} from "../rooms/room";
+import {Room} from "../rooms/room.spec";
 import {AnyRoom, isRoom} from "../rooms/rooms";
 import {Player} from "../users/players/player";
 import {Lobby} from "../rooms/lobby";

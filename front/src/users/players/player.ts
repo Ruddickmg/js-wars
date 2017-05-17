@@ -19,6 +19,7 @@ export interface Player {
 export default function(user: User, co?: CO): Player {
 
     return {
+
         co,
         gold: 0,
         id: user.id,
