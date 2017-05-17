@@ -182,4 +182,4 @@ function publishSubscribe(): PubSub {
     };
 }
 
-export default single(publishSubscribe());
+export default single<PubSub>(publishSubscribe);

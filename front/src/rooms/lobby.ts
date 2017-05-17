@@ -1,54 +1,61 @@
 import {Player} from "../users/players/player";
-import {UserId} from "../users/user";
+import {RoomId} from "./room";
 
 export interface Lobby {
 
-    id(): UserId;
+    id(): RoomId;
     name(): string;
     size(): number;
     all(): object;
-    getPlayer(id: UserId): Player;
+    getPlayer(id: RoomId): Player;
     add(player: Player): Lobby;
-    removePlayer(id: UserId): Player;
+    removePlayer(id: RoomId): Player;
 }
 
-export default function(identity: UserId): Lobby {
+export default function(identity: RoomId): Lobby {
 
-    const id: UserId = identity;
-    const name: string = "lobby";
+    const roomId: RoomId = identity;
+    const nameOfRoom: string = "lobby";
     const players: any = {};
 
     let length: number = 0;
 
+    const add = function(player: Player): Lobby {
+
+        const playerId: RoomId = player.id;
+
+        length += 1;
+        player.number = length;
+        players[playerId] = player;
+
+        return this;
+    };
+    const all = (): object => players;
+    const size = (): number => length;
+    const getPlayer = (playerId: RoomId): Player => players[playerId];
+    const id = (): RoomId => roomId;
+    const name = (): string => nameOfRoom;
+    const removePlayer = (playerId: RoomId): Player => {
+
+        const removed: Player = players[playerId];
+
+        delete players[playerId];
+
+        if (removed) {
+
+            length -= 1;
+        }
+
+        return removed;
+    };
+
     return {
 
-        add(player: Player): Lobby {
-
-            const playerId: UserId = player.id;
-
-            length += 1;
-            player.number = length;
-            players[playerId] = player;
-
-            return this;
-        },
-        all: (): object => players,
-        getPlayer: (playerId: UserId): Player => players[playerId],
-        id: (): UserId => id,
-        name: (): string => name,
-        removePlayer(playerId: UserId): Player {
-
-            const removed: Player = players[playerId];
-
-            delete players[playerId];
-
-            if (removed) {
-
-                length -= 1;
-            }
-
-            return removed;
-        },
-        size: (): number => length,
+        add,
+        all,
+        size,
+        getPlayer,
+        id,
+        name,
     };
 }

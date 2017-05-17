@@ -1,10 +1,10 @@
 import composer from "../tools/composer";
 
-export type UserId = number | string;
+export type RoomId = number | string;
 
 export interface Login {
 
-    id: UserId;
+    id: RoomId;
     name: string;
     first_name: string;
     last_name: string;

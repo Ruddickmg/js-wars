@@ -17,4 +17,11 @@ export default {
 
         return Math.random() * (max - min) + min;
     },
+
+    boolean() {
+
+        const threshHold = 0.5;
+
+        return this.inRange(0, 1) > threshHold;
+    },
 };

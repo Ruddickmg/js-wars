@@ -10,7 +10,7 @@ export default function<Type>(object: any): () => Type {
 
         if (!stored) {
 
-            stored = object;
+            stored = object();
         }
 
         return stored;

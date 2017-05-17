@@ -1,5 +1,5 @@
 import {default as identifier, Identifier} from "../../tools/identity.js";
-import {User, UserId} from "../user";
+import {User, RoomId} from "../user";
 import {AiPlayer, default as createAiPlayer} from "./aiPlayer";
 
 interface AiPlayers {
@@ -9,7 +9,7 @@ interface AiPlayers {
 
 export interface AiController {
 
-    get(id: UserId): AiPlayer;
+    get(id: RoomId): AiPlayer;
     remove(...aiPlayers: AiPlayer[]): AiController;
     add(aiPlayer: User, roomName: string): AiPlayer;
 }
@@ -20,17 +20,17 @@ export default function() {
 
     const incrementId = (id: number): number => id + 1;
     const decrementId = (id: number): number => id - 1;
-    const identity: Identifier<UserId> = identifier<UserId>(1, incrementId, decrementId);
+    const identity: Identifier<RoomId> = identifier<RoomId>(1, incrementId, decrementId);
     const addPlayer = (player: AiPlayer, currentPlayers: AiPlayers): AiPlayers => {
 
         const modifiedPlayers: AiPlayers = Object.assign({}, currentPlayers);
-        const id: UserId = identity.get();
+        const id: RoomId = identity.get();
 
         modifiedPlayers[id] = player;
 
         return modifiedPlayers;
     };
-    const removePlayer = (id: UserId, currentPlayers: AiPlayers): AiPlayers => {
+    const removePlayer = (id: RoomId, currentPlayers: AiPlayers): AiPlayers => {
 
         const modifiedPlayers: AiPlayers = Object.assign({}, currentPlayers);
 
@@ -40,7 +40,7 @@ export default function() {
 
         return modifiedPlayers;
     };
-    const get = (id: UserId): AiPlayer => players[id];
+    const get = (id: RoomId): AiPlayer => players[id];
     const remove = (...aiPlayers: AiPlayer[]): AiController => {
 
         aiPlayers.forEach((aiPlayer) => {
@@ -52,7 +52,7 @@ export default function() {
     };
     const add = (aiPlayer: User, roomName: string): AiPlayer => {
 
-        const id: UserId = identity.get();
+        const id: RoomId = identity.get();
 
         players = addPlayer(createAiPlayer(aiPlayer, roomName), players);
 

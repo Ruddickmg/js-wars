@@ -3,7 +3,7 @@ import {ClientHandler} from "../clients/clients";
 import {Listener} from "../connections/sockets/listener";
 import {AiController} from "../users/ai/aiController";
 import {default as createPlayer, Player} from "../users/players/player";
-import {default as createUser, User, UserId} from "../users/user";
+import {default as createUser, User, RoomId} from "../users/user";
 import {Lobby} from "./lobby";
 import {Room} from "./room";
 import {isRoom, Rooms} from "./rooms.js";
@@ -16,7 +16,7 @@ export default function(clients: ClientHandler, rooms: Rooms, aiHandler: AiContr
 
             const user: User = createUser(loginData, origin);
             const player: Player = createPlayer(user);
-            const id: UserId = user.id;
+            const id: RoomId = user.id;
 
             let client;
 

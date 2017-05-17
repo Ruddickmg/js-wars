@@ -1,4 +1,4 @@
-export default (input: () => any, context: any = this) => {
+export default (input: (...args: any[]) => any, context: any = this) => {
 
     const totalNumberOfArguments: number = input.length;
 

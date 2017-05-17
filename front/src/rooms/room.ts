@@ -2,7 +2,7 @@ import {Game} from "../game/game";
 import {AiPlayer} from "../users/ai/aiPlayer";
 import {Player} from "../users/players/player";
 import {AnyPlayer, isAiPlayer} from "../users/players/playerSocketListener";
-import {UserId} from "../users/user";
+import {RoomId} from "../users/user";
 
 export type RoomId = number | string;
 
@@ -24,8 +24,8 @@ export interface Room {
     isSameAs(room: Room): boolean;
     add(player: Player): Room;
     getAiPlayers(): AiPlayer[];
-    removePlayer(id: UserId): AnyPlayer;
-    replacePlayer(id: UserId, replacement: AnyPlayer): AnyPlayer;
+    removePlayer(id: RoomId): AnyPlayer;
+    replacePlayer(id: RoomId, replacement: AnyPlayer): AnyPlayer;
 }
 
 export default function(id: RoomId, game: Game): Room {
@@ -103,7 +103,7 @@ export default function(id: RoomId, game: Game): Room {
 
             }, []);
         },
-        removePlayer(userId: UserId): AnyPlayer {
+        removePlayer(userId: RoomId): AnyPlayer {
 
             const index: number = indexOf(userId);
 
@@ -112,7 +112,7 @@ export default function(id: RoomId, game: Game): Room {
                 return players.splice(index, 1)[0];
             }
         },
-        replacePlayer(userId: UserId, replacement: AnyPlayer): AnyPlayer {
+        replacePlayer(userId: RoomId, replacement: AnyPlayer): AnyPlayer {
 
             const index: number = indexOf(userId);
 

@@ -16,7 +16,7 @@ export default function<Id>(initialId: Id, incrementId: (id: Id) => Id, decremen
     const outOfStoredIds = (): boolean => !usableIds.size();
     const get = (): Id => {
 
-        const currentId = id;
+        const currentId: any = id;
 
         if (outOfStoredIds()) {
 
@@ -48,8 +48,6 @@ export default function<Id>(initialId: Id, incrementId: (id: Id) => Id, decremen
 
         heap.forEach((usedId: Id): void => {
 
-            id = incrementId(id);
-
             while (id < usedId) {
 
                 usableIds.push(id);
@@ -57,7 +55,7 @@ export default function<Id>(initialId: Id, incrementId: (id: Id) => Id, decremen
                 id = incrementId(id);
             }
 
-            id = usedId;
+            id = incrementId(usedId);
         });
 
         return this;

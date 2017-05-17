@@ -1,7 +1,7 @@
 import {default as createClient, Client} from "./client.js";
 import {default as socketHandler, SocketHandler} from "../connections/sockets/socketHandler.js";
 import {default as createPlayer, Player} from "../users/players/player";
-import {User, UserId} from "../users/user";
+import {User, RoomId} from "../users/user";
 import {AnyRoom, isRoom} from "../rooms/rooms";
 
 export type ClientId = string | number;
@@ -16,7 +16,7 @@ export interface ClientHandler {
     disconnect(socket: any): ClientHandler,
     reconnect(id: ClientId): Client,
     removeTimedOutDisconnections(timeAllowedToReconnect: number): ClientHandler,
-    updateUser(user: any, id: UserId): Clients,
+    updateUser(user: any, id: RoomId): Clients,
 }
 
 interface DisconnectedClient {
@@ -142,7 +142,7 @@ export default function(): ClientHandler {
 
             return this;
         },
-        updateUser(user: User, id: UserId): Clients {
+        updateUser(user: User, id: RoomId): Clients {
 
             const
                 client: Client = this.remove(id),

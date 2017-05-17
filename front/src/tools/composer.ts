@@ -5,7 +5,7 @@ interface TruthTable {
 
 export interface Composer<OutputType> {
 
-    functions(arrayOfFunctions: Array<((input: any) => any)>): (input: any) => any;
+    functions(...arrayOfFunctions: Array<((input: any) => any)>): (input: any) => any;
     including(parameters: string[], ...objects: any[]): OutputType;
     excluding(elements: string[], ...objects: any[]): OutputType;
     combine(...objects: any[]): OutputType;
@@ -81,7 +81,7 @@ export default function<OutputType>(): Composer<OutputType> {
 
         }, {}) as TruthTable;
     };
-    const functions = (arrayOfFunctions: Array<((input: any) => any)>): (input: any) => any => {
+    const functions = (...arrayOfFunctions: Array<(input: any) => any>): (input: any) => any => {
 
         return (input: any): OutputType => arrayOfFunctions
             .slice()

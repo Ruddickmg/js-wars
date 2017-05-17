@@ -1,9 +1,9 @@
 import {CO} from "../co/co";
-import {User, UserId} from "../user";
+import {User, RoomId} from "../user";
 
 export interface Player {
 
-    id: UserId;
+    id: RoomId;
     name: string;
     ready: boolean;
     co: CO;
