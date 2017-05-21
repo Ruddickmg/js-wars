@@ -1,4 +1,4 @@
-import {default as createPosition, Position} from "../position";
+import {default as createPosition, Position} from "../../../../coordinates/position";
 import {MapElement} from "../defaults";
 
 export default function(map: Map) {
@@ -12,7 +12,7 @@ export default function(map: Map) {
 			road:["road"],
 			pipe:["pipe"],
 			bridge: ["bridge"],
-			river:["river"]
+			river:["river"],
 		};
 
     return {
@@ -91,6 +91,6 @@ export default function(map: Map) {
             const position = this.position(element);
 
             return position.x === x && position.y === y;
-        }
+        },
     };
 }

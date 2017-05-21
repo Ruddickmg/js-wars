@@ -7,5 +7,5 @@ export default {
     building: obstacle('building', 2),
     plain: obstacle('plain', 1),
     snow: obstacle('snow', 1),
-    unit: obstacle('unit', 0)
+    unit: obstacle('unit', 0),
 }

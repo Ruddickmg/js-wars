@@ -1,28 +1,28 @@
-import {default as createPosition, Position} from "../position";
-import createDefaults from "../defaults";
-import unitDefaults from "../unit/unitDefinitions";
+import {default as createPosition, Position} from "../../../../coordinates/position";
 import buildingDefaults from "../building/buildingDefaults";
-import terrainDefaults from "./properties";
+import getDefaults from "../defaults";
+import unitDefaults from "../unit/unitDefinitions";
+import terrainDefaults from "./terrainDefaults";
 
 export interface Terrain {
 
-    type: string,
-    orientation: string,
-    name: string,
-    draw: string,
-    position: Position
+    type: string;
+    orientation: string;
+    name: string;
+    draw: string;
+    position: Position;
 }
 
-export default function (type: string, {x, y}: Position): Terrain {
+export default function(type: string, {x, y}: Position): Terrain {
 
-    const defaults = createDefaults(unitDefaults, buildingDefaults, terrainDefaults);
+    const defaults: any = getDefaults();
 
     return {
 
-        type: "terrain",
-        orientation: "",
-        name: defaults.name(type),
         draw: type,
-        position: createPosition(x, y)
+        name: defaults.name(type),
+        orientation: "",
+        position: createPosition(x, y),
+        type: "terrain",
     };
 }

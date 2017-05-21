@@ -1,5 +1,5 @@
 import {default as draw, DrawingController}  from "./drawingController.js";
-import {default as createDimensions, Dimensions} from "./dimensions";
+import {default as createDimensions, ScreenDimensions} from "./screenDimensions";
 
 export interface CanvasController {
 
@@ -7,7 +7,7 @@ export interface CanvasController {
     get(): any
     context(): any
     render(nameForClassOfAnimations: string, hide: boolean, gridSquareSize?: number): CanvasController
-    dimensions(): Dimensions
+    dimensions(): ScreenDimensions
 }
 
 export default function(elementName: string, contextType: string="2d"): CanvasController {
@@ -21,7 +21,7 @@ export default function(elementName: string, contextType: string="2d"): CanvasCo
         padding: number = leftPadding + rightPadding,
         width: number = canvas.clientWidth - padding,
         height: number = canvas.clientHeight - padding,
-        dimensions: Dimensions = createDimensions(width, height),
+        dimensions: ScreenDimensions = createDimensions(width, height),
         drawingsForEachClassOfAnimation: DrawingController = draw(canvas, context, dimensions),
         clearScreen = (): void => context.clearRect(0, 0, width, height);
 
@@ -52,6 +52,6 @@ export default function(elementName: string, contextType: string="2d"): CanvasCo
 
             return this;
         },
-        dimensions:(): Dimensions => createDimensions(width, height)
+        dimensions:(): ScreenDimensions => createDimensions(width, height)
     };
 }

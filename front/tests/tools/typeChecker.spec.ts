@@ -3,23 +3,27 @@ import typeChecker from "../../src/tools/typeChecker";
 
 describe("typeChecker", () => {
 
-    const stringType: string = "this is a string";
-    const objectType: object = {};
-    const arrayType: any[] = [1, 2, 3, 4];
-    const numberType: number = 1;
-    const booleanType: boolean = true;
-    const functionType: () => any = () => true;
+    const stringType = "this is a string";
+    const objectType = {a: 1, b: 2, c: 3};
+    const arrayType = [1, 2, 3];
+    const dateType = new Date();
+    const numberType = 1;
+    const booleanType = true;
+    const nullType: any = null;
+    const undefinedType: any = undefined;
+    const functionType = () => true;
 
     describe("isArray", () => {
 
         it("returns true if an object is an array", () => {
 
-            expect(typeChecker.isArray(arrayType)).to.be.true;
+            expect(typeChecker.isArray(arrayType)).to.equal(true);
 
-            [objectType, numberType, stringType, booleanType, functionType].forEach((element: any): void => {
+            [dateType, nullType, undefinedType, objectType, numberType, stringType, booleanType, functionType]
+                .forEach((element: any): void => {
 
-                expect(typeChecker.isArray(element)).to.be.false;
-            });
+                    expect(typeChecker.isArray(element)).to.equal(false);
+                });
         });
     });
 
@@ -27,12 +31,13 @@ describe("typeChecker", () => {
 
         it("returns true if an object is a function", () => {
 
-            expect(typeChecker.isFunction(functionType)).to.be.true;
+            expect(typeChecker.isFunction(functionType)).to.equal(true);
 
-            [objectType, numberType, stringType, booleanType, arrayType].forEach((element: any): void => {
+            [dateType, nullType, undefinedType, objectType, numberType, stringType, booleanType, arrayType]
+                .forEach((element: any): void => {
 
-                expect(typeChecker.isFunction(element)).to.be.false;
-            });
+                    expect(typeChecker.isFunction(element)).to.equal(false);
+                });
         });
     });
 
@@ -40,12 +45,13 @@ describe("typeChecker", () => {
 
         it("returns true if an object is a boolean", () => {
 
-            expect(typeChecker.isBoolean(booleanType)).to.be.true;
+            expect(typeChecker.isBoolean(booleanType)).to.equal(true);
 
-            [objectType, numberType, stringType, arrayType, functionType].forEach((element: any): void => {
+            [dateType, nullType, undefinedType, objectType, numberType, stringType, arrayType, functionType]
+                .forEach((element: any): void => {
 
-                expect(typeChecker.isBoolean(element)).to.be.false;
-            });
+                    expect(typeChecker.isBoolean(element)).to.equal(false);
+                });
         });
     });
 
@@ -53,12 +59,27 @@ describe("typeChecker", () => {
 
         it("returns true if an object is a string", () => {
 
-            expect(typeChecker.isString(stringType)).to.be.true;
+            expect(typeChecker.isString(stringType)).to.equal(true);
 
-            [objectType, numberType, booleanType, arrayType, functionType].forEach((element: any): void => {
+            [dateType, nullType, undefinedType, objectType, numberType, booleanType, arrayType, functionType]
+                .forEach((element: any): void => {
 
-                expect(typeChecker.isString(element)).to.be.false;
-            });
+                    expect(typeChecker.isString(element)).to.equal(false);
+                });
+        });
+    });
+
+    describe("isObject", () => {
+
+        it("returns true if an object is an object", () => {
+
+            expect(typeChecker.isObject(objectType)).to.equal(true);
+
+            [dateType, nullType, undefinedType, stringType, numberType, booleanType, arrayType, functionType]
+                .forEach((element: any): void => {
+
+                    expect(typeChecker.isObject(element)).to.equal(false);
+                });
         });
     });
 });

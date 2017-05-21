@@ -1,32 +1,35 @@
-import units from '../unit/unitDefinitions';
+import units from "../unit/unitDefinitions";
 
 export default {
 
-    base:{
-        infantry: units.infantry,
-        mech: units.mech,
-        recon: units.recon,
-        apc: units.apc,
-        antiAir: units.antiAir,
-        tank: units.tank,
-        midTank: units.midTank,
-        artillery: units.artillery,
-        missiles: units.missiles,
-        rockets: units.rockets,
-        neoTank: units.neoTank
+    airport: {
+
+        bCopter: units.bCopter,
+        bomber: units.bomber,
+        fighter: units.fighter,
+        tCopter: units.tCopter,
     },
 
-    airport: {
-        tCopter: units.tCopter,
-        bCopter: units.bCopter,
-        fighter: units.fighter,
-        bomber: units.bomber
+    base: {
+
+        antiAir: units.antiAir,
+        apc: units.apc,
+        artillery: units.artillery,
+        infantry: units.infantry,
+        mech: units.mech,
+        midTank: units.midTank,
+        missiles: units.missiles,
+        neoTank: units.neoTank,
+        recon: units.recon,
+        rockets: units.rockets,
+        tank: units.tank,
     },
-    
+
     seaport: {
-        lander: units.lander,
+
+        bShip: units.bShip,
         cruiser: units.cruiser,
+        lander: units.lander,
         submarine: units.submarine,
-        bShip: units.bShip
-    }
+    },
 };

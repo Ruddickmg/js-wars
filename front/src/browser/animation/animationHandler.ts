@@ -1,13 +1,13 @@
 import {default as canvasHandler, CanvasHandler} from "./canvasHandler.js";
 import {CanvasController} from "./canvas";
-import {Dimensions} from "./dimensions";
+import {ScreenDimensions} from "./screenDimensions";
 
 export interface AnimationHandler {
 
     getCanvas(name: string): CanvasController
     show(...objectName: string[]): AnimationHandler
     hide(...objectName: string[]): AnimationHandler
-    dimensions(objectName: string): Dimensions
+    dimensions(objectName: string): ScreenDimensions
     initialize(...canvases: any[]): AnimationHandler
 }
 
@@ -53,7 +53,7 @@ export default function(...initialCanvasNames: string[]): AnimationHandler {
 
             return this;
         },
-        dimensions(objectName: string): Dimensions {
+        dimensions(objectName: string): ScreenDimensions {
 
             const storedCanvas = canvas.get(objectName);
 

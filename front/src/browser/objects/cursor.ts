@@ -2,7 +2,7 @@
  * Created by moonmaster on 5/13/17.
  */
 
-import {default as createPosition, Position} from "../../game/map/elements/position";
+import {default as createPosition, Position} from "../../coordinates/position";
 import single from "../../tools/singleton";
 
 function cursor(initialX: number = 0, initialY: number = 0) {

@@ -1,10 +1,10 @@
-import {default as createPosition, Position} from "../position";
+import {default as createPosition, Position} from "../../../../coordinates/position";
 import {default as createBuilding, Building} from "../building/building";
 import {default as composer, Composer} from "../../../../tools/composer";
 import {default as identifier, Identifier} from "../../../../tools/identity";
 import createDefaults from "../defaults";
 import unitDefaults from "./unitDefaults";
-import terrainDefaults from "../terrain/properties";
+import terrainDefaults from "../terrain/terrainDefaults";
 import buildingDefaults from "../building/buildingDefaults";
 import {Player} from "../../../../users/players/player";
 import unitDefinitions from '../unit/unitDefinitions';

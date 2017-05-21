@@ -3,11 +3,11 @@ import {BinaryHeap, default as binaryHeap} from "../../src/tools/binaryHeap";
 
 describe("binaryHeap", () => {
 
-    const total = 10;
+    const numberOfTests = 100;
     const newHeap = (): BinaryHeap<number> => binaryHeap<number>((int: number) => int);
     const loadHeap = (heap: BinaryHeap<number>): BinaryHeap<number> => {
 
-        let elements = total;
+        let elements = numberOfTests;
 
         while (elements--) {
 
@@ -26,7 +26,7 @@ describe("binaryHeap", () => {
 
         it("reports the amount of elements in the heap", () => {
 
-            for (numberOfElements; numberOfElements < total; numberOfElements++) {
+            for (numberOfElements; numberOfElements < numberOfTests; numberOfElements++) {
 
                 heap.push(numberOfElements);
 
@@ -38,7 +38,7 @@ describe("binaryHeap", () => {
     describe("top", () => {
 
         const heap: BinaryHeap<number> = newHeap();
-        let numberOfElements: number = total;
+        let numberOfElements: number = numberOfTests;
 
         it("returns the first heap element", () => {
 
@@ -55,7 +55,7 @@ describe("binaryHeap", () => {
 
         const heap: BinaryHeap<number> = newHeap();
         const values: any = {};
-        let value: number = total;
+        let value: number = numberOfTests;
         let keys: any[];
 
         while (value--) {
@@ -89,7 +89,7 @@ describe("binaryHeap", () => {
 
             it("removes and returns the smallest heap element", () => {
 
-                for (numberOfElements; numberOfElements < total; numberOfElements += 1) {
+                for (numberOfElements; numberOfElements < numberOfTests; numberOfElements += 1) {
 
                     expect(heap.pop()).is.equal(numberOfElements);
                 }
@@ -99,7 +99,7 @@ describe("binaryHeap", () => {
         describe("max heap", () => {
 
             const heap: BinaryHeap<number> = loadedMaxHeap();
-            let numberOfElements = total;
+            let numberOfElements = numberOfTests;
 
             it ("removes and returns the largest heap element", () => {
 
@@ -142,7 +142,7 @@ describe("binaryHeap", () => {
     describe("filter", () => {
 
         const heap: BinaryHeap<number> = loadedMaxHeap();
-        const halfOfInsertedElements = total / 2;
+        const halfOfInsertedElements = numberOfTests / 2;
 
         it ("returns a new heap with unwanted values filtered out", () => {
 
@@ -216,11 +216,11 @@ describe("binaryHeap", () => {
 
         it ("reports whether the heap is set to max or not", () => {
 
-            expect(heap.isMax()).to.be.true;
+            expect(heap.isMax()).to.equal(true);
 
             heap.setToMin();
 
-            expect(heap.isMax()).to.be.false;
+            expect(heap.isMax()).to.equal(false);
         });
     });
 });

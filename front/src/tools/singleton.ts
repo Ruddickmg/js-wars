@@ -6,11 +6,11 @@ export default function<Type>(object: any): () => Type {
 
     let stored: Type;
 
-    return (): Type => {
+    return (...args: any[]): Type => {
 
         if (!stored) {
 
-            stored = object();
+            stored = object(...args);
         }
 
         return stored;

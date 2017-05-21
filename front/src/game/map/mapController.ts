@@ -38,66 +38,65 @@ export default function() {
 
     // const validate = new Validator("mapEditor");
 
-    const
-        restricted = {
+    const sea = ["sea", "reef", "shoal"];
+    const restricted = {
 
-            sea: ["sea", "reef", "shoal"],
-            reef: this.sea,
-            shoal: this.sea,
-            road: ["road"],
-            pipe: ["pipe"],
-            bridge: ["bridge"],
-            river: ["river"]
-        },
-        occupants = ({x,y}) => {
+        bridge: ["bridge"],
+        pipe: ["pipe"],
+        reef: sea,
+        river: ["river"],
+        road: ["road"],
+        sea,
+        shoal: sea,
+    };
+    const occupants = ({x,y}) => {
 
-            const
-                onSamePosition = terrainController.on,
-                type = terrainController.type,
-                mapElements = [units, buildings, terrain],
-                terrain = createTerrain("plain", new Position(x, y));
+        const
+            onSamePosition = terrainController.on,
+            type = terrainController.type,
+            mapElements = [units, buildings, terrain],
+            terrain = createTerrain("plain", new Position(x, y));
 
-            return mapElements.reduce((occupants, elements) => {
+        return mapElements.reduce((occupants, elements) => {
 
-                const occupant = elements.find((element) => onSamePosition(terrain, element));
+            const occupant = elements.find((element) => onSamePosition(terrain, element));
 
-                if (occupant) {
+            if (occupant) {
 
-                    occupants[type(occupant)] = occupant;
-                }
+                occupants[type(occupant)] = occupant;
+            }
 
-                return occupants;
+            return occupants;
 
-            }, {});
-        },
-        detectIndex = (element) => {
+        }, {});
+    };
+    const detectIndex = (element) => {
 
-            const
-                type = terrainController.type(element),
-                mapElements = {
-                    unit: units,
-                    building: buildings,
-                    terrain: terrain
-                } [type];
+        const
+            type = terrainController.type(element),
+            mapElements = {
+                unit: units,
+                building: buildings,
+                terrain: terrain
+            } [type];
 
-            return getIndex(element, mapElements);
-        },
-        getIndex = (element, elements) => {
+        return getIndex(element, mapElements);
+    };
 
-            const
-                elementId = unitController.id(element),
-                position = terrainController.position(element);
+    const getIndex = (element, elements) => {
 
-            return elements.findIndex((comparison) => {
+        const elementId = unitController.id(element);
+        const position = terrainController.position(element);
 
-                const
-                    comparisonId = unitController.id(comparison),
-                    onSamePosition = terrainController.on(position, comparison);
+        return elements.findIndex((comparison: any) => {
 
-                return elementId === comparisonId || onSamePosition;
-            });
-        },
-        refresh = (hide) => app.animate("unit", hide),
+            const comparisonId = unitController.id(comparison);
+            const onSamePosition = terrainController.on(position, comparison);
+
+            return elementId === comparisonId || onSamePosition;
+        });
+    };
+    const refresh = (hide) => app.animate("unit", hide);
         neighbors = (position) => {
 
             const positions = position.neighbors();

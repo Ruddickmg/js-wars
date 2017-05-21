@@ -19,7 +19,7 @@ export interface User extends Login {
     loginSite: string;
 }
 
-export default function(loginData: Login, loginWebsite: string): User {
+export default function(loginData: Login, loginWebsite?: string): User {
 
     const compose = composer();
 

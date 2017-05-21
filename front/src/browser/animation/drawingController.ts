@@ -1,7 +1,7 @@
-import {default as createPosition, Position} from "../../game/map/elements/position";
+import {default as createPosition, Position} from "../../coordinates/position";
 import curry from "../../tools/curry";
 import screenConfiguration from "../configuration/screenConfig";
-import {default as createDimensions, Dimensions} from "./dimensions";
+import {default as createDimensions, ScreenDimensions} from "./screenDimensions";
 import {default as createDrawingCache, DrawingCache} from "./drawingTool";
 import app = require('../configuration/settings/app.js');
 
@@ -21,7 +21,7 @@ export interface DrawingController {
     cursor(): DrawingController;
 }
 
-export default function(canvas: any, context: any, {width, height}: Dimensions, base: number): DrawingController {
+export default function(canvas: any, context: any, {width, height}: ScreenDimensions, base: number): DrawingController {
 
     const
         numberOfVerticalGridSquares: number = screenConfiguration.numberOfVerticalGridSquares,
@@ -82,7 +82,7 @@ export default function(canvas: any, context: any, {width, height}: Dimensions, 
             });
         },
 
-        fillScreen = (nameOfMapElement: string, dimensions?: Dimensions): void => {
+        fillScreen = (nameOfMapElement: string, dimensions?: ScreenDimensions): void => {
 
             let x: number = dimensions.width,
                 y: number = dimensions.height;

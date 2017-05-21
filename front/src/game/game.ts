@@ -15,3 +15,19 @@ export interface Game {
     max: number;
     [index: string]: boolean | string | Map | Player[] | RoomId;
 }
+
+export default function(id: RoomId, name: string, category: string, map: Map) {
+
+    return {
+
+        id,
+        name,
+        category,
+        map,
+        background: "",
+        max: map.maximumAmountOfPlayers,
+        players: [] as Player[],
+        saved: false,
+        started: false,
+    };
+}

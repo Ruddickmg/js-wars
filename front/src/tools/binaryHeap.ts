@@ -98,13 +98,13 @@ export default function binaryHeap<HeapElement>(
 
     const heapSort = (currentHeap: HeapElement[], index: number): HeapElement[] => {
 
-        const indexOfLastElement: number = size();
+        const indexOfTheLastElement: number = size();
 
         let parentIndex: number = index;
         let childIndex: number = index;
         let leftChildIndex: number = leftChild(parentIndex);
 
-        while (leftChildIndex < indexOfLastElement) {
+        while (leftChildIndex < indexOfTheLastElement) {
 
             childIndex = determineIndexOfBestChild(currentHeap, leftChildIndex, rightChild(parentIndex));
             swapChildWithParent(currentHeap, childIndex, parentIndex);
@@ -112,9 +112,9 @@ export default function binaryHeap<HeapElement>(
             leftChildIndex = leftChild(parentIndex);
         }
 
-        if (rightChildIsBestHeapElement(currentHeap, indexOfLastElement, childIndex)) {
+        if (rightChildIsBestHeapElement(currentHeap, indexOfTheLastElement, childIndex)) {
 
-            swapChildWithParent(currentHeap, childIndex, indexOfLastElement);
+            swapChildWithParent(currentHeap, childIndex, indexOfTheLastElement);
             moveElementAtIndexIntoPosition(currentHeap, childIndex);
         }
 

@@ -1,6 +1,6 @@
 import {default as createDrawingTool, DrawingTool} from "./lineTool";
 import canvasAnimations from "./animations.js";
-import {Dimensions} from "./dimensions";
+import {ScreenDimensions} from "./screenDimensions";
 
 export interface DrawingCache {
 
@@ -12,7 +12,7 @@ export interface DrawingCache {
     cache(name: string, canvas: any): DrawingCache
 }
 
-export default function (screenCanvas: any, context: any, {width, height}: Dimensions, base: number, offsetNeededToCenterDrawing: number=0): DrawingCache {
+export default function (screenCanvas: any, context: any, {width, height}: ScreenDimensions, base: number, offsetNeededToCenterDrawing: number=0): DrawingCache {
 
     const
         cache = {},

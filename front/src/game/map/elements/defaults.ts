@@ -1,96 +1,116 @@
-import buildingController from "./building/buildingController";
-import {Unit} from "./unit/unit";
+import allSettings, {Settings} from "../../../settings/settings";
+import single from "../../../tools/singleton";
 import {Building} from "./building/building";
 import {Terrain} from "./terrain/terrain";
+import {Unit} from "./unit/unit";
 
 interface Element {
 
-    name: string
-    type: string
+    name: string;
+    type: string;
+    [index: string]: string;
 }
 
 export type MapElement = Terrain | Building | Unit;
 
-export default function(units, buildings, terrain) {
+export default single(function() {
 
-	const
-        defaultHealth: number = 100,
-		elements = {
-            unit: units,
-            building: buildings,
-            terrain: terrain
-        },
-	    healing = {
+    const settings: Settings = allSettings();
+    const buildingSettings: Settings = settings.get("typesOfUnitsABuildingCanHeal");
+    const typesOfMapElements: Settings = settings.get("typesOfMapElements");
+    const allMapElements: Settings = settings.get("mapElements");
 
-            hq:["foot", "wheels"],
-            city:["foot", "wheels"],
-            base:["foot", "wheels"],
-            seaport:["boat"],
-            airport:["flight"]
-        },
-        get = (element: Element): any => {
+    const get = (element: any): any => {
 
-	        const
-                type = element.type.toLowerCase(),
-                name = element.name.toLowerCase();
+        const type: string = element.type.toLowerCase();
+        const name: string = element.name.toLowerCase();
 
-            return elements[type][name];
-        },
-        property = (element: Element): any => get(element).properties;
+        return allMapElements.get(type, name);
+    };
 
-	return {
+    const property = (element: Element): any => get(element).properties;
 
-		name(type: string): string {
+    const name = (type: string): string => {
 
-            return Object.keys(elements).reduce((nameOfElement,mapElement, mapElements) => {
+        return allMapElements.reduce((nameOfElement: string, elements: any) => {
 
-                const
-                    elements = mapElements[mapElement],
-                    element = elements[type],
-                    foundName: string = element.name,
-                    nameNotFoundBefore: boolean = !nameOfElement;
+            const element: MapElement = elements[type];
 
-                return foundName && nameNotFoundBefore ? foundName : nameOfElement;
-            });
-		},
-        canHeal(building: Element): string[] {
+            let foundName: string;
 
-            const name: string = building.name;
+            if (element) {
 
-            return healing[name.toLowerCase()];
-        },
-		movementCost(unit: Element, obstacle: Element): number {
+                foundName = element.name;
+            }
 
-			const
-                name: string = obstacle.name.toLowerCase(),
-                key = {
-                    plains: "plain",
-                    woods: "wood",
-                    base: "building",
-                    seaport: "building",
-                    airport: "building",
-                    hq: "building"
-                }[name];
+            return nameOfElement || foundName;
+        });
+    };
 
-			return property(unit).movementCosts[key || name];
-		},
-        find: (type: string) => elements.unit[type],
-        ammo: (unit: Element): number => property(unit).ammo,
-        fuel: (unit: Element): number => property(unit).fuel,
-        movement: (unit: Element): number => property(unit).movement,
-        vision: (unit: Element): number => property(unit).vision,
-        canAttack: (unit: Element): boolean => property(unit).canAttack,
-        inRange: (unit: Element): number => property(unit).inRange,
-        damageType: (unit: Element): string => property(unit).damageType,
-		movable: (unit: Element): boolean => property(unit).movable,
-		transportation: (unit: Element): string => property(unit).transportation,
-		capture: (unit: Element): boolean => property(unit).capture,
-		weapon1: (unit: Element): string => property(unit).weapon1,
-		weapon2: (unit: Element): string => property(unit).weapon2,
-		maxLoad: (unit: Element): number => property(unit).maxLoad,
-		load: (unit: Element): boolean => property(unit).load,
-		loaded: (unit: Element): Unit[] => property(unit).loaded,
-        cost: (unit: Element): number => get(unit).cost,
-        health: (): number => defaultHealth
-	};
-};
+    const canHeal = (building: Element): string[] => {
+
+        const typeOfBuilding: string = building.name.toLocaleLowerCase();
+        const typesTheBuildingCanHeal: string[] = buildingSettings.get(typeOfBuilding);
+
+        return typesTheBuildingCanHeal || [];
+    };
+
+    const movementCost = (unit: Element, obstacle: Element): number => {
+
+        const properties = property(unit);
+        const nameOfMapElement: string = obstacle.name.toLowerCase();
+        const key: string = typesOfMapElements.get(nameOfMapElement) || nameOfMapElement;
+        const costOfMovement = properties.movementCosts[key];
+
+        if (isNaN(costOfMovement)) {
+
+            throw new Error(`Could not determine a valid movement cost, found: ${costOfMovement}`);
+        }
+
+        return property(unit).movementCosts[key || nameOfMapElement];
+    };
+
+    const find = (type: string) => allMapElements.get("unit", type);
+    const ammo = (unit: Element): number => property(unit).ammo;
+    const fuel = (unit: Element): number => property(unit).fuel;
+    const movement = (unit: Element): number => property(unit).movement;
+    const vision = (unit: Element): number => property(unit).vision;
+    const canAttack = (unit: Element): boolean => property(unit).canAttack;
+    const inRange = (unit: Element): number => property(unit).inRange;
+    const damageType = (unit: Element): string => property(unit).damageType;
+    const movable = (unit: Element): boolean => property(unit).movable;
+    const transportation = (unit: Element): string => property(unit).transportation;
+    const capture = (unit: Element): boolean => property(unit).capture;
+    const firstWeapon = (unit: Element): string => property(unit).weapon1;
+    const secondWeapon = (unit: Element): string => property(unit).weapon2;
+    const maxLoad = (unit: Element): number => property(unit).maxLoad;
+    const load = (unit: Element): boolean => property(unit).load;
+    const loaded = (unit: Element): Unit[] => property(unit).loaded;
+    const cost = (unit: Element): number => get(unit).cost;
+    const health = (): number => settings.get("defaultHealth");
+
+    return {
+
+        name,
+        canHeal,
+        movementCost,
+        find,
+        ammo,
+        fuel,
+        movement,
+        vision,
+        canAttack,
+        inRange,
+        damageType,
+        movable,
+        transportation,
+        capture,
+        firstWeapon,
+        secondWeapon,
+        maxLoad,
+        load,
+        loaded,
+        cost,
+        health,
+    };
+});

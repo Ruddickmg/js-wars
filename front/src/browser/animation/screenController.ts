@@ -1,6 +1,6 @@
-import {default as createPosition, Position} from "../../game/map/elements/position.js";
+import {default as createPosition, Position} from "../../coordinates/position.js";
 import {default as time, Time} from "../../tools/calculations/time";
-import {default as createDimensions, Dimensions} from "./dimensions";
+import {default as createDimensions, ScreenDimensions} from "./screenDimensions";
 import {AnimationHandler} from "./animationHandler.js";
 
 import cursor = require("../controller/cursorController.js");
@@ -11,14 +11,14 @@ export interface ScreenController {
     width(): number
     height(): number
     pixels(): number
-    dimensions(): Dimensions
+    dimensions(): ScreenDimensions
     position(): Position
     top(): number
     bottom(): number
     left(): number
     right(): number
     focused(): boolean
-    setDimensions(dimensions: Dimensions, base: number): ScreenController
+    setDimensions(dimensions: ScreenDimensions, base: number): ScreenController
     reset(): ScreenController
     scroll(): ScreenController
     moveTo(coordinates): ScreenController
@@ -26,7 +26,7 @@ export interface ScreenController {
     withinDimensions({x, y}: Position): boolean
 }
 
-export default function(mapDimensions: Dimensions, animation: AnimationHandler): ScreenController {
+export default function(mapDimensions: ScreenDimensions, animation: AnimationHandler): ScreenController {
 
     let
         squaresFromEdgeBeforeMoving: number = 2,
@@ -34,8 +34,8 @@ export default function(mapDimensions: Dimensions, animation: AnimationHandler):
         bottomOrLeftEdgeOfScreen: number = 0,
         scrollSpeed: number = 50,
         focused: boolean = false,
-        screenDimensions: Dimensions,
-        dimensions: Dimensions;
+        screenDimensions: ScreenDimensions,
+        dimensions: ScreenDimensions;
 
 	const
         screenPosition: Position = createPosition(0,0),
@@ -87,14 +87,14 @@ export default function(mapDimensions: Dimensions, animation: AnimationHandler):
         width:(): number => screenDimensions.width,
         height:(): number => screenDimensions.height,
         pixels:(): number => screenDimensions.width * screenDimensions.height,
-        dimensions:(): Dimensions => dimensions,
+        dimensions:(): ScreenDimensions => dimensions,
         position:(): Position => screenPosition,
         top:(): number => screenPosition.y,
         bottom:(): number => screenPosition.y + dimensions.height,
         left:(): number => screenPosition.x,
         right:(): number => screenPosition.x + dimensions.width,
         focused:(): boolean => focused,
-		setDimensions({width, height}:Dimensions, baseSize: number): ScreenController {
+		setDimensions({width, height}:ScreenDimensions, baseSize: number): ScreenController {
 
 			screenDimensions = createDimensions(width, height);
 			dimensions = screenDimensions.scaleToGrid(baseSize);

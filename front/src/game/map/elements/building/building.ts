@@ -1,32 +1,36 @@
-import {default as composer, Composer} from "../../../../tools/composer";
-import {default as createTerrain, Terrain} from "../terrain/terrain.js";
+import {Position} from "../../../../coordinates/position";
+import {Composer, default as composer} from "../../../../tools/composer";
 import {Player} from "../../../../users/players/player";
+import {default as createTerrain, Terrain} from "../terrain/terrain.js";
 
 export interface Building {
 
-    type: string,
-    player: Player,
-    health: number,
-    name: string,
-    index?: number,
-    draw: string,
-    position: Position
+    type: string;
+    player: Player;
+    health: number;
+    name: string;
+    index?: number;
+    draw: string;
+    position: Position;
 }
 
-export default function (type, position, player, index): Building {
-    
-	const
-        selectivelyCombineObjects: Composer = composer(),
-        baseObject: Terrain = createTerrain(type, position),
-        buildingProperties = {
+export default function(name: string, position: Position, player: number, index?: number): Building {
 
-            type: "building",
-            player: player,
-            health: 20,
-            name: type,
-            index: index,
-        };
+    const combine: Composer<Building> = composer() as Composer<Building>;
+    const baseObject: Terrain = createTerrain(name, position);
+    const buildingProperties = {
 
-	return <Building>selectivelyCombineObjects.excluding("type", "name", "orientation")
-        .combine(buildingProperties, baseObject);
-};
+        health: 20,
+        index,
+        player,
+        name,
+        type: "building",
+    };
+
+    return combine.excluding(
+
+        ["type", "name", "orientation"],
+        buildingProperties,
+        baseObject,
+    );
+}

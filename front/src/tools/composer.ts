@@ -1,3 +1,5 @@
+import single from "./singleton";
+
 interface TruthTable {
 
     [index: string]: boolean;
@@ -11,7 +13,7 @@ export interface Composer<OutputType> {
     combine(...objects: any[]): OutputType;
 }
 
-export default function<OutputType>(): Composer<OutputType> {
+export default single(function<OutputType>(): Composer<OutputType> {
 
     const checkIfParameterExists = (parameter: any): boolean => parameter !== undefined;
     const checkIfParameterDoesNotExist = (parameter: any): boolean => !parameter;
@@ -131,4 +133,4 @@ export default function<OutputType>(): Composer<OutputType> {
         functions,
         including,
     };
-}
+});

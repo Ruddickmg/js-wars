@@ -1,13 +1,21 @@
-export default function(properties) {
+export interface UnitDefaults {
 
-	const
-        ammo: number = properties.ammo,
-        fuel: number = properties.fuel,
-        movement: number = properties.movement,
-        vision: number = properties.vision,
-        defaultHealth: number = 100;
+    ammo(): number;
+    fuel(): number;
+    health(): number;
+    movement(): number;
+    vision(): number;
+}
 
-    [ammo, fuel, movement, vision, defaultHealth].forEach((property) => {
+export default function(properties: any): UnitDefaults {
+
+    const ammo: number = properties.ammo;
+    const fuel: number = properties.fuel;
+    const movement: number = properties.movement;
+    const vision: number = properties.vision;
+    const defaultHealth: number = 100;
+
+    [ammo, fuel, movement, vision, defaultHealth].forEach((property: number) => {
 
         if (isNaN(property)) {
 
@@ -15,11 +23,12 @@ export default function(properties) {
         }
     });
 
-	return {
-		ammo:() => ammo,
-		fuel:() => fuel,
-		movement:() => movement,
-		vision:() => vision,
-		health: () => defaultHealth
-	};
-};
+    return {
+
+        ammo: (): number => ammo,
+        fuel: (): number => fuel,
+        health: (): number => defaultHealth,
+        movement: (): number => movement,
+        vision: (): number => vision,
+    };
+}

@@ -108,7 +108,7 @@ export default function(roomId: RoomId, game: Game): Room {
     const getPlayer = (id: RoomId): AnyPlayer => players[indexOf(id)];
     const getGame = (): Game => game;
     const isSaved = (): boolean => game.saved;
-    const isEmpty = (): boolean => !this.users().length;
+    const isEmpty = (): boolean => !getUsers().length;
     const isFull = (): boolean => players.length >= game.max;
     const hasStarted = (): boolean => game.started;
     const isSameAs = (room: Room): boolean => {
