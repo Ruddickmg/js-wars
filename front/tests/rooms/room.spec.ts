@@ -3,7 +3,7 @@ import createGame, {Game} from "../../src/game/game";
 import createRoom, {Room} from "../../src/rooms/room";
 import createAiPlayer, {AiPlayer} from "../../src/users/ai/aiPlayer";
 import createPlayer, {Player} from "../../src/users/players/player";
-import createUser, {User} from "../../src/users/user";
+import createUser from "../../src/users/user";
 import map from "../game/map/testMap";
 
 describe("room", () => {
