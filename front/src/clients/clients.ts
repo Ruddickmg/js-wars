@@ -1,38 +1,38 @@
-import {default as createClient, Client} from "./client.js";
 import {default as socketHandler, SocketHandler} from "../connections/sockets/socketHandler.js";
-import {default as createPlayer, Player} from "../users/players/player";
-import {User, RoomId} from "../users/user";
 import {AnyRoom, isRoom} from "../rooms/rooms";
+import {default as createPlayer, Player} from "../users/players/player";
+import {RoomId, User} from "../users/user";
+import {Client, default as createClient} from "./client.js";
 
 export type ClientId = string | number;
 
 export interface ClientHandler {
 
-    bySocket(socket: any): Client,
-    byId(id: ClientId): Client,
-    remove(id: ClientId): Client,
-    wasDisconnected(id: ClientId): boolean,
-    add(socket: any, id: ClientId): Client,
-    disconnect(socket: any): ClientHandler,
-    reconnect(id: ClientId): Client,
-    removeTimedOutDisconnections(timeAllowedToReconnect: number): ClientHandler,
-    updateUser(user: any, id: RoomId): Clients,
+    bySocket(socket: any): Client;
+    byId(id: ClientId): Client;
+    remove(id: ClientId): Client;
+    wasDisconnected(id: ClientId): boolean;
+    add(socket: any, id: ClientId): Client;
+    disconnect(socket: any): ClientHandler;
+    reconnect(id: ClientId): Client;
+    removeTimedOutDisconnections(timeAllowedToReconnect: number): ClientHandler;
+    updateUser(user: any, id: RoomId): Player;
 }
 
 interface DisconnectedClient {
 
-    client: Client,
-    timeOfDisconnect: Date
+    client: Client;
+    timeOfDisconnect: Date;
 }
 
 interface Clients {
 
-    [index: string]: Client
+    [index: string]: Client;
 }
 
 interface DisconnectedClients {
 
-    [index: string]: DisconnectedClient
+    [index: string]: DisconnectedClient;
 }
 
 type AllClients = Clients | DisconnectedClients;
@@ -40,122 +40,138 @@ type AnyClient = Client | DisconnectedClient;
 
 export default function(): ClientHandler {
 
-    let
-        connectedClients: Clients = {},
-        disconnectedClients: DisconnectedClients = {};
+    let connectedClients: Clients = {};
+    let disconnectedClients: DisconnectedClients = {};
 
-    const
-        socketIds: SocketHandler = socketHandler(),
-        getClientBySocket = (socket: any, listOfClients: Clients): Client => listOfClients[socketIds.getId(socket)],
-        getClientById = (id: ClientId, listOfClients: AllClients): AnyClient => listOfClients[id],
-        addClient = (client: AnyClient , id: ClientId, listOfClients: AllClients): AllClients => {
+    const socketIds: SocketHandler = socketHandler();
+    const getClientBySocket = (socket: any, listOfClients: Clients): Client => listOfClients[socketIds.getId(socket)];
+    const getClientById = (id: ClientId, listOfClients: AllClients): AnyClient => listOfClients[id];
+    const addClient = (client: AnyClient , id: ClientId, listOfClients: AllClients): AllClients => {
 
-            const modifiedClientList: AllClients = Object.assign({}, listOfClients);
+        const modifiedClientList: AllClients = Object.assign({}, listOfClients);
 
-            modifiedClientList[id] = client;
+        modifiedClientList[id] = client;
 
-            return modifiedClientList;
-        },
-        removeClient = (id: ClientId, listOfClients: AllClients): AllClients => {
+        return modifiedClientList;
+    };
+    const removeClient = (id: ClientId, listOfClients: AllClients): AllClients => {
 
-            const modifiedClientList: AllClients = Object.assign({}, listOfClients);
+        const modifiedClientList: AllClients = Object.assign({}, listOfClients);
 
-            delete modifiedClientList[id];
+        delete modifiedClientList[id];
 
-            return modifiedClientList;
-        };
+        return modifiedClientList;
+    };
+    const add = (socket: any, id: ClientId): Client => {
+
+        const client: Client = createClient(socket);
+
+        socketIds.setId(socket, id);
+
+        connectedClients = addClient(client, id, connectedClients) as Clients;
+
+        return client;
+    };
+    const byId = (id: ClientId): Client => getClientById(id, connectedClients) as Client;
+    const bySocket = (socket: any): Client => getClientBySocket(socket, connectedClients);
+    const disconnect = function(socket: any): ClientHandler {
+
+        const id: ClientId = socketIds.getId(socket);
+        const client: Client = getClientById(id, connectedClients) as Client;
+        const timeOfDisconnect: Date = new Date();
+
+        client.disconnect();
+
+        disconnectedClients = addClient({client, timeOfDisconnect}, id, disconnectedClients) as DisconnectedClients;
+
+        connectedClients = removeClient(id, connectedClients) as Clients;
+
+        return this;
+    };
+
+    const reconnect = (id: ClientId): Client => {
+
+        const connection: DisconnectedClient = getClientById(id, disconnectedClients) as DisconnectedClient;
+        let client ;
+
+        if (connection) {
+
+            client = connection.client;
+
+            disconnectedClients = removeClient(id, disconnectedClients) as DisconnectedClients;
+
+            connectedClients = addClient(client, id, connectedClients) as Clients;
+
+            return client;
+        }
+    };
+
+    const remove = (id: ClientId): Client => {
+
+        const removedClient: Client = getClientById(id, connectedClients) as Client;
+
+        connectedClients = removeClient(id, connectedClients) as Clients;
+
+        return removedClient;
+    };
+
+    const removeTimedOutDisconnections = function(timeAllowedToReconnect: number): ClientHandler {
+
+        const disconnectedClientIds = Object.keys(disconnectedClients);
+        const now = new Date();
+
+        disconnectedClients = disconnectedClientIds.reduce((clients: DisconnectedClients, id: ClientId) => {
+
+            const connection: DisconnectedClient = getClientById(id, disconnectedClients) as DisconnectedClient;
+
+            let clientsWithinTimeLimit = clients;
+
+            if (Number(now) - Number(connection.timeOfDisconnect) < timeAllowedToReconnect) {
+
+                clientsWithinTimeLimit = addClient(connection, id, clientsWithinTimeLimit) as DisconnectedClients;
+
+            } else {
+
+                socketIds.remove(connection.client.getSocket());
+            }
+
+            return clientsWithinTimeLimit;
+
+        }, {});
+
+        return this;
+    };
+
+    const updateUser = function(user: User, id: RoomId): Player {
+
+        let client: Client = remove(id);
+        const room: AnyRoom = client.getRoom();
+        const player: Player = createPlayer(user);
+
+        if (isRoom(room) && client) {
+
+            room.replacePlayer(id, player);
+
+            client = add(client.getSocket(), id);
+            client.setPlayer(player);
+            client.setRoom(room);
+
+            return player;
+        }
+    };
+
+    const wasDisconnected = (id: ClientId): boolean => disconnectedClients.hasOwnProperty(`${id}`);
 
     return {
 
-        bySocket: (socket: any): Client => getClientBySocket(socket, connectedClients),
-        byId: (id: ClientId): Client => <Client>getClientById(id, connectedClients),
-        remove: (id: ClientId): Client => {
-
-            const removedClient: Client = <Client>getClientById(id, connectedClients);
-
-            connectedClients = <Clients>removeClient(id, connectedClients);
-
-            return removedClient;
-        },
-        wasDisconnected: (id: ClientId): boolean => disconnectedClients.hasOwnProperty(`${id}`),
-        add(socket: any, id: ClientId): Client {
-
-            const client: Client = createClient(socket);
-
-            socketIds.setId(socket, id);
-
-            connectedClients = <Clients>addClient(client, id, connectedClients);
-
-            return client;
-        },
-        disconnect(socket: any): ClientHandler {
-
-            const
-                id: ClientId = socketIds.getId(socket),
-                client: Client = <Client>getClientById(id, connectedClients),
-                timeOfDisconnect = new Date();
-
-            client.disconnect();
-
-            disconnectedClients = <DisconnectedClients>addClient({client, timeOfDisconnect}, id, disconnectedClients);
-
-            connectedClients = <Clients>removeClient(id, connectedClients);
-
-            return this;
-        },
-        reconnect(id: ClientId): Client {
-
-            const
-                connection: DisconnectedClient = <DisconnectedClient>getClientById(id, disconnectedClients),
-                client = connection.client;
-
-            disconnectedClients = <DisconnectedClients>removeClient(id, disconnectedClients);
-
-            connectedClients = <Clients>addClient(client, id, connectedClients);
-
-            return client;
-        },
-        removeTimedOutDisconnections(timeAllowedToReconnect: number): ClientHandler {
-
-            const
-                disconnectedClientIds = Object.keys(disconnectedClients),
-                now = new Date();
-
-            disconnectedClients = disconnectedClientIds.reduce((clients: DisconnectedClients, id: ClientId) => {
-
-                const connection: DisconnectedClient = <DisconnectedClient>getClientById(id, disconnectedClients);
-
-                let clientsWithinTimeLimit = clients;
-
-                if (Number(now) - Number(connection.timeOfDisconnect) < timeAllowedToReconnect) {
-
-                    clientsWithinTimeLimit = <DisconnectedClients>addClient(connection, id, clientsWithinTimeLimit);
-
-                } else {
-
-                    socketIds.remove(connection.client.socket());
-                }
-
-                return clientsWithinTimeLimit;
-
-            }, {});
-
-            return this;
-        },
-        updateUser(user: User, id: RoomId): Clients {
-
-            const
-                client: Client = this.remove(id),
-                room: AnyRoom = client.room(),
-                player: Player = createPlayer(user);
-
-            if (isRoom(room) && client) {
-
-                room.replacePlayer(id, player);
-                this.addElement(client.socket(), id);
-            }
-
-            return this;
-        }
+        add,
+        byId,
+        bySocket,
+        disconnect,
+        reconnect,
+        remove,
+        removeTimedOutDisconnections,
+        updateUser,
+        wasDisconnected,
     };
 }

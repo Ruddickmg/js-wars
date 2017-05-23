@@ -1,29 +1,39 @@
+import {Map} from "../game/map/map";
+import {Dimensions} from "./dimensions";
+
 export interface Position {
 
-    x: number,
-    y: number,
-    orientation?: string,
-    on(position: Position): boolean,
-    toString(): string,
-    inMap(): boolean,
-    neighbors(): Position[],
-    corners(): Position[],
-    surrounding(): Position[]
+    x: number;
+    y: number;
+    orientation?: string;
+    on(position: Coordinates): boolean;
+    toString(): string;
+    inMap(map: Map): boolean;
+    neighbors(map: Map): Position[];
+    corners(map: Map): Position[];
+    surrounding(map: Map): Position[];
 }
 
-interface Coordinates {
+export interface Coordinates {
 
-    x: number,
-    y: number
+    x: number;
+    y: number;
 }
 
-export default function createPosition(x: number, y: number, orientation: string="", mapDimensions?: Coordinates): Position {
+export default function createPosition(
 
-    const filter = (positions: Position[]): Position[] => {
+    xAxis: number,
+    yAxis: number,
+    orientation: string = "",
+    mapDimensions?: Coordinates,
+
+): Position {
+
+    const filter = (positions: Position[], map: Map): Position[] => {
 
         return positions.reduce((allowedPositions: Position[], position: Position): Position[] => {
 
-            if (position.inMap()) {
+            if (position.inMap(map)) {
 
                 allowedPositions.push(position);
             }
@@ -35,55 +45,60 @@ export default function createPosition(x: number, y: number, orientation: string
 
     return {
 
-        x:x,
-        y:y,
-        orientation: orientation,
-        on: ({x, y}: Coordinates): boolean => this.x === x && this.y === y,
-        toString: (): string => `{ x: ${this.x}, y: ${this.y}}`,
-        inMap(): boolean {
+        corners(map: Map): Position[] {
 
-            const {x, y} = mapDimensions;
+            const {x, y} = this;
+            const positions: Position[] = [
 
-            return this.x >= 0 &&
-                this.y >= 0 &&
-                this.x < x &&
-                this.y < y;
+                createPosition(x - 1, y - 1, "northWest", mapDimensions),
+                createPosition(x + 1, y - 1, "southEast", mapDimensions),
+                createPosition(x + 1, y + 1, "northEast", mapDimensions),
+                createPosition(x - 1, y + 1, "southWest", mapDimensions),
+            ];
+
+            return filter(positions, map);
         },
-        neighbors(): Position[] {
+        inMap(map: Map): boolean {
 
-            const
-                {x, y} = this,
-                positions: Position[] = [
+            const {x, y}: Position = this;
+            const {width, height}: Dimensions = map.dimensions;
+            const startingPosition = 0;
 
-                    createPosition(x - 1, y, 'west', mapDimensions),
-                    createPosition(x, y - 1, 'south', mapDimensions),
-                    createPosition(x + 1, y, 'east', mapDimensions),
-                    createPosition(x, y + 1, 'north', mapDimensions)
-                ];
-
-            return filter(positions);
+            return x >= startingPosition
+                && y >= startingPosition
+                && x < width
+                && y < height;
         },
-        corners(): Position[] {
+        neighbors(map: Map): Position[] {
 
-            const
-                {x, y} = this,
-                positions: Position[] = [
+            const {x, y} = this;
+            const positions: Position[] = [
 
-                    createPosition(x - 1, y - 1, 'northWest', mapDimensions),
-                    createPosition(x + 1, y - 1, 'southEast', mapDimensions),
-                    createPosition(x + 1, y + 1, 'northEast', mapDimensions),
-                    createPosition(x - 1, y + 1, 'southWest', mapDimensions)
-                ];
+                createPosition(x - 1, y, "west", mapDimensions),
+                createPosition(x, y - 1, "south", mapDimensions),
+                createPosition(x + 1, y, "east", mapDimensions),
+                createPosition(x, y + 1, "north", mapDimensions),
+            ];
 
-            return filter(positions);
+            return filter(positions, map);
         },
-        surrounding(): Position[] {
+        on({x, y}: Coordinates): boolean {
 
-            const
-                neighboringSquares = this.neighbors(),
-                squaresOnEachCorner = this.corners();
+            return this.x === x && this.y === y;
+        },
+        orientation,
+        surrounding(map: Map): Position[] {
+
+            const neighboringSquares = this.neighbors(map);
+            const squaresOnEachCorner = this.corners(map);
 
             return neighboringSquares.concat(squaresOnEachCorner);
-        }
-    }
-};
+        },
+        toString(): string {
+
+            return `{x: ${this.x}, y: ${this.y}}`;
+        },
+        x: xAxis,
+        y: yAxis,
+    };
+}

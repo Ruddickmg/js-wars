@@ -112,7 +112,7 @@ export default function(app: any, rooms: Rooms, clients: ClientHandler, root: st
         const game: Game = req.body.game;
         const user: User = req.body.user;
         const client: Client = clients.byId(user.id);
-        const room: AnyRoom = client.room();
+        const room: AnyRoom = client.getRoom();
 
         if (isRoom(room)) {
 

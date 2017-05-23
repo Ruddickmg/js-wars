@@ -6,9 +6,9 @@ export interface Lobby {
     id(): RoomId;
     name(): string;
     size(): number;
-    all(): object;
+    getPlayers(): object;
     getPlayer(id: RoomId): Player;
-    add(player: Player): Lobby;
+    addPlayer(player: Player): Lobby;
     removePlayer(id: RoomId): Player;
 }
 
@@ -20,7 +20,7 @@ export default function(identity: RoomId): Lobby {
 
     let length: number = 0;
 
-    const add = function(player: Player): Lobby {
+    const addPlayer = function(player: Player): Lobby {
 
         const playerId: RoomId = player.id;
 
@@ -30,7 +30,7 @@ export default function(identity: RoomId): Lobby {
 
         return this;
     };
-    const all = (): object => players;
+    const getPlayers = (): object => players;
     const size = (): number => length;
     const getPlayer = (playerId: RoomId): Player => players[playerId];
     const id = (): RoomId => roomId;
@@ -51,8 +51,8 @@ export default function(identity: RoomId): Lobby {
 
     return {
 
-        add,
-        all,
+        addPlayer,
+        getPlayers,
         size,
         getPlayer,
         id,

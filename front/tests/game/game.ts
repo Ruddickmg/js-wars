@@ -4,8 +4,8 @@ import {Map} from "./map/mapController";
 
 export interface Game {
 
-    id: RoomId,
-    name: string,
+    id: RoomId;
+    name: string;
     category: string,
     background: string,
     players: Player[],

@@ -1,13 +1,13 @@
 export interface Listener {
 
-    [index: string]: (error: Error, data: any, socket: any) => void
+    [index: string]: (error: Error, data: any, socket: any) => void;
 }
 
 export interface SocketListeners {
 
-    addListener(listeners: Listener)
-    addListeners(...listeners: Listener[])
-    listenForSocketCommunication(socket:any): void
+    addListener(listeners: Listener): void;
+    addListeners(...listeners: Listener[]): void;
+    listenForSocketCommunication(socket: any): void;
 }
 
 export default function(): SocketListeners {
@@ -25,19 +25,19 @@ export default function(): SocketListeners {
 
     return {
 
-        addListener(listener: Listener) {
+        addListener(listener: Listener): void {
 
             allListeners = addListener(listener, allListeners);
         },
-        addListeners(...listeners: Listener[]) {
+        addListeners(...listeners: Listener[]): void {
 
-            allListeners = listeners.reduce((listeners, listener) => {
+            allListeners = listeners.reduce((addedListeners: Listener[], listener: Listener): Listener[] => {
 
-                return addListener(listener, listeners);
+                return addListener(listener, addedListeners);
 
-            }, allListeners)
+            }, allListeners);
         },
-        listenForSocketCommunication(socket: any){
+        listenForSocketCommunication(socket: any): void {
 
             allListeners.forEach((listener: Listener) => {
 
@@ -47,14 +47,14 @@ export default function(): SocketListeners {
 
                     socket.on(directive, (message: any): void => {
 
-                        const
-                            errorReported: string = message.error,
-                            error = errorReported ? new Error(errorReported) : undefined;
+                        const errorReported: string = message.error;
+                        const error = errorReported ? new Error(errorReported) : undefined;
 
                         listener[directive](error, message, socket);
                     });
                 });
-            })
-        }
-    }
-};
+            });
+        },
+    };
+}
+

@@ -1,4 +1,4 @@
-import {default as createDimensions, Dimensions} from "../../coordinates/dimensions.";
+import {default as createDimensions, Dimensions} from "../../coordinates/dimensions";
 
 export interface ScreenDimensions extends Dimensions {
 

@@ -11,7 +11,7 @@ export default function(clients: ClientHandler, rooms: Rooms) {
         background(error: Error, type: string, socket: any): void {
 
             const client: Client = clients.bySocket(socket);
-            const room: AnyRoom = client.room();
+            const room: AnyRoom = client.getRoom();
 
             if (error !== undefined) {
 
@@ -37,7 +37,7 @@ export default function(clients: ClientHandler, rooms: Rooms) {
         ready(error: Error, isReady: boolean, socket: any): void {
 
             const client: Client = clients.bySocket(socket);
-            const player: Player = client.player();
+            const player: Player = client.getPlayer();
 
             if (error !== undefined) {
 
@@ -52,7 +52,7 @@ export default function(clients: ClientHandler, rooms: Rooms) {
 
             const {player, property, value} = properties;
             const client: Client = clients.bySocket(socket);
-            const storedPlayer: Player = client.room()
+            const storedPlayer: Player = client.getRoom()
                     .getPlayer(player);
 
             if (error !== undefined) {
@@ -84,13 +84,13 @@ export default function(clients: ClientHandler, rooms: Rooms) {
             }
 
             socket.broadcast
-                .moveTo(socket.room.name)
+                .moveTo(socket.getRoom.name)
                 .emit("setMap", map);
         },
         boot(error: Error, bootedPlayer: any, socket: any): void {
 
             const client: Client = clients.bySocket(socket);
-            const room = client.room();
+            const room = client.getRoom();
             const player: Player = room.getPlayer(bootedPlayer.id);
 
             if (error !== undefined) {

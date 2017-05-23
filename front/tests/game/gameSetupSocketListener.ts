@@ -1,6 +1,6 @@
-import {Client} from "../clients/client";
-import {ClientHandler} from "../clients/clients";
-import {AnyRoom, isRoom, Rooms} from "../rooms/rooms";
+import {Client} from "../clients/client.spec";
+import {ClientHandler} from "../clients/clients.spec";
+import {AnyRoom, isRoom, Rooms} from "../rooms/rooms.spec";
 import {Player} from "../users/players/player";
 import {Game} from "./game";
 
@@ -84,7 +84,7 @@ export default function(clients: ClientHandler, rooms: Rooms) {
             }
 
             socket.broadcast
-                .moveTo(socket.room.name)
+                .moveTo(socket.getRoom.name)
                 .emit("setMap", map);
         },
         boot(error: Error, bootedPlayer: any, socket: any): void {

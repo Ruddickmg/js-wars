@@ -14,7 +14,7 @@ export default function() {
 
     const broadcast = (playerSocket: any, action: string, value: any): void => {
 
-        playerSocket.broadcast.moveTo(playerSocket.room.name).emit(action, value);
+        playerSocket.broadcast.moveTo(playerSocket.getRoom.name).emit(action, value);
     };
     const addUnit = (unit: Unit, socket: any): void => broadcast(socket, "addUnit", unit);
     const attack = (attacking: any, socket: any): void => broadcast(socket, "attack", attacking);

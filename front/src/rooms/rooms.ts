@@ -57,19 +57,21 @@ export default function(url: string): Rooms {
     const canEdit = (name: string): boolean => !restricted[name];
     const canAdd = (name: string, id: RoomId): boolean => canEdit(name) && !get(id);
     const categories: Categories = {lobby: createLobby(identity.get())};
-    const getOrCreateCategory = (category: string): any => {
+    const category = (currentCategory: string): any => {
 
-        if (!categories[category]) {
+        if (!categories[currentCategory]) {
 
-            categories[category] = {};
+            categories[currentCategory] = {};
         }
 
-        return categories[category];
+        return categories[currentCategory];
     };
     const get = (id: RoomId): Room => all[id];
-    const getOpenRooms = (category: string): OpenRooms => {
+    const getAllOpenRooms = (roomCategory: string): OpenRooms => {
 
-        const rooms: any = categories[category];
+        const rooms: any = categories[roomCategory];
+        const open: Game[] = [];
+        const running: Game[] = [];
 
         return Object.keys(rooms).reduce((openRooms: OpenRooms, id: string): OpenRooms => {
 
@@ -83,77 +85,90 @@ export default function(url: string): Rooms {
 
             return openRooms;
 
-        }, {open: [], running: []});
+        }, {open, running});
+    };
+
+    const add = (game: Game): Room => {
+
+        const id: RoomId = game.id || identity.get();
+        const newRoom: Room = createRoom(id, game);
+        const roomCategory: string = newRoom.category();
+
+        if (canAdd(newRoom.name(), newRoom.id())) {
+
+            // if (newRoom.isSaved()) {
+
+            category(roomCategory)[id] = newRoom;
+
+            all[id] = newRoom;
+            // }
+
+            // console.log(all);
+
+            return newRoom;
+        }
+    };
+
+    const addReservedIds = function(ids: RoomId[]): Rooms {
+
+        identity.reserveIds(ids);
+
+        return this;
+    };
+
+    const getOpenRooms = (roomCategory: string): Game[] => getAllOpenRooms(roomCategory).open;
+    const getRunningRooms = (roomCategory: string): Game[] => getAllOpenRooms(roomCategory).running;
+    const lobby = (): Lobby => categories.lobby as Lobby;
+    const matchRunningGames = (games: Game[]): Game[] => {
+
+        const matchedGames = games.map((savedGame: Game): Game => {
+
+            const room: Room = get(savedGame.id);
+
+            return room ? room.getGame() : savedGame;
+        });
+
+        return matchedGames; // .reverse();
+    };
+
+    const remove = (room: Room): Room => {
+
+        const roomBeingRemoved: Room = room;
+        const storedRoom: Room = get(roomBeingRemoved.id());
+        const roomsInCategory: any = categories[storedRoom.category()];
+        const roomId: RoomId = storedRoom.id();
+        const userHasStatedTheyDoNotWishToSave: boolean = !room.isSaved() && storedRoom.isSaved();
+
+        if (canEdit(roomBeingRemoved.name()) && storedRoom.isSameAs(roomBeingRemoved)) {
+
+            if (roomsInCategory) {
+
+                delete roomsInCategory[roomId];
+            }
+
+            delete all[roomId];
+
+            if (userHasStatedTheyDoNotWishToSave) {
+
+                identity.remove(roomId);
+                backend.deleteGame(storedRoom.id())
+                    .catch((error: Error) => { throw error; });
+            }
+        }
+
+        return storedRoom;
     };
 
     return {
 
-        add(game: Game): Room {
-
-            const id: RoomId = game.id || identity.get();
-            const newRoom: Room = createRoom(id, game);
-            const category: string = newRoom.category();
-
-            if (canAdd(newRoom.name(), newRoom.id())) {
-
-                if (newRoom.isSaved()) {
-
-                    getOrCreateCategory(category)[id] = newRoom;
-                }
-
-                return newRoom;
-            }
-        },
-        addReservedIds(ids: RoomId[]): Rooms {
-
-            identity.reserveIds(ids);
-
-            return this;
-        },
-        category: getOrCreateCategory,
+        add,
+        addReservedIds,
+        category,
         get,
-        getOpenRooms: (category: string): Game[] => getOpenRooms(category).open,
-        getRunningRooms: (category: string): Game[] => getOpenRooms(category).running,
-        lobby: (): Lobby => categories.lobby as Lobby,
-        matchRunningGames(games: Game[]): Game[] {
-
-            const gameList: Game[] = [];
-
-            games.forEach((game: Game): void => {
-
-                const storedGame: Game = get(game.id).getGame();
-
-                gameList.push(storedGame || game);
-            });
-
-            return gameList.reverse();
-        },
-        remove(room: Room): Room {
-
-            const roomBeingRemoved: Room = room;
-            const storedRoom: Room = get(roomBeingRemoved.id());
-            const category: any = categories[storedRoom.category()];
-            const roomId: RoomId = storedRoom.id();
-            const userHasStatedTheyDoNotWishToSave: boolean = !room.isSaved() && storedRoom.isSaved();
-
-            if (canEdit(roomBeingRemoved.name()) && storedRoom.isSameAs(roomBeingRemoved)) {
-
-                if (category) {
-
-                    delete category[roomId];
-                }
-
-                delete all[roomId];
-
-                if (userHasStatedTheyDoNotWishToSave) {
-
-                    identity.remove(roomId);
-                    backend.deleteGame(storedRoom.id())
-                        .catch((error: Error) => { throw error; });
-                }
-            }
-
-            return storedRoom;
-        },
+        getOpenRooms,
+        getRunningRooms,
+        lobby,
+        matchRunningGames,
+        remove,
     };
 }

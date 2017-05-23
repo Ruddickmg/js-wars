@@ -1,4 +1,4 @@
-import {Dimensions} from "../../coordinates/dimensions.";
+import {Dimensions} from "../../coordinates/dimensions";
 import {Player} from "../../users/players/player";
 import {Building} from "./elements/building/building";
 import {Terrain} from "./elements/terrain/terrain";

@@ -1,4 +1,4 @@
-import createDimensions, {Dimensions} from "../../../src/coordinates/dimensions.";
+import createDimensions, {Dimensions} from "../../../src/coordinates/dimensions";
 import createPosition from "../../../src/coordinates/position";
 import createBuilding from "../../../src/game/map/elements/building/building";
 import createTerrain from "../../../src/game/map/elements/terrain/terrain";

@@ -14,7 +14,7 @@ export default function (clients: ClientHandler,  aiHandler: AiController): List
 
             const
                 client: Client = clients.bySocket(socket),
-                room: AnyRoom = client.room(),
+                room: AnyRoom = client.getRoom(),
                 aiPlayer: AiPlayer = aiHandler.addElement(player, room.name());
 
             if (isRoom(room)) {
@@ -34,7 +34,7 @@ export default function (clients: ClientHandler,  aiHandler: AiController): List
 
             const
                 client: Client = clients.bySocket(socket),
-                room: AnyRoom = client.room(),
+                room: AnyRoom = client.getRoom(),
                 aiPlayer: AnyPlayer = room.getPlayer(player.id);
 
             let wasFull: boolean;

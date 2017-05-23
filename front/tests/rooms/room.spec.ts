@@ -46,7 +46,7 @@ describe("room", () => {
 
     describe("category", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         it("returns the category of the room", () => {
@@ -57,7 +57,7 @@ describe("room", () => {
 
     describe("id", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         it("Returns the id of the room.", () => {
@@ -68,7 +68,7 @@ describe("room", () => {
 
     describe("name", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         it("Returns the name of the room.", () => {
@@ -79,7 +79,7 @@ describe("room", () => {
 
     describe("size", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         it("Returns the amount of players in the room.", () => {
@@ -93,7 +93,7 @@ describe("room", () => {
 
     describe("addPlayer", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room = createRoom(roomId, game);
 
         it("Adds a player to the room.", () => {
@@ -105,7 +105,7 @@ describe("room", () => {
 
     describe("addAi", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         it("Adds an ai player to the room.", () => {
@@ -123,7 +123,7 @@ describe("room", () => {
 
     describe("getPlayers", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         room.addPlayer(userOne);
@@ -141,7 +141,7 @@ describe("room", () => {
 
     describe("getAiPlayers", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         room.addPlayer(userOne);
@@ -159,7 +159,7 @@ describe("room", () => {
 
     describe("getPlayer", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         room.addPlayer(userOne);
@@ -174,7 +174,7 @@ describe("room", () => {
 
     describe("getGame", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         it("Returns the game being hosted by the room.", () => {
@@ -185,7 +185,7 @@ describe("room", () => {
 
     describe("isSaved", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         it("Returns a boolean indicating whether a game was saved or not.", () => {
@@ -200,7 +200,7 @@ describe("room", () => {
 
     describe("isEmpty", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         it("Returns a boolean indicating whether the room contains players or not.", () => {
@@ -217,7 +217,7 @@ describe("room", () => {
 
     describe("isFull", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
         let numberOfPlayersNeededToFill = game.max;
 
@@ -236,7 +236,7 @@ describe("room", () => {
 
     describe("hasStarted", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         room.addPlayer(userOne);
@@ -256,8 +256,8 @@ describe("room", () => {
 
         const roomTwoId: number = roomId + 1;
         const roomTwoName: string = name + "Two";
-        const game: Game = createGame(roomId, name, category, map());
-        const gameTwo: Game = createGame(roomTwoId, roomTwoName, category, map());
+        const game: Game = createGame(name, category, map());
+        const gameTwo: Game = createGame(roomTwoName, category, map());
         const room: Room = createRoom(roomId, game);
         const roomTwo: Room = createRoom(roomTwoId, gameTwo);
 
@@ -270,7 +270,7 @@ describe("room", () => {
 
     describe("getUsers", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         room.addPlayer(aiPlayer);
@@ -284,7 +284,7 @@ describe("room", () => {
 
     describe("removePlayer", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         room.addPlayer(userTwo);
@@ -303,7 +303,7 @@ describe("room", () => {
 
     describe("replacePlayer", () => {
 
-        const game: Game = createGame(roomId, name, category, map());
+        const game: Game = createGame(name, category, map());
         const room: Room = createRoom(roomId, game);
 
         room.addPlayer(userOne);

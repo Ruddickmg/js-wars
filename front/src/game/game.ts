@@ -1,10 +1,10 @@
-import {RoomId} from "../rooms/room";
+import {Room, RoomId} from "../rooms/room";
 import {Player} from "../users/players/player";
 import {Map} from "./map/map";
 
 export interface Game {
 
-    id: RoomId;
+    id?: RoomId;
     name: string;
     category: string;
     background: string;
@@ -16,7 +16,7 @@ export interface Game {
     [index: string]: boolean | string | Map | Player[] | RoomId;
 }
 
-export default function(id: RoomId, name: string, category: string, map: Map) {
+export default function(name: string, category: string, map: Map, id?: RoomId) {
 
     return {
 
