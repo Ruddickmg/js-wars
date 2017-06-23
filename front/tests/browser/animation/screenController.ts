@@ -104,7 +104,7 @@ export default function(mapDimensions: Dimensions, animation: AnimationHandler):
         reset(): ScreenController {
 
             ['actionHud', 'damageDisplay', 'buildUnitScreen', 'unitInfoScreen', 'optionsMenu']
-                .forEach((screen) => app.dom.remove(screen));
+                .forEach((screen) => app.dom.removePlayer(screen));
 
             app.coStatus.show();
             app.hud.show();

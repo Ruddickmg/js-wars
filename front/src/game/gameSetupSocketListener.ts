@@ -34,7 +34,7 @@ export default function(clients: ClientHandler, rooms: Rooms) {
 
             clients.bySocket(socket).broadcast("start", game);
         },
-        ready(error: Error, isReady: boolean, socket: any): void {
+        allPlayersAreReady(error: Error, isReady: boolean, socket: any): void {
 
             const client: Client = clients.bySocket(socket);
             const player: Player = client.getPlayer();
@@ -44,7 +44,7 @@ export default function(clients: ClientHandler, rooms: Rooms) {
                 throw error;
             }
 
-            player.ready = isReady;
+            player.allPlayersAreReady = isReady;
 
             client.broadcast("readyStateChange", player);
         },

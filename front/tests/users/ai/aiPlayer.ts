@@ -20,7 +20,7 @@ export default function(user: User, co: CO): AiPlayer {
         isComputer: true,
         mode: "cp",
         play: (game: Game): void => console.log(`playing game called: ${game.name}`),
-        ready: true,
+        allPlayersAreReady: true,
     };
 
     return compose.excluding(["isComputer"], aiProperties, player, {yes: "cusha"});

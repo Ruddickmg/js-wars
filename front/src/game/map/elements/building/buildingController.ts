@@ -40,14 +40,14 @@ export default function () {
             },
             units:(element) => defaults.units(element),
             health:(element) => defaults.health(element),
-            player:({player}:Building): Player => player,
+            player:({playerNumber}:Building): Player => playerNumber,
             getPlayer(element) {
 
                 const id = this.player(element);
 
                 if (!isNaN(id) || isString(id)) {
 
-                    return app.players.byId(id);
+                    return app.players.getPlayerById(id);
                 }
 
                 throw new Error("Invalid id pulled from element passed to \"getPlayer\".");
@@ -66,7 +66,7 @@ export default function () {
 
                 return element.index;
             },
-            get(element) {
+            getPlayer(element) {
 
                 return app.map.buildings()[this.indexOf(element)];
             },

@@ -1,19 +1,17 @@
 import {Game} from "../../game/game";
 import {Composer, default as composer} from "../../tools/composer";
-import {CO} from "../co/co";
-import {default as createPlayer, Player} from "../players/player";
-import {User} from "../user";
+import {Player} from "../players/player";
 
 export interface AiPlayer extends Player  {
 
     emit(io: any, roomName: string, action: string, value: any): void;
     play(game: Game): void;
+    [index: string]: any;
 }
 
-export default function(user: User, co: CO): AiPlayer {
+export default function(player: Player): AiPlayer {
 
-    const compose: Composer<AiPlayer> = composer<AiPlayer>();
-    const player = createPlayer(user, co);
+    const compose: Composer<AiPlayer> = composer() as Composer<AiPlayer>;
     const aiProperties = {
 
         emit: (io: any, roomName: string, action: string, value: any): void => io.in(roomName).emit(action, value),

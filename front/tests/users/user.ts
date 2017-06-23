@@ -1,31 +1,43 @@
-import composer from "../tools/composer.spec";
+import {expect} from "chai";
+import createUser, {User} from "../../src/users/user";
 
-export type UserId = number | string;
+describe("user", () => {
 
-export interface Login {
+    const mockLoginSite = "www.mock.com";
+    const testString = "testString";
+    const desiredParameters = [
+        "id",
+        "name",
+        "first_name",
+        "last_name",
+        "gender",
+        "email",
+        "link",
+    ];
+    const mockLoginData = {
 
-    id: UserId;
-    name: string;
-    first_name: string;
-    last_name: string;
-    screenName?: string;
-    gender: string;
-    email: string;
-    link: string;
-}
+        email: testString,
+        first_name: testString,
+        gender: testString,
+        id: testString,
+        last_name: testString,
+        link: testString,
+        mumbaJumba: testString,
+        name: testString,
+        screenName: testString,
+        someOtherLoginData: testString,
+        thisAndThat: testString,
+    };
 
-export interface User extends Login {
+    it("Creates a User object.", () => {
 
-    loginSite: string;
-}
+        const user: User = createUser(mockLoginData, mockLoginSite);
 
-export default function(loginData: Login, loginWebsite: string): User {
+        expect(user.loginWebsite).to.equal(mockLoginSite);
 
-    const compose = composer();
+        desiredParameters.forEach((property) => expect(user[property]).to.equal(testString));
 
-    return compose.including(
-        ["id", "name", "first_name", "last_name", "gender", "email", "link"],
-        {loginWebsite},
-        loginData,
-    );
-}
+        expect(Object.keys(user).length).to.equal(desiredParameters.length + 1);
+    });
+});
+

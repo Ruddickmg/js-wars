@@ -27,6 +27,9 @@ describe("connections", () => {
 
     describe("backend", () => {
 
+        // TODO
+        // make more generic?
+
         it("Returns a connection object with connection information on server to database communication", () => {
 
             const backendConnectionInfo = connections.backend();

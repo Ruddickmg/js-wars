@@ -68,7 +68,7 @@ module.exports = function () {
                 name: name,
                 map: app.map.raw(),
                 settings: settings,
-                players: app.players.all() // players.mapEditor(function (players) {return players.raw();})
+                players: app.players.getAllPlayers() // players.mapEditor(function (players) {return players.raw();})
             };
         },
 
@@ -199,7 +199,7 @@ module.exports = function () {
 
             var room = {};
 
-            room.map = app.map.get();
+            room.map = app.map.getPlayer();
             room.name = this.setName(name);
             room.settings = this.setSettings(settings);
             room.max = app.map.players();
@@ -217,7 +217,7 @@ module.exports = function () {
 
             if (app.players.length() > 1) {
 
-                app.players.addElement(room.players);
+                app.players.addPlayer(room.players);
 
                 // players = app.players.all();
             }
@@ -274,7 +274,7 @@ module.exports = function () {
             app.players.initialize();
 
             // get the players whos turn it is
-            var player = app.players.current();
+            var player = app.players.currentPlayer();
 
             var hq = composer.functions([
                 buildingController.position,
@@ -324,7 +324,7 @@ module.exports = function () {
             var menu, options = app.options.active();
 
             // incriment frame counter
-            tick.incriment();
+            tick.increment();
 
             if (confirmation) {
 
@@ -356,7 +356,7 @@ module.exports = function () {
             // display co status hud
             } else if (!options) {
 
-                app.coStatus.display(app.players.current(), app.cursor.side("x"));
+                app.coStatus.display(app.players.currentPlayer(), app.cursor.side("x"));
                 
                 app.map.focus();
             }
@@ -414,15 +414,15 @@ module.exports = function () {
         end: function (saved) {
 
             // create game screen
-            alert("player " + playerController.number(app.players.moveToFirst()) + " wins!  with a score of " + playerController.score(app.players.moveToFirst()).calculate() + "!");
+            alert("player " + playerController.getPlayerByNumber(app.players.moveToFirst()) + " wins!  with a score of " + playerController.score(app.players.moveToFirst()).calculate() + "!");
             end = true;
         },
 
-        remove: function (saved) {
+        removePlayer: function (saved) {
 
             // transmit.removeRoom(name, id, created, saved);
             app.input.deactivate();
-            app.maps.remove(app.map.get());
+            app.maps.removePlayer(app.map.getPlayer());
             app.players.removeSaved();
             this.clear();
         }

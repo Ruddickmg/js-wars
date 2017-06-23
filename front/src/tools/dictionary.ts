@@ -2,7 +2,7 @@
  * Created by moonmaster on 5/18/17.
  */
 
-import check from "./typeChecker";
+import typeChecker, {TypeChecker} from "./typeChecker";
 
 export interface Dictionary {
 
@@ -18,6 +18,7 @@ export interface Dictionary {
 
 export default function createDictionary(initialValues?: any): Dictionary {
 
+    const check: TypeChecker = typeChecker();
     const empty: any = void 0;
     const dictionary: any = initialValues || {};
     const minimumDepth: number = 1;

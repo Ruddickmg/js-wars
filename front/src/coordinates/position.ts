@@ -1,17 +1,14 @@
-import {Map} from "../game/map/map";
 import {Dimensions} from "./dimensions";
 
-export interface Position {
+export interface Position extends Coordinates {
 
-    x: number;
-    y: number;
     orientation?: string;
     on(position: Coordinates): boolean;
     toString(): string;
-    inMap(map: Map): boolean;
-    neighbors(map: Map): Position[];
-    corners(map: Map): Position[];
-    surrounding(map: Map): Position[];
+    inRange(dimensions: Dimensions): boolean;
+    neighbors(dimensions: Dimensions): Position[];
+    corners(dimensions: Dimensions): Position[];
+    surrounding(dimensions: Dimensions): Position[];
 }
 
 export interface Coordinates {
@@ -20,20 +17,13 @@ export interface Coordinates {
     y: number;
 }
 
-export default function createPosition(
+export default (function(): any {
 
-    xAxis: number,
-    yAxis: number,
-    orientation: string = "",
-    mapDimensions?: Coordinates,
-
-): Position {
-
-    const filter = (positions: Position[], map: Map): Position[] => {
+    const filter = (positions: Position[], dimensions: Dimensions): Position[] => {
 
         return positions.reduce((allowedPositions: Position[], position: Position): Position[] => {
 
-            if (position.inMap(map)) {
+            if (position.inRange(dimensions)) {
 
                 allowedPositions.push(position);
             }
@@ -43,62 +33,78 @@ export default function createPosition(
         }, []);
     };
 
-    return {
+    const positionIsInRange = ({x, y}: Position, {width, height}: Dimensions) => {
 
-        corners(map: Map): Position[] {
+        const startingPosition = 0;
 
-            const {x, y} = this;
-            const positions: Position[] = [
-
-                createPosition(x - 1, y - 1, "northWest", mapDimensions),
-                createPosition(x + 1, y - 1, "southEast", mapDimensions),
-                createPosition(x + 1, y + 1, "northEast", mapDimensions),
-                createPosition(x - 1, y + 1, "southWest", mapDimensions),
-            ];
-
-            return filter(positions, map);
-        },
-        inMap(map: Map): boolean {
-
-            const {x, y}: Position = this;
-            const {width, height}: Dimensions = map.dimensions;
-            const startingPosition = 0;
-
-            return x >= startingPosition
-                && y >= startingPosition
-                && x < width
-                && y < height;
-        },
-        neighbors(map: Map): Position[] {
-
-            const {x, y} = this;
-            const positions: Position[] = [
-
-                createPosition(x - 1, y, "west", mapDimensions),
-                createPosition(x, y - 1, "south", mapDimensions),
-                createPosition(x + 1, y, "east", mapDimensions),
-                createPosition(x, y + 1, "north", mapDimensions),
-            ];
-
-            return filter(positions, map);
-        },
-        on({x, y}: Coordinates): boolean {
-
-            return this.x === x && this.y === y;
-        },
-        orientation,
-        surrounding(map: Map): Position[] {
-
-            const neighboringSquares = this.neighbors(map);
-            const squaresOnEachCorner = this.corners(map);
-
-            return neighboringSquares.concat(squaresOnEachCorner);
-        },
-        toString(): string {
-
-            return `{x: ${this.x}, y: ${this.y}}`;
-        },
-        x: xAxis,
-        y: yAxis,
+        return x >= startingPosition
+            && y >= startingPosition
+            && x < width
+            && y < height;
     };
-}
+
+    const getCorners = ({x, y}: Position, dimensions: Dimensions) => {
+
+        const positions: Position[] = [
+
+            createPosition(x - 1, y - 1, "northWest"),
+            createPosition(x + 1, y - 1, "southEast"),
+            createPosition(x + 1, y + 1, "northEast"),
+            createPosition(x - 1, y + 1, "southWest"),
+        ];
+
+        return filter(positions, dimensions);
+    };
+
+    const getNeighbors = ({x, y}: Position, dimensions: Dimensions) => {
+
+        const positions: Position[] = [
+
+            createPosition(x - 1, y, "west"),
+            createPosition(x, y - 1, "south"),
+            createPosition(x + 1, y, "east"),
+            createPosition(x, y + 1, "north"),
+        ];
+
+        return filter(positions, dimensions);
+    };
+
+    const createPosition = function(xAxis: number, yAxis: number, orientation: string = ""): Position {
+
+        return {
+
+            corners(dimensions: Dimensions): Position[] {
+
+                return getCorners(this, dimensions);
+            },
+            inRange(dimensions: Dimensions): boolean {
+
+                return positionIsInRange(this, dimensions);
+            },
+            neighbors(dimensions: Dimensions): Position[] {
+
+                return getNeighbors(this, dimensions);
+            },
+            on({x, y}: Coordinates): boolean {
+
+                return this.x === x && this.y === y;
+            },
+            orientation,
+            surrounding(dimensions: Dimensions): Position[] {
+
+                const neighboringSquares = getNeighbors(this, dimensions);
+                const squaresOnEachCorner = getCorners(this, dimensions);
+
+                return neighboringSquares.concat(squaresOnEachCorner);
+            },
+            toString(): string {
+
+                return `{x: ${this.x}, y: ${this.y}}`;
+            },
+            x: xAxis,
+            y: yAxis,
+        };
+    };
+
+    return createPosition;
+})();

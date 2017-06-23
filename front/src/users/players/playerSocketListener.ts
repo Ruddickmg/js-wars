@@ -38,7 +38,7 @@ export default function() {
         attack,
         capture,
         confirm,
-        defeat,
+        playerDefeated,
         del,
         endTurn,
         join,

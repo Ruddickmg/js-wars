@@ -16,14 +16,14 @@ export default function(...initialCanvasNames: string[]): AnimationHandler {
     const
 
         canvas: CanvasHandler = canvasHandler(),
-        initialize = (canvasNames: string[]): void => canvasNames.forEach((name: string): CanvasHandler => canvas.addElement(name)),
+        initialize = (canvasNames: string[]): void => canvasNames.forEach((name: string): CanvasHandler => canvas.addPlayer(name)),
         animate = (hide: boolean, objectNames: string[]): void => {
 
             window.requestAnimationFrame(() => {
 
                 objectNames.forEach((nameOfCanvasToBeRedrawn: string): void => {
 
-                    const currentCanvas: CanvasController = canvas.get(nameOfCanvasToBeRedrawn);
+                    const currentCanvas: CanvasController = canvas.getPlayer(nameOfCanvasToBeRedrawn);
 
                     if (currentCanvas) {
 
@@ -40,7 +40,7 @@ export default function(...initialCanvasNames: string[]): AnimationHandler {
 
     return {
 
-        getCanvas:(name: string): CanvasController => canvas.get(name),
+        getCanvas:(name: string): CanvasController => canvas.getPlayer(name),
         show(...objectName: string[]): AnimationHandler {
 
             animate(false, objectName);
@@ -55,7 +55,7 @@ export default function(...initialCanvasNames: string[]): AnimationHandler {
         },
         dimensions(objectName: string): ScreenDimensions {
 
-            const storedCanvas = canvas.get(objectName);
+            const storedCanvas = canvas.getPlayer(objectName);
 
             if (storedCanvas) {
 

@@ -39,24 +39,24 @@ export default function(app: any, rooms: Rooms, clients: ClientHandler, root: st
         .then(() => syncDatabaseIdsWithRoomIds())
         .catch((err) => console.log(err));
 
-    app.get("/", (_: any, res: any): void => {
+    app.getPlayer("/", (_: any, res: any): void => {
 
         res.sendFile(`${root}/index.html`);
     });
 
-    app.get("/games/open/:category", (req: any, res: any): void => {
+    app.getPlayer("/games/open/:category", (req: any, res: any): void => {
 
         res.json(rooms.getOpenRooms(req.params.category) || []);
         res.end();
     });
 
-    app.get("/games/running/:category", (req: any, res: any): void => {
+    app.getPlayer("/games/running/:category", (req: any, res: any): void => {
 
         res.json(rooms.getRunningRooms(req.params.category) || []);
         res.end();
     });
 
-    app.get("/games/saved/:id", (req: any, res: any): void => {
+    app.getPlayer("/games/saved/:id", (req: any, res: any): void => {
 
         const id: string = req.params.id;
 
@@ -69,7 +69,7 @@ export default function(app: any, rooms: Rooms, clients: ClientHandler, root: st
             .catch((error: Error) => console.log(error));
     });
 
-    app.get("/maps/type/:category", (req: any, res: any): void => {
+    app.getPlayer("/maps/type/:category", (req: any, res: any): void => {
 
         backend.getMaps(req.params.category)
             .then((maps) => res.json(maps))
@@ -111,7 +111,7 @@ export default function(app: any, rooms: Rooms, clients: ClientHandler, root: st
 
         const game: Game = req.body.game;
         const user: User = req.body.user;
-        const client: Client = clients.byId(user.id);
+        const client: Client = clients.getPlayerById(user.id);
         const room: AnyRoom = client.getRoom();
 
         if (isRoom(room)) {

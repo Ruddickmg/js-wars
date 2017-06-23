@@ -55,7 +55,7 @@ export default function(canvas: any, context: any, {width, height}: Dimensions, 
         drawToCanvas = (name: string, position: Position): void => {
 
             const
-                getDrawing: any = drawings.isCached(name) ? drawings.get : drawings.draw,
+                getDrawing: any = drawings.isCached(name) ? drawings.getPlayer : drawings.draw,
                 x: number = position.x - xOffset,
                 y: number = position.y - yOffset,
                 drawing: any = getDrawing(name);

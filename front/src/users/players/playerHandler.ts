@@ -1,434 +1,290 @@
-/* ------------------------------------------------------------------------------------------------------*\
-   
-    Players.js controls player coordination within the game
-   
-\* ------------------------------------------------------------------------------------------------------*/
+import notifier, {PubSub} from "../../tools/pubSub";
+import createAiPlayer from "../ai/aiPlayer";
+import {UserId} from "../user";
+import {Player} from "./player";
+import {AnyPlayer} from "./playerSocketListener";
 
-app = require('../settings/app.js');
-app.map = require('../controller/mapController.js');
-createPlayer = require('../user/player.js');
-AiPlayer = require('../user/aiPlayer.js');
-Teams = require('../menu/teams.js');
-playerController = require("../controller/player.js");
-trasmit = require("../sockets/transmitter.js");
+export interface PlayerHandler {
 
-/// set current players upon start of a continued game (need to save current players on save)
+    addPlayer(player: AnyPlayer): PlayerHandler;
+    addPlayers(multiplePlayers: AnyPlayer[]): PlayerHandler;
+    allPlayersAreReady(): boolean;
+    defeatedPlayers(): AnyPlayer[];
+    empty(): boolean;
+    first(): AnyPlayer;
+    getAllPlayers(): AnyPlayer[];
+    getCurrentPlayer(): AnyPlayer;
+    getOtherPlayers({id: userId}: AnyPlayer): AnyPlayer[];
+    getPlayer(player: AnyPlayer): AnyPlayer;
+    getPlayerById(id: UserId): AnyPlayer;
+    getPlayerByNumber(playerNumber: number): AnyPlayer;
+    last(): AnyPlayer;
+    namesOfEachPlayerToString(allPlayers: AnyPlayer[]): string;
+    next(): AnyPlayer;
+    numberOfActivePlayers(): number;
+    playerDefeated(player: AnyPlayer): AnyPlayer;
+    removePlayer(player: AnyPlayer): AnyPlayer;
+    replacePlayer(player: Player, replacement: AnyPlayer): AnyPlayer;
+    setCurrentPlayer(player: Player): Player;
+    updatePlayer(player: Player): Player;
+}
 
-module.exports = function () {
+export default function(players: Player[] = [], maximumAmountOfPlayers: number): PlayerHandler {
 
-	var current, saved, players = [], defeated = [], elements = [], ready;
+    let current: Player;
+    let gameHasStarted: boolean;
+    let indexOfLastPlayer: number = maximumAmountOfPlayers - 1;
 
-    var exists = function (player) {
+    const notifications: PubSub = notifier();
+    const finishedPlayers: Player[] = [];
+    const numberOfPlayersRequiredForGame = 2;
 
-        var id = playerController.id(player);
+    const getNext = (): Player => {
 
-        return players.findIndex(function (player) {
+        const playerIndex: number = indexOfPlayer(current, players);
 
-            return playerController.id(player) === id;
+        return playerIndex >= indexOfLastPlayer ? first() : players[playerIndex + 1];
+    };
+
+    const shiftPlayers = (indexOfRemovedPlayer: number, currentPlayers: Player[]) => {
+
+        currentPlayers.slice(indexOfRemovedPlayer).forEach((player: Player, index: number): void => {
+
+            player.number = index + 1;
         });
     };
 
-    var addPlayer = function (player, number) {
-        
-        // check if players is already in and replace if they are
-        if (players.length <= app.map.players()) {
+    const gameIsFull = () => numberOfActivePlayers() >= maximumAmountOfPlayers;
+    const indexOfPlayer = (player: Player, currentPlayers: Player[]) => {
 
-            var number, index, id;
+        const playerId = player.id;
 
-            if (!playerController.isComputer(player)) {
+        return currentPlayers.findIndex(({id}: Player) =>  playerId === id);
+    };
 
-                player = createPlayer(player);
-            }
-                        
-            if (saved) {
+    const addPlayer = function(player: AnyPlayer): PlayerHandler {
 
-                id = playerController.id(player);
+        const index: number = indexOfPlayer(player, players);
 
-                index = saved.findIndex(function (player) {
+        if (!gameIsFull()) {
 
-                    return playerController.id(player) === id;
-                });
-            }
-            
-            if (isNaN(index) || app.game.started()) {
+            if (isNaN(index)) {
 
-                index = exists(player);
-            }
-            
-            if (!isNaN(index)) {
-
-                if (saved) {
-
-                    players[index] = player;
-                    number = saved[index].number;
-
-                } else {
-
-                    players.splice(index, 1, player);
-                    number = playerController.number(players[index]);
-                }
+                player.number = numberOfActivePlayers() + 1;
+                players.push(player);
 
             } else {
 
-                players.push(player);
+                players[index] = Object.assign(player, players[index]);
             }
 
-            player = playerController.setNumber(player, number || (number = players.length));
+            notifications.publish("playerAdded", player);
 
-            if (saved) {
-
-                player = playerController.update(player, saved[number - 1]);
-            }
-
-            var element = Teams.playerElement(number);
-            var value = playerController.co(player) || element && element.coName();
-
-            if (value) {
-
-                player = playerController.setCo(player, value);
-            }
-
-            players[exists(player)] = player;
-
-            if (!playerController.number(player)) {
-
-                throw new Error("Number has not been set for added players.", "players.js");
-            }
-
-            return players;
+            return this;
         }
-        return false;
+
+        throw Error("Game is full.");
     };
 
-    var shiftPlayers = function (index) {
+    const addPlayers = (multiplePlayers: AnyPlayer[]): PlayerHandler => {
 
-        var playerNumber = app.user.number();
+        const wasEmpty = empty();
 
-        players.slice(index).forEach(function (player, index) {
+        multiplePlayers.forEach((player: Player) => addPlayer(player));
 
-            var number = index + 1;
+        if (wasEmpty) {
 
-            players[index] = playerController.setNumber(player, number);
-
-            Teams.playerElement(number).co().changeCurrent(playerController.co(player).name.toLowerCase());
-        });
-
-        if (index < playerNumber) {
-
-            Teams.arrows.setPosition(Teams.playerElement(app.user.number()).co());
+            current = first();
         }
+
+        return this;
     };
 
-    var replacePlayer = function (player) {
+    const allPlayersAreReady = (): boolean => {
 
-        var index = exists(player);
+        return players.reduce((allAreReady: boolean, {ready}: Player) => ready && allAreReady, true);
+    };
+
+    const defeatedPlayers = (): AnyPlayer[] => finishedPlayers;
+    const empty = (): boolean => !numberOfActivePlayers();
+    const first = (): AnyPlayer => players[0];
+    const getAllPlayers = (): AnyPlayer[] => players.concat(finishedPlayers);
+    const getCurrentPlayer = (): AnyPlayer => current || first();
+    const getOtherPlayers = ({id: userId}: AnyPlayer): AnyPlayer[] => {
+
+        return players.filter(({id}: Player): boolean => id !== userId);
+    };
+    const getPlayer = (player: AnyPlayer): AnyPlayer => getPlayerById(player.id);
+    const getPlayerById = (id: UserId): AnyPlayer => {
+
+        return getAllPlayers().find(({id: userId}: AnyPlayer) => userId === id);
+    };
+    const getPlayerByNumber = (playerNumber: number): AnyPlayer => {
+
+        return players.find((player: AnyPlayer) => player.number === playerNumber);
+    };
+    const last = (): AnyPlayer => players[indexOfLastPlayer];
+    const namesOfEachPlayerToString = (allPlayers: AnyPlayer[]): string => {
+
+        const amountOfPlayers: number = allPlayers.length;
+
+        return allPlayers.reduce((stringOfPlayerNames: string, {name}: Player, index: number): string => {
+
+            let transition: string = "";
+
+            const isNotLastPlayer = index + 1 < amountOfPlayers;
+            const isBeforeLastPlayer = index + 2 < amountOfPlayers;
+
+            if (isNotLastPlayer) {
+
+                transition = isBeforeLastPlayer ?  ", " : " and ";
+            }
+
+            return `${stringOfPlayerNames}${name}${transition}`;
+
+        }, "");
+    };
+    const next = (): AnyPlayer => {
+
+        current = getNext();
+
+        return current;
+    };
+    const numberOfActivePlayers = (): number => players.length;
+    const playerDefeated = (player: AnyPlayer): AnyPlayer => {
+
+        const indexOfDefeatedPlayer: number = indexOfPlayer(player, players);
+
+        let removedPlayer: AnyPlayer;
+
+        if (isNaN(indexOfDefeatedPlayer)) {
+
+            throw Error(`Argument passed to playerDefeated(${player}) was not found in the array of active players.`);
+        }
+
+        removedPlayer = players.splice(indexOfDefeatedPlayer, 1)[0];
+
+        finishedPlayers.push(removedPlayer);
+
+        if (numberOfActivePlayers() < numberOfPlayersRequiredForGame) {
+
+            finishedPlayers.push(players.pop());
+
+            notifications.publish("gameOver", {players: finishedPlayers});
+            // TODO -- make this report that the game needs to end
+            // return app.game.end();
+        }
+
+        indexOfLastPlayer -= 1;
+
+        return removedPlayer;
+    };
+    const removePlayer = (player: AnyPlayer): AnyPlayer => {
+
+        let removedPlayer: AnyPlayer;
+
+        const indexOfRemovedPlayer = indexOfPlayer(player, players);
+
+        if (gameHasStarted && !player.isComputer) {
+
+            removedPlayer = replacePlayer(player, createAiPlayer(player));
+
+        } else if (!isNaN(indexOfRemovedPlayer)) {
+
+            removedPlayer = players.splice(indexOfRemovedPlayer, 1)[0];
+
+            notifications.publish("playerRemovedFromGame", removedPlayer);
+            // transmit.removeAi(removedPlayer);
+
+            if (numberOfActivePlayers() >= indexOfRemovedPlayer + 1) {
+
+                shiftPlayers(indexOfRemovedPlayer, players);
+            }
+
+            indexOfLastPlayer -= 1;
+        }
+
+        return removedPlayer;
+    };
+    const replacePlayer = (player: Player, replacement: AnyPlayer): AnyPlayer => {
+
+        const index = indexOfPlayer(player, players);
+        const replacedPlayer = players[index];
+
+        if (isNaN(index)) {
+
+            throw Error("Not able to replace player, player not found.");
+        }
+
+        // transmit.boot(players[index]);
+
+        notifications.publish("playerReplaced", {player, replacement});
+
+        players[index] = replacement;
+
+        return replacedPlayer;
+    };
+    const setCurrentPlayer = (player: AnyPlayer) : AnyPlayer => {
+
+        if (current) {
+
+            current.isTurn = false;
+        }
+
+        player.isTurn = true;
+
+        current = player;
+
+        return current;
+    };
+    const updatePlayer = (player: AnyPlayer): AnyPlayer => {
+
+        const index: number = indexOfPlayer(player, players);
 
         if (!isNaN(index)) {
 
-            transmit.boot(players[index]);
-            
-            players[index] = new AiPlayer(playerController.number(player));
-        
-        } else {
-
-            throw new Error("Not able to replace players, players not found.", "controller/players.js");
-        }
-    };
-
-    var allReady = function () {
-
-        var l = app.map.players();
-
-        while (l--) {
-
-            if (!players[l] || !playerController.ready(players[l])) {
-
-                return false;
-            }
+            players[index] = player;
         }
 
-        return true;
+        return player;
     };
 
-	return {
-
-        replace: replacePlayer,
-
-        saved: function (players) { 
-
-            return players ? (saved = players) : saved;
-        },
-
-        removeSaved: function () {
-
-            saved = undefined;
-        },
-
-		changeProperty: function (p) { // change this its weird
-            
-            var player = players[exists(position.player)];
-            var property = position.property;
-            var value = position.valueOfCurrentElement;
-            var element = Teams.playerElement(playerController.number(player));
-
-            if (element && element[property]) {
-
-                element[property]().changeCurrent(value);
-            }
-
-            playerController.setProperty(player, property, value);
-        },
-
-        getInfo: function () {
-
-            return players.map(function (player) {
-
-                return playerController.displayedInfo(player);
-            });
-        },
-
-        update: function (player) {
-
-            var index = exists(player);
-
-            if (!isNaN(index)) {
-
-                players[index] = player;
-            }
-        },
-
-        setElements: function (e) {
-
-            elements = e;
-        },
-
-        addElement: function (e) {
-
-            elements.push(e);
-        },
-
-        element: function (number) {
-
-            return elements[number - 1];
-        },
-
-        empty: function () { 
-
-            return !players.length; 
-        },
-
-        // first might cause weirdness if indices change.. 
-        first: function () { 
-
-            return players[0]; 
-        },
-
-        last: function () { 
-
-            return players[players.length - 1]; 
-        },
-
-       	next: function () { 
-
-            return current === this.moveToLast() ? this.moveToFirst() : players[playerController.number(current)];
-        },
-
-        other: function () { 
-
-            return players.filter(function (player) {
-
-                return playerController.id(player) !== app.user.id();
-            });
-        },
-
-        all: function () { 
-
-            return players.concat(defeated); 
-        },
-
-        length: function () {
-
-            return players.reduce(function (prev, player) {
-
-                return prev + (player ? 1 : 0);
-
-            }, 0);
-        },
-
-        addElement: function (player) {
-
-        	if (player.isArray()) {
-
-                player.forEach(function (p, i) {
-
-                    addPlayer(position, i + 1);
-                });
-            
-            } else {
-
-                addPlayer(player);
-            }
-
-        	return current = players[0];
-        },
-
-        // check if all players are present and ready
-		ready: function () { 
-
-            return ready; 
-        },
-
-        checkReady:function(){ 
-
-            ready = allReady(); 
-        },
-
-        get: function (object) {
-
-            var id = playerController.id(object);
-
-        	return this.all().find(function (player) {
-
-                return player && id == playerController.id(player);
-            });
-        },
-
-        byId: function (id) {
-
-            return this.get({id:id});
-        },
-
-        reset: function () {
-
-            players = [];
-
-            this.removeSaved();
-
-            return this;
-        },
-
-        current: function () { 
-
-            return current ? current : this.moveToFirst(); 
-        },
-
-        setCurrent: function (player) {
-
-            if (current) {
-
-                current.isTurn = false;
-            }
-
-            player.isTurn = true;
-
-            current = player; 
-        },
-
-        defeated: function () { 
-
-            return defeated; 
-        },
-
-        defeat: function (player) {
-
-            defeated.concat(players.splice(playerController.index(player), 1));
-
-            if (app.players.length() <= 1) {
-
-                return app.game.end();
-            }
-
-            alert('player '+playerController.number(player)+' defeated');
-        },
-
-        indexOf: function (object) {
-
-            var l = players.length;
-
-            while (l--) {
-
-                if (playerController.id(players[l]) === playerController.id(object)) {
-
-                    return l;
-                }
-            }
-
-            return false;
-        },
-
-        number: function (number) {
-
-            if (app.game.started()) {
-
-                return players.find(function (player) {
-
-                    return playerController.number(player) == number;
-                });
-            }
-
-            return (player = players[number - 1]) ? player : false;
-        },
-
-        names: function (players) {
-
-            return players.reduce(function (previous, player, i, players) {
-                
-                var len = players.length;
-                var p = typeof(prev) === "string" ? previous : '';
-                var transition = (i + 1 < len ? (i + 2 < len ? ', ' : ' and ') : '');
-
-                return position + playerController.name(player) + transition;
-            });
-        },
-
-        unconfirm: function () {
-
-            players = players.map(function (player) {
-
-                return playerController.unconfirm(player);
-            });
-        },
-
-        remove: function (player) {
-
-            var index, removed;
-
-            if (app.game.started() && !playerController.isComputer(player)) {
-
-                replacePlayer(player);
-
-            } else if (!isNaN((index = exists(player)))) {
-
-                removed = players.splice(index, 1)[0]
-
-                if (playerController.isComputer(removed) && app.user.moveToFirst()) {
-
-                    transmit.removeAi(removed);
-                }
-                
-                if (players.length >= index + 1 && !saved) {
-
-                    shiftPlayers(index);
-                }
-            }
-        },
-
-        initialize: function () {
-
-            players = players.map(function (player) {
-
-                if (isString(playerController.co(player))) {
-
-                    playerController.setCo(player, playerController.co(player));
-                }
-
-                if (playerController.isTurn(player)) {
-
-                    current = player;
-                }
-
-                return player;
-            });
-        }
+    notifications.subscribe("gameHasStarted", () => {
+
+        gameHasStarted = true;
+    });
+
+    return {
+
+        addPlayer,
+        addPlayers,
+        allPlayersAreReady,
+        defeatedPlayers,
+        empty,
+        first,
+        getAllPlayers,
+        getCurrentPlayer,
+        getOtherPlayers,
+        getPlayer,
+        getPlayerById,
+        getPlayerByNumber,
+        last,
+        namesOfEachPlayerToString,
+        next,
+        numberOfActivePlayers,
+        playerDefeated,
+        removePlayer,
+        replacePlayer,
+        setCurrentPlayer,
+        updatePlayer,
+
+        // TODO - move somewhere else
+        // unconfirm: function() {
+        //
+        //     players = players.map(function(player) {
+        //
+        //         return playerController.unconfirm(player);
+        //     });
+        // },
     };
-}();
+}

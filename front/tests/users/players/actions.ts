@@ -16,7 +16,7 @@ module.exports = {
     },
     wait() {
 
-        app.dom.remove('actionHud');
+        app.dom.removePlayer('actionHud');
         app.screen.reset();
         app.hud.show();
         app.cursor.show();

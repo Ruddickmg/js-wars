@@ -15,7 +15,7 @@ export default function (clients: ClientHandler,  aiHandler: AiController): List
             const
                 client: Client = clients.bySocket(socket),
                 room: AnyRoom = client.getRoom(),
-                aiPlayer: AiPlayer = aiHandler.addElement(player, room.name());
+                aiPlayer: AiPlayer = aiHandler.addPlayer(player, room.name());
 
             if (isRoom(room)) {
 
@@ -47,7 +47,7 @@ export default function (clients: ClientHandler,  aiHandler: AiController): List
 
                 if (isAiPlayer(aiPlayer)) {
 
-                    aiHandler.remove(aiPlayer);
+                    aiHandler.removePlayer(aiPlayer);
 
                 } else {
 

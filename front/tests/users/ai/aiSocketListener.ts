@@ -4,7 +4,7 @@ import {ClientHandler} from "../../clients/clients.spec";
 import {AnyRoom, isRoom} from "../../rooms/rooms.spec";
 import {AiPlayer} from "./aiPlayer";
 import {Client} from "../../clients/client.spec";
-import {AnyPlayer, isAiPlayer} from "../players/playerSocketListener";
+import {AnyPlayer, isAiPlayer} from "../players/playerSocketListener.spec";
 
 export default function (clients: ClientHandler,  aiHandler: AiController): Listener {
 
@@ -15,7 +15,7 @@ export default function (clients: ClientHandler,  aiHandler: AiController): List
             const
                 client: Client = clients.bySocket(socket),
                 room: AnyRoom = client.room(),
-                aiPlayer: AiPlayer = aiHandler.addElement(player, room.name());
+                aiPlayer: AiPlayer = aiHandler.addPlayer(player, room.name());
 
             if (isRoom(room)) {
 
@@ -47,7 +47,7 @@ export default function (clients: ClientHandler,  aiHandler: AiController): List
 
                 if (isAiPlayer(aiPlayer)) {
 
-                    aiHandler.remove(aiPlayer);
+                    aiHandler.removePlayer(aiPlayer);
 
                 } else {
 

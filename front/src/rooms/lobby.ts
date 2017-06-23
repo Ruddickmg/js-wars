@@ -14,18 +14,17 @@ export interface Lobby {
 
 export default function(identity: RoomId): Lobby {
 
+    let length: number = 0;
+
     const roomId: RoomId = identity;
     const nameOfRoom: string = "lobby";
     const players: any = {};
-
-    let length: number = 0;
-
     const addPlayer = function(player: Player): Lobby {
 
         const playerId: RoomId = player.id;
 
         length += 1;
-        player.number = length;
+        player.getPlayerByNumber = length;
         players[playerId] = player;
 
         return this;

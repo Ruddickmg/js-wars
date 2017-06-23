@@ -126,7 +126,7 @@ export default function() {
 
                 const
                     index = detectIndex(element),
-                    storedBuilding = matrix.remove(element);
+                    storedBuilding = matrix.removePlayer(element);
 
                 allowedBuildings += 1;
 
@@ -162,7 +162,7 @@ export default function() {
 
             } else {
 
-                matrix.remove(element.position());
+                matrix.removePlayer(element.position());
             }
         };
 
@@ -260,7 +260,7 @@ export default function() {
 
                 terrain.splice(detectIndex(neighbor), 1, adjusted);
 
-                if (terrainController.isUnit(matrix.get(neighbor))) {
+                if (terrainController.isUnit(matrix.getPlayer(neighbor))) {
 
                     matrix.insert(adjusted);
                 }
@@ -339,7 +339,7 @@ export default function() {
 
         if (buildingController.isHQ(building) && (hq = indexOfHQ(building)) !== false) {
 
-            matrix.remove(buildings[hq]);
+            matrix.removePlayer(buildings[hq]);
             buildings.splice(hq, 1);
         }
 
@@ -516,7 +516,7 @@ export default function() {
             return matrix.position(position, replace); 
         },
 
-        get: function () { 
+        getPlayer: function () {
 
             return map; 
         },
@@ -548,7 +548,7 @@ export default function() {
                     createBuilding(
                         buildingController.type(b) || buildingController.name(b), 
                         buildingController.position(b), 
-                        (editor ? player : playerController.id(app.players.number(player))),
+                        (editor ? player : playerController.id(app.players.getPlayerByNumber(player))),
                         index
                     )
                 );
@@ -560,7 +560,7 @@ export default function() {
 
                 var unit = createUnit(
                     unitController.type(u) || unitController.name(u),
-                    (editor ? player : playerController.id(app.players.number(player))),
+                    (editor ? player : playerController.id(app.players.getPlayerByNumber(player))),
                     unitController.position(u)
                 );
 
@@ -583,7 +583,7 @@ export default function() {
 
             if (current) {
 
-                matrix.remove(current);
+                matrix.removePlayer(current);
             
             } else {
 
@@ -616,9 +616,9 @@ export default function() {
                 unit = units.splice(index, 1)[0];
             }
 
-            if ((element = matrix.get(unit)) && terrainController.isUnit(element) && unitController.isSame(element, unit)) {
+            if ((element = matrix.getPlayer(unit)) && terrainController.isUnit(element) && unitController.isSame(element, unit)) {
 
-                matrix.remove(unit);
+                matrix.removePlayer(unit);
             }
 
             refresh();
@@ -626,18 +626,18 @@ export default function() {
             return unit;
         },
 
-        attackUnit: function (unit, damage) {
+        applyDamageToUnit: function (unit, damage) {
 
             var health = unitController.health(unit);
 
             units[getIndex(unit, units)].takeDamage(health - damage);
 
-            matrix.get(unit).takeDamage(health - damage);
+            matrix.getPlayer(unit).takeDamage(health - damage);
         },
 
         changeOwner: function (element, player) {
 
-            var element = matrix.get(element);
+            var element = matrix.getPlayer(element);
 
             building = terrainController.isUnit(element) ? unitController.occupies(element) : element;
 
@@ -654,7 +654,7 @@ export default function() {
             refresh();
         },
 
-        takeHQ: function (hq) {
+        changeHqToCity: function (hq) {
 
             var index = buildingController.indexOf(hq);
 

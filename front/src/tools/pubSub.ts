@@ -12,9 +12,11 @@ export interface PubSub {
     unsubscribe(id: number, event?: string): Subscriber;
 }
 
+export type SubscriptionId = number;
+
 export interface Subscriber {
 
-    id: number;
+    id: SubscriptionId;
     emit: Emitter;
 }
 
@@ -35,9 +37,9 @@ type Emitter = (data: any, timeSinceLastUpdate: number) => any;
 function publishSubscribe(): PubSub {
 
     const events: Events = {};
-    const increment = (id: number) => id + 1;
-    const decrement = (id: number) => id - 1;
-    const identity: Identifier<number> = identifier<number>(1, increment, decrement);
+    const increment = (id: SubscriptionId) => id + 1;
+    const decrement = (id: SubscriptionId) => id - 1;
+    const identity: Identifier<SubscriptionId> = identifier<SubscriptionId>(1, increment, decrement);
 
     const createEvent = (name: string): Event => ({name, subscribers: [], timeOfLastUpdate: new Date()});
 
@@ -89,7 +91,7 @@ function publishSubscribe(): PubSub {
         }
     };
 
-    const removeSubscriberFromEvent = (id: number, event: Event): Subscriber => {
+    const removeSubscriberFromEvent = (id: SubscriptionId, event: Event): Subscriber => {
 
         const nonExistentIndex = -1;
         const elementsToRemoveFromEvents = 1;
@@ -114,7 +116,7 @@ function publishSubscribe(): PubSub {
         }
     };
 
-    const removeSubscriberById = (id: number): Subscriber => {
+    const removeSubscriberById = (id: SubscriptionId): Subscriber => {
 
         return iterateThroughEvents((event: Event): Subscriber => {
 
@@ -122,7 +124,7 @@ function publishSubscribe(): PubSub {
         });
     };
 
-    const addSubscriber = (subscribers: Subscriber[], eventHandler: Emitter): number => {
+    const addSubscriber = (subscribers: Subscriber[], eventHandler: Emitter): SubscriptionId => {
 
         const subscriber = createSubscriber(eventHandler);
 
@@ -133,7 +135,7 @@ function publishSubscribe(): PubSub {
 
     const getSubscribers = (name: string) => getEvent(name).subscribers;
 
-    const subscribe = (eventId: string, handler: Emitter): number => {
+    const subscribe = (eventId: string, handler: Emitter): SubscriptionId => {
 
         return addSubscriber(getSubscribers(eventId), handler);
     };
@@ -162,7 +164,7 @@ function publishSubscribe(): PubSub {
         }
     };
 
-    const unsubscribe = (id: number, event?: string): Subscriber => {
+    const unsubscribe = (id: SubscriptionId, event?: string): Subscriber => {
 
         identity.remove(id);
 

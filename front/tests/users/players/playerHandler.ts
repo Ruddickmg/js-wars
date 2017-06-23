@@ -60,12 +60,12 @@ module.exports = function () {
                 if (saved) {
 
                     players[index] = player;
-                    number = saved[index].number;
+                    number = saved[index].getPlayerByNumber;
 
                 } else {
 
                     players.splice(index, 1, player);
-                    number = playerController.number(players[index]);
+                    number = playerController.getPlayerByNumber(players[index]);
                 }
 
             } else {
@@ -80,7 +80,7 @@ module.exports = function () {
                 player = playerController.update(player, saved[number - 1]);
             }
 
-            var element = Teams.playerElement(number);
+            var element = Teams.playerElements(number);
             var value = playerController.co(player) || element && element.coName();
 
             if (value) {
@@ -90,7 +90,7 @@ module.exports = function () {
 
             players[exists(player)] = player;
 
-            if (!playerController.number(player)) {
+            if (!playerController.getPlayerByNumber(player)) {
 
                 throw new Error("Number has not been set for added players.", "players.js");
             }
@@ -102,7 +102,7 @@ module.exports = function () {
 
     var shiftPlayers = function (index) {
 
-        var playerNumber = app.user.number();
+        var playerNumber = app.user.getPlayerByNumber();
 
         players.slice(index).forEach(function (player, index) {
 
@@ -110,12 +110,12 @@ module.exports = function () {
 
             players[index] = playerController.setNumber(player, number);
 
-            Teams.playerElement(number).co().changeCurrent(playerController.co(player).name.toLowerCase());
+            Teams.playerElements(number).co().changeCurrent(playerController.co(player).name.toLowerCase());
         });
 
         if (index < playerNumber) {
 
-            Teams.arrows.setPosition(Teams.playerElement(app.user.number()).co());
+            Teams.arrows.setPosition(Teams.playerElements(app.user.getPlayerByNumber()).co());
         }
     };
 
@@ -127,7 +127,7 @@ module.exports = function () {
 
             transmit.boot(players[index]);
             
-            players[index] = new AiPlayer(playerController.number(player));
+            players[index] = new AiPlayer(playerController.getPlayerByNumber(player));
         
         } else {
 
@@ -141,7 +141,7 @@ module.exports = function () {
 
         while (l--) {
 
-            if (!players[l] || !playerController.ready(players[l])) {
+            if (!players[l] || !playerController.allPlayersAreReady(players[l])) {
 
                 return false;
             }
@@ -152,7 +152,7 @@ module.exports = function () {
 
 	return {
 
-        replace: replacePlayer,
+        replacePlayer: replacePlayer,
 
         saved: function (players) { 
 
@@ -169,7 +169,7 @@ module.exports = function () {
             var player = players[exists(position.player)];
             var property = position.property;
             var value = position.valueOfCurrentElement;
-            var element = Teams.playerElement(playerController.number(player));
+            var element = Teams.playerElements(playerController.getPlayerByNumber(player));
 
             if (element && element[property]) {
 
@@ -202,7 +202,7 @@ module.exports = function () {
             elements = e;
         },
 
-        addElement: function (e) {
+        addPlayer: function (e) {
 
             elements.push(e);
         },
@@ -230,10 +230,10 @@ module.exports = function () {
 
        	next: function () { 
 
-            return current === this.moveToLast() ? this.moveToFirst() : players[playerController.number(current)];
+            return current === this.moveToLast() ? this.moveToFirst() : players[playerController.getPlayerByNumber(current)];
         },
 
-        other: function () { 
+        getOtherPlayers: function () {
 
             return players.filter(function (player) {
 
@@ -241,7 +241,7 @@ module.exports = function () {
             });
         },
 
-        all: function () { 
+        getAllPlayers: function () {
 
             return players.concat(defeated); 
         },
@@ -255,7 +255,7 @@ module.exports = function () {
             }, 0);
         },
 
-        addElement: function (player) {
+        addPlayer: function (player) {
 
         	if (player.isArray()) {
 
@@ -273,7 +273,7 @@ module.exports = function () {
         },
 
         // check if all players are present and ready
-		ready: function () { 
+		allPlayersAreReady: function () {
 
             return ready; 
         },
@@ -283,19 +283,19 @@ module.exports = function () {
             ready = allReady(); 
         },
 
-        get: function (object) {
+        getPlayer: function (object) {
 
             var id = playerController.id(object);
 
-        	return this.all().find(function (player) {
+        	return this.getAllPlayers().find(function (player) {
 
                 return player && id == playerController.id(player);
             });
         },
 
-        byId: function (id) {
+        getPlayerById: function (id) {
 
-            return this.get({id:id});
+            return this.getPlayer({id:id});
         },
 
         reset: function () {
@@ -307,12 +307,12 @@ module.exports = function () {
             return this;
         },
 
-        current: function () { 
+        currentPlayer: function () {
 
             return current ? current : this.moveToFirst(); 
         },
 
-        setCurrent: function (player) {
+        setCurrentPlayer: function (player) {
 
             if (current) {
 
@@ -324,12 +324,12 @@ module.exports = function () {
             current = player; 
         },
 
-        defeated: function () { 
+        defeatedPlayers: function () {
 
             return defeated; 
         },
 
-        defeat: function (player) {
+        playerDefeated: function (player) {
 
             defeated.concat(players.splice(playerController.index(player), 1));
 
@@ -338,7 +338,7 @@ module.exports = function () {
                 return app.game.end();
             }
 
-            alert('player '+playerController.number(player)+' defeated');
+            alert('player '+playerController.getPlayerByNumber(player)+' defeated');
         },
 
         indexOf: function (object) {
@@ -356,20 +356,20 @@ module.exports = function () {
             return false;
         },
 
-        number: function (number) {
+        getPlayerByNumber: function (number) {
 
             if (app.game.started()) {
 
                 return players.find(function (player) {
 
-                    return playerController.number(player) == number;
+                    return playerController.getPlayerByNumber(player) == number;
                 });
             }
 
             return (player = players[number - 1]) ? player : false;
         },
 
-        names: function (players) {
+        allPlayerNamesToString: function (players) {
 
             return players.reduce(function (previous, player, i, players) {
                 
@@ -389,7 +389,7 @@ module.exports = function () {
             });
         },
 
-        remove: function (player) {
+        removePlayer: function (player) {
 
             var index, removed;
 

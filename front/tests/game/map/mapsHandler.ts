@@ -57,7 +57,7 @@ module.exports = function () {
 
 			maps = [], keys = [], category = cat;
 
-	        app.request.get(category, types[type].url, function (response) {
+	        app.request.getPlayer(category, types[type].url, function (response) {
 
 	            if (response && !response.error) {
 
@@ -204,12 +204,12 @@ module.exports = function () {
 			return byCategory(category);
 		},
 
-		all: function (){ 
+		getAllPlayers: function (){
 
 			return maps; 
 		},
 
-    	byId: function (id) {
+    	getPlayerById: function (id) {
 
 	        var map = byId(maps, id);
 
@@ -226,7 +226,7 @@ module.exports = function () {
     		return sub(maps[0]); 
     	},
 
-    	addElement:function(room){
+    	addPlayer:function(room){
 
     		return edit(types.game.items, room, function (games, room, index) {
 
@@ -234,7 +234,7 @@ module.exports = function () {
     		});
         },
 
-        remove: function (room) {
+        removePlayer: function (room) {
 
         	return edit(types.game.items, room, function (games, room, index) {
 

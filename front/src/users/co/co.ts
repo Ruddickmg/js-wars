@@ -4,9 +4,14 @@ export interface CO {
 
 }
 
-export default function () {
+export function isCo(name: string) {
 
-    var percent = function (amount) {
+    return name;
+}
+
+export default (function() {
+
+    var percent = function(amount) {
 
         return amount / 100;
     };
@@ -269,4 +274,4 @@ export default function () {
             };
         }
     };
-}();
+}());

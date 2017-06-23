@@ -1,35 +1,38 @@
+import single from "../singleton";
+
 export interface Time {
 
-    seconds(number): number,
-    minutes(number): number,
-    hours(number): number,
-    days(number): number,
-    years(number): number,
-    wait(number): Promise<void>
+    seconds(seconds: number): number;
+    minutes(minutes: number): number;
+    hours(hours: number): number;
+    days(days: number): number;
+    years(years: number): number;
+    wait(milliseconds: number): Promise<any>;
 }
 
-export default function (): Time {
+export default single<Time>(function(): Time {
 
-    const
-        millisecondsInASecond: number = 1000,
-        secondsInAMinute: number = 60,
-        minutesInAnHour: number = 60,
-        hoursInADay: number = 24,
-        daysInAYear: number = 365,
-        seconds = (seconds: number): number => seconds * millisecondsInASecond,
-        minutes = (minutes: number): number => minutes * seconds(secondsInAMinute),
-        hours = (hours: number): number => hours * minutes(minutesInAnHour),
-        days = (days: number): number => days * hours(hoursInADay);
+    const millisecondsInASecond: number = 1000;
+    const secondsInAMinute: number = 60;
+    const minutesInAnHour: number = 60;
+    const hoursInADay: number = 24;
+    const daysInAYear: number = 365;
+    const seconds = (numberOfSeconds: number): number => numberOfSeconds * millisecondsInASecond;
+    const minutes = (numberOfMinutes: number): number => numberOfMinutes * seconds(secondsInAMinute);
+    const hours = (numberOfHours: number): number => numberOfHours * minutes(minutesInAnHour);
+    const days = (numberOfDays: number): number => numberOfDays * hours(hoursInADay);
+    const years = (numberOfYears: number): number => numberOfYears * days(daysInAYear);
 
     return {
+
         seconds,
         minutes,
         hours,
         days,
-        years: (years: number): number => years * days(daysInAYear),
-        wait(timeInMilliseconds: number=0): Promise<void> {
+        years,
+        wait(timeInMilliseconds: number= 0): Promise<any> {
 
             return new Promise((resolve) => setTimeout(resolve, timeInMilliseconds));
-        }
+        },
     };
-}
+});

@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------------------------------------*\
-   
-    Game.js controls the setting up and selection of games / game modes 
-   
+
+    Game.js controls the setting up and selection of games / game modes
+
 \* ------------------------------------------------------------------------------------------------------*/
 
 StatusHud = require("../huds/coStatusHud.js");
@@ -26,92 +26,92 @@ actions = require("../controller/actionsController.js");
 playerController = require("../controller/players.js");
 buildingController = require("../controller/building.js");
 
-module.exports = function () {
+module.exports = function() {
 
-    var game, saved, mode, name, joined, selected, settings, map, id, created;
-    var end = false, started = false;
-    var menus = ["optionsMenu", "options", "intel", "save", "exit", "yield"];
+    let game, saved, mode, name, joined, selected, settings, map, id, created;
+    let end = false, started = false;
+    const menus = ["optionsMenu", "options", "intel", "save", "exit", "yield"];
 
     // used for accessing the correct building array via what type of transportation the unit uses
-    var ports = { 
-        air: "airport", 
-        foot: "base", 
-        wheels: "base", 
-        boat: "seaport" 
+    const ports = {
+        air: "airport",
+        foot: "base",
+        wheels: "base",
+        boat: "seaport",
     };
 
-    var tick = new Counter(1000);
+    const tick = new Counter(1000);
 
-    var removeScreen = function () {
+    const removeScreen = function() {
 
-        var screen = document.getElementById("setupScreen");
+        const screen = document.getElementById("setupScreen");
         screen.parentNode.removeChild(screen);
     };
 
     return {
 
-        tick:tick.reached,
+        tick: tick.reached,
 
-        setId: function (i) {
+        setId: function(i) {
 
             return id = i;
         },
 
-        id: function () {
+        id: function() {
 
             return id;
         },
 
-        raw: function () {
+        raw: function() {
 
             return {
-                name: name,
+                name,
                 map: app.map.raw(),
-                settings: settings,
-                players: app.players.all() // players.mapEditor(function (players) {return players.raw();})
+                settings,
+                players: app.players.getAllPlayers(), // players.mapEditor(function (players) {return players.raw();})
             };
         },
 
-        joined: function () {
+        joined: function() {
 
             return joined;
         },
 
-        setJoined: function (bool) {
+        setJoined: function(bool) {
 
             joined = bool;
         },
 
-        started: function () {
+        started: function() {
 
             return started;
         },
 
-        settings: function () {
+        settings: function() {
 
             return settings;
         },
 
-        map: function () {
+        map: function() {
 
             return map;
         },
 
-        removeSaved: function () {
+        removeSaved: function() {
 
             saved = undefined;
 
             return this;
         },
 
-        removeMap: function () {
+        removeMap: function() {
 
             map = undefined;
 
             return this;
         },
 
-        removeSettings: function () {
+        removeSettings: function() {
 
             settings = undefined;
 
@@ -130,31 +130,31 @@ module.exports = function () {
         //     return players;
         // },
 
-        name: function () { 
+        name: function() {
 
-            return name; 
+            return name;
         },
 
-        category: function () {
+        category: function() {
 
             return map.category;
         },
 
-        room: function () {
+        room: function() {
 
             return {
 
-                name:name, 
-                category:map.category
+                name,
+                category: map.category,
             };
         },
 
-        screen: function () { 
+        screen: function() {
 
-            return gameScreen; 
+            return gameScreen;
         },
 
-        clear: function () {
+        clear: function() {
 
             // players = undefined;
             saved = undefined;
@@ -164,42 +164,17 @@ module.exports = function () {
             end = false;
         },
 
-        setName: function (n) {
-
-            return name = n;
-        },
-
-        setSettings: function (s) {
-
-            return settings = s;
-        },
-
-        // setPlayers: function (p) {
-
-        //     return players = p;
-        // },
-
-        setMap: function (m) {
-
-            return map = m;
-        },
-
-        logout: function () {
+        logout: function() {
 
             // handle logout
             alert("logout!!");
         },
 
-        setCreated: function (c) {
+        create: function(name, id) {
 
-            created = c;
-        },
+            const room = {};
 
-        create: function (name, id) {
-
-            var room = {};
-
-            room.map = app.map.get();
+            room.map = app.map.getPlayer();
             room.name = this.setName(name);
             room.settings = this.setSettings(settings);
             room.max = app.map.players();
@@ -210,28 +185,27 @@ module.exports = function () {
             transmit.createRoom(room);
         },
 
-        load: function (room) { 
+        load: function(room) {
 
             this.setId(room.id);
             this.setCreated(room.created);
 
             if (app.players.length() > 1) {
 
-                app.players.addElement(room.players);
+                app.players.addPlayer(room.players);
 
                 // players = app.players.all();
             }
         },
 
-        setup: function (setupScreen){
+        setup: function(setupScreen) {
 
-            // select game mode
-            if(app.user.id() && !mode) {
+            if (app.user.id() && !mode) {
 
                 mode = app.menu.mode();
             }
 
-            // if a game has been set 
+            // if a game has been set
             if (game) {
 
                 removeScreen();
@@ -247,20 +221,20 @@ module.exports = function () {
             // loop
             window.requestAnimationFrame(app.game.setup);
 
-            if(app.key.pressed()) {
+            if (app.key.pressed()) {
 
-                app.key.undo();        
+                app.key.undo();
             }
         },
 
-        reset: function () {
+        reset: function() {
 
             game = false;
             mode = app.menu.mode();
             this.setup();
         },
 
-        start: function (game) {
+        start: function(game) {
 
             if (app.players.length() !== app.map.players()) {
 
@@ -274,19 +248,19 @@ module.exports = function () {
             app.players.initialize();
 
             // get the players whos turn it is
-            var player = app.players.current();
+            const player = app.players.currentPlayer();
 
-            var hq = composer.functions([
+            const hq = composer.functions([
                 buildingController.position,
-                playerController.hq
+                playerController.hq,
             ], player);
 
-            var gold = app.players.saved() ? 
-                playerController.gold(player):
+            const gold = app.players.saved() ?
+                playerController.gold(player) :
                 playerController.income(player);
 
             playerController.score(player).income(gold);
-            
+
             app.players.update(playerController.setGold(player, gold));
 
             // setup game huds
@@ -300,37 +274,37 @@ module.exports = function () {
 
             // begin game animations
             app.animate(["background", "terrain", "building", "unit", "cursor"]);
-            
+
             // mark the game as started
             return started = true;
         },
 
         /* --------------------------------------------------------------------------------------------------------*\
-            
-            app.game.loop consolidates all the game logic and runs it in a loop, coordinating animation calls and 
+
+            app.game.loop consolidates all the game logic and runs it in a loop, coordinating animation calls and
             running the game
 
         \* ---------------------------------------------------------------------------------------------------------*/
 
-        update: function () { 
+        update: function() {
 
-            return app.game.started() ? app.game.loop() : app.game.setup(); 
+            return app.game.started() ? app.game.loop() : app.game.setup();
         },
 
-        loop: function () {
+        loop: function() {
 
-            var confirmation = app.confirm.active();
-            var selected = app.cursor.selected();
-            var menu, options = app.options.active();
+            const confirmation = app.confirm.active();
+            const selected = app.cursor.selected();
+            let menu, options = app.options.active();
 
             // incriment frame counter
-            tick.incriment();
+            // tick.increment();
 
             if (confirmation) {
 
                 app.confirm.evaluate();
             }
-            
+
             if (app.cursor.deleting()) {
 
                 app.cursor.deleteUnit();
@@ -352,12 +326,12 @@ module.exports = function () {
             if (selected && actions.type(selected).evaluate(selected))  {
 
                 app.screen.reset();
-                
+
             // display co status hud
             } else if (!options) {
 
-                app.coStatus.display(app.players.current(), app.cursor.side("x"));
-                
+                app.coStatus.display(app.players.currentPlayer(), app.cursor.side("x"));
+
                 app.map.focus();
             }
 
@@ -377,11 +351,11 @@ module.exports = function () {
             // exit menus when esc key is pressed
             if (app.key.pressed(app.key.esc())) {
 
-                if (app.cursor.deleting()) { 
+                if (app.cursor.deleting()) {
 
                     app.cursor.selectMode();
 
-                } else if(!app.options.active() && !selected && !confirmation) {
+                } else if (!app.options.active() && !selected && !confirmation) {
 
                     app.options.display();
                     app.coStatus.hideCurrentElement();
@@ -396,35 +370,35 @@ module.exports = function () {
             app.key.undoKeyUp();
 
             tick.reset();
-            
+
             return end || window.requestAnimationFrame(app.game.loop);
         },
 
-        save:function () {
+        save: function() {
 
-            app.request.post({user:app.user.raw(), game:this.raw()}, "games/save", function (response) {
+            app.request.post({user: app.user.raw(), game: this.raw()}, "games/save", function(response) {
 
                 if (response && !response.error) {
 
-                    alert("ending game");;
+                    alert("ending game");
                 }
             });
         },
 
-        end: function (saved) {
+        end: function(saved) {
 
             // create game screen
-            alert("player " + playerController.number(app.players.moveToFirst()) + " wins!  with a score of " + playerController.score(app.players.moveToFirst()).calculate() + "!");
+            alert("player " + playerController.getPlayerByNumber(app.players.moveToFirst()) + " wins!  with a score of " + playerController.score(app.players.moveToFirst()).calculate() + "!");
             end = true;
         },
 
-        remove: function (saved) {
+        removePlayer: function(saved) {
 
             // transmit.removeRoom(name, id, created, saved);
             app.input.deactivate();
-            app.maps.remove(app.map.get());
+            app.maps.removePlayer(app.map.getPlayer());
             app.players.removeSaved();
             this.clear();
-        }
+        },
     };
 }();

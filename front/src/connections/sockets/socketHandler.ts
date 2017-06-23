@@ -2,14 +2,19 @@ export type SocketId = string | number;
 
 export interface SocketHandler {
 
-    getId(socket: any): SocketId,
-    setId(socket: any, id: SocketId): SocketHandler,
-    remove(socket: any): SocketId
+    getId(socket: any): SocketId;
+    setId(socket: any, id: SocketId): SocketHandler;
+    remove(socket: any): SocketId;
+}
+
+interface SocketIds {
+
+    [index: string]: SocketId;
 }
 
 export default function() {
 
-    const sockets = {};
+    const sockets: SocketIds = {};
 
     return {
         getId: (socket: any): SocketId => sockets[socket],
@@ -26,6 +31,6 @@ export default function() {
             delete sockets[socket];
 
             return id;
-        }
+        },
     };
 }

@@ -121,8 +121,9 @@ export default function(parent: any = document.createElement("ul"), childNodes: 
 
         return this;
     };
+    const prototype = Object.create(createList(children));
 
-    return Object.assign(Object.create(createList(children)), {
+    return Object.assign(prototype, {
 
         deHighlight,
         element,
@@ -135,7 +136,7 @@ export default function(parent: any = document.createElement("ul"), childNodes: 
         setBackgroundColor,
         setLeftPosition,
         valueOfCurrentElement,
-        addElement,
+        addPlayer,
         className,
         hideCurrentElement,
         prepHorizontal,

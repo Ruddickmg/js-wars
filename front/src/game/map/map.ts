@@ -1,4 +1,5 @@
 import {Dimensions} from "../../coordinates/dimensions";
+import settings from "../../settings/settings";
 import {Player} from "../../users/players/player";
 import {Building} from "./elements/building/building";
 import {Terrain} from "./elements/terrain/terrain";
@@ -11,26 +12,17 @@ export interface Map {
     id?: MapId;
     name: string;
     maximumAmountOfPlayers: number;
-    players: Player[];
     category: string;
     dimensions: Dimensions;
     terrain: Terrain[];
     buildings: Building[];
     units: Unit[];
+    creator: string;
 }
 
 export default (function() {
 
-    const categories: any = {
-
-        2: "two",
-        3: "three",
-        4: "four",
-        5: "five",
-        6: "six",
-        7: "seven",
-        8: "eight",
-    };
+    const categories: any = settings().get("mapCategories");
 
     return function(
 
@@ -41,6 +33,7 @@ export default (function() {
         terrain: Terrain[] = [],
         buildings: Building[] = [],
         units: Unit[] = [],
+        creator: string = "none",
     ) {
 
         const category: string = units.length ?
@@ -51,8 +44,8 @@ export default (function() {
 
             id,
             name,
+            creator,
             maximumAmountOfPlayers,
-            players: [] as Player[],
             category,
             dimensions,
             terrain,

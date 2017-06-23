@@ -18,6 +18,14 @@ export default {
         return Math.random() * (max - min) + min;
     },
 
+    index(array: any[]): number {
+
+        const lastIndex = array.length - 1;
+        const firstIndex = 0;
+
+        return Math.floor(this.inRange(lastIndex, firstIndex));
+    },
+
     boolean() {
 
         const threshHold = 0.5;

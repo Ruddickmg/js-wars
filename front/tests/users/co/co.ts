@@ -137,8 +137,8 @@ export default function () {
                         special = 100;
                         superPowerActive = false;
                     }
-                }
-            }
+                },
+            };
         },
 
         max: function (player) {

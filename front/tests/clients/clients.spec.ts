@@ -20,35 +20,35 @@ describe("clients", () => {
     const moveTo: any = sinon.spy();
     const testUser: User = createUser({
 
-        id: 1,
-        name: "yoMan",
-        first_name: "firstOne",
-        last_name: "lastOne",
-        gender: "male",
         email: "test@email.com",
+        first_name: "firstOne",
+        gender: "male",
+        id: 1,
+        last_name: "lastOne",
         link: "www.testy.com",
+        name: "yoMan",
     }, "none");
     const secondTestUser: User = createUser({
 
-        id: 2,
-        name: "secondTestUser",
-        first_name: "name",
-        last_name: "lastOne",
-        gender: "famale",
         email: "test@email.com",
+        first_name: "name",
+        gender: "famale",
+        id: 2,
+        last_name: "lastOne",
         link: "www.testy.com",
+        name: "secondTestUser",
     }, "none");
     const testPlayer: Player = createPlayer(testUser, "andy");
-    const mockSocket: any = (emit) => ({
-        id: 1,
-        name: "mock socket",
-        emit,
+    const mockSocket: any = (emit: any) => ({
         broadcast: {
             moveTo: (roomName: string): any => {
                 moveTo(roomName);
                 return {emit};
             },
         },
+        id: 1,
+        name: "mock socket",
+        emit,
         join,
         leave,
     });
@@ -60,7 +60,7 @@ describe("clients", () => {
 
         it("Adds a client to the client handler.", () => {
 
-            const client = clients.add(testSocket, testId);
+            const client: Client = clients.add(testSocket, testId);
 
             expect(clients.byId(testId)).to.equal(client);
             expect(clients.bySocket(testSocket)).to.equal(client);
@@ -85,7 +85,7 @@ describe("clients", () => {
 
         it("Returns a client by the socket it uses.", () => {
 
-            const client = clients.add(testSocket, testId);
+            const client: Client = clients.add(testSocket, testId);
 
             expect(clients.bySocket(testSocket)).to.equal(client);
         });

@@ -135,7 +135,7 @@ export default function(parent: any = document.createElement("ul"), childNodes: 
         setBackgroundColor,
         setLeftPosition,
         valueOfCurrentElement,
-        addElement,
+        addPlayer,
         className,
         hideCurrentElement,
         prepHorizontal,

@@ -21,7 +21,7 @@ describe("identity", () => {
             while (testing--) {
 
                 id = identity.get();
-                expect(!record[id]).to.be.true;
+                expect(!record[id]).to.equal(true);
                 record[id] = true;
             }
         });
@@ -79,7 +79,7 @@ describe("identity", () => {
 
                 id = identity.get();
 
-                expect(!reservedIds[id]).to.be.true;
+                expect(!reservedIds[id]).to.equal(true);
             }
         });
     });

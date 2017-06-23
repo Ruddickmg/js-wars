@@ -26,7 +26,7 @@ export interface Rooms {
     get(id: RoomId): Room;
     addReservedIds(ids: RoomId[]): Rooms;
     lobby(): Lobby;
-    category(category: string): object;
+    category(category: string): ListOfRooms;
     add(game: Game): Room;
     remove(room: Room): Room;
     getOpenRooms(category: string): Game[];
@@ -121,14 +121,12 @@ export default function(url: string): Rooms {
     const lobby = (): Lobby => categories.lobby as Lobby;
     const matchRunningGames = (games: Game[]): Game[] => {
 
-        const matchedGames = games.map((savedGame: Game): Game => {
+        return games.map((savedGame: Game): Game => {
 
             const room: Room = get(savedGame.id);
 
             return room ? room.getGame() : savedGame;
-        });
-
-        return matchedGames; // .reverse();
+        }); // .reverse();
     };
 
     const remove = (room: Room): Room => {

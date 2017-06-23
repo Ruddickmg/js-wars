@@ -34,7 +34,7 @@ export default function(clients: ClientHandler, rooms: Rooms, aiHandler: AiContr
                 .setUser(user);
         }
 
-        client = clients.byId(id);
+        client = clients.getPlayerById(id);
         client.joinRoom(rooms.lobby());
         client.emit("player", player);
     };
@@ -42,7 +42,7 @@ export default function(clients: ClientHandler, rooms: Rooms, aiHandler: AiContr
     const join = (error: Error, room: any, socket: any): void => {
 
         const client: Client = clients.bySocket(socket);
-        const storedRoom: Room = rooms.get(room);
+        const storedRoom: Room = rooms.getPlayer(room);
 
         if (error !== undefined) {
 
@@ -65,7 +65,7 @@ export default function(clients: ClientHandler, rooms: Rooms, aiHandler: AiContr
     const newRoom = (error: Error, game: any, socket: any) => {
 
         const client: Client = clients.bySocket(socket);
-        const existingRoom: Room = rooms.get(game);
+        const existingRoom: Room = rooms.getPlayer(game);
 
         let room: Room;
 
@@ -101,9 +101,9 @@ export default function(clients: ClientHandler, rooms: Rooms, aiHandler: AiContr
 
         if (isRoom(room) && room.isEmpty()) {
 
-            rooms.remove(room);
+            rooms.removePlayer(room);
 
-            aiHandler.remove(...room.getAiPlayers());
+            aiHandler.removePlayer(...room.getAiPlayers());
         }
     };
 

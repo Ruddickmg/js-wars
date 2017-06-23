@@ -54,7 +54,7 @@ export default function(type, position, player): Unit {
         unitNameAndType = {type: "unit", name: type},
         unitProperties = {
 
-            id: identity.get(),
+            id: identity.getPlayer(),
             position: createPosition(position.x, position.y),
             actions: {},
             targets: [],

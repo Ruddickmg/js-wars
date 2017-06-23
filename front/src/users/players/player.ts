@@ -1,25 +1,29 @@
-import {CO} from "../co/co";
-import {User, RoomId} from "../user";
+import {isCo} from "../co/co";
+import {User, UserId} from "../user";
 
 export interface Player {
 
-    id: RoomId;
+    id: UserId;
     name: string;
     ready: boolean;
-    co: CO;
+    co: string;
     gold: number;
     special: number;
     score: number;
     isComputer: boolean;
     mode: string;
     number: number;
-    [index: string]: any;
+    [index: string]: string | boolean | number;
 }
 
-export default function(user: User, co?: CO): Player {
+export default function(user: User, co?: string): Player {
+
+    if (co && !isCo(co)) {
+
+        throw new TypeError("Invalid co passed in player object creation.");
+    }
 
     return {
-
         co,
         gold: 0,
         id: user.id,

@@ -56,7 +56,7 @@ describe("rooms", () => {
         it("Retrieves all games of a specified category.", () => {
 
             const firstRoom: Room = rooms.add(createGame(categoryOne, categoryOne, map()));
-            const secondRoom = rooms.add(createGame(categoryTwo, categoryTwo, map()));
+            const secondRoom: Room = rooms.add(createGame(categoryTwo, categoryTwo, map()));
 
             expect(rooms.category(categoryOne)[firstRoom.id()]).to.equal(firstRoom);
             expect(rooms.category(categoryTwo)[secondRoom.id()]).to.equal(secondRoom);
@@ -122,13 +122,13 @@ describe("rooms", () => {
 
                 thirdRoom.addPlayer(createPlayer(createUser({
 
-                    id: 1,
-                    name: "yoMan",
-                    first_name: "firstOne",
-                    last_name: "lastOne",
-                    gender: "male",
                     email: "test@email.com",
+                    first_name: "firstOne",
+                    gender: "male",
+                    id: 1,
+                    last_name: "lastOne",
                     link: "www.testy.com",
+                    name: "yoMan",
 
                 }, "facebook"), "andy"));
             }

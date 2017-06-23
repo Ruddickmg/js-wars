@@ -24,7 +24,7 @@ export default function() {
     const addPlayer = (player: AiPlayer, currentPlayers: AiPlayers): AiPlayers => {
 
         const modifiedPlayers: AiPlayers = Object.assign({}, currentPlayers);
-        const id: RoomId = identity.get();
+        const id: RoomId = identity.getPlayer();
 
         modifiedPlayers[id] = player;
 
@@ -34,7 +34,7 @@ export default function() {
 
         const modifiedPlayers: AiPlayers = Object.assign({}, currentPlayers);
 
-        identity.remove(id);
+        identity.removePlayer(id);
 
         delete modifiedPlayers[id];
 
@@ -52,7 +52,7 @@ export default function() {
     };
     const add = (aiPlayer: User, roomName: string): AiPlayer => {
 
-        const id: RoomId = identity.get();
+        const id: RoomId = identity.getPlayer();
 
         players = addPlayer(createAiPlayer(aiPlayer, roomName), players);
 
@@ -60,8 +60,8 @@ export default function() {
     };
 
     return {
-        addElement,
-        get,
-        remove,
+        addPlayer,
+        getPlayer,
+        removePlayer,
     };
 }

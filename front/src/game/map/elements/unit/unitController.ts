@@ -980,12 +980,6 @@ module.exports = function () {
     
     }.bind(controller));
 
-    controller.isSame = curry(function (unit1, unit2) {
-
-        return this.id(unit1) === this.id(unit2);
-    
-    }.bind(controller));
-
     /*
         modifies the passed in unit, setting its position then returning it
 

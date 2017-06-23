@@ -17,10 +17,10 @@ buildingController = require("../controller/building.js");
 composer = require("../tools/composition.js");
 transmit = require("../sockets/transmitter.js");
 
-module.exports = function () {
+module.exports = function() {
 
     // var validate = new Validator("controller/players.js");
-    
+
     return {
 
         update: function (player, update) {
@@ -28,15 +28,15 @@ module.exports = function () {
             player.id = update.id;
             player.gold = update.gold;
             player.special = update.special;
-            player.ready = app.game.started() || app.players.saved() !== undefined;
-            player.number = update.number;
+            player.allPlayersAreReady = app.game.started() || app.players.saved() !== undefined;
+            player.getPlayerByNumber = update.getPlayerByNumber;
             player.co = app.co[update.co.toLowerCase()](player);
             player.score = new Score(update.score);
 
             return player;
         },
 
-        id: function (player) {
+        id: function(player) {
 
             return player.id;
         },
@@ -45,7 +45,7 @@ module.exports = function () {
 
             player[property] = value;
 
-            if (app.user.number() === this.number(player)) {
+            if (app.user.getPlayerByNumber() === this.getPlayerByNumber(player)) {
 
                 transmit.setUserProperty(player, property, value);
             }
@@ -67,7 +67,7 @@ module.exports = function () {
 
             // figure out color system
 
-            return this.number(player);
+            return this.getPlayerByNumber(player);
         },
 
         index: function (player) {
@@ -79,20 +79,20 @@ module.exports = function () {
 
         setNumber: function (player, number) {
 
-            player.number = number;
+            player.getPlayerByNumber = number;
 
             return player;
         },
 
-        number: function (player) {
+        getPlayerByNumber: function (player) {
 
-            return player.number;
+            return player.getPlayerByNumber;
         },
 
         endTurn: function () {
 
             // update score
-            if ((current = app.players.current()) === app.user.player()) {
+            if ((current = app.players.currentPlayer()) === app.user.player()) {
 
                 app.user.score.update(this.score(current));
             }
@@ -117,7 +117,7 @@ module.exports = function () {
             app.screen.moveTo(buildingController.position(this.hq(player)));
 
             // assign the next players as the current players
-            app.players.setCurrent(player);
+            app.players.setCurrentPlayer(player);
 
             // if the players is ai then send the games current state
             if (this.isComputer(player)) {
@@ -200,7 +200,7 @@ module.exports = function () {
 
         isReady: function (player, state) { // check this out for functionality
 
-            player.ready = state; 
+            player.allPlayersAreReady = state;
 
             app.players.checkReady();
 
@@ -214,14 +214,14 @@ module.exports = function () {
             info.bases = this.buildings(player).length;
             info.income = this.income(player);
             info.funds = this.gold(player);
-            info.player = this.number(player);
+            info.player = this.getPlayerByNumber(player);
 
             return info;
         },
 
-        ready: function (player) { 
+        allPlayersAreReady: function (player) {
 
-            return player.ready; 
+            return player.allPlayersAreReady;
         },
 
         income: function (player) {
@@ -247,17 +247,17 @@ module.exports = function () {
             return player;
         },
 
-        defeat: function (player1, player2, capturing) {
+        playerDefeated: function (player1, player2, capturing) {
 
             if (app.user.owns(player1)) { 
 
-                transmit.defeat(player1, player2, capturing);
+                transmit.playerDefeated(player1, player2, capturing);
             }
 
             this.score(player1).conquer();
-            this.score(player2).defeat();
+            this.score(player2).playerDefeated();
 
-            app.players.defeat(player2);
+            app.players.playerDefeated(player2);
 
             var buildings = app.map.buildings();
             var building, l = buildings.length;
@@ -274,7 +274,7 @@ module.exports = function () {
 
                     if (buildingController.isHQ(building)) {
 
-                        app.map.takeHQ(building);
+                        app.map.changeHqToCity(building);
                     }
 
                     buildingController.changeOwner(capturing, building);
@@ -289,14 +289,14 @@ module.exports = function () {
             return player.score;
         },
 
-        get: function (player) { 
+        getPlayer: function (player) {
 
-            return app.players.get(player); 
+            return app.players.getPlayer(player);
         },
 
         isTurn: function (player) { // change this outside of object 
 
-            return this.id(player) === this.id(app.players.current()); 
+            return this.id(player) === this.id(app.players.currentPlayer());
         },
 
         first: function (player) { 
@@ -333,7 +333,7 @@ module.exports = function () {
 
         owns: function (player, object) { // could modify game parameters to add a dimension to the game like territory
 
-            return this.id(this.get(player)) === buildingController.playerId(object); 
+            return this.id(this.getPlayer(player)) === buildingController.playerId(object);
         },
 
         co: function (player) {
@@ -406,6 +406,6 @@ module.exports = function () {
                     return building;
                 }
             }
-        }
+        },
     };
 }();

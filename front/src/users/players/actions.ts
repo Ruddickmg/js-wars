@@ -3,7 +3,7 @@ app.target = require("../../browser/controller/target.js");
 app.cursor = require("../../browser/controller/cursorController.js");
 app.coStatus = require("../../browser/huds/coStatusHud.js");
 app.hud = require("../../browser/huds/hud.js");
-app.dom = require("../../browser/tools/dom.js");
+app.dom = require("../../browser/dom/dom");
 
 module.exports = {
     attack(options, unit) {
@@ -16,7 +16,7 @@ module.exports = {
     },
     wait() {
 
-        app.dom.remove('actionHud');
+        app.dom.removePlayer('actionHud');
         app.screen.reset();
         app.hud.show();
         app.cursor.show();
@@ -43,8 +43,8 @@ module.exports = {
 
         return unitController.join(options.join, unit);
     },
-    load(options, unit) {
+    load({load}, unit) {
 
-        return unitController.load(options.load, unit);
+        return unitController.load(load, unit);
     },
 };

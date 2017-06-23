@@ -10,11 +10,11 @@ describe("position", () => {
     const x = 5;
     const y = 6;
     const {width, height}: Dimensions = map.dimensions;
-    const checkNeighbors = (expectedNeighbors: Position[], neighbors: Position[], currentMap: Map) => {
+    const checkNeighbors = (expectedNeighbors: Position[], neighbors: Position[], dimensions: Dimensions) => {
 
         return expectedNeighbors.reduce((allContained, expectedNeighbor) => {
 
-            if (expectedNeighbor.inMap(currentMap)) {
+            if (expectedNeighbor.inRange(dimensions)) {
 
                 return allContained && neighbors.reduce((isIn, neighbor) => {
 
@@ -81,8 +81,8 @@ describe("position", () => {
             const position: Position = createPosition(width - 1, height - 1);
             const badPosition: Position = createPosition(width + 1, height + 1);
 
-            expect(position.inMap(map)).to.equal(true);
-            expect(badPosition.inMap(map)).to.equal(false);
+            expect(position.inRange(map.dimensions)).to.equal(true);
+            expect(badPosition.inRange(map.dimensions)).to.equal(false);
         });
     });
 
@@ -90,10 +90,10 @@ describe("position", () => {
 
         it("Returns an array of directly adjacent grid squares.", () => {
 
-            const neighbors = createPosition(x, y).neighbors(map);
+            const neighbors = createPosition(x, y).neighbors(map.dimensions);
 
-            expect(checkNeighbors(adjacentNeighbors, neighbors, map)).to.equal(true);
-            expect(checkNeighbors(badNeighbors, neighbors, map)).to.equal(false);
+            expect(checkNeighbors(adjacentNeighbors, neighbors, map.dimensions)).to.equal(true);
+            expect(checkNeighbors(badNeighbors, neighbors, map.dimensions)).to.equal(false);
         });
     });
 
@@ -101,22 +101,22 @@ describe("position", () => {
 
         it("Returns an array of diagonally neighboring squares.", () => {
 
-            const neighbors = createPosition(x, y).corners(map);
+            const neighbors = createPosition(x, y).corners(map.dimensions);
 
-            expect(checkNeighbors(corners, neighbors, map)).to.equal(true);
-            expect(checkNeighbors(badNeighbors, neighbors, map)).to.equal(false);
+            expect(checkNeighbors(corners, neighbors, map.dimensions)).to.equal(true);
+            expect(checkNeighbors(badNeighbors, neighbors, map.dimensions)).to.equal(false);
         });
     });
 
     describe("surrounding", () => {
 
-        it ("Returns an array of all neighbors both adjacent and diagonal.", () => {
+        it("Returns an array of all neighbors both adjacent and diagonal.", () => {
 
-            const neighbors = createPosition(x, y).surrounding(map);
+            const neighbors = createPosition(x, y).surrounding(map.dimensions);
             const expectedNeighbors = adjacentNeighbors.concat(corners);
 
-            expect(checkNeighbors(expectedNeighbors, neighbors, map)).to.equal(true);
-            expect(checkNeighbors(badNeighbors, neighbors, map)).to.equal(false);
+            expect(checkNeighbors(expectedNeighbors, neighbors, map.dimensions)).to.equal(true);
+            expect(checkNeighbors(badNeighbors, neighbors, map.dimensions)).to.equal(false);
         });
     });
 });
