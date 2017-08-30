@@ -4,20 +4,24 @@
 
 \* --------------------------------------------------------------------------------------*/
 
-ModesElement = require(".//elements/modesElement.js");
-ScrollText = require("../effects/scrollText.js");
-Select = require("../tools/selection.js");
+import {Dictionary} from "../../../tools/dictionary";
 
-import allSettings, {Settings} from "../../settings/settings";
-import createList from "../dom/list";
-import createUList from "../dom/ul";
-import createFader from "../effects/fade";
-import createMenu, {Menu} from "./elements/menu";
+ScrollText = require("../../effects/scrollText.js");
+Select = require("../../tools/selection.js");
+
+import allSettings from "../../../settings/settings";
+import createList from "../../dom/list";
+import createUList from "../../dom/ul";
+import createFader from "../../effects/fade";
+import createMenu, {Menu} from "../elements/menu";
+import createModeElement, {ModesElement} from "../elements/modesElement";
+import {ModeMenuItem} from "./modeMenuItem";
 
 export default function() {
 
-    const settings: Settings = allSettings();
+    const settings: Dictionary = allSettings();
     const menu: Menu = Object.create(createMenu());
+
     const positions = [
 
         "twoAbove",
@@ -26,6 +30,7 @@ export default function() {
         "oneBelow",
         "twoBelow",
     ];
+
     const messages = {
 
         COdesign: "Customize the look of your CO",
@@ -41,11 +46,11 @@ export default function() {
         store: "Purchase maps, CO\"s, and other game goods",
     };
 
-    const createListOfModeElements = (properties: string[]): any[] => {
+    const createListOfModeElements = (properties: ModeMenuItem[]): ModesElement[] => {
 
-        return properties.map((property: string, index: number) => {
+        return properties.map((item: ModeMenuItem, index: number): ModesElement => {
 
-            return new ModesElement(property, index);
+            return createModeElement(item.id, index, item.options);
         });
     };
 
@@ -73,8 +78,7 @@ export default function() {
         this.setElement(createUList(menu));
         this.rotate(this.list().indexOf(mode));
         this.insert(modeScreen);
-        this.fader = createFader([background], color)
-            .start();
+        this.fader = createFader([background], color).start();
 
         app.footer.scroll(this.message(this.mode().id()));
 
