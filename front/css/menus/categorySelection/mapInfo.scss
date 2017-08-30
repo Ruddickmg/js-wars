@@ -1,0 +1,16 @@
+.numberOfBuildingsItem {
+  margin:13px;
+  margin-top:5px;
+  width:64px;
+  height: 64px;
+}
+
+.numberOf {
+  color:white;
+  text-shadow: -2px 0 0 black, 0 -2px 0 black, -2px 2px 0 black, 2px -2px 0 black, 2px 2px 0 black, -2px -2px 0 black, 3px 3px 0 black, 3px 0 0 black, 0 3px 0 black, 4px 0 0 black, 0 4px 0 black, 4px 4px 0 black;
+  font-size:40px;
+  position:relative;
+  z-index:10;
+  top:26px;
+  left:40px;
+}

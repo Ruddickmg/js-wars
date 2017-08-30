@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import createUser, {User} from "../../src/users/user";
+import createUser, {User} from "../../javascript/users/user";
 
 describe("user", () => {
 

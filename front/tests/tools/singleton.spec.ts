@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import single from "../../src/tools/singleton";
+import single from "../../javascript/tools/singleton";
 
 describe("singleton", () => {
 

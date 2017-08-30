@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import random from "../../src/tools/random";
+import random from "../../javascript/tools/random";
 
 describe("random", () => {
 

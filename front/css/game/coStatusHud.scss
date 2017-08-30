@@ -1,0 +1,54 @@
+#coPowerBar,
+#coStatusHud {
+  border-radius: 0 60px 60px 8px;
+}
+
+#coStatusHud {
+  left:270px;
+  top: 90px;
+  position: absolute;
+  z-index: 11;
+  background: rgba( 218, 218, 218, .8 );
+  border: solid white 4px;
+  box-shadow: 1px 1px 8px 1px black inset, 0 1px 0 black, 1px 1px 0 black, 1px 0 0 black, 3px 4px 0 black;
+  width:310px;
+  height:128px;
+}
+
+#coStatusHud #gold {
+  padding-left: 25px;
+  padding-right: 25px;
+  font-size: 30px;
+  line-height: 40px;
+  position: absolute;
+  width: 246px;
+  height: 40px;
+  border: 1px solid black;
+  box-shadow: -5px 0 0 white;
+  top:20px;
+  left: -17px;
+  border-radius: 50px;
+  background: rgb(243,197,189); /* Old browsers */
+  background: -moz-linear-gradient(top,  rgba(243,197,189,1) 0%, rgba(232,108,87,1) 50%, rgba(234,40,3,1) 51%, rgba(255,102,0,1) 75%, rgba(199,34,0,1) 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(243,197,189,1)), color-stop(50%,rgba(232,108,87,1)), color-stop(51%,rgba(234,40,3,1)), color-stop(75%,rgba(255,102,0,1)), color-stop(100%,rgba(199,34,0,1))); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top,  rgba(243,197,189,1) 0%,rgba(232,108,87,1) 50%,rgba(234,40,3,1) 51%,rgba(255,102,0,1) 75%,rgba(199,34,0,1) 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top,  rgba(243,197,189,1) 0%,rgba(232,108,87,1) 50%,rgba(234,40,3,1) 51%,rgba(255,102,0,1) 75%,rgba(199,34,0,1) 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top,  rgba(243,197,189,1) 0%,rgba(232,108,87,1) 50%,rgba(234,40,3,1) 51%,rgba(255,102,0,1) 75%,rgba(199,34,0,1) 100%); /* IE10+ */
+  background: linear-gradient(to bottom,  rgba(243,197,189,1) 0%,rgba(232,108,87,1) 50%,rgba(234,40,3,1) 51%,rgba(255,102,0,1) 75%,rgba(199,34,0,1) 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f3c5bd', endColorstr='#c72200',GradientType=0 ); /* IE6-9 */
+
+}
+
+#gold li {
+  display: inline-block;
+}
+
+#currentGold {
+  float: right;
+}
+
+#coPowerBar {
+  overflow: hidden;
+  z-index: -1;
+  position: absolute;
+}

@@ -1,9 +1,9 @@
 import {default as aiController, AiController} from "./aiController";
-import {Listener} from "../../connections/sockets/listener.spec";
-import {ClientHandler} from "../../clients/clients.spec";
-import {AnyRoom, isRoom} from "../../rooms/rooms.spec";
+import {Listener} from "../../server/connections/sockets/listener.spec";
+import {ClientHandler} from "../../server/clients/clients.spec";
+import {AnyRoom, isRoom} from "../../server/rooms/rooms.spec";
 import {AiPlayer} from "./aiPlayer";
-import {Client} from "../../clients/client.spec";
+import {Client} from "../../server/clients/client.spec";
 import {AnyPlayer, isAiPlayer} from "../players/playerSocketListener.spec";
 
 export default function (clients: ClientHandler,  aiHandler: AiController): Listener {

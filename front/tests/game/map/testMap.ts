@@ -1,8 +1,8 @@
-import createDimensions, {Dimensions} from "../../../src/coordinates/dimensions";
-import createPosition from "../../../src/coordinates/position";
-import createBuilding from "../../../src/game/map/elements/building/building";
-import createTerrain from "../../../src/game/map/elements/terrain/terrain";
-import {default as createMap, Map} from "../../../src/game/map/map";
+import createDimensions, {Dimensions} from "../../../javascript/coordinates/dimensions";
+import createPosition from "../../../javascript/coordinates/position";
+import createBuilding from "../../../javascript/game/map/elements/building/building";
+import createTerrain from "../../../javascript/game/map/elements/terrain/terrain";
+import {default as createMap, Map} from "../../../javascript/game/map/map";
 
 export default function(): Map {
 

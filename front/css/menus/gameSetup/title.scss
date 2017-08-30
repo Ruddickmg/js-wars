@@ -1,0 +1,12 @@
+#title {
+  top: 10px;
+  left: -30px;
+  color: white;
+  transform: scale(.8,1);
+  position: absolute;
+  font-size: 100px;
+  font-weight: bold;
+  text-transform: uppercase;
+  -webkit-font-smoothing: antialiased;
+  @include thick-text-shadow(hsl(216,100%,50%), 10, 30);
+}

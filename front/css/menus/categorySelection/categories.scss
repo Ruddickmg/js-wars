@@ -1,0 +1,21 @@
+/*  inner map/game select css stuff */
+
+.numberOfBuildingsItem,
+.selectCategoryScreenItem,
+.selectCategoryScreenItem li {
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.selectCategoryScreenItem {
+  transition: left 0.3s ease;
+  position: absolute;
+}
+
+.selectCategoryScreenItem [pos=right] {
+  left:100%;
+}
+
+.selectCategoryScreenItem [pos=left] {
+  left:-100%;
+}

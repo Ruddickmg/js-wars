@@ -3,7 +3,7 @@
  */
 
 import {expect} from "chai";
-import {default as pubSub, PubSub} from "../../src/tools/pubSub";
+import {default as pubSub, PubSub} from "../../javascript/tools/pubSub";
 
 describe("pubSub", () => {
 

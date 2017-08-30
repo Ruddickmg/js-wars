@@ -1,5 +1,5 @@
 import {Player} from "../users/players/player";
-import {RoomId} from "../rooms/room.spec";
+import {RoomId} from "../server/rooms/room.spec";
 import {Map} from "./map/mapController";
 
 export interface Game {

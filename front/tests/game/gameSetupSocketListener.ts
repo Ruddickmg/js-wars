@@ -1,6 +1,6 @@
-import {Client} from "../clients/client.spec";
-import {ClientHandler} from "../clients/clients.spec";
-import {AnyRoom, isRoom, Rooms} from "../rooms/rooms.spec";
+import {Client} from "../server/clients/client.spec";
+import {ClientHandler} from "../server/clients/clients.spec";
+import {AnyRoom, isRoom, Rooms} from "../server/rooms/rooms.spec";
 import {Player} from "../users/players/player";
 import {Game} from "./game";
 

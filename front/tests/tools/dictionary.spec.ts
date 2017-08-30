@@ -3,7 +3,7 @@
  */
 
 import {expect} from "chai";
-import {default as dictionary, Dictionary} from "../../src/tools/dictionary";
+import {default as dictionary, Dictionary} from "../../javascript/tools/dictionary";
 
 describe("dictionary", () => {
 

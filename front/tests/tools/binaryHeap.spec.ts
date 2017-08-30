@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {BinaryHeap, default as binaryHeap} from "../../src/tools/binaryHeap";
+import {BinaryHeap, default as binaryHeap} from "../../javascript/tools/binaryHeap";
 
 describe("binaryHeap", () => {
 
