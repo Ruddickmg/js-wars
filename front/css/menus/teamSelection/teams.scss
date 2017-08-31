@@ -1,0 +1,87 @@
+.team {
+  position: absolute;
+  color: white;
+  z-index: 10;
+  font-size: 60px;
+  text-align: center;
+  text-shadow: -2px 0 0 black,
+  0 -2px 0 black,
+  -2px 2px 0 black,
+  2px -2px 0 black,
+  2px 2px 0 black,
+  -2px -2px 0 black,
+  3px 3px 0 black,
+  3px 0 0 black,
+  0 3px 0 black,
+  4px 0 0 black,
+  0 4px 0 black,
+  4px 4px 0 black;
+  transition: top 0.3s ease;
+}
+
+#teams {
+  z-index: 10;
+}
+
+.team .a::first-letter,
+.team .b::first-letter,
+.team .c::first-letter,
+.team .d::first-letter {
+  font-size: 80px;
+  text-shadow:
+          -2px 0 0 white,
+          0 -2px 0 white,
+          -2px 2px 0 white,
+          2px -2px 0 white,
+          2px 2px 0 white,
+          -2px -2px 0 white,
+
+          -3px 0 0 white,
+          0 -3px 0 white,
+          -3px 3px 0 white,
+          3px -3px 0 white,
+          3px 3px 0 white,
+          -3px -3px 0 white,
+
+          -4px 0 0 black,
+          0 -4px 0 black,
+          -4px 4px 0 black,
+          4px -4px 0 black,
+          4px 4px 0 black,
+          -4px -4px 0 black,
+
+          -5px 0 0 black,
+          0 -5px 0 black,
+          -5px 5px 0 black,
+          5px -5px 0 black,
+          5px 5px 0 black,
+          -5px -5px 0 black,
+
+          6px 6px 0 black,
+          6px 0 0 black,
+          0 6px 0 black,
+
+          7px 0 0 black,
+          0 7px 0 black,
+          7px 7px 0 black,
+
+          8px 0 0 black,
+          0 8px 0 black,
+          8px 8px 0 black;
+}
+
+.team .a::first-letter {
+  color: #E6DE8E;
+}
+
+.team .b::first-letter {
+  color: #85E0FF;
+}
+
+.team .c::first-letter {
+  color: #A4E68E;
+}
+
+.team .d::first-letter {
+  color: #FAACDC;
+}

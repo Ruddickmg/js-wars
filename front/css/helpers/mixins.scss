@@ -1,0 +1,11 @@
+@mixin thick-text-shadow($color, $thickness, $depth) {
+
+  $text-shadow: '';
+
+  @for $i from 1 through $depth {
+
+    $text-shadow: $text-shadow + if($i == 1, '', ', ') + "0 0 #{$thickness}px #{$color}";
+  }
+
+  text-shadow: #{$text-shadow}
+}

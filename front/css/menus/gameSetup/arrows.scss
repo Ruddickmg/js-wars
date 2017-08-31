@@ -1,0 +1,45 @@
+.upArrow {
+  position:absolute;
+  z-index: 10;
+  left:20%;
+  top:30%;
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 20px solid black;
+  transition: left 0.3s ease, top 0.3s ease;
+}
+
+.downArrow {
+  position:absolute;
+  z-index: 10;
+  left:20%;
+  top:60%;
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 20px solid black;
+  transition: left 0.3s ease, top 0.3s ease;
+}
+
+#upArrowBackground {
+  left:-14px;
+  top:3px;
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-bottom: 15px solid white;
+}
+
+#downArrowBackground {
+  left:-14px;
+  top:-18px;
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-top: 15px solid white;
+}

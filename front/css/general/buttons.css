@@ -1,0 +1,11 @@
+.button {
+  top: 5%;
+  right: 5%;
+  display: block;
+  width: 15%;
+  height: 10%;
+  background-color: red;
+  border-radius: 35%;
+  position: absolute; }
+
+/*# sourceMappingURL=buttons.css.map */
