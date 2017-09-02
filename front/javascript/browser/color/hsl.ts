@@ -60,9 +60,10 @@ export default single<HslFactory>(function() {
 
 export function isColor(element: any): boolean {
 
-    const {isNumber, isFunction}: TypeChecker = typeChecker();
+    const {isNumber, isFunction, isDefined}: TypeChecker = typeChecker();
 
-    return isNumber(element.hue)
+    return isDefined(element)
+        && isNumber(element.hue)
         && isNumber(element.lightness)
         && isNumber(element.saturation)
         && isFunction(element.format)
