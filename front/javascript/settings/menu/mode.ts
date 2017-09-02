@@ -1,12 +1,21 @@
-import modeMenuItem from "../../browser/menus/mode/modeMenuItem";
+import modeMenuItem from "../../browser/menus/mode/modeItem";
 
 export default {
 
+    events: {
+        codesign: "editCo",
+        continuegame: "resumeSavedGame",
+        continuejoin: "joinContinuingGame",
+        logout: "logOut",
+        mapdesign: "createNewMap",
+        newgame: "startNewGame",
+        newjoin: "joinNewGame",
+        store: "gameStore",
+    },
     heightOfSelected: 75,
     menuSpacing: 20,
     messages: {
-
-        COdesign: "Customize the look of your CO",
+        codesign: "Customize the look of your CO",
         continuegame: "Resume a saved game",
         continuejoin: "Re-Join a saved game started at an earlier time",
         design: "Design maps or edit CO appearance",
@@ -18,19 +27,18 @@ export default {
         newjoin: "Find and join a new game",
         store: "Purchase maps, CO\"s, and other game goods",
     },
+    modes: [
+        modeMenuItem("game", ["new", "continue"], "setup"),
+        modeMenuItem("join", ["new", "continue"]),
+        modeMenuItem("design", ["map", "co"]),
+        modeMenuItem("store"),
+        modeMenuItem("logout", null, "exit"),
+    ],
     positions: [
-
         "twoAbove",
         "oneAbove",
         "selected",
         "oneBelow",
         "twoBelow",
-    ],
-    selections: [
-        modeMenuItem("game", ["new", "continue"], "setup"),
-        modeMenuItem("join", ["new", "continue"]), // used to have param: `color:"yellow"`
-        modeMenuItem("design", ["map", "co"]),
-        modeMenuItem("store"),
-        modeMenuItem("logout", null, "exit"),
     ],
 };

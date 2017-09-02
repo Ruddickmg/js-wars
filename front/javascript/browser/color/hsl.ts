@@ -1,4 +1,5 @@
 import single from "../../tools/singleton";
+import typeChecker, {TypeChecker} from "../../tools/typeChecker";
 
 interface HslPrototype {
 
@@ -56,3 +57,16 @@ export default single<HslFactory>(function() {
         });
     };
 })();
+
+export function isColor(element: any): boolean {
+
+    const {isNumber, isFunction}: TypeChecker = typeChecker();
+
+    return isNumber(element.hue)
+        && isNumber(element.lightness)
+        && isNumber(element.saturation)
+        && isFunction(element.format)
+        && isFunction(element.setLightness)
+        && isFunction(element.setHue)
+        && isFunction(element.setLightness);
+}

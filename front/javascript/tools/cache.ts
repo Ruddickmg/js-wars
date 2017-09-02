@@ -2,14 +2,15 @@ import reduceF from "./reduce";
 
 export interface Cache<Type> {
 
-    get(name: string): Type;
-    contains(name: string): boolean;
     add(name: string, canvas: any): Type;
-    remove(name: string): Type;
-    reduce(callback: any, initialAccumulator: any): any;
-    map(callback: (item: any, key: string, self: Cache<Type>) => Cache<Type>): Cache<Type>;
-    forEach(callback: (item: any, key: string, self: Cache<Type>) => void): void;
+    contains(name: string): boolean;
     filter(callback: (item: any, key: string, self: Cache<Type>) => void): Cache<Type>;
+    find(callback: (item: Type, key: string, self: Cache<Type>) => boolean): Type;
+    forEach(callback: (item: any, key: string, self: Cache<Type>) => void): void;
+    get(name: string): Type;
+    map(callback: (item: any, key: string, self: Cache<Type>) => Cache<Type>): Cache<Type>;
+    reduce(callback: any, initialAccumulator: any): any;
+    remove(name: string): Type;
 }
 
 export default function createCache<Type>(): Cache<Type> {
@@ -67,12 +68,32 @@ export default function createCache<Type>(): Cache<Type> {
 
         }, createCache<Type>());
     };
+    const find = function(callback: (item: Type, key?: string, self?: Cache<Type>) => boolean): Type {
+
+        const keys: string[] = Object.keys(cached);
+
+        let indexOfKey: number = keys.length;
+        let element: Type;
+        let key: string;
+
+        while (indexOfKey--) {
+
+            key = keys[indexOfKey];
+            element = cached[key];
+
+            if (callback(element, key, this)) {
+
+                return element;
+            }
+        }
+    };
 
     return {
 
         add,
         contains,
         filter,
+        find,
         forEach,
         get,
         map,

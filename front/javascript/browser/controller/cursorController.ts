@@ -310,7 +310,7 @@ export default single<CursorController>(function() {
         clear,
         deleteMode,
         deselect,
-        getSelected,
+        selected: getSelected,
         hide,
         hovered,
         isActive,

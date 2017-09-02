@@ -62,9 +62,8 @@ export default single<LoginScreen>(function() {
 
             gameScreen.clear();
 
-            publish(["addUser", "beginGameSetup"], user);
-
-            // game.setup();
+            publish("addUser", user);
+            publish(["beginGameSetup", "settingUpGame"], true);
 
         } else {
 

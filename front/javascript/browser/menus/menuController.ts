@@ -1,163 +1,66 @@
-/* --------------------------------------------------------------------------------------*\
+import getSettings from "../../settings/settings";
+import {Dictionary} from "../../tools/dictionary";
+import notifications, {PubSub} from "../../tools/pubSub";
+import createTitle, {Title} from "./elements/title";
+import loginHandler, {LoginScreen} from "./login/login";
+import getGameScreen, {GameScreen} from "./main/gameScreen";
+import gameModeSelection from "./mode/modeMenu";
 
-    menu.js holds handles the selection of game modes / logout etc.. <--- can be redone better
+export default function() {
 
-\* --------------------------------------------------------------------------------------*/
+    const {subscribe}: PubSub = notifications();
+    const login: LoginScreen = loginHandler();
+    const settings: Dictionary = getSettings();
+    const gameScreen: GameScreen = getGameScreen();
+    const testing: boolean = settings.get("testing");
+    const title: Title = createTitle();
 
-import join from "./join/join";
+    subscribe("login", () => testing ? login.skip() : login.display());
 
-app = require("../configuration/settings/app");
-app.maps = require("../controller/mapsHandler.js");
-app.user = require("../user/user.js");
-app.testMap = require("../../game/map/testMap.js");
+    subscribe("beginGameSetup", () => {
 
-Join = require("./join/join.ts");
-Settings = require("./settings/settings.js");
-Teams = require("./teamSelection/teams.js");
-Modes = require("./mode/modes");
-transmit = require("../communication/sockets/transmitter");
+        gameScreen.add(title.id, title);
 
-module.exports = function() {
+        gameModeSelection();
+    });
 
-    var sent, boot, active, game = {};
+    subscribe("joinNewGame", (): void => {
 
-    var exitSetupScreen = function () {
+        alert("joining new game!");
+    });
 
-        var ss = document.getElementById("setupScreen");
-        if (ss) ss.parentNode.removeChild(ss);                
-    };
+    subscribe("joinContinuingGame", (): void => {
 
-    var join = function(game, category, type) {
+        alert("joining on going game!");
+    });
 
-        if (!game.map) {
+    subscribe("startNewGame", (): void => {
 
-            if (Join.back()) {
-                
-                return "back";
+        alert("starting new game!");
+    });
 
-            } else {
+    subscribe("editCo", (): void => {
 
-                game.map = Join[category](type);
-            }
-        
-        // handle settings selection
-        } else if (category === "map" && !app.game.settings()) {
+        alert("editing my co!");
+    });
 
-            if (Settings.back()) {
+    subscribe("logOut", (): void => {
 
-                app.game.removeMap().removeSettings();
+        alert("logging out!");
+    });
 
-            } else {
+    subscribe("resumeSavedGame", (): void => {
 
-                app.game.setSettings(Settings.withArrows().select());
-            }
-        
-        } else if (!app.game.started()) {
+        alert("resuming a saved game!");
+    });
 
-            if (Teams.back()) {
+    subscribe("gameStore", (): void => {
 
-                // app.game.removePlayers();
+        alert("going to the store!");
+    });
 
-            } else {
+    subscribe("createNewMap", (): void => {
 
-                Teams.withArrows().select();
-            }
-        
-        } else {
-
-            Teams.removePlayer();
-
-            // app.game.setPlayers(app.players.all());
-
-            if (app.user.player() === app.players.moveToFirst()) {
-
-                transmit.start(true);
-            }
-
-            return true;
-        }
-    };
-    
-    return {
-
-        boot: function () {
-
-            boot = true
-        },
-
-        mode: function() {
-
-            return Modes.select();
-        },
-
-        newgame: function () {
-
-            return join("map", "open");
-        },
-
-        continuegame: function () {
-
-            return join("game", "saved");
-        },
-
-        newjoin: function () {
-
-            return join("game", "open");
-        },
-
-        continuejoin: function () {
-
-            return join("game", "running");
-        },
-
-        mapdesign: function () {
-
-            app.maps.save(app.testMap(), "testMap #1");
-
-            app.game.reset();
-
-            // if (!game.mapEditor) {
-            //     game.mapEditor = Join.mapEditor();
-            //     if (game.mapEditor) {
-            //         if (game.mapEditor === "back") {
-            //             delete game.mapEditor;
-            //             return "back";
-            //         }
-            //         app.players.add(app.user.raw());
-            //         app.cursor.editing();
-            //         return "editor";
-            //     }
-            // }
-        },
-
-        COdesign: function () {
-
-            alert("Co design is under construction");
-        },
-
-        store: function () { 
-
-            alert("The game store is under construction");
-        },
-
-        joined: function () {
-
-            return joined;
-        },
-
-        active: function () {
-
-            return active;
-        },
-
-        activate: function () {
-
-            active = true;
-        },
-
-        deactivate: function() {
-
-            active = false;
-        }
-    };
-}();
+        alert("editing a map!");
+    });
+}

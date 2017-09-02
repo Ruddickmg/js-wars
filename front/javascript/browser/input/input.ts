@@ -1,14 +1,12 @@
 import subscription, {PubSub} from "../../tools/pubSub";
-import dom from "../dom/dom";
 import createElement, {Element} from "../dom/element";
 import typeWriter, {TypeWriter} from "../effects/typing";
-import footerFactory from "../objects/footer";
+import createFooter, {Footer} from "../menus/footers/footer";
 
 export interface GameInput {
 
     addInput(text: string): void;
     clear(): void;
-    // // descriptions(): any;
     createForm(name: string, width: number, defaultText?: string): Element<any>;
     message(newMessage: string): any;
     name(text: string): any;
@@ -19,7 +17,6 @@ export interface GameInput {
 
 export default (function() {
 
-    const footer = footerFactory();
     const writer: TypeWriter = typeWriter();
     const subscriber: PubSub = subscription();
 
@@ -47,25 +44,21 @@ export default (function() {
 
     const name = function(text: string): any {
 
-        const nameOfInputLocation = "descriptionOrChatScreen";
-        const description = document.getElementById("descriptions");
-        const textField = footer.display();
-        const parentOfTextField = textField.parentNode;
+        const textField: Footer = createFooter();
 
-        dom.appendOrReplace(parentOfTextField, nameOfInputLocation);
+        // description.style.paddingTop = "2%";
+        // description.style.paddingBottom = "1.5%";
+        // description.parentNode.style.overflow = "hidden";
+        //
+        // this.description = description;
 
-        description.style.paddingTop = "2%";
-        description.style.paddingBottom = "1.5%";
-        description.parentNode.style.overflow = "hidden";
+        textField.setDescription(text);
 
-        this.parent = parentOfTextField;
-        this.description = description;
-        this.text = textField;
         this.addInput();
 
         writer.type(this.description, text || "Enter name for game.");
 
-        return parentOfTextField;
+        return textField;
     };
 
     // remove input form from footer
@@ -101,17 +94,11 @@ export default (function() {
 
     const addInput = function(text: string): void {
 
-        const createdForm = this.form("name", text, "Enter name here.");
-        const input = document.getElementById("nameForm");
+        const createdForm: Element<any> = createForm("name", null, "Enter name here.");
+        const input: Element<any> = createdForm.children.get("input");
 
-        input.appendChild(createdForm);
-
-        input.style.display = "block";
-        input.style.height = "30%";
-
-        this.nameInput = input;
-
-        // this.description.style.display = null;
+        input.display("block");
+        input.setHeight("30%");
 
         document.getElementById("nameInput").focus();
     };
@@ -132,8 +119,6 @@ export default (function() {
 
             addInput,
             clear,
-            // descriptions,
-            // entry,
             createForm,
             message,
             name,

@@ -2,6 +2,14 @@ import createCache, {Cache} from "../../tools/cache";
 import notifications, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/typeChecker";
 
+export interface ElementPosition {
+
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+}
+
 interface ElementMethods<ValueType> {
 
     addEventListener(id: string, listener: any): Element<ValueType>;
@@ -20,7 +28,7 @@ interface ElementMethods<ValueType> {
     setBackgroundColor(color: string): Element<ValueType>;
     setBorderColor(color: string): Element<ValueType>;
     setClass(classType: string): Element<ValueType>;
-    setColor(color: string): Element<ValueType>;
+    setTextColor(color: string): Element<ValueType>;
     setHeight(height: number): Element<ValueType>;
     setId(idType: string): Element<ValueType>;
     setLeft(left: string | number): void;
@@ -31,6 +39,7 @@ interface ElementMethods<ValueType> {
     setWidth(width: any): Element<ValueType>;
     show(): Element<ValueType>;
     transform(transformation: number): Element<ValueType>;
+    position(): ElementPosition;
 }
 
 export interface Element<ValueType> extends ElementMethods<ValueType> {
@@ -38,6 +47,7 @@ export interface Element<ValueType> extends ElementMethods<ValueType> {
     id: string;
     value?: ValueType;
     text?: string;
+    type?: string;
     element: any;
     children: Cache<Element<ValueType>>;
     parent?: Element<any>;
@@ -58,7 +68,10 @@ export default (function() {
 
         element.style.opacity = opacity;
     };
+    const removePx = (amountInPixels: string): number => {
 
+        return Number(amountInPixels.replace("px", ""));
+    };
     const methods: ElementMethods<any> = {
 
         addEventListener(id: string, listener: any): Element<any> {
@@ -67,13 +80,13 @@ export default (function() {
 
             return this;
         },
-        appendChild(myElement: Element<any>): Element<any> {
+        appendChild(newAddition: Element<any>): Element<any> {
 
             const {children, element}: any = this;
 
-            children.add(myElement);
-            element.appendChild(myElement.element);
-            myElement.parent = this;
+            children.add(newAddition);
+            element.appendChild(newAddition.element);
+            newAddition.parent = this;
 
             return this;
         },
@@ -109,7 +122,7 @@ export default (function() {
 
             if (["client", "offset"].indexOf(type) > -1) {
 
-                return this.element.style[`${type}Width`];
+                return this.element[`${type}Width`];
             }
 
             publish("invalidInput", {className: "element", method: "getWidth", input: type});
@@ -166,16 +179,17 @@ export default (function() {
         setClass(classType: string): any {
 
             this.element.setAttribute("class", classType);
+            this.type = classType;
 
             return this;
         },
-        setColor(color: string): Element<any> {
+        setTextColor(color: string): Element<any> {
 
             this.element.style.color = color;
 
             return this;
         },
-        setHeight(height: number) {
+        setHeight(height: number | string) {
 
             this.element.style.height = height;
 
@@ -206,6 +220,7 @@ export default (function() {
         setText(text: string): Element<any> {
 
             this.element.textContent = text;
+            this.text = text;
 
             return this;
         },
@@ -233,6 +248,18 @@ export default (function() {
 
             return this;
         },
+        position(): ElementPosition {
+
+            const {left, right, bottom, top}: any = this.element.style;
+
+            return {
+
+                bottom: removePx(bottom),
+                left: removePx(left),
+                right: removePx(right),
+                top: removePx(top),
+            };
+        },
     };
 
     return function<ValueType>(id: string, type: string, value?: ValueType): Element<ValueType> {
@@ -242,12 +269,11 @@ export default (function() {
 
         element.setAttribute("id", id);
 
-        return Object.assign(Object.create(methods), {
-
+        return Object.assign({
             children,
             element,
             id,
             value,
-        });
+        }, methods);
     };
 }());

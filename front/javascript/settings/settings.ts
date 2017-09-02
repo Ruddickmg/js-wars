@@ -3,10 +3,11 @@ import terrainStats from "../game/map/elements/terrain/terrainDefaults";
 import unitStats from "../game/map/elements/unit/unitDefinitions";
 import dictionary, {Dictionary} from "../tools/dictionary";
 import single from "../tools/singleton";
+import colorSettings from "./colors/colorSettings";
 import canvasSettings from "./dom/canvas";
 import factorsAllowingKeyboardInput from "./keyboard/factorsAllowingKeyboardInput";
 import factorsDenyingKeyboardInput from "./keyboard/factorsDenyingKeyboardInput";
-import keys from "./keyboard/keyCodeMappings";
+import keyCodeMappings from "./keyboard/keyCodeMappings";
 import categories from "./map/categories";
 import elements from "./map/elements";
 import restrictions from "./map/terrainRestriction";
@@ -29,23 +30,7 @@ export default single<Dictionary>(() => dictionary({
         two: {type: "1 on 1"},
     },
 
-    colorSwellIncrement: 1.5,
-    // general swell speed
-    colorSwellSpeed: 2,
-
-    colors: {
-
-        blue: {h: 216, s: 100, l: 50},
-        design: {h: 216, s: 100, l: 50},
-        game: {h: 0, s: 100, l: 50},
-        green: {h: 144, s: 100, l: 50},
-        join: {h: 144, s: 100, l: 50},
-        logout: {h: 288, s: 100, l: 50},
-        red: {h: 0, s: 100, l: 50},
-        store: {h: 72, s: 100, l: 50},
-        white: {h: 360, s: 0, l: 100},
-        yellow: {h: 72, s: 100, l: 50},
-    },
+    colors: colorSettings,
 
     combineAbleProperties: ["fuel", "health", "ammo"],
 
@@ -93,7 +78,7 @@ export default single<Dictionary>(() => dictionary({
 
     keys: {
 
-        keys,
+        keyCodeMappings,
         factorsAllowingKeyboardInput,
         factorsDenyingKeyboardInput,
     },

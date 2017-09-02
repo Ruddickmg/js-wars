@@ -1,188 +1,114 @@
-import allSettings from "../../settings/settings";
-import timeKeeper, {Time} from "../../tools/calculations/time";
-import {Dictionary} from "../../tools/dictionary";
-import single from "../../tools/singleton";
-import createHsl, {Hsl} from "../color/hsl";
+import createOscillator, {Oscillator} from "../../tools/oscillator";
+import notifications, {PubSub} from "../../tools/pubSub";
+import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import validateCallbacks from "../../tools/validateCallbacks";
+import createHsl, {Hsl, isColor} from "../color/hsl";
 
-interface FaderPrototype {
+export interface Fader extends Oscillator {
 
-    fadeBackground(): Fader;
-    fadeBorder(): Fader;
-    isFading(): boolean;
-    makeBorderTransparent(): Fader;
-    setColor(color: string, element: any): void;
-    setElement(element: any): any;
-    start(colorShifter: any): Fader;
+    start(): Fader;
     stop(): Fader;
-    toSolid(): void;
-    toWhite(): void;
+    clear(): Fader;
+    isFading(): boolean;
+    addCallbacks(callback: FaderCallback): Fader;
+    setCallbacks(...callbacks: FaderCallback[]): Fader;
+    setColor(color: Hsl): Fader;
 }
 
-export interface Fader extends FaderPrototype {
+type FaderCallback = (color: string) => void;
 
-    color: Hsl;
-    elements: any[];
-    elementPropertiesToFade: any[];
-    fading: boolean;
-    increment: number;
-    speed: number;
-}
+export default (function() {
 
-export type FaderFactory = (elements: any[], color: Hsl, speed?: number, increment?: number ) => Fader;
-
-export default single<FaderFactory>(function() {
-
-    const settings: Dictionary = allSettings();
-    const time: Time = timeKeeper();
+    const {isFunction}: TypeChecker = typeChecker();
+    const {publish}: PubSub = notifications();
     const minimumLightness = 50;
     const fullLightness = 100;
-    const validIndexLimit = 0;
-    const colors = settings.get("colors");
 
-    const fadeElementWith = (colorSetter: any, elementPropertiesToFade: any[]): void => {
+    return function(speed: number = 10, increment: number = 1): Fader {
 
-        if (elementPropertiesToFade.indexOf(colorSetter) < validIndexLimit) {
+        let color: Hsl;
+        let callbacks: FaderCallback[] = [];
 
-            elementPropertiesToFade.push(colorSetter);
-        }
-    };
-    const setBorderColor = (element: any, formattedColor: string, transparent: boolean = false): void => {
+        const oscillator: Oscillator = createOscillator(minimumLightness, fullLightness);
+        const isFading = oscillator.isOscillating;
+        const setLightness = (lightness: number): void => {
 
-        element.style.borderColor = `${formattedColor}${transparent ? " transparent" : ""}`;
-    };
-    const setBackgroundColor = (element: any, formattedColor: string): void => {
+            color.setLightness(lightness);
 
-        element.style.backgroundColor = formattedColor;
-    };
-    const increaseLightnessOfColor = ({setLightness, lightness}: Hsl, increment: number): void => {
+            // console.log("color: " + color.format());
 
-        return setLightness(lightness + increment);
-    };
-    const decreaseLightnessOfColor = ({setLightness, lightness}: Hsl, increment: number): void => {
+            callbacks.forEach((callback: FaderCallback): void => callback(color.format()));
+        };
+        const methods: any = {
 
-        return setLightness(lightness - increment);
-    };
-    const fade = (
+            setColor(newColor: Hsl): Fader {
 
-        fader: Fader,
-        color: Hsl,
-        changeColor: any,
-        previousLightness: number = minimumLightness,
+                if (isColor(newColor)) {
 
-    ): void => {
+                    color = createHsl(newColor.hue, newColor.saturation, newColor.lightness);
 
-        const {elements, speed, increment, fading} = fader;
-        const upperBrightnessLimit = fader.color.lightness;
-        const maximumLightness = fullLightness + increment;
-        const currentLightness = color.lightness;
-        const nextStepDown = currentLightness - increment;
-        const nextStepUp = currentLightness + increment;
-        const decrementing = currentLightness < previousLightness;
-        const incrementing = currentLightness > previousLightness;
-        const newColor = fading ? color : null;
+                } else {
 
-        time.wait(speed)
-            .then(() => {
-
-                changeColor(newColor, elements);
-
-                if (fading) {
-
-                    if (nextStepUp <= maximumLightness && decrementing || nextStepDown < minimumLightness) {
-
-                        increaseLightnessOfColor(color, increment);
-
-                    } else if (nextStepDown >= upperBrightnessLimit && incrementing || nextStepUp > fullLightness) {
-
-                        decreaseLightnessOfColor(color, increment);
-                    }
-
-                    fade(fader, color, currentLightness, changeColor);
+                    publish("invalidInput", {className: "fader", method: "setColor", input: newColor});
                 }
-            });
+
+                return this;
+            },
+            addCallbacks(callback: FaderCallback): Fader {
+
+                if (isFunction(callback)) {
+
+                    callbacks.push(callback);
+
+                    oscillator.setCallback((lightness: number): void => setLightness(lightness));
+
+                } else {
+
+                    publish("invalidInput", {className: "fader", method: "addCallback", input: callback});
+                }
+
+                return this;
+            },
+            setCallbacks(...callback: FaderCallback[]): Fader {
+
+                callbacks = validateCallbacks(callback, "fader", "setCallback");
+                oscillator.setCallback((lightness: number): void => setLightness(lightness));
+
+                return this;
+            },
+            clear(): Fader {
+
+                oscillator.clear();
+                callbacks = [];
+
+                return this;
+            },
+            start(): Fader {
+
+                if (isColor(color)) {
+
+                    oscillator.setPosition(color.lightness);
+                    oscillator.start();
+
+                } else {
+
+                    publish("invalidInput", {className: "fader", method: "start", input: color});
+                }
+
+                return this;
+            },
+            stop(): Fader {
+
+                oscillator.stop();
+                callbacks.forEach((callback: FaderCallback): void => callback(null));
+
+                return this;
+            },
+        };
+
+        oscillator.setSpeed(speed);
+        oscillator.setIncrement(increment);
+
+        return Object.assign({isFading}, oscillator, methods);
     };
-
-    const faderPrototype: FaderPrototype = {
-
-        fadeBackground(): Fader {
-
-            this.fadeElementWith(setBackgroundColor, this.elementPropertiesToFade);
-
-            return this;
-        },
-        fadeBorder(): Fader {
-
-            fadeElementWith(setBorderColor, this.elementPropertiesToFade);
-
-            return this;
-        },
-        isFading(): boolean {
-
-            return this.fading;
-        },
-        makeBorderTransparent(): Fader {
-
-            this.transparent = true;
-
-            return this;
-        },
-        setColor(color: string, elements: any[]): void {
-
-            this.elementPropertiesToFade.forEach((setColorOfProperty: any) => {
-
-                elements.forEach((element) => setColorOfProperty(element, color));
-            });
-        },
-        setElement(element: any): any {
-
-            return this.stop()
-                .setElement(element)
-                .start();
-        },
-        start(colorShifter: any): Fader {
-
-            const {hue, saturation, lightness}: Hsl = this.color;
-
-            this.fading = true;
-
-            fade(this, createHsl(hue, saturation, lightness), colorShifter);
-
-            return this;
-        },
-        stop(): Fader {
-
-            this.fading = false;
-
-            return this;
-        },
-        toSolid(): void {
-
-            const {elements, color, setColor}: Fader = this;
-
-            elements.forEach((element) => setColor(color.format(), element));
-        },
-        toWhite(): void {
-
-            const {setColor, elements}: Fader = this;
-
-            elements.forEach((element) => setColor(colors.white.format(), element));
-        },
-    };
-
-    return function(elements: any[], color: Hsl, speed: number = 10, increment: number = 1): Fader {
-
-        const fadeMethods = Object.create(faderPrototype);
-        const fading = false;
-        const elementPropertiesToFade: any[] = [];
-
-        return Object.assign(fadeMethods, {
-
-            color,
-            elements,
-            elementPropertiesToFade,
-            fading,
-            increment,
-            speed,
-        });
-    };
-})();
+}());

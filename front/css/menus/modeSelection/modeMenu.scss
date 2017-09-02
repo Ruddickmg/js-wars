@@ -107,9 +107,26 @@ li[position=selected] {
         right: 1%;
         overflow: hidden;
         margin: 0 auto;
-        line-height: 80%;
+        line-height: 75%;
         font-size: 690%;
         font-weight: bold;
+    }
+
+    .modeBackground {
+
+        background: white !important;
+    }
+
+    .block {
+
+      display: none;
+    }
+
+    .textBackground {
+
+       background-color: transparent;
+       text-decoration: underline;
+       border-bottom: 16px solid;
     }
 
     .modeOptions {
