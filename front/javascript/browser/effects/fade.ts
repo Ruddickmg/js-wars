@@ -35,8 +35,6 @@ export default (function() {
 
             color.setLightness(lightness);
 
-            // console.log("color: " + color.format());
-
             callbacks.forEach((callback: FaderCallback): void => callback(color.format()));
         };
         const methods: any = {
