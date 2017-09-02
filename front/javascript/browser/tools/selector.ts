@@ -34,30 +34,30 @@ export default function<OuterType>(...initialSelections: OuterType[]): Selection
     let verticalSelectionHandler: Handler;
     let horizontalSelectionHandler: Handler;
 
-    const isIterable = (selection: any): boolean => isDefined(selection) && isFunction(selection.getCurrentElement);
-    const elementSelection = (movementHandler: Handler, moveForward: boolean): any => {
+    const isList = (selection: any): boolean => isDefined(selection) && isFunction(selection.getCurrentElement);
+    const elementSelection = (handleSelection: Handler, movingForward: boolean): any => {
 
-        const selected = moveForward ? selections.next() : selections.previous();
+        const selected = movingForward ? selections.next() : selections.previous();
 
-        movementHandler(selected, current, selections);
+        handleSelection(selected, current, selections);
 
         current = selected;
     };
-    const listSelection = (movementHandler: Handler): any => {
+    const listSelection = (handleSelection: Handler): any => {
 
-        const targetList: List<any> = selections.getCurrentElement();
-        const list: List<any> = isIterable(targetList) ? targetList : container;
+        const target: List<any> = selections.getCurrentElement();
+        const list: List<any> = isList(target) ? target : container;
         const selected: any = list.getCurrentElement();
 
         if (isDefined(selected)) {
 
-            movementHandler(selected, current, selections);
+            handleSelection(selected, current, selections);
 
             selections = list;
             current = selected;
         }
     };
-    const assignHandlers = (movementHandler: Handler, isOuter: boolean, moveForward: boolean): any => {
+    const handleKeyPress = (movementHandler: Handler, isOuter: boolean, moveForward: boolean): any => {
 
         return isOuter ?
             elementSelection(movementHandler, !moveForward) :
@@ -73,12 +73,12 @@ export default function<OuterType>(...initialSelections: OuterType[]): Selection
 
         if (pressedUp || pressedDown) {
 
-            assignHandlers(verticalSelectionHandler, isVertical, pressedUp);
+            handleKeyPress(verticalSelectionHandler, isVertical, pressedUp);
         }
 
         if (pressedLeft || pressedRight) {
 
-            assignHandlers(horizontalSelectionHandler, !isVertical, pressedRight);
+            handleKeyPress(horizontalSelectionHandler, !isVertical, pressedRight);
         }
     };
 
@@ -104,12 +104,12 @@ export default function<OuterType>(...initialSelections: OuterType[]): Selection
 
                 verticalSelectionHandler = selectionHandler;
 
-                return this;
-
             } else {
 
                 publish("invalidInput", {className: "selectionHandler", method: "vertical", input: selectionHandler});
             }
+
+            return this;
         },
         horizontal(selectionHandler: Handler): SelectionHandler {
 
@@ -117,12 +117,12 @@ export default function<OuterType>(...initialSelections: OuterType[]): Selection
 
                 horizontalSelectionHandler = selectionHandler;
 
-                return this;
-
             } else {
 
                 publish("invalidInput", {className: "selectionHandler", method: "vertical", input: selectionHandler});
             }
+
+            return this;
         },
         stop(): SelectionHandler {
 
