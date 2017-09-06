@@ -1,4 +1,4 @@
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import {Dimensions} from "./dimensions";
 
 export interface Coordinates {

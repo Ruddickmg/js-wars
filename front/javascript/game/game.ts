@@ -1,5 +1,5 @@
 import {RoomId} from "../server/rooms/room";
-import typeChecker, {TypeChecker} from "../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../tools/validation/typeChecker";
 import {isMap, Map} from "./map/map";
 import {Player} from "./users/players/player";
 
@@ -17,7 +17,13 @@ export interface Game {
     [index: string]: boolean | string | Map | Player[] | RoomId;
 }
 
-export default function(name: string, category: string, map: Map, id?: RoomId) {
+export default function(name?: string, category?: string, map?: Map, id?: RoomId) {
+
+    const max: number = map ? map.maximumAmountOfPlayers : 0;
+    const background: string = null;
+    const players: Player[] = [];
+    const saved: boolean = false;
+    const started: boolean = false;
 
     return {
 
@@ -25,11 +31,11 @@ export default function(name: string, category: string, map: Map, id?: RoomId) {
         name,
         category,
         map,
-        background: "",
-        max: map.maximumAmountOfPlayers,
-        players: [] as Player[],
-        saved: false,
-        started: false,
+        background,
+        max,
+        players,
+        saved,
+        started,
     };
 }
 

@@ -1,17 +1,15 @@
-.selectCategoryScreenItem li,
-.selectMapScreenItem li,
-.selectGameScreenItem li {
+.categorySelectionElement li,
+.mapSelectionElement li {
   height: 64px;
   line-height: 64px;
   font-size: 30px;
 }
 
-#selectMapScreen,
-#selectGameScreen {
+#mapSelection {
   height:93.5%;
 }
 
 #numberOfBuildings,
-#selectCategoryScreen {
+#categorySelection {
   height: 77%;
 }

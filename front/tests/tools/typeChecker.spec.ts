@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import typeChecker, {TypeChecker} from "../../javascript/tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../javascript/tools/validation/typeChecker";
 
 describe("typeChecker", () => {
 

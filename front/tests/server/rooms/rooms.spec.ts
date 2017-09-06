@@ -4,7 +4,7 @@ import {Room} from "../../../javascript/server/rooms/room";
 import roomHandler, {Rooms} from "../../../javascript/server/rooms/rooms";
 import createPlayer from "../../javascript/users/players/player";
 import createUser from "../../javascript/users/user";
-import map from "../../game/map/testMap";
+import map from "../../../javascript/game/map/testMap";
 
 describe("rooms", () => {
 

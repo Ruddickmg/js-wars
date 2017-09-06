@@ -1,6 +1,6 @@
 import {Position} from "../../../game/coordinates/position";
 import single from "../../../tools/singleton";
-import typeChecker, {TypeChecker} from "../../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element";
 import createOption from "./options/optionElement";
 import createOptionElement, {OptionsElement} from "./options/optionsElement";

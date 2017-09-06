@@ -67,7 +67,7 @@ class Maps(Base):
 	creator_id = Column(Integer, ForeignKey('user.id'))
 	creator = relationship("User", back_populates="savedMaps")
 	name = Column(String(80), unique=True)
-	players = Column(Integer)
+	maximumAmountOfPlayers = Column(Integer)
 	category = Column(String(20))
 	dimensions = Column(JSON)
 	terrain = Column(JSON)
@@ -75,10 +75,10 @@ class Maps(Base):
 	units = Column(JSON)
 	date = Column(DateTime, default=datetime.utcnow())
 
-	def __init__(self, name, category, players, dimensions, terrain, buildings, units):
+	def __init__(self, name, category, maximumAmountOfPlayers, dimensions, terrain, buildings, units):
 		self.name = name
 		self.category = category
-		self.players = players
+		self.maximumAmountOfPlayers = maximumAmountOfPlayers
 		self.dimensions = dimensions
 		self.terrain = terrain
 		self.buildings = buildings
@@ -158,6 +158,8 @@ def DropAll():
 def Teardown(exception, session):
 
 	if exception:
+		print ("error")
+		print (exception)
 		logging.debug(exception)
 		if session:	
 			session.rollback()

@@ -6,7 +6,7 @@ export interface RequestHandler {
     [index: string]: IncompleteRequest;
 }
 
-export default function(routeName: string, routes: string[]): RequestHandler {
+export default function(routeName: string, ...routes: string[]): RequestHandler {
 
     const {subscribe}: PubSub = notifications();
     const {get, post}: Request = requestMaker();
@@ -16,7 +16,7 @@ export default function(routeName: string, routes: string[]): RequestHandler {
 
     subscribe("sendErrorToServer", sendErrorToServer);
 
-    return routes.reduce((handler: any, route: string): any => {
+    return routes.reduce((handler: any, route: string): IncompleteRequest => {
 
         handler[route] = (parameter?: string): Promise<any> => {
 

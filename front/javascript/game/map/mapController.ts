@@ -1,7 +1,7 @@
 import settings from "../../settings/settings";
 import {Dictionary} from "../../tools/dictionary";
 import notifier, {PubSub} from "../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import createPosition, {Position} from "../coordinates/position";
 import createBuilding, {Building} from "./elements/building/building";
 import {MapElement} from "./elements/defaults";

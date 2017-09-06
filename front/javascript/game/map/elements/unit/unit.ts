@@ -2,7 +2,8 @@ import settings from "../../../../settings/settings";
 import composer, {Composer} from "../../../../tools/composer";
 import {Dictionary} from "../../../../tools/dictionary";
 import identifier, {Identifier} from "../../../../tools/identity";
-import createPosition, {Position} from "../../../coordinates/position";
+import typeChecker, {TypeChecker} from "../../../../tools/validation/typeChecker";
+import createPosition, {isPosition, Position} from "../../../coordinates/position";
 import createBuilding, {Building} from "../building/building";
 
 export type UnitId = string | number;
@@ -16,25 +17,50 @@ interface Actions {
 
 export interface Unit {
 
-    drawing: string;
-    type: string;
-    name: string;
-    id: UnitId;
-    playerNumber: number;
-    position: Position;
-    moves: Position[];
-    movement: number;
+    action?: string;
+    [index: string]: any;
     actions: Actions;
     damage: number[];
-    targets: Target[];
-    health: number;
+    drawing: string;
     fuel: number;
-    vision: number;
-    selectable: boolean;
+    health: number;
+    id: UnitId;
     loaded?: Unit[];
     moved: number;
-    action: string;
-    [index: string]: any;
+    movement: number;
+    moves: Position[];
+    name: string;
+    playerNumber: number;
+    position: Position;
+    selectable: boolean;
+    targets: Target[];
+    type: string;
+    vision: number;
+}
+
+export function isUnit(element: any): boolean {
+
+    const {isString, isNumber, isArray, isDefined, isObject, isBoolean}: TypeChecker = typeChecker();
+
+    return isDefined(element)
+        && isString(element.action)
+        && isObject(element.actions)
+        && isArray(element.damage)
+        && isString(element.drawing)
+        && isNumber(element.fuel)
+        && isNumber(element.health)
+        && (isNumber(element.id) || isString(element.id))
+        && (!isDefined(element.loaded) || isArray(element.loaded))
+        && (!isDefined(element.moved) || isNumber(element.moved))
+        && isNumber(element.movement)
+        && isArray(element.moves)
+        && isString(element.name)
+        && isNumber(element.playerNumber)
+        && isPosition(element.position)
+        && isBoolean(element.selectable)
+        && isArray(element.targets)
+        && isString(element.type)
+        && isNumber(element.vision);
 }
 
 export default function(type: string, position: Position, playerNumber: number): Unit {
@@ -54,7 +80,6 @@ export default function(type: string, position: Position, playerNumber: number):
 
     const unitProperties = {
 
-        action: false,
         actions: {},
         ammo,
         damage,

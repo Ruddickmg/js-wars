@@ -8,5 +8,5 @@
   font-weight: bold;
   text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
-  @include thick-text-shadow(hsl(216,100%,50%), 10, 30);
+  @include thick-text-shadow(hsl(216,100%,50%), 10, 50);
 }

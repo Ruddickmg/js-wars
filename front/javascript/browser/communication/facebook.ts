@@ -1,6 +1,7 @@
 import single from "../../tools/singleton";
-import dom from "../dom/dom";
 import createElement, {Element} from "../dom/element";
+import getUrlParameters from "../tools/getUrlParameters";
+import redirectToUrl from "../tools/redirect";
 
 export interface FacebookApi {
 
@@ -12,34 +13,35 @@ export interface FacebookApi {
 export default single<FacebookApi>(() => {
 
     const appId = "1481194978837888";
-    // const facebookLoginVersion = "2.3";
+    const facebookLoginVersion = "2.3";
     const scope = "public_profile";
     const redirectUri = "http://localhost/";
     const facebookOauthUrl = "https://graph.facebook.com/oauth/authorize";
     const facebookOauthParameters = `client_id=${appId}&scope=${scope}&email&redirect_uri=${redirectUri}`;
     const oauthString = `${facebookOauthUrl}?${facebookOauthParameters}`;
-    // const version = `v${facebookLoginVersion}`;
+    const version = `v${facebookLoginVersion}`;
     const scriptTag = "script";
     const facebookElementId = "facebook-jssdk";
     const facebookElementSource = "//connect.facebook.net/en_US/sdk.js";
     const onClick = "click";
     const onLogin = "login";
 
-    // const settings = {
-    //
-    //     appId,
-    //     cookie: true,
-    //     oauth: true,
-    //     version,
-    //     xfbml: true, // parse social plugins on the page
-    // };
+    const settings = {
 
+        appId,
+        cookie: true,
+        oauth: true,
+        version,
+        xfbml: true, // parse social plugins on the page
+    };
+
+    const getFirstElementWithTag = (tag: string): any =>  document.getElementsByTagName(tag)[0];
     const send = function() {
 
-        const parameters = dom.getUrlParameters();
+        const parameters = getUrlParameters();
         const url = `${oauthString}${parameters}`;
 
-        dom.redirectTo(url);
+        redirectToUrl(url);
     };
 
     const createButton = (verifyLogin: any): Element<any> => {
@@ -60,24 +62,24 @@ export default single<FacebookApi>(() => {
 
     const setupLogin = (logUserIn: (response: any) => void): void => {
 
-        // window.fbAsyncInit = function() {
-        //
-        //     console.log("doing async...");
-        //
-        //     try {
-        //
-        //         FB.init(settings);
-        //         FB.getLoginStatus(logUserIn);
-        //
-        //     } catch (e) {
-        //
-        //         console.log(e);
-        //     }
-        // };
+        window.fbAsyncInit = function() {
+
+            console.log("doing async...");
+
+            try {
+
+                FB.init(settings);
+                FB.getLoginStatus(logUserIn);
+
+            } catch (e) {
+
+                console.log(e);
+            }
+        };
 
         (function(doc, tag, id) {
 
-            const firstScript = dom.getFirst(tag);
+            const firstScript = getFirstElementWithTag(tag);
 
             let fbElement = doc.getElementById(facebookElementId);
 

@@ -1,7 +1,7 @@
 import createPosition, {Position} from "../../game/coordinates/position";
 import createTerrain, {Terrain} from "../../game/map/elements/terrain/terrain";
 import notifications, {PubSub} from "../../tools/pubSub";
-import getRandom from "../../tools/random";
+import getRandom from "../../tools/calculations/random";
 import getSocket from "../communication/sockets/socket";
 
 export interface Background {

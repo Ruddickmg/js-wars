@@ -1,5 +1,5 @@
 import createPosition from "../../../coordinates/position";
-import typeChecker, {TypeChecker} from "../../../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../../../tools/validation/typeChecker";
 import {Player} from "../../../users/players/player";
 import playerController from "../../../users/players/playerSocketListener";
 import terrainController from "../terrain/terrainController";

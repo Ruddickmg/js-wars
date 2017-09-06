@@ -1,7 +1,7 @@
 import textWidthChecker, {TextWidthChecker} from "../../../tools/calculations/textWidth";
 import timeKeeper, {Time} from "../../../tools/calculations/time";
 import notifications, {PubSub} from "../../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element";
 
 export interface ScrollBar extends Element<string> {

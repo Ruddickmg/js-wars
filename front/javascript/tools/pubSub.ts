@@ -1,6 +1,6 @@
 import identifier, {Identifier} from "./identity";
 import single from "./singleton";
-import typeChecker, {TypeChecker} from "./typeChecker";
+import typeChecker, {TypeChecker} from "./validation/typeChecker";
 
 export interface PubSub {
 
@@ -33,9 +33,13 @@ type Emitter = (data: any, timeSinceLastUpdate: number) => any;
 
 export default single<PubSub>(function(): PubSub {
 
+    const nonExistentIndex = -1;
+    const elementsToRemoveFromEvents = 1;
+    const firstElementInReturnedArray = 0;
     const errorEventId: string = "error";
     const check: TypeChecker = typeChecker();
     const events: Events = {};
+    const isEmpty = (subscribers: Subscriber[]): boolean => subscribers.length < elementsToRemoveFromEvents;
     const increment = (id: SubscriptionId) => id + 1;
     const decrement = (id: SubscriptionId) => id - 1;
     const identity: Identifier<SubscriptionId> = identifier<SubscriptionId>(1, increment, decrement);
@@ -92,9 +96,6 @@ export default single<PubSub>(function(): PubSub {
 
     const removeSubscriberFromEvent = (id: SubscriptionId, event: Event): Subscriber => {
 
-        const nonExistentIndex = -1;
-        const elementsToRemoveFromEvents = 1;
-        const firstElementInReturnedArray = 0;
         const subscribers = event.subscribers;
         const indexOfSubscriber = subscribers.findIndex((subscriber) => subscriber.id === id);
 
@@ -106,7 +107,7 @@ export default single<PubSub>(function(): PubSub {
             arrayOfSplicedOutSubscribers = subscribers.splice(indexOfSubscriber, elementsToRemoveFromEvents);
             subscriber = arrayOfSplicedOutSubscribers[firstElementInReturnedArray];
 
-            if (!subscribers.length) {
+            if (isEmpty(subscribers)) {
 
                 removeEvent(event.name);
             }
@@ -151,26 +152,18 @@ export default single<PubSub>(function(): PubSub {
 
         const event = getEvent(eventId);
         const subscribers = getSubscribers(eventId);
-        const subscriptionIds: string[] = Object.keys(subscribers);
         const currentTime: Date = new Date();
         const timeOfLastUpdate: Date = event.timeOfLastUpdate;
         const timeSinceLastUpdate = Number(currentTime) - Number(timeOfLastUpdate);
-
-        let indexOfUnnotifiedSubscriberId = subscriptionIds.length;
-        let subscriptionId: any;
-        let subscriber: Subscriber;
 
         if (check.isString(eventId)) {
 
             event.timeOfLastUpdate = currentTime;
 
-            while (indexOfUnnotifiedSubscriberId--) {
-
-                subscriptionId = subscriptionIds[indexOfUnnotifiedSubscriberId];
-                subscriber = subscribers[subscriptionId];
+            subscribers.forEach((subscriber: Subscriber): void => {
 
                 subscriber.emit(data, timeSinceLastUpdate);
-            }
+            });
 
         } else {
 

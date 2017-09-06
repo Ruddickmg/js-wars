@@ -1,6 +1,6 @@
 import map from "../../game/map/map";
 import notifications, {PubSub} from "../../tools/pubSub";
-import animationHandler, {CanvasCache} from "../animation/canvasCache";
+import animationHandler, {CanvasCache} from "../canvas/canvasCache";
 import keyBoardInput, {default as keyboard, KeyBoard} from "../input/keyboard";
 import cursorController from "./cursorController";
 

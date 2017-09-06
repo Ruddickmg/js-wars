@@ -1,37 +1,35 @@
-import createMatrix, {Matrix} from "../../tools/matrix";
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import createMatrix, {Matrix} from "../../tools/matrix/matrix";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import {Dimensions} from "../coordinates/dimensions";
 import createPosition, {Position} from "../coordinates/position";
-import {MapElement} from "./elements/defaults";
 import createTerrain from "./elements/terrain/terrain";
 import {Map} from "./map";
 import mapController, {MapController} from "./mapController";
 
-export interface MatrixMap {
+export interface MatrixMap<Type> {
 
     clean(): void;
-    getElement(element: MapElement): MapElement;
-    get(): Map;
-    insert(element: MapElement): MapElement;
-    position(coordinates: Position): any;
-    remove(element: MapElement): any;
+    getElement(element: Type): Type;
+    get(coordinates: Position): Type;
+    insert(element: Type): Type;
+    remove(element: Type): any;
     dimensions(): Dimensions;
 }
 
-export default function(map: Map) {
+export default function<Type>(map: Map, positionOfElement: any): MatrixMap<Type> {
 
     let placeHolders: any[] = [];
 
     const {getOccupantsOfPosition}: MapController = mapController(map);
     const {isUnit, isTerrain}: TypeChecker = typeChecker();
-    const matrix: Matrix = createMatrix();
+    const matrix: Matrix<Type> = createMatrix<Type>();
     const isSame = (element: any, comparison: any) => {
 
         return element && comparison && element.id === comparison.id;
     };
-    const insert = (element: MapElement): MapElement => {
+    const insert = (element: Type): Type => {
 
-        return matrix.insert(element.position, element);
+        return matrix.insert(positionOfElement(element), element);
     };
     const clean = (): void => {
 
@@ -47,13 +45,14 @@ export default function(map: Map) {
 
         placeHolders = [];
     };
-    const getElement = (element: MapElement): MapElement => position(element.position);
-    const position = (coordinates: Position): any => {
+    const getElement = (element: Type): Type => get(positionOfElement(element));
+    const get = (coordinates: Position): any => {
 
         const minimumIndex: number = 0;
         const {x, y}: Position = coordinates;
         const {width, height}: Dimensions = map.dimensions;
         const positionIsInBounds = x <= width && x >= minimumIndex && y <= height && y >= minimumIndex;
+        const defaultElement: Type = createTerrain("plain", createPosition(x, y));
 
         if (positionIsInBounds) {
 
@@ -61,7 +60,7 @@ export default function(map: Map) {
 
                 placeHolders.push(coordinates);
 
-                matrix.insert(coordinates, createTerrain("plain", createPosition(x, y)));
+                matrix.insert(coordinates, defaultElement);
             }
 
             return matrix.get(coordinates);
@@ -69,16 +68,16 @@ export default function(map: Map) {
 
         throw RangeError(`provided position: {${x}, ${y}}, out of map bounds: {width: ${width}, height: ${height}}.`);
     };
-    const remove = (element: MapElement): any => {
+    const remove = (element: Type): Type => {
 
-        const positionOfElement = element.position;
-        const {unit, building, terrain} = getOccupantsOfPosition(positionOfElement, map);
-        const {x, y} = positionOfElement;
+        const position: Position = positionOfElement(element);
+        const {unit, building, terrain} = getOccupantsOfPosition(position, map);
+        const {x, y} = position;
 
         if (isUnit(element) && isSame(unit, element)) {
 
             matrix.insert(
-                positionOfElement,
+                position,
                 building
                 || terrain
                 || createTerrain("plain", createPosition(x, y)),
@@ -88,15 +87,13 @@ export default function(map: Map) {
         }
     };
     const dimensions = (): Dimensions => map.dimensions;
-    const get = (): Map => map;
 
     return {
 
         clean,
-        get,
         getElement,
         insert,
-        position,
+        get,
         remove,
         dimensions,
     };

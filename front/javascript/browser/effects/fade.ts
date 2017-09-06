@@ -1,7 +1,7 @@
 import createOscillator, {Oscillator} from "../../tools/oscillator";
 import notifications, {PubSub} from "../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
-import validateCallbacks from "../../tools/validateCallbacks";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import validateCallbacks from "../../tools/validation/validateCallbacks";
 import createHsl, {Hsl, isColor} from "../color/hsl";
 
 export interface Fader extends Oscillator {

@@ -1,4 +1,4 @@
-import binaryHeap, {BinaryHeap} from "./binaryHeap";
+import binaryHeap, {BinaryHeap} from "./heaps/binaryHeap";
 
 export interface Identifier<Id> {
 

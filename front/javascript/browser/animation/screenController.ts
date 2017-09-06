@@ -2,10 +2,10 @@ import createDimensions, {Dimensions} from "../../game/coordinates/dimensions";
 import createPosition, {Coordinates, Position} from "../../game/coordinates/position";
 import time, {Time} from "../../tools/calculations/time";
 import notifications, {PubSub} from "../../tools/pubSub";
+import canvasCache, {CanvasCache} from "../canvas/canvasCache";
 import screenConfiguration from "../configuration/screenConfig";
-import dom from "../dom/dom";
 import keyboardInput, {KeyBoard} from "../input/keyboard";
-import canvasCache, {CanvasCache} from "./canvasCache";
+import getGameScreen, {GameScreen} from "../menus/main/gameScreen";
 
 export interface ScreenController {
 
@@ -44,6 +44,7 @@ export default function(mapDimensions: Dimensions): ScreenController {
     const scrollSpeed: number = 50;
     const isFocused: boolean = false;
 
+    const gameScreen: GameScreen = getGameScreen();
     const screenPosition: Position = createPosition(initialX, initialY);
     const canvases: CanvasCache = canvasCache(...listOfCanvasAnimations);
 
@@ -201,7 +202,7 @@ export default function(mapDimensions: Dimensions): ScreenController {
             "unitInfoScreen",
             "optionsMenu",
         ]
-            .forEach((screenName) => dom.removeElement(document.getElementById(screenName)));
+            .forEach((screenName) => gameScreen.remove(screenName));
 
         canvases.get("effects").clear();
 

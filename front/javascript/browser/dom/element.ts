@@ -1,6 +1,6 @@
 import createCache, {Cache} from "../../tools/cache";
 import notifications, {PubSub} from "../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 
 export interface ElementPosition {
 
@@ -10,46 +10,49 @@ export interface ElementPosition {
     bottom: number;
 }
 
-interface ElementMethods<ValueType> {
+interface ElementMethods<Type> {
 
-    addEventListener(id: string, listener: any): Element<ValueType>;
-    appendChild(myElement: Element<ValueType>): Element<ValueType>;
-    display(): Element<ValueType>;
-    getChildren(): Array<Element<ValueType>>;
+    addEventListener(id: string, listener: any): Element<Type>;
+    appendChild(myElement: Element<Type>): Element<Type>;
+    clear(): Element<Type>;
+    display(): Element<Type>;
+    getChildren(): Array<Element<Type>>;
     getInput(): any;
     getText(): string;
-    getValue(): ValueType;
+    getValue(): Type;
     getWidth(width?: string): number;
-    hide(): Element<ValueType>;
-    makeInvisible(): Element<ValueType>;
-    makeVisible(): Element<ValueType>;
-    removeChild(removed: Element<any>): Element<ValueType>;
-    setAttribute(attribute: string, value: string): Element<ValueType>;
-    setBackgroundColor(color: string): Element<ValueType>;
-    setBorderColor(color: string): Element<ValueType>;
-    setClass(classType: string): Element<ValueType>;
-    setTextColor(color: string): Element<ValueType>;
-    setHeight(height: number): Element<ValueType>;
-    setId(idType: string): Element<ValueType>;
+    hide(): Element<Type>;
+    makeInvisible(): Element<Type>;
+    makeVisible(): Element<Type>;
+    removeAttribute(attribute: string): Element<Type>;
+    removeChild(removed: Element<any>): Element<Type>;
+    setAttribute(attribute: string, value: string): Element<Type>;
+    setBackgroundColor(color: string): Element<Type>;
+    setBorderColor(color: string): Element<Type>;
+    setClass(classType: string): Element<Type>;
+    setTextColor(color: string): Element<Type>;
+    setHeight(height: number): Element<Type>;
+    setId(idType: string): Element<Type>;
     setLeft(left: string | number): void;
-    setOpacity(opacity: number): Element<ValueType>;
-    setSpacing(spacing?: number): Element<ValueType>;
-    setText(text: string): Element<ValueType>;
-    setValue(value: ValueType): Element<ValueType>;
-    setWidth(width: any): Element<ValueType>;
-    show(): Element<ValueType>;
-    transform(transformation: number): Element<ValueType>;
+    setOpacity(opacity: number): Element<Type>;
+    setSpacing(spacing?: number): Element<Type>;
+    setText(text: string): Element<Type>;
+    setValue(value: Type): Element<Type>;
+    setWidth(width: any): Element<Type>;
+    show(): Element<Type>;
+    transform(transformation: number): Element<Type>;
     position(): ElementPosition;
+    [index: string]: any;
 }
 
-export interface Element<ValueType> extends ElementMethods<ValueType> {
+export interface Element<Type> extends ElementMethods<Type> {
 
     id: string;
-    value?: ValueType;
+    value?: Type;
     text?: string;
     type?: string;
     element: any;
-    children: Cache<Element<ValueType>>;
+    children: Cache<Element<Type>>;
     parent?: Element<any>;
 }
 
@@ -62,7 +65,7 @@ export default (function() {
 
     const visible: number = 1;
     const invisible: number = 0;
-    const {isNumber}: TypeChecker = typeChecker();
+    const {isNumber, isString}: TypeChecker = typeChecker();
     const {publish}: PubSub = notifications();
     const changeOpacity = (element: any, opacity: number): void => {
 
@@ -84,7 +87,7 @@ export default (function() {
 
             const {children, element}: any = this;
 
-            children.add(newAddition);
+            children.add(newAddition.id, newAddition);
             element.appendChild(newAddition.element);
             newAddition.parent = this;
 
@@ -238,7 +241,7 @@ export default (function() {
         },
         show(): any {
 
-            this.display(this.element);
+            this.display(null);
 
             return this;
         },
@@ -260,12 +263,31 @@ export default (function() {
                 top: removePx(top),
             };
         },
+        clear(): Element<any> {
+
+            const element: any = this.element;
+
+            while (element.firstChild) {
+
+                element.removeChild(element.firstChild);
+            }
+
+            return this;
+        },
+        removeAttribute(attribute: string): Element<any> {
+
+            if (isString(attribute)) {
+
+                this.element.setAttribute(attribute);
+            }
+            return this;
+        },
     };
 
-    return function<ValueType>(id: string, type: string, value?: ValueType): Element<ValueType> {
+    return function<Type>(id: string, type: string, value?: Type): Element<Type> {
 
         const element: any = document.createElement(type);
-        const children: Cache<Element<ValueType>> = createCache<Element<ValueType>>();
+        const children: Cache<Element<Type>> = createCache<Element<Type>>();
 
         element.setAttribute("id", id);
 

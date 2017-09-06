@@ -5,7 +5,7 @@ import getSettings from "../../settings/settings";
 import {Dictionary} from "../../tools/dictionary";
 import notifications, {PubSub} from "../../tools/pubSub";
 import singleton from "../../tools/singleton";
-import createCanvas, {Canvas} from "../animation/canvas";
+import createCanvas, {Canvas} from "../canvas/canvas";
 import cursorController, {CursorController} from "../controller/cursorController";
 import dom from "../dom/dom";
 

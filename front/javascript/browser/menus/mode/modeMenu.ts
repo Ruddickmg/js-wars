@@ -1,7 +1,7 @@
 import getSettings from "../../../settings/settings";
 import {Dictionary} from "../../../tools/dictionary";
 import notifications, {PubSub} from "../../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import createHsl, {Hsl} from "../../color/hsl";
 import createElement, {Element} from "../../dom/element";
 import createList, {List} from "../../dom/list";
@@ -44,7 +44,7 @@ export default function() {
         return createModeElement(id, options);
     });
     const modeElements: List<ModeElement> = createList<ModeElement>(gameModes);
-    const selector: SelectionHandler = createSelector<ModeElement>(...gameModes);
+    const selector: SelectionHandler<ModeElement> = createSelector<ModeElement>(modeElements);
     const currentMode: ModeElement = modeElements.getCurrentElement();
 
     const isOption = (list: any): boolean => isDefined(list) && list.type === optionType;
@@ -85,7 +85,7 @@ export default function() {
 
     const subscription: number = subscribe(keyEvent, (): void => {
 
-        const mode: any = selector.selected().getValue();
+        const mode: any = selector.getSelected().getValue();
 
         if (keyboard.pressedEnter() && isSelectable(mode)) {
 
@@ -105,7 +105,7 @@ export default function() {
 
         selectMode(selected, previous);
 
-    }).horizontal(selectMode);
+    }).horizontal(selectMode).start();
 
     rotateMenuElements(modeElements);
     selectMode(currentMode, currentMode);

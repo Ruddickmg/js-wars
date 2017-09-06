@@ -2,9 +2,9 @@ import createDimensions, {Dimensions} from "../../game/coordinates/dimensions";
 import createPosition, {Position} from "../../game/coordinates/position";
 import createCache, {Cache} from "../../tools/cache";
 import notifications, {PubSub} from "../../tools/pubSub";
+import createCanvas, {Canvas} from "../canvas/canvas";
 import screenConfiguration from "../configuration/screenConfig";
 import animations, {Animations} from "./animations";
-import createCanvas, {Canvas} from "./canvas";
 import createLineTool, {DrawingTool, LineController} from "./lineTool";
 
 export interface DrawingController {
@@ -54,7 +54,7 @@ export default function(dimensions: Dimensions, currentScreenPosition: Position)
 
         return (coordinate * dimension) - (position * dimension);
     };
-    const drawToCanvas = (name: string, {x, y}: Position, canvas: Canvas): Canvas => {
+    const drawToCanvas = (name: string, {x, y}: Position, canvas: Canvas<any>): Canvas<any> => {
 
         const drawing: any = canvas.context();
         const line: DrawingTool = lineTool(x, y);
@@ -64,21 +64,21 @@ export default function(dimensions: Dimensions, currentScreenPosition: Position)
 
         return canvas;
     };
-    const createImage = (name: string): Canvas => {
+    const createImage = (name: string): Canvas<any> => {
 
         const width: number = offsetDrawing(gridSquare.width);
         const height: number = offsetDrawing(gridSquare.height);
 
         return createCanvas(name, createDimensions(width, height));
     };
-    const drawImage = (name: string): Canvas => {
+    const drawImage = (name: string): Canvas<any> => {
 
         const x: number = centerDrawing(gridSquare.width);
         const y: number = centerDrawing(gridSquare.height);
 
         return drawToCanvas(name, createPosition(x, y), createImage(name));
     };
-    const drawImageToCanvas = (name: any, {x, y}: Position, canvas: Canvas): void => {
+    const drawImageToCanvas = (name: any, {x, y}: Position, canvas: Canvas<any>): void => {
 
         const image: any = cacheOrCreateDrawing(name);
         const position: Position = createPosition(
@@ -111,13 +111,13 @@ export default function(dimensions: Dimensions, currentScreenPosition: Position)
         return {left, right, top, bottom};
     };
 
-    const fill = (drawing: any, canvas: Canvas): void => {
+    const fill = (drawing: any, canvas: Canvas<any>): void => {
 
         const {left, right, top, bottom}: any = getScreenDimensions();
 
-        let position;
-        let x;
-        let y;
+        let position: Position;
+        let x: number;
+        let y: number;
 
         for (x = right; x >= left; x -= 1) {
 

@@ -60,17 +60,13 @@ export default function(app: any, rooms: Rooms, clients: ClientHandler, root: st
         res.end();
     });
 
-    app.get("/games/saved/:id", (req: any, res: any): void => {
+    app.get("/games/saved/:id", (req: any): void => {
 
         const id: string = req.params.id;
 
         backend.getGames(id)
-            .then((game: Game[]) => {
-
-                res.json(game);
-                rooms.matchRunningGames(game);
-            })
-            .catch((error: Error) => publish(errorEventId, error));
+            .then((game: Game[]) => rooms.matchRunningGames(game))
+            .catch((error: Error): any => publish(errorEventId, error));
     });
 
     app.get("/maps/type/:category", (req: any, res: any): void => {
@@ -84,10 +80,8 @@ export default function(app: any, rooms: Rooms, clients: ClientHandler, root: st
 
     app.post("/maps/save", (req: any, res: any): void => {
 
-        // TODO validate
-
         backend.saveMap(req.body)
-            .then((map) => res.json(map))
+            .then((response: any) => res.json(response))
             .catch((error: Error) => publish(errorEventId, error));
     });
 

@@ -5,7 +5,7 @@ import {Dictionary} from "../../tools/dictionary";
 import invert from "../../tools/invertObject";
 import notifications, {PubSub} from "../../tools/pubSub";
 import single from "../../tools/singleton";
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 
 interface Keys {
 

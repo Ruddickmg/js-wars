@@ -1,31 +1,37 @@
-import matrixTracker, {MatrixTracker} from "./matrixTracking";
 import {Dimensions} from "../game/coordinates/dimensions";
 import {Position} from "../game/coordinates/position";
-import {MapElement} from "../game/map/elements/defaults";
-// import mapController from "../game/map/mapController";
-import {MatrixMap} from "../game/map/mapMatrix";
-import createHeap, {BinaryHeap} from "./binaryHeap";
-// import unitHandler from ""; TODO get unit handler situated
+import createHeap, {BinaryHeap} from "./heaps/binaryHeap";
+import {Matrix} from "./matrix/matrix";
+import matrixTracker, {MatrixTracker} from "./matrix/matrixTracking";
 
-export interface PathFinder {
+export interface PathFinder<Type> {
 
-    getAllReachablePositions(element: MapElement, movement?: number): Position[];
-    getShortestPath(element: MapElement, target: Position): Position[];
+    getAllReachablePositions(element: Type, movement?: number): Position[];
+    getShortestPath(element: Type, target: Position): Position[];
 }
 
-export default function(map: MatrixMap): PathFinder {
+type GetCost = <Type>(element: Type, neighbor: any) => number;
+type GetAllowed = <Type>(element: Type) => number;
+type GetPosition = <Type>(element: Type) => Position;
 
-    // TODO unit handler situated
-    const {allowedMovement, movementCost} = unitHandler;
-    const dimensions: Dimensions = map.dimensions();
+export default function<Type>(
+    matrix: Matrix<Type>,
+    dimensions: Dimensions,
+    positionOfElement: GetPosition,
+    movementCost: GetCost,
+    allowedMovement: GetAllowed,
+): PathFinder<Type> {
 
-    const getNeighbors = (position: Position, visited: MatrixTracker): MapElement[] => {
+    const abs = Math.abs;
+    const floor = Math.floor;
+    const random = Math.random;
+
+    const getNeighbors = (position: Position, visited: MatrixTracker<Type>): Type[] => {
 
         return position.neighbors(dimensions)
-            .reduce((neighbors: MapElement[], currentPosition: Position): MapElement[] => {
+            .reduce((neighbors: Type[], currentPosition: Position): Type[] => {
 
-                // TODO make sure this works changed from "topElementAtPosition" in "mapController"
-                const neighbor: MapElement = map.position(currentPosition);
+                const neighbor: Type = matrix.get(currentPosition);
 
                 if (neighbor && !visited.getElement(neighbor)) {
 
@@ -44,20 +50,20 @@ export default function(map: MatrixMap): PathFinder {
         const distanceFromOriginX = origin.x - target.x;
         const distanceFromOriginY = origin.y - target.y;
 
-        const cross = Math.abs((distanceToTargetX * distanceFromOriginY) - (distanceFromOriginX * distanceToTargetY));
-        const rand = Math.floor(Math.random() + 1) / 1000;
+        const cross = abs((distanceToTargetX * distanceFromOriginY) - (distanceFromOriginX * distanceToTargetY));
+        const rand = floor(random() + 1) / 1000;
 
-        return ((Math.abs(distanceToTargetX) + Math.abs(distanceToTargetY)) + (cross * rand));
+        return ((abs(distanceToTargetX) + abs(distanceToTargetY)) + (cross * rand));
     };
 
-    const getPath = (currentElement: MapElement, visited: MatrixTracker): Position[] => {
+    const getPath = (currentElement: Type, visited: MatrixTracker<Type>): Position[] => {
 
         const path: Position[] = [];
-        let current: MapElement = currentElement;
+        let current: Type = currentElement;
 
         while (current) {
 
-            path.push(current.position);
+            path.push(positionOfElement(current));
 
             current = visited.getParent(current);
         }
@@ -65,14 +71,14 @@ export default function(map: MatrixMap): PathFinder {
         return path.reverse();
     };
 
-    const getAllReachablePositions = (element: MapElement, movement?: number): Position[] => {
+    const getAllReachablePositions = (element: Type, movement?: number): Position[] => {
 
-        const visited: MatrixTracker = matrixTracker();
+        const visited: MatrixTracker<Type> = matrixTracker<Type>();
         const open: BinaryHeap<any> = createHeap<any>(visited.getF);
-        const reachable: Position[] = [element.position];
+        const reachable: Position[] = [positionOfElement(element)];
         const allowed = movement || allowedMovement(element);
 
-        let current: MapElement;
+        let current: Type;
         let cost: number;
 
         open.push(visited.close(element));
@@ -81,7 +87,7 @@ export default function(map: MatrixMap): PathFinder {
 
             current = open.pop();
 
-            getNeighbors(current.position, visited).forEach((neighbor: MapElement) => {
+            getNeighbors(positionOfElement(current), visited).forEach((neighbor: Type) => {
 
                 cost = (visited.getF(current) || 0) + movementCost(neighbor, element);
 
@@ -91,7 +97,7 @@ export default function(map: MatrixMap): PathFinder {
 
                     open.push(visited.getElement(neighbor));
 
-                    reachable.push(neighbor.position);
+                    reachable.push(positionOfElement(neighbor));
                 }
             });
         }
@@ -99,14 +105,14 @@ export default function(map: MatrixMap): PathFinder {
         return reachable;
     };
 
-    const getShortestPath = (element: MapElement, target: Position): Position[] => {
+    const getShortestPath = (element: Type, target: Position): Position[] => {
 
-        const visited: MatrixTracker = matrixTracker();
-        const open: BinaryHeap<any> = createHeap<any>(visited.getF);
-        const allowed = movementCost(element);
+        const visited: MatrixTracker<Type> = matrixTracker<Type>();
+        const open: BinaryHeap<Type> = createHeap<Type>(visited.getF);
+        const allowed = allowedMovement(element);
 
-        let current: MapElement;
-        let position = element.position;
+        let current: Type;
+        let position = positionOfElement(element);
 
         visited.close(element).setF(element, manhattanDistance(position, position, target));
         open.push(element);
@@ -114,14 +120,14 @@ export default function(map: MatrixMap): PathFinder {
         while (open.size()) {
 
             current = open.pop();
-            position = current.position;
+            position = positionOfElement(current);
 
             if (position.on(target)) {
 
                 return getPath(current, visited);
             }
 
-            getNeighbors(position, visited).forEach((neighbor: MapElement): void => {
+            getNeighbors(position, visited).forEach((neighbor: Type): void => {
 
                 const currentCost: number = visited.getG(current) || 0;
                 const costOfNeighbor: number = visited.getG(neighbor);
@@ -133,8 +139,8 @@ export default function(map: MatrixMap): PathFinder {
                     visited.close(neighbor)
                         .setG(neighbor, totalCost)
                         .setF(neighbor, totalCost + manhattanDistance(
-                                neighbor.position,
-                                element.position,
+                                positionOfElement(neighbor),
+                                positionOfElement(element),
                                 target,
                             ))
                         .setParent(neighbor, current);

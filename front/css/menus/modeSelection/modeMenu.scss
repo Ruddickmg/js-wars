@@ -110,6 +110,8 @@ li[position=selected] {
         line-height: 75%;
         font-size: 690%;
         font-weight: bold;
+        position: relative;
+        top: -7%;
     }
 
     .modeBackground {
@@ -126,7 +128,8 @@ li[position=selected] {
 
        background-color: transparent;
        text-decoration: underline;
-       border-bottom: 16px solid;
+       border-bottom: 24px solid;
+       width: 97%;
     }
 
     .modeOptions {

@@ -2,7 +2,7 @@ import {expect} from "chai";
 import {Dimensions} from "../../javascript/coordinates/dimensions";
 import createPosition, {Coordinates, Position} from "../../javascript/coordinates/position";
 import {Map} from "../../../javascript/game/map/map";
-import testMap from "../map/testMap";
+import testMap from "../../../javascript/game/map/testMap";
 
 describe("position", () => {
 

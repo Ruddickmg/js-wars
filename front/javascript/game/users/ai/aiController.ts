@@ -66,7 +66,7 @@ export default function(rooms: Rooms) {
 
     return {
         add,
-        get,
+        getMap: get,
         remove,
     };
 }

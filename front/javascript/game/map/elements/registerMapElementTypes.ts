@@ -1,4 +1,4 @@
-import typeChecker from "../../../tools/typeChecker";
+import typeChecker from "../../../tools/validation/typeChecker";
 import {Map} from "../map";
 import {MapElement} from "./defaults";
 

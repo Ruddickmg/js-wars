@@ -1,17 +1,15 @@
-import buildingStats from "../game/map/elements/building/buildingDefaults";
-import terrainStats from "../game/map/elements/terrain/terrainDefaults";
-import unitStats from "../game/map/elements/unit/unitDefinitions";
 import dictionary, {Dictionary} from "../tools/dictionary";
 import single from "../tools/singleton";
-import colorSettings from "./colors/colorSettings";
+import colors from "./colors/colorSettings";
 import canvasSettings from "./dom/canvas";
+import errorEvents from "./error/errorEvents";
 import factorsAllowingKeyboardInput from "./keyboard/factorsAllowingKeyboardInput";
 import factorsDenyingKeyboardInput from "./keyboard/factorsDenyingKeyboardInput";
 import keyCodeMappings from "./keyboard/keyCodeMappings";
-import categories from "./map/categories";
-import elements from "./map/elements";
-import restrictions from "./map/terrainRestriction";
-import modeSettings from "./menu/mode";
+import mode from "./menu/mode";
+import map from "./map/mapSettings";
+import hoverInfo from "./hud/hoverInfo";
+import position from "./hud/position";
 
 export default single<Dictionary>(() => dictionary({
 
@@ -19,26 +17,11 @@ export default single<Dictionary>(() => dictionary({
     canvas: canvasSettings,
     capture: 20,
 
-    categories: {
-        eight: {type: "8 Player"},
-        five: {type: "5 Player"},
-        four: {type: "4 Player"},
-        preDeployed: {type: "Pre-Deployed"},
-        seven: {type: "7 Player"},
-        six: {type: "6 Player"},
-        three: {type: "3 Player"},
-        two: {type: "1 on 1"},
-    },
-
-    colors: colorSettings,
+    colors,
 
     combineAbleProperties: ["fuel", "health", "ammo"],
 
     cursor: {
-        scroll: {
-            x: 0,
-            y: 0,
-        },
         speed: 50,
         x: 6,
         y: 4,
@@ -46,16 +29,7 @@ export default single<Dictionary>(() => dictionary({
 
     debug: true,
     defaultHealth: 100,
-    defaults: {
-
-        category: () => 0,
-        cursorMoved: () => true,
-        lightness: () => 50,
-        menuOptionsActive: () => false,
-        saturation: () => 0,
-        scrollTime: () => 0,
-        selectActive: () => false,
-    },
+    errorEvents,
     game: {
 
         capt: "off",
@@ -67,14 +41,10 @@ export default single<Dictionary>(() => dictionary({
         weather: "random",
     },
 
-    hoverInfo: ["ammo", "showHealth", "health", "name", "fuel", "defense", "canvas"],
-
-    // which actions can be displayed
-    hudHeight: 200,
-    hudLeft: 1050,
-
-    // spacing / positioning of mode menu selection elements
-    hudWidth: 120,
+    hud: {
+        hoverInfo,
+        position,
+    },
 
     keys: {
 
@@ -83,34 +53,8 @@ export default single<Dictionary>(() => dictionary({
         factorsDenyingKeyboardInput,
     },
 
-    map: {
-        categories,
-        elements,
-        restrictions,
-    },
-
-    mapCategories: ["preDeployed", "two", "three", "four", "five", "six", "seven", "eight"],
-
-    // cursor settings
-    mapElementRestrictions: {
-
-        bridge: ["bridge"],
-        pipe: ["pipe"],
-        reef: ["sea", "reef", "shoal"],
-        river: ["river"],
-        road: ["road"],
-        sea: ["sea", "reef", "shoal"],
-        shoal: ["sea", "reef", "shoal"],
-    },
-
-    mapElements: {
-
-        buildings: buildingStats,
-        terrain: terrainStats,
-        units: unitStats,
-    },
-
-    mode: modeSettings,
+    map,
+    mode,
 
     // which attributes of objects ( unit, buildings etc ) will be displayed in hud
     notSelectable: ["terrain", "hq", "city"],

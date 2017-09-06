@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import {default as identifier, Identifier} from "../../javascript/tools/identity";
-import random from "../../javascript/tools/random";
+import random from "../../javascript/tools/calculations/random";
 
 describe("identity", () => {
 

@@ -1,5 +1,5 @@
 import composer, {Composer} from "../../tools/composer";
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 
 export type UserId = number | string;
 

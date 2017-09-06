@@ -1,5 +1,5 @@
 import settings from "../../settings/settings";
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import {areDimensions, Dimensions} from "../coordinates/dimensions";
 import {Building} from "./elements/building/building";
 import {Terrain} from "./elements/terrain/terrain";
@@ -17,7 +17,7 @@ export interface Map {
     terrain: Terrain[];
     buildings: Building[];
     units: Unit[];
-    creator: string;
+    creator: number;
 }
 
 export function isMap(element: any): boolean {
@@ -38,18 +38,18 @@ export function isMap(element: any): boolean {
 
 export default (function() {
 
-    const categories: any = settings().get("mapCategories");
+    const categories: any = settings().toObject("map", "numberToCategoryMappings");
 
     return function(
 
         name: string,
+        creator: number,
         maximumAmountOfPlayers: number,
         dimensions: Dimensions,
-        id?: MapId,
         terrain: Terrain[] = [],
         buildings: Building[] = [],
         units: Unit[] = [],
-        creator: string = "none",
+        id?: MapId,
     ) {
         const category: string = units.length ? "preDeployed" : categories[maximumAmountOfPlayers];
 

@@ -5,18 +5,19 @@ export interface GameMenu<Type> extends Element<Type> {
     innerScreen: Element<Type>;
 }
 
-export default (function(): any {
+export default function<Type>(id: string, type: string, value?: any): GameMenu<Type> {
 
-    let counter: number = 1;
+    const display: Element<Type> = createElement<Type>(id, type, value).setClass("menuScreen");
+    const innerScreen: Element<Type> = createElement<Type>(`${id}InnerScreen`, "div")
+        .setClass("innerScreen");
 
-    return function<Type>(id: string, type: string, value?: any): GameMenu<Type> {
+    display.appendChild(innerScreen);
+    display.appendChild = function(child: Element<Type>): GameMenu<Type> {
 
-        const display: Element<Type> = createElement<Type>(id, type, value);
-        const innerScreen: Element<Type> = createElement<Type>(`innserScreen#${counter++}`, "div")
-            .setClass("innerScreen");
+        innerScreen.appendChild(child);
 
-        display.appendChild(innerScreen);
-
-        return Object.assign(display, {innerScreen});
+        return this;
     };
-}());
+
+    return Object.assign(display, {innerScreen});
+}

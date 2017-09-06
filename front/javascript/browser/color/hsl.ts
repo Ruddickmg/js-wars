@@ -1,5 +1,5 @@
 import single from "../../tools/singleton";
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 
 interface HslPrototype {
 

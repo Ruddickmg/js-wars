@@ -19,21 +19,21 @@ export default single(function() {
     const settings: Dictionary = getSettings();
     const buildingSettings: Dictionary = settings.get("typesOfUnitsABuildingCanHeal");
     const typesOfMapElements: Dictionary = settings.get("typesOfMapElements");
-    const allMapElements: Dictionary = settings.get("mapElements");
+    const mapElements: Dictionary = settings.get("map", "elements");
 
     const get = (element: any): any => {
 
         const type: string = element.type.toLowerCase();
         const name: string = element.name.toLowerCase();
 
-        return allMapElements.get(type, name);
+        return mapElements.get(type, name);
     };
 
     const property = (element: Element): any => get(element).properties;
 
     const name = (type: string): string => {
 
-        return allMapElements.reduce((nameOfElement: string, elements: any) => {
+        return mapElements.reduce((nameOfElement: string, elements: any) => {
 
             const element: MapElement = elements[type];
 
@@ -71,7 +71,7 @@ export default single(function() {
         return property(unit).movementCosts[key || nameOfMapElement];
     };
 
-    const find = (type: string) => allMapElements.get("unit", type);
+    const find = (type: string) => mapElements.get("unit", type);
     const ammo = (unit: Element): number => property(unit).ammo;
     const fuel = (unit: Element): number => property(unit).fuel;
     const movement = (unit: Element): number => property(unit).movement;

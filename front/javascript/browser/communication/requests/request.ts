@@ -1,14 +1,14 @@
 import curry from "../../../tools/curry";
 import single from "../../../tools/singleton";
-import typeChecker, {TypeChecker} from "../../../tools/typeChecker";
+import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 
-export type IncompleteRequest = (url: string) => Promise<any>;
+export type IncompleteRequest = (input: any) => Promise<any>;
 
 export interface Request {
 
-    get(input: any, url?: string): Promise<any> | IncompleteRequest;
-    post(input: any, url?: string): Promise<any> | IncompleteRequest;
-    del(input: any, url?: string): Promise<any> | IncompleteRequest;
+    get(url: string, input?: any): Promise<any> | IncompleteRequest;
+    post(url: string, input?: any): Promise<any> | IncompleteRequest;
+    del(url: string, input?: any): Promise<any> | IncompleteRequest;
 }
 
 export default single<Request>(function() {
@@ -72,9 +72,9 @@ export default single<Request>(function() {
         });
     };
 
-    const del = curry((input: any, url?: string) => ajaj(input, "DELETE", `${url}/${input}`));
-    const get = curry((input: any, url?: string) => ajaj(input, "GET", `${url}/${input}`));
-    const post = curry((input: any, url?: string) => ajaj(input, "POST", url));
+    const del = curry((url: string, input?: any) => ajaj(input, "DELETE", `${url}/${input}`));
+    const get = curry((url: string, input?: any) => ajaj(input, "GET", `${url}/${input}`));
+    const post = curry((url: string, input?: any) => ajaj(input, "POST", url));
 
     return {
 

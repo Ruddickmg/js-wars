@@ -1,36 +1,40 @@
 import notifications, {PubSub} from "../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../tools/typeChecker";
+import createStack, {Stack} from "../../tools/stack/listStack";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import createList, {List} from "../dom/list";
 import keyboardInput, {KeyBoard} from "../input/keyboard";
 
-interface SelectorMethods {
+interface SelectorMethods<Type> {
 
-    selectVertically(): SelectionHandler;
-    selectHorizontally(): SelectionHandler;
-    vertical(selectionHandler: Handler): SelectionHandler;
-    horizontal(selectionHandler: Handler): SelectionHandler;
-    stop(): SelectionHandler;
+    selectVertically(): SelectionHandler<Type>;
+    selectHorizontally(): SelectionHandler<Type>;
+    setSelections(selections: List<Type>): SelectionHandler<Type>;
+    vertical(selectionHandler: Handler): SelectionHandler<Type>;
+    horizontal(selectionHandler: Handler): SelectionHandler<Type>;
+    stop(): SelectionHandler<Type>;
 }
 
-export interface SelectionHandler extends SelectorMethods {
+export interface SelectionHandler<Type> extends SelectorMethods<Type> {
 
-    selected(): any;
-    select(): any;
+    getSelected(): Type;
+    select(): void;
+    start(): SelectionHandler<Type>;
 }
 
 type Handler = (selected: any, previous: any, selections: any) => any;
 
-export default function<OuterType>(...initialSelections: OuterType[]): SelectionHandler {
+export default function<Type>(container: List<Type> = createList<any>()): SelectionHandler<Type> {
 
     const keyEvent: string = "keyPressed";
-    const {isFunction, isDefined}: TypeChecker = typeChecker();
-    const container: List<OuterType> = createList<OuterType>(initialSelections);
-    const {subscribe, publish, unsubscribe}: PubSub = notifications();
     const keyboard: KeyBoard = keyboardInput();
+    const previous: Stack<List<Type>> = createStack<List<Type>>();
+    const {isFunction, isDefined}: TypeChecker = typeChecker();
+    const {subscribe, publish, unsubscribe}: PubSub = notifications();
 
+    let subscription: number;
     let isVertical: boolean = true;
-    let selections: List<any> = container;
-    let current: any = selections.getCurrentElement();
+    let selections: List<Type> = container;
+    let current: Type = selections.getCurrentElement();
     let verticalSelectionHandler: Handler;
     let horizontalSelectionHandler: Handler;
 
@@ -39,32 +43,47 @@ export default function<OuterType>(...initialSelections: OuterType[]): Selection
 
         const selected = movingForward ? selections.next() : selections.previous();
 
-        handleSelection(selected, current, selections);
-
-        current = selected;
-    };
-    const listSelection = (handleSelection: Handler): any => {
-
-        const target: List<any> = selections.getCurrentElement();
-        const list: List<any> = isList(target) ? target : container;
-        const selected: any = list.getCurrentElement();
-
-        if (isDefined(selected)) {
+        if (isDefined(selected) && isDefined(current)) {
 
             handleSelection(selected, current, selections);
-
-            selections = list;
             current = selected;
         }
     };
-    const handleKeyPress = (movementHandler: Handler, isOuter: boolean, moveForward: boolean): any => {
+    const listSelection = (handleSelection: Handler): void => {
 
-        return isOuter ?
-            elementSelection(movementHandler, !moveForward) :
-            listSelection(movementHandler);
+        let list: any;
+        let selected: any;
+
+        const target: Type = selections.getCurrentElement();
+
+        if (isList(target)) {
+
+            list = target;
+            previous.push(selections);
+
+        } else if (!previous.isEmpty()) {
+
+            list = previous.pop();
+        }
+
+        if (isDefined(list)) {
+
+            selected = list.getCurrentElement();
+
+            if (isDefined(selected)) {
+
+                handleSelection(selected, current, selections);
+
+                selections = list;
+                current = selected;
+            }
+        }
     };
+    const handleKeyPress = (movementHandler: Handler, isOuter: boolean, moveForward: boolean): void => {
 
-    const select = (): any => {
+        isOuter ? elementSelection(movementHandler, !moveForward) : listSelection(movementHandler);
+    };
+    const select = (): void => {
 
         const pressedUp: boolean = keyboard.pressedUp();
         const pressedDown: boolean = keyboard.pressedDown();
@@ -78,27 +97,39 @@ export default function<OuterType>(...initialSelections: OuterType[]): Selection
 
         if (pressedLeft || pressedRight) {
 
-            handleKeyPress(horizontalSelectionHandler, !isVertical, pressedRight);
+            handleKeyPress(horizontalSelectionHandler, !isVertical, pressedLeft);
         }
     };
+    const getSelected = (): Type => current;
+    const start = function(): SelectionHandler<Type> {
 
-    const selected = (): any => current;
-    const subscription: any = subscribe(keyEvent, select);
-    const methods: SelectorMethods = {
+        subscription = subscribe(keyEvent, select) as number;
 
-        selectVertically(): SelectionHandler {
+        return this;
+    };
+    const methods: SelectorMethods<Type> = {
+
+        selectVertically(): SelectionHandler<Type> {
 
             isVertical = true;
 
             return this;
         },
-        selectHorizontally(): SelectionHandler {
+        selectHorizontally(): SelectionHandler<Type> {
 
             isVertical = false;
 
             return this;
         },
-        vertical(selectionHandler: Handler): SelectionHandler {
+        setSelections(newSelections: List<Type>): SelectionHandler<Type> {
+
+            selections = newSelections;
+            current = selections.getCurrentElement();
+            previous.clear();
+
+            return this;
+        },
+        vertical(selectionHandler: Handler): SelectionHandler<Type> {
 
             if (isFunction(selectionHandler)) {
 
@@ -111,7 +142,7 @@ export default function<OuterType>(...initialSelections: OuterType[]): Selection
 
             return this;
         },
-        horizontal(selectionHandler: Handler): SelectionHandler {
+        horizontal(selectionHandler: Handler): SelectionHandler<Type> {
 
             if (isFunction(selectionHandler)) {
 
@@ -124,7 +155,7 @@ export default function<OuterType>(...initialSelections: OuterType[]): Selection
 
             return this;
         },
-        stop(): SelectionHandler {
+        stop(): SelectionHandler<Type> {
 
             unsubscribe(subscription, keyEvent);
 
@@ -132,5 +163,5 @@ export default function<OuterType>(...initialSelections: OuterType[]): Selection
         },
     };
 
-    return Object.assign(methods, {select, selected});
+    return Object.assign(methods, {select, getSelected, start});
 }

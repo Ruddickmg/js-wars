@@ -1,21 +1,21 @@
 /*  inner map/game select css stuff */
 
 .numberOfBuildingsItem,
-.selectCategoryScreenItem,
-.selectCategoryScreenItem li {
+.categorySelectionElement,
+.categorySelectionElement li {
   white-space: nowrap;
   display: inline-block;
 }
 
-.selectCategoryScreenItem {
+.categorySelectionElement {
   transition: left 0.3s ease;
   position: absolute;
 }
 
-.selectCategoryScreenItem [pos=right] {
+.categorySelectionElement [pos=right] {
   left:100%;
 }
 
-.selectCategoryScreenItem [pos=left] {
+.categorySelectionElement [pos=left] {
   left:-100%;
 }

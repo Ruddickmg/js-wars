@@ -68,7 +68,7 @@ def maps_toDict(maps):
 			return {
 				"name":maps.name,
 				"id":maps.id,
-				"players":maps.players,
+				"maximumAmountOfPlayers":maps.maximumAmountOfPlayers,
 				"buildings":maps.buildings,
 				"dimensions":maps.dimensions, 
 				"terrain":maps.terrain,
@@ -103,11 +103,15 @@ def get_maps(category):
 	session = Session()
 	try:
 		if category:
+			print ("category: ", category)
+
 			maps = list(map(maps_toDict, Maps.query.filter(Maps.category == category).all()))
-			if(maps):
+
+			print (maps)
+			if (maps):
 				return json.dumps(maps, separators=(',',':'))
 
-		return jsonify({"error":"Not found"})
+		return jsonify({"error":"404"})
 
 	except Exception as error:
 		Teardown(error, session);
@@ -118,17 +122,19 @@ def get_maps(category):
 
 @app.route("/maps/save", methods=["POST"])
 def add_map():
+
 	session = Session();
-	maps = request.get_json()
-
-	if len(maps["units"]) > 0:
-		maps["category"] = "preDeployed"
-
+	
 	try:
+		maps = request.get_json()
+
+		if len(maps["units"]) > 0:
+			maps["category"] = "preDeployed"
+	
 		newMap = Maps(
 			maps["name"],
 			maps["category"],
-			maps["players"],
+			maps["maximumAmountOfPlayers"],
 			maps["dimensions"],
 			maps["terrain"],
 			maps["buildings"],
@@ -136,8 +142,10 @@ def add_map():
 		)
 
 		creator = User.query.get(maps['creator'])
+
 		if creator:
 			newMap.creator = creator
+
 		session.add(newMap)
 		session.commit()
 
@@ -155,7 +163,6 @@ def maps_remove(id):
 	session = Session()
 
 	try:
-
 		maps = Maps.query.get(id)
 
 		if maps:

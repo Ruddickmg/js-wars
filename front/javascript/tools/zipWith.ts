@@ -1,27 +1,47 @@
-export default function(
+import notifications, {PubSub} from "./pubSub";
+import typeChecker, {TypeChecker} from "./validation/typeChecker";
 
-    firstInputArray: any[],
-    secondInputArray: any[],
-    callback: (firstValue?: any, secondValue?: any, index?: number, firstArray?: any[], secondArray?: any[]) => any,
+export default (function() {
 
-): any[] {
+    const {publish}: PubSub = notifications();
+    const {isArray}: TypeChecker = typeChecker();
 
-    let firstValue: any;
-    let secondValue: any;
-    let index: number;
+    return function(
 
-    const length: number = Math.min(firstInputArray.length, secondInputArray.length);
-    const firstArray: any[] = firstInputArray.slice();
-    const secondArray: any[] = secondInputArray.slice();
-    const zippedArray: any[] = [];
+        firstInputArray: any[],
+        secondInputArray: any[],
+        callback: (firstValue?: any, secondValue?: any, index?: number, firstArray?: any[], secondArray?: any[]) => any,
 
-    for (index = 0; index < length; index += 1) {
+    ): any[] {
 
-        firstValue = firstInputArray[index];
-        secondValue = secondInputArray[index];
+        let firstValue: any;
+        let secondValue: any;
+        let firstArray: any[];
+        let secondArray: any[];
+        let index: number;
 
-        zippedArray[index] = callback(firstValue, secondValue, index, firstArray, secondArray);
-    }
+        const length: number = Math.min(firstInputArray.length, secondInputArray.length);
+        const zippedArray: any[] = [];
 
-    return zippedArray;
-}
+        if (isArray(firstInputArray) && isArray(secondInputArray)) {
+
+            firstArray = firstInputArray.slice();
+            secondArray = secondInputArray.slice();
+
+            for (index = 0; index < length; index += 1) {
+
+                firstValue = firstInputArray[index];
+                secondValue = secondInputArray[index];
+
+                zippedArray[index] = callback(firstValue, secondValue, index, firstArray, secondArray);
+            }
+
+            return zippedArray;
+        }
+
+        publish(
+            "error",
+            `invalid input passed to zipWith, firstArray: ${firstInputArray}, secondArray: ${secondInputArray}`,
+        );
+    };
+}());
