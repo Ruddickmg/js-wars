@@ -1,4 +1,4 @@
-import {Element} from "../dom/element";
+import {Element} from "../dom/element/element";
 
 export interface Highlighter {
     highlight(element: Element<any>): Highlighter;
@@ -8,19 +8,15 @@ export interface Highlighter {
 export default (function() {
 
     const highlighted: string = "highlighted";
-    const setHighlight = (element: Element<any>, highlight: string): void => {
-
-        element.setAttribute(highlighted, highlight);
-    };
     const highlight = function(element: Element<any>): Highlighter {
 
-        setHighlight(element, "true");
+        element.setAttribute(highlighted, "true");
 
         return this;
     };
     const deHighlight =  function(element: Element<any>): Highlighter {
 
-        setHighlight(element, null);
+        element.removeAttribute(highlighted);
 
         return this;
     };

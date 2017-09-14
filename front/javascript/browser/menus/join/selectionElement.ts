@@ -1,4 +1,4 @@
-import createElement, {Element} from "../../dom/element";
+import createElement, {Element} from "../../dom/element/element";
 
 export default function<Type>(id: string): Element<Type> {
 

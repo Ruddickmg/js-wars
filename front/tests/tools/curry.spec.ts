@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import curry from "../../javascript/tools/curry";
+import curry from "../../javascript/tools/function/curry";
 
 describe("curry", () => {
 

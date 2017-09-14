@@ -7,7 +7,7 @@
 import {User} from "./users/user";
 
 StatusHud = require("../huds/coStatusHud.js");
-Counter = require("../tools/counter.js");
+Counter = require("../tools/array/counter.js");
 Hud = require("../huds/hud.js");
 transmit = require("../sockets/transmitter.js");
 

@@ -1,4 +1,4 @@
-import createCache, {Cache} from "../../tools/cache";
+import createCache, {Cache} from "../../tools/storage/cache";
 import notifications, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import createCanvas, {Canvas} from "./canvas";

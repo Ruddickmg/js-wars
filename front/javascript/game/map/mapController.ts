@@ -1,5 +1,5 @@
 import settings from "../../settings/settings";
-import {Dictionary} from "../../tools/dictionary";
+import {Dictionary} from "../../tools/storage/dictionary";
 import notifier, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import createPosition, {Position} from "../coordinates/position";

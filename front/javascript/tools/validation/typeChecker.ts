@@ -1,5 +1,6 @@
-import capitalizeFirstLetter from "../capitalizeFirstLetter";
-import single from "../singleton";
+import setName from "../function/setName";
+import single from "../storage/singleton";
+import capitalizeFirstLetter from "../stringManipulation/capitalizeFirstLetter";
 
 export interface TypeChecker {
 
@@ -13,7 +14,6 @@ export interface TypeChecker {
     isObject(element: any): boolean;
     isString(element: any): boolean;
     register(type: string, typeCheck: (object: any) => boolean): TypeChecker;
-    registerChecksOnProperty(property: string, types: string[]): TypeChecker;
     [index: string]: any;
 }
 
@@ -51,17 +51,12 @@ export default single<TypeChecker>(function(): TypeChecker {
 
     const register = function(type: string, typeCheck: (object: any) => boolean): TypeChecker {
 
-        this[formatToIsType(type)] = typeCheck;
+        const formattedName: string = formatToIsType(type);
 
-        return this;
-    };
+        if (isString(type) && isFunction(typeCheck)) {
 
-    const registerChecksOnProperty = function(property: string, types: string[]) {
-
-        types.forEach((type: string): void => {
-
-            this[formatToIsType(type)] = (element: any): boolean => element[property] === type;
-        });
+            this[formattedName] = setName(typeCheck, formattedName);
+        }
 
         return this;
     };
@@ -78,6 +73,5 @@ export default single<TypeChecker>(function(): TypeChecker {
         isObject,
         isString,
         register,
-        registerChecksOnProperty,
     };
 });

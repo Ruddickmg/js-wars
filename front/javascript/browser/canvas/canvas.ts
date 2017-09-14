@@ -3,7 +3,7 @@ import {Position} from "../../game/coordinates/position";
 import getSettings from "../../settings/settings";
 import notifications, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
-import createElement, {Element} from "../dom/element";
+import createElement, {Element} from "../dom/element/element";
 
 export interface Canvas<Type> extends Element<Type> {
 

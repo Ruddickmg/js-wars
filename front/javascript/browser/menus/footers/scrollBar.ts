@@ -1,82 +1,54 @@
-import textWidthChecker, {TextWidthChecker} from "../../../tools/calculations/textWidth";
-import timeKeeper, {Time} from "../../../tools/calculations/time";
 import notifications, {PubSub} from "../../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
-import createElement, {Element} from "../../dom/element";
+import createElement, {Element} from "../../dom/element/element";
+import textScroller, {TextScroller} from "../../effects/scrollingText";
 
-export interface ScrollBar extends Element<string> {
+export interface ScrollBar extends Element<string>, TextScroller {
 
-    scroll(): void;
     setText(text: string): ScrollBar;
+    listen(): ScrollBar;
     stop(): ScrollBar;
 }
 
 export default function() {
 
-    const scrollingSpeed: number = 4;
-    const offScreen: number = 1;
-    const widthType: string = "client";
-    const amountToIncrementBy: number = 1;
-    const scrollBar: Element<any> = createElement("scrollBar", "footer");
+    let subscription: number;
+
+    const scrollingSpeed: number = 14;
+    const amountToIncrementBy: number = 2;
+    const {subscribe, unsubscribe}: PubSub = notifications();
     const text: Element<any> = createElement("scrollingInfo", "p");
+    const scrollBar: Element<any> = createElement("scrollBar", "footer")
+        .appendChild(text);
 
-    const calculator: TextWidthChecker = textWidthChecker();
-    const {isString}: TypeChecker = typeChecker();
-    const {subscribe}: PubSub = notifications();
-    const time: Time = timeKeeper();
-    const textPosition = (): number => text.position().left;
-    const textHasMovedOffScreen = (): boolean => {
+    const scroller: TextScroller = textScroller(text, scrollBar)
+        .setIncrement(amountToIncrementBy)
+        .setSpeed(scrollingSpeed) as TextScroller;
 
-        const limit: number = scrollBar.getWidth(widthType);
-        const position: number = textPosition();
-
-        return position > limit;
-    };
-    const widthOfText = (): number => calculator.calculateTextWidth(text.text, "30px").width;
-    const increase = (): void => move(amountToIncrementBy);
-    // const decrease = (): void => move(-amountToIncrementBy);
-    const reset = (): any => text.setLeft(-widthOfText() * offScreen);
-    const move = (movement: number): void => {
-
-        text.setLeft(textPosition() + movement);
-    };
     const setText = function(message: string): ScrollBar {
 
-        const position: number = textPosition();
-
-        text.setText(message);
-
-        position ? text.setLeft(position) : reset();
-
+        text.setText(message).setValue(message);
         scrollBar.setValue(message);
 
         return this;
     };
-    const scroll = (): void => {
+    const stop = function(): ScrollBar {
 
-        if (isString(text.text)) {
+        unsubscribe(subscription);
+        scroller.stop();
 
-            textHasMovedOffScreen() ? reset() : increase();
-
-            time.wait(scrollingSpeed).then(scroll);
-        }
+        return this;
     };
-    const stop = (): ScrollBar => {
+    const listen = function(): ScrollBar {
 
-        calculator.removeFromDom();
-        return setText(null);
+        subscription = subscribe("scrollText", setText) as number;
+
+        return this;
     };
 
-    calculator.attachToDom();
+    return Object.assign(Object.create(scroller), scrollBar, {
 
-    scrollBar.appendChild(text);
-
-    subscribe("scrollText", setText);
-
-    return Object.assign(scrollBar, {
-
-        scroll,
         setText,
         stop,
+        listen,
     });
 }

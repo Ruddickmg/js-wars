@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import random from "../../javascript/tools/calculations/random";
-import zipWith from "../../javascript/tools/zipWith";
+import zipWith from "../../javascript/tools/array/zipWith";
 
 describe("zipWith", () => {
 

@@ -1,6 +1,6 @@
 import settings from "../../settings/settings";
 import notifications, {PubSub} from "../../tools/pubSub";
-import single from "../../tools/singleton";
+import single from "../../tools/storage/singleton";
 
 interface PublishedError {
 
@@ -26,13 +26,15 @@ export default single<ErrorHandler>(function(): ErrorHandler {
         if (debugging) {
 
             throw Error(message);
-        }
 
-        publish("sendErrorToServer", message);
+        } else {
 
-        if (fatal) {
+            publish("sendErrorToServer", message);
 
-            throw Error("An error has occurred.");
+            if (fatal) {
+
+                throw Error("An error has occurred.");
+            }
         }
     };
     const customError = ({message, className, method, fatal}: PublishedError): void  => {
@@ -50,10 +52,10 @@ export default single<ErrorHandler>(function(): ErrorHandler {
         handleError(`Unable to ${message} from ${className}. ${input} was not found${locationString}.`, fatal);
     };
 
-    subscribe("error", (message: string): void => handleError(message, true));
+    subscribe("error", (message: string): void => handleError(message));
     subscribe("customError", customError);
-    subscribe("invalidInput", invalidInput);
-    subscribe("notFound", notFound);
+    subscribe("invalidInputError", invalidInput);
+    subscribe("notFoundError", notFound);
 
     return {
 

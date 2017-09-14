@@ -1,6 +1,6 @@
 import createDimensions, {Dimensions} from "../../game/coordinates/dimensions";
-import capitalizeFirstLetter from "../capitalizeFirstLetter";
-import single from "../singleton";
+import capitalizeFirstLetter from "../stringManipulation/capitalizeFirstLetter";
+import single from "../storage/singleton";
 
 export interface TextWidthChecker {
 
@@ -17,8 +17,18 @@ export default single<TextWidthChecker>(function(): TextWidthChecker {
 
         return Number(element[`client${capitalizeFirstLetter(dimension)}`]) + 1;
     };
-    const attachToDom = (): any => document.body.appendChild(textContainer);
-    const removeFromDom = (): any => document.body.removeChild(textContainer);
+    const attachToDom = function(): TextWidthChecker {
+
+        document.body.appendChild(textContainer);
+
+        return this;
+    };
+    const removeFromDom = function(): TextWidthChecker {
+
+        document.body.removeChild(textContainer);
+
+        return this;
+    };
 
     const calculateTextWidth = function(text: string, fontSize: string | number = null): Dimensions {
 

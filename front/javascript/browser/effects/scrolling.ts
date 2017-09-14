@@ -1,8 +1,7 @@
-import notifications, {PubSub} from "../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
-import wrapIndex from "../../tools/wrapIndex";
-import {Element} from "../dom/element";
-import {isList, List} from "../dom/list";
+import wrapIndex from "../../tools/array/wrapIndex";
+import validator, {Validator} from "../../tools/validation/validator";
+import {Element} from "../dom/element/element";
+import {List} from "../dom/list/list";
 
 export type Scroller = (movingForward: boolean) => void;
 export type ScrollHandler = (list: List<Element<any>>) => Scroller;
@@ -10,25 +9,36 @@ export type ScrollHandler = (list: List<Element<any>>) => Scroller;
 export default (function() {
 
     const className: string = "scrolling";
-    const {publish}: PubSub = notifications();
-    const {isNumber, isBoolean}: TypeChecker = typeChecker();
+    const {validateBoolean, validateNumber, validateList}: Validator = validator(className);
     const oneStep: number = 1;
     const firstIndex: number = 0;
     const floor = Math.floor;
     const min = Math.min;
     const max = Math.max;
     const abs = Math.abs;
-    const getLastIndex = (currentList: List<Element<any>>): number => currentList.length() - 1;
+    const getLastIndex = (list: List<Element<any>>): number => list.length() - 1;
     const getValueOfDirection = (movingForward: boolean): number => movingForward ? 1 : -1;
     const showElement = (element: Element<any>): any => element.show();
+    const hideElement = (element: Element<any>): any => element.hide();
     const getDistance = (index: number, secondIndex: number, length: number) => {
 
-        return index >= secondIndex ? abs((length - index) + secondIndex) : secondIndex - index;
+        return index > secondIndex ? abs((length - index) + secondIndex) : secondIndex - index;
+    };
+    const showElements = (currentList: List<any>, beginning: number, end: number, amount: number) => {
+
+        const lastIndex: number = getLastIndex(currentList);
+        const first: number = end > lastIndex ? lastIndex - amount : max(beginning, firstIndex);
+        const last: number = beginning < firstIndex ? amount : min(end, lastIndex);
+
+        currentList.modify(showElement, first, last);
+
+        return {first, last};
     };
 
-    return (numberOfElementsToShow: number = 1, amountOfBuffering: number = 0): ScrollHandler => {
+    return (numberOfElementsToShow: number = 1, amountOfBuffering: number = 1): ScrollHandler => {
 
-        let bufferAmount: number;
+        let numberOfNeighbors: number;
+        let buffer: number;
         let amountOfElementsToShow: number;
         let firstElementToShow: number;
         let lastElementToShow: number;
@@ -36,27 +46,19 @@ export default (function() {
         let amountBelow: number;
         let list: List<Element<any>>;
 
-        const canScroll = (index: number): boolean => {
-
-            const lastIndex: number = getLastIndex(list);
-
-            return lastIndex > amountOfElementsToShow
-                && index + bufferAmount + oneStep >= firstIndex
-                && index - bufferAmount - oneStep <= lastIndex;
-        };
         const scroll = (movingForward: boolean, currentIndex: number): any => {
 
             let elementToShow: number;
 
-            const lastIndex: number = getLastIndex(list);
             const length: number = list.length();
             const movement: number = getValueOfDirection(movingForward);
+            const distanceAllowedFromEdge: number = buffer;
             const elementToHide: number = movingForward ? firstElementToShow : lastElementToShow;
             const distanceFromEdge: number = movingForward ?
-                getDistance(currentIndex, lastIndex, length) :
-                getDistance(firstIndex, currentIndex, length);
+                getDistance(currentIndex, lastElementToShow + movement, length) :
+                getDistance(firstElementToShow + movement, currentIndex, length);
 
-            if (distanceFromEdge > bufferAmount) {
+            if (distanceFromEdge <= distanceAllowedFromEdge) {
 
                 firstElementToShow = wrapIndex(firstElementToShow + movement, length);
                 lastElementToShow = wrapIndex(lastElementToShow + movement, length);
@@ -68,73 +70,61 @@ export default (function() {
         };
         const scroller = (movingForward: boolean): void => {
 
+            let elementPositions: any;
+
             const index: number = list.getCurrentIndex();
+            const lastIndex: number = getLastIndex(list);
+            const landedOnFirstElement: boolean = index <= firstIndex;
+            const landedOnLastElement: boolean = index >= lastIndex;
+            const withinScrollBoundaries: boolean = index - amountAbove + oneStep >= firstIndex
+                && index + amountBelow - oneStep <= lastIndex;
 
-            if (isBoolean(movingForward)) {
+            if (validateBoolean(movingForward, "scroller")) {
 
-                if (canScroll(index)) {
+                if (movingForward && landedOnFirstElement || !movingForward && landedOnLastElement) {
+
+                    list.modify(hideElement, firstElementToShow, lastElementToShow);
+
+                    elementPositions = showElements(list, index - amountAbove, index + amountBelow, numberOfNeighbors);
+
+                    firstElementToShow = elementPositions.first;
+                    lastElementToShow = elementPositions.last;
+
+                } else if (withinScrollBoundaries) {
 
                     scroll(movingForward, index);
                 }
-            } else {
-
-                publish("invalidInputError", {className, method: "scroller", input: movingForward});
             }
         };
         const setList = (listToBeScrolled: List<Element<any>>): Scroller => {
 
-            let currentIndex: number;
-            let lastIndex: number;
-            let positionOfFirstElement: number;
-            let positionOfLastElement: number;
+            const currentIndex = listToBeScrolled.getCurrentIndex();
+            const firstElement: number = currentIndex - amountAbove;
+            const lastElement: number = currentIndex + amountBelow;
 
-            if (isList(listToBeScrolled)) {
+            let elementPositions: any;
 
-                lastIndex = getLastIndex(listToBeScrolled);
-                currentIndex = listToBeScrolled.getCurrentIndex();
-                positionOfFirstElement = currentIndex - amountAbove;
-                positionOfLastElement = currentIndex + amountBelow;
-
-                firstElementToShow = positionOfLastElement > lastIndex ?
-                    lastIndex - numberOfElementsToShow :
-                    max(positionOfFirstElement, firstIndex);
-
-                lastElementToShow = positionOfFirstElement < firstIndex ?
-                    numberOfElementsToShow :
-                    min(positionOfLastElement, lastIndex);
-
-                if (lastIndex < amountOfElementsToShow) {
-
-                    listToBeScrolled.forEach(showElement);
-
-                }  else {
-
-                    listToBeScrolled.modify(showElement, firstElementToShow, lastElementToShow);
-                }
+            if (validateList(listToBeScrolled, "setList")) {
 
                 list = listToBeScrolled;
 
+                elementPositions = showElements(list, firstElement, lastElement, numberOfNeighbors);
+                firstElementToShow = elementPositions.first;
+                lastElementToShow = elementPositions.last;
+
                 return scroller;
             }
-
-            publish("invalidInputError", {className, method: "setList", input: listToBeScrolled});
         };
-        const numberOfElementsIsANumber: boolean = isNumber(numberOfElementsToShow);
 
-        if (numberOfElementsIsANumber && isNumber(amountOfBuffering)) {
+        if (validateNumber(numberOfElementsToShow, className) && validateNumber(amountOfBuffering, className)) {
 
-            bufferAmount = max(amountOfBuffering, firstIndex);
-            amountOfElementsToShow = max(numberOfElementsToShow - 1, firstIndex);
-            amountAbove = floor(amountOfElementsToShow / 2);
-            amountBelow = amountOfElementsToShow - amountAbove;
+            buffer = max(amountOfBuffering, firstIndex);
+            amountOfElementsToShow = max(numberOfElementsToShow, firstIndex);
+            numberOfNeighbors = max(amountOfElementsToShow - oneStep, firstIndex);
+            amountAbove = floor(numberOfNeighbors / 2);
+            amountBelow = numberOfNeighbors - amountAbove;
 
             return setList;
         }
-
-        publish("invalidInputError", {
-            className,
-            input: numberOfElementsIsANumber ? amountOfBuffering : numberOfElementsToShow,
-            method: "constructor",
-        });
     };
 }());

@@ -2,7 +2,7 @@ import {Position} from "../../game/coordinates/position";
 import {MapElement} from "../../game/map/elements/defaults";
 import {isUnit} from "../../game/map/elements/unit/unit";
 import {MatrixMap} from "../../game/map/mapMatrix";
-import pathfinder, {PathFinder} from "../../tools/path";
+import pathfinder, {PathFinder} from "../../tools/pathfinding/path";
 import notifications, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import unitController, {UnitController} from "../controller/unitController";

@@ -1,5 +1,5 @@
 import notifications, {PubSub} from "../tools/pubSub";
-import single from "../tools/singleton";
+import single from "../tools/storage/singleton";
 import {Map} from "./map/map";
 import {Player} from "./users/players/player";
 import {User} from "./users/user";

@@ -1,4 +1,4 @@
-import createElement, {Element} from "../../dom/element";
+import createElement, {Element} from "../../dom/element/element";
 
 export interface TextElement extends Element<any> {
 

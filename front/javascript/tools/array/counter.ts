@@ -1,4 +1,4 @@
-import typeChecker, {TypeChecker} from "./validation/typeChecker";
+import typeChecker, {TypeChecker} from "../validation/typeChecker";
 
 export default (function() {
 

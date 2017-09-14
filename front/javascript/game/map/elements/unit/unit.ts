@@ -1,6 +1,6 @@
 import settings from "../../../../settings/settings";
-import composer, {Composer} from "../../../../tools/composer";
-import {Dictionary} from "../../../../tools/dictionary";
+import composer, {Composer} from "../../../../tools/object/composer";
+import {Dictionary} from "../../../../tools/storage/dictionary";
 import identifier, {Identifier} from "../../../../tools/identity";
 import typeChecker, {TypeChecker} from "../../../../tools/validation/typeChecker";
 import createPosition, {isPosition, Position} from "../../../coordinates/position";

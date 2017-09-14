@@ -1,5 +1,5 @@
-import curry from "../../../tools/curry";
-import single from "../../../tools/singleton";
+import curry from "../../../tools/function/curry";
+import single from "../../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 
 export type IncompleteRequest = (input: any) => Promise<any>;

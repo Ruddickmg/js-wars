@@ -2,35 +2,35 @@ import createGame, {Game} from "../../game/game";
 import {Map} from "../../game/map/map";
 import testMap from "../../game/map/testMap";
 import getSettings from "../../settings/settings";
-import {Dictionary} from "../../tools/dictionary";
+import {Dictionary} from "../../tools/storage/dictionary";
 import notifications, {PubSub} from "../../tools/pubSub";
+import single from "../../tools/storage/singleton";
 import requestMaker, {IncompleteRequest, Request} from "../communication/requests/request";
-import createTitle, {Title} from "./elements/title";
+import {Element} from "../dom/element/element";
 import join from "./join/join";
 import loginHandler, {LoginScreen} from "./login/login";
-import getGameScreen, {GameScreen} from "./main/gameScreen";
-import gameModeSelection from "./mode/modeMenu";
+import handleGameModeSelection from "./mode/modeMenu";
+import getGameScreen from "./screen/gameScreen";
+import createTitle from "./screen/title";
 
-export default function() {
+export default single<any>(function() {
 
     const request: Request = requestMaker();
     const saveMap: IncompleteRequest = request.post("maps/save") as IncompleteRequest;
     const {subscribe}: PubSub = notifications();
     const login: LoginScreen = loginHandler();
     const settings: Dictionary = getSettings();
-    const gameScreen: GameScreen = getGameScreen();
+    const gameScreen: Element<any> = getGameScreen();
     const testing: boolean = settings.get("testing");
-    const title: Title = createTitle();
+    const title: Element<string> = createTitle();
 
-    subscribe("login", () => testing ? login.skip() : login.display());
-
+    subscribe("login", (): any => testing ? login.skip() : login.display());
     subscribe("beginGameSetup", () => {
 
-        gameScreen.add("title", title);
+        gameScreen.appendChild(title);
 
-        gameModeSelection();
+        handleGameModeSelection();
     });
-
     subscribe("joinNewGame", (): any => join<Game>("open"));
     subscribe("joinContinuingGame", (): any => join<Game>("running"));
     subscribe("startNewGame", (): any => join<Map>("type", createGame()));
@@ -59,4 +59,4 @@ export default function() {
 
         alert("going to the store!");
     });
-}
+});

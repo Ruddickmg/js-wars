@@ -1,4 +1,4 @@
-import single from "./singleton";
+import single from "../storage/singleton";
 
 interface TruthTable {
 

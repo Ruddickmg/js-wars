@@ -1,5 +1,5 @@
-import capitalizeFirstLetter from "../../../../tools/capitalizeFirstLetter";
-import createElement, {Element} from "../../../dom/element";
+import capitalizeFirstLetter from "../../../../tools/stringManipulation/capitalizeFirstLetter";
+import createElement, {Element} from "../../../dom/element/element";
 
 export default function(option: string, idOfOption: string): Element<string> {
 

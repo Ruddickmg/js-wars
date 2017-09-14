@@ -1,4 +1,4 @@
-import createOscillator, {Oscillator} from "../../tools/oscillator";
+import createOscillator, {Oscillator} from "../../tools/motion/oscillator";
 import notifications, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import validateCallbacks from "../../tools/validation/validateCallbacks";
@@ -24,7 +24,7 @@ export default (function() {
     const minimumLightness = 50;
     const fullLightness = 100;
 
-    return function(speed: number = 10, increment: number = 1): Fader {
+    return function(speed: number = 60, increment: number = 5): Fader {
 
         let color: Hsl;
         let callbacks: FaderCallback[] = [];

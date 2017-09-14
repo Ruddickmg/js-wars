@@ -1,10 +1,10 @@
 import allSettings from "../../settings/settings";
-import capitalizeFirstLetter from "../../tools/capitalizeFirstLetter";
-import checkForTruthInArray from "../../tools/checkForTruthInArray";
-import {Dictionary} from "../../tools/dictionary";
-import invert from "../../tools/invertObject";
+import capitalizeFirstLetter from "../../tools/stringManipulation/capitalizeFirstLetter";
+import checkForTruthInArray from "../../tools/array/checkForTruthInArray";
+import {Dictionary} from "../../tools/storage/dictionary";
+import invert from "../../tools/object/inverter";
 import notifications, {PubSub} from "../../tools/pubSub";
-import single from "../../tools/singleton";
+import single from "../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 
 interface Keys {

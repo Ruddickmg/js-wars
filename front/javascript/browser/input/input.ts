@@ -1,5 +1,5 @@
 import subscription, {PubSub} from "../../tools/pubSub";
-import createElement, {Element} from "../dom/element";
+import createElement, {Element} from "../dom/element/element";
 import typeWriter, {TypeWriter} from "../effects/typing";
 import createFooter, {Footer} from "../menus/footers/footer";
 

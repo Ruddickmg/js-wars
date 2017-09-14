@@ -2,7 +2,7 @@ import createPosition, {Coordinates, Position} from "../../coordinates/position"
 import {MapElement} from "../../game/map/elements/defaults";
 import map from "../../game/map/map";
 import notifications, {PubSub} from "../../tools/pubSub";
-import single from "../../tools/singleton";
+import single from "../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import animationHandler, {CanvasCache} from "../canvas/canvasCache";
 import getSocket from "../communication/sockets/socket";

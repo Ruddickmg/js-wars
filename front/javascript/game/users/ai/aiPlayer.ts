@@ -1,4 +1,4 @@
-import composer, {Composer} from "../../../tools/composer";
+import composer, {Composer} from "../../../tools/object/composer";
 import {Game} from "../../game";
 import {Player} from "../players/player";
 

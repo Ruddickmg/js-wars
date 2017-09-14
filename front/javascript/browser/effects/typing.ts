@@ -1,6 +1,6 @@
 import appSettings from "../../settings/settings";
-import {Dictionary} from "../../tools/dictionary";
-import {Element} from "../dom/element";
+import {Dictionary} from "../../tools/storage/dictionary";
+import {Element} from "../dom/element/element";
 
 export interface TypeWriter {
 

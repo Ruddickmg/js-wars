@@ -1,7 +1,7 @@
 import createPosition, {Position} from "../../coordinates/position";
 import {MapElement} from "../../game/map/elements/defaults";
 import notifications, {PubSub} from "../../tools/pubSub";
-import single from "../../tools/singleton";
+import single from "../../tools/storage/singleton";
 import keyBoardInput, {KeyBoard} from "../input/keyboard";
 
 export interface TargetHandler {

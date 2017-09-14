@@ -1,5 +1,5 @@
 import createPosition, {Position} from "../../game/coordinates/position";
-import single from "../../tools/singleton";
+import single from "../../tools/storage/singleton";
 
 export interface Cursor {
 

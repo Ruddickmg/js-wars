@@ -2,21 +2,21 @@ import {Game} from "../../../game/game";
 import {Building} from "../../../game/map/elements/building/building";
 import {isMap, Map} from "../../../game/map/map";
 import settings from "../../../settings/settings";
-import capitalizeFirstLetter from "../../../tools/capitalizeFirstLetter";
-import countBuildings from "../../../tools/counter";
+import countBuildings from "../../../tools/array/counter";
+import zipWith from "../../../tools/array/zipWith";
 import notifications, {PubSub} from "../../../tools/pubSub";
+import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
-import zipWith from "../../../tools/zipWith";
+import validator, {Validator} from "../../../tools/validation/validator";
 import gameElementHandler, {GameElementHandler} from "../../controller/gameElementHandler";
-import {Element} from "../../dom/element";
-import createList, {List} from "../../dom/list";
+import {Element} from "../../dom/element/element";
+import createList, {List} from "../../dom/list/list";
 import highlighter, {Highlighter} from "../../effects/highlighter";
 import createScroller, {Scroller, ScrollHandler} from "../../effects/scrolling";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
 import selectionHandler, {SelectionHandler} from "../../tools/selector";
 import createGameMenu, {GameMenu} from "../elements/gameMenu";
-import {Title} from "../elements/title";
-import getGameScreen, {GameScreen} from "../main/gameScreen";
+import getGameScreen from "../screen/gameScreen";
 import createBuildingsDisplay, {BuildingsDisplay} from "./buildingsDisplay/buildingsDisplay";
 import createSelectionElement from "./selectionElement";
 
@@ -29,18 +29,8 @@ export interface JoinMenu<Type> {
 
 export default (function() {
 
-    const {isDefined, isArray, isString}: TypeChecker = typeChecker();
-    const {subscribe, publish, unsubscribe}: PubSub = notifications();
-    const {highlight, deHighlight}: Highlighter = highlighter();
-    const keyBoard: KeyBoard = keyboardInput();
-    const setupScreen: GameScreen = getGameScreen();
-    const bufferAmountForMapScrolling: number = 1;
-    const amountOfMapsToShowWhileScrolling: number = 5;
-    const amountOfCategoryNeighbors: number = 2;
-    const amountOfCategoriesToShow: number = 1;
-    const className: string = "join";
     const idOfTitle: string = "title";
-    const positionAttribute = "postion";
+    const positionAttribute = "position";
     const defaultCategory: string = "two";
     const selectionMenuType: string = "section";
     const mapSelectionId: string = "mapSelection";
@@ -50,6 +40,17 @@ export default (function() {
     const categorySelectionId: string = "categorySelection";
     const classOfCategoryScreen: string = "categorySelectionElement";
     const keyPressEvent = "keyPressed";
+    const className: string = "join";
+    const {isDefined, isArray}: TypeChecker = typeChecker();
+    const {validateString}: Validator = validator(className);
+    const {subscribe, publish, unsubscribe}: PubSub = notifications();
+    const {highlight, deHighlight}: Highlighter = highlighter();
+    const keyBoard: KeyBoard = keyboardInput();
+    const setupScreen: Element<any> = getGameScreen();
+    const bufferAmountForMapScrolling: number = 1;
+    const amountOfMapsToShowWhileScrolling: number = 5;
+    const amountOfCategoryNeighbors: number = 2;
+    const amountOfCategoriesToShow: number = 1;
     const configurations = settings();
     const {
         list: categories,
@@ -74,10 +75,11 @@ export default (function() {
         categorySelectionMenu.appendChild(element);
     };
     const scrollThroughCategories: Scroller = createScroller(amountOfCategoriesToShow)(categoryElements);
-    const positionCategoryElements = (elements: Array<Element<string>>): Array<Element<string>> => {
+    const positionCategoryElements = (elements: Element<string>[]): Element<string>[] => {
 
         return zipWith(elements, categoryPositions, (element: Element<string>, position: string): Element<string> => {
 
+            console.log(`${positionAttribute}: ${position}`);
             return element.setAttribute(positionAttribute, position);
         });
     };
@@ -95,7 +97,7 @@ export default (function() {
         const selectingMaps: boolean = isDefined(game);
         const selectionType: string = selectingMaps ? mapSelectionType : gameSelectionType;
         const finishedSelecting: string = `finishedSelecting${capitalizeFirstLetter(selectionType)}`;
-        const title: Title = setupScreen.get(idOfTitle) as Title;
+        const title: Element<any> = setupScreen.get(idOfTitle);
         const getMap = (element: any): Map => selectingMaps ? element : element.map;
         const selector: SelectionHandler<Element<Type>> = selectionHandler<Element<Type>>();
         const categorySelection: SelectionHandler<Element<string>> = selectionHandler<Element<string>>(categoryElements)
@@ -113,9 +115,9 @@ export default (function() {
         };
         const remove = function(): JoinMenu<Type> {
 
-            setupScreen.remove(selectionMenu.id);
-            setupScreen.remove(categorySelectionMenu.id);
-            setupScreen.remove(buildingsDisplay.id);
+            setupScreen.removeChild(selectionMenu);
+            setupScreen.removeChild(categorySelectionMenu);
+            setupScreen.removeChild(buildingsDisplay);
             categorySelection.stop();
             selector.stop();
             unsubscribe(subscription, keyPressEvent);
@@ -125,7 +127,7 @@ export default (function() {
         const goBack = function(): JoinMenu<Type> {
 
             remove();
-            setupScreen.remove(idOfTitle);
+            setupScreen.removeChild(setupScreen.get(idOfTitle));
             publish(["beginGameSetup", "settingUpGame"], true);
 
             return this;
@@ -150,13 +152,15 @@ export default (function() {
 
                         selectionMenu.appendChild(selectionElement);
 
-                        return selectionElement;
+                        return selectionElement.hide();
 
                     })).moveToElement(current);
 
                     scrollThroughSelectionMenu = selectionMenuScroller(newSelections);
                     selectedElement = selector.setSelections(newSelections).getSelected();
 
+                    console.log("highlight element!");
+                    console.log(selectedElement);
                     highlight(selectedElement);
                     updateBuildingsDisplay(getMap(selectedElement.getValue()));
 
@@ -165,7 +169,7 @@ export default (function() {
                     buildingsDisplay.clearCount();
                 }
 
-                setupScreen.replace(selectionMenu.id, selectionMenu);
+                setupScreen.refresh(selectionMenu);
 
                 return Promise.resolve(received);
             });
@@ -205,14 +209,15 @@ export default (function() {
             const map: Map = getMap(current.getValue());
 
             deHighlight(previous);
-            highlight(current);
             scrollThroughSelectionMenu(keyBoard.pressedDown());
+            highlight(current);
+
             updateBuildingsDisplay(map);
         };
         const horizontalSelection = (current: any, _: any, currentCategory: List<Element<string>>): void => {
 
             const category: string = current.getValue();
-            const neighbors: Array<Element<string>> = currentCategory.getNeighboringElements(amountOfCategoryNeighbors);
+            const neighbors: Element<string>[] = currentCategory.getNeighboringElements(amountOfCategoryNeighbors);
             const movingForward: boolean = keyBoard.pressedRight();
             const firstElement: Element<string> = neighbors.shift();
             const lastElement: Element<string> = neighbors.pop();
@@ -234,7 +239,7 @@ export default (function() {
             .show()
             .getValue();
 
-        if (isString(type)) {
+        if (validateString(type, "constructor")) {
 
             selections = gameElementHandler<Type>(`${selectionType}s`, type);
 
@@ -243,14 +248,20 @@ export default (function() {
 
             update(category).catch(({message}: Error): any => {
 
-                publish("customError", {className, method: "update", input: defaultCategory, message});
+                publish("customError", {
+                    className,
+                    input: defaultCategory,
+                    message,
+                    method: "update",
+                });
             });
 
             categoryElements.forEach(addElementToCategorySelection);
+            // positionCategoryElements(categoryElements.getNeighboringElements(categoryPlusLeftAndRight));
 
-            setupScreen.add(selectionMenu.id, selectionMenu);
-            setupScreen.add(buildingsDisplay.id, buildingsDisplay);
-            setupScreen.add(categorySelectionMenu.id, categorySelectionMenu);
+            setupScreen.appendChild(selectionMenu);
+            setupScreen.appendChild(buildingsDisplay);
+            setupScreen.appendChild(categorySelectionMenu);
 
             title.setText(`Select*${selectionType}`);
 
@@ -261,6 +272,5 @@ export default (function() {
                 remove,
             };
         }
-        publish("invalidInput", {className, method: "constructor", input: type});
     };
 }());

@@ -1,4 +1,4 @@
-import createPosition, {Position} from "../../game/coordinates/position";
+import createPosition, {Position} from "../../../game/coordinates/position";
 import createMatrix, {Matrix} from "./matrix";
 
 export interface MatrixTracker<Type> {

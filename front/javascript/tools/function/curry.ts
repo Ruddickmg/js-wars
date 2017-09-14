@@ -1,8 +1,8 @@
-export default (input: (...args: any[]) => any, context: any = this) => {
+export default (input: (...args: any[]) => any, context: any = this): any => {
 
     const totalNumberOfArguments: number = input.length;
 
-    const currier = (...initialArguments: any[]) => {
+    const currier = (...initialArguments: any[]): any => {
 
         const currentArguments: any[] = initialArguments.slice();
         const allArgumentsEntered: boolean = currentArguments.length >= totalNumberOfArguments;

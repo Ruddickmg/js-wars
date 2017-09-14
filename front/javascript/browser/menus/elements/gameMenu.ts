@@ -1,4 +1,4 @@
-import createElement, {Element} from "../../dom/element";
+import createElement, {Element} from "../../dom/element/element";
 
 export interface GameMenu<Type> extends Element<Type> {
 

@@ -1,10 +1,10 @@
 import createUser, {isUser, User} from "../../../game/users/user";
 import notifications, {PubSub} from "../../../tools/pubSub";
-import single from "../../../tools/singleton";
+import single from "../../../tools/storage/singleton";
 import facebookApi, {FacebookApi} from "../../communication/facebook";
-import createElement, {Element} from "../../dom/element";
+import createElement, {Element} from "../../dom/element/element";
 import userInput from "../../input/input";
-import getGameScreen, {GameScreen} from "../main/gameScreen";
+import getGameScreen from "../screen/gameScreen";
 
 export interface LoginScreen {
 
@@ -14,7 +14,7 @@ export interface LoginScreen {
 
 export default single<LoginScreen>(function() {
 
-    const gameScreen: GameScreen = getGameScreen();
+    const gameScreen: Element<any> = getGameScreen();
     const input: any = userInput();
     const loginScreenId: string = "login";
     const loginFormType: string = "section";
@@ -88,8 +88,8 @@ export default single<LoginScreen>(function() {
     const skip = (): void => setup(testUser, "testing");
     const display = function(): void {
 
-        gameScreen.add(loginScreenId, createLoginForm());
-        gameScreen.add(statusBarId, createStatusBar());
+        gameScreen.appendChild(createLoginForm());
+        gameScreen.appendChild(createStatusBar());
         gameScreen.get(loginScreenId).hide();
 
         facebook.setupLogin(handleStatusChanges);

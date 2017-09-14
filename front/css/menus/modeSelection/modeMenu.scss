@@ -31,8 +31,7 @@ $magenta: hsl(288, 100, 50);
 }
 
 .modeItem {
-
-    transition: left 0.3s ease, top 0.3s ease;
+    transition: 0.3s ease;
     z-index: 9;
     position: absolute;
     text-align: center;

@@ -1,5 +1,5 @@
 import notifications, {PubSub} from "../../tools/pubSub";
-import {Element} from "../dom/element";
+import {Element} from "../dom/element/element";
 import typeWriter, {TypeWriter} from "../effects/typing";
 
 export default (function() {

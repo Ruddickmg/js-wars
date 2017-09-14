@@ -1,6 +1,6 @@
 import createDimensions, {Dimensions} from "../../game/coordinates/dimensions";
 import createPosition, {Position} from "../../game/coordinates/position";
-import createCache, {Cache} from "../../tools/cache";
+import createCache, {Cache} from "../../tools/storage/cache";
 import notifications, {PubSub} from "../../tools/pubSub";
 import createCanvas, {Canvas} from "../canvas/canvas";
 import screenConfiguration from "../configuration/screenConfig";

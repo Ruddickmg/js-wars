@@ -1,4 +1,4 @@
-import curry from "../../../tools/curry";
+import curry from "../../../tools/function/curry";
 
 export interface Arrow {
 

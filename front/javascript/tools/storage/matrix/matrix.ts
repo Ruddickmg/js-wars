@@ -1,5 +1,5 @@
-import {Position} from "../../game/coordinates/position";
-import typeChecker, {TypeChecker} from "../validation/typeChecker";
+import {Position} from "../../../game/coordinates/position";
+import typeChecker, {TypeChecker} from "../../validation/typeChecker";
 
 export interface Matrix<Type> {
 

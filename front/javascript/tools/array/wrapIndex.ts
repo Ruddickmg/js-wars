@@ -1,5 +1,5 @@
-import notifications, {PubSub} from "./pubSub";
-import typeChecker, {TypeChecker} from "./validation/typeChecker";
+import notifications, {PubSub} from "../pubSub";
+import typeChecker, {TypeChecker} from "../validation/typeChecker";
 
 export default (function() {
 

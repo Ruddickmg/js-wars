@@ -1,19 +1,22 @@
 import getSettings from "../../../settings/settings";
-import {Dictionary} from "../../../tools/dictionary";
 import notifications, {PubSub} from "../../../tools/pubSub";
+import {Dictionary} from "../../../tools/storage/dictionary";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import validator, {Validator} from "../../../tools/validation/validator";
 import createHsl, {Hsl} from "../../color/hsl";
-import createElement, {Element} from "../../dom/element";
-import createList, {List} from "../../dom/list";
+import createElement, {Element} from "../../dom/element/element";
+import createList, {List} from "../../dom/list/list";
 import createFader, {Fader} from "../../effects/fade";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
 import createSelector, {SelectionHandler} from "../../tools/selector";
 import createScrollBar, {ScrollBar} from "../footers/scrollBar";
-import getGameScreen, {GameScreen} from "../main/gameScreen";
+import getGameScreen from "../screen/gameScreen";
 import createModeElement, {ModeElement} from "./modeElement";
 import {ModeMenuItem} from "./modeItem";
 
-export default function() {
+export default (function() {
+
+    let subscription: number;
 
     const keyEvent: string = "keyPressed";
     const screenName: string = "setupScreen";
@@ -30,12 +33,13 @@ export default function() {
 
     const settings: Dictionary = getSettings();
     const {isDefined}: TypeChecker = typeChecker();
+    const {validateString}: Validator = validator("modeMenu");
     const keyboard: KeyBoard = keyboardInput();
     const {publish, subscribe, unsubscribe}: PubSub = notifications();
-    const setupScreen: GameScreen = getGameScreen();
+    const setupScreen: Element<any> = getGameScreen();
     const {modes, positions, messages, events}: any = settings.toObject(modeSettings);
     const colors: any = settings.toObject("colors", "definitions");
-    const scrollBar: ScrollBar = createScrollBar();
+    const scrollBar: ScrollBar = createScrollBar().listen();
     const fader: Fader = createFader();
 
     const menu: Element<any> = createElement(modeMenuId, modeMenuType);
@@ -45,11 +49,16 @@ export default function() {
     });
     const modeElements: List<ModeElement> = createList<ModeElement>(gameModes);
     const selector: SelectionHandler<ModeElement> = createSelector<ModeElement>(modeElements);
-    const currentMode: ModeElement = modeElements.getCurrentElement();
 
     const isOption = (list: any): boolean => isDefined(list) && list.type === optionType;
     const toHsl = ({h, s, l}: any): Hsl => createHsl(h, s, l);
-    const getDescriptionOf = ({id}: Element<any>): string => messages[id];
+    const getDescriptionOf = ({id}: Element<any>): string => {
+
+        if (validateString(id, "getDescriptionOf")) {
+
+            return messages[id.toLowerCase()];
+        }
+    };
     const isSelectable = (mode: string): boolean => !nonSelectableElements[mode];
     const rotateMenuElements = (list: List<ModeElement>): void => {
 
@@ -63,8 +72,8 @@ export default function() {
         scrollBar.stop();
         fader.stop();
         selector.stop();
-        setupScreen.remove(scrollBar.id);
-        setupScreen.remove(menu.id);
+        setupScreen.removeChild(scrollBar);
+        setupScreen.removeChild(menu);
         unsubscribe(subscription, keyEvent);
     };
     const selectMode = (current: any, previous: any): void => {
@@ -83,19 +92,6 @@ export default function() {
         scrollBar.setText(messages[mode]);
     };
 
-    const subscription: number = subscribe(keyEvent, (): void => {
-
-        const mode: any = selector.getSelected().getValue();
-
-        if (keyboard.pressedEnter() && isSelectable(mode)) {
-
-            remove();
-
-            publish(events[mode], mode);
-        }
-
-    }) as number;
-
     selector.vertical((selected: ModeElement, previous: ModeElement, selections: List<ModeElement>): void => {
 
         if (!isOption(selected)) {
@@ -105,22 +101,40 @@ export default function() {
 
         selectMode(selected, previous);
 
-    }).horizontal(selectMode).start();
+    }).horizontal(selectMode);
 
     rotateMenuElements(modeElements);
-    selectMode(currentMode, currentMode);
 
-    setupScreen.add(menu.id, menu);
-    setupScreen.add(scrollBar.id, scrollBar);
-    setupScreen.setClass(screenName);
-    setupScreen.get("title").setText(titleOfScreen);
+    return function() {
 
-    modeElements.forEach((modeElement: ModeElement) => menu.appendChild(modeElement));
+        const current: Element<any> = selector.getSelected();
 
-    scrollBar.setText(getDescriptionOf(modeElements.getCurrentElement()))
-        .scroll();
+        subscription = subscribe(keyEvent, (): void => {
 
-    fader.start();
+            const mode: any = selector.getSelected().getValue();
 
-    return {remove};
-}
+            if (keyboard.pressedEnter() && isSelectable(mode)) {
+
+                remove();
+
+                publish(events[mode], mode);
+            }
+
+        }) as number;
+
+        selectMode(current, current);
+        modeElements.forEach((modeElement: ModeElement) => menu.appendChild(modeElement));
+        scrollBar.setText(getDescriptionOf(current));
+
+        setupScreen.appendChild(menu);
+        setupScreen.appendChild(scrollBar);
+        setupScreen.setClass(screenName);
+        setupScreen.get("title").setText(titleOfScreen);
+
+        scrollBar.start();
+        selector.start();
+        fader.start();
+
+        return {remove};
+    };
+}());

@@ -10,10 +10,10 @@
   transition: left 0.3s ease;
   position: absolute; }
 
-.categorySelectionElement [pos=right] {
+#categorySelectionInnerScreen ul[position=right] {
   left: 100%; }
 
-.categorySelectionElement [pos=left] {
+.categorySelectionElement[position=left] {
   left: -100%; }
 
 .categorySelectionElement li,
@@ -689,7 +689,7 @@ h1 {
   overflow: hidden; }
 
 .modeItem {
-  transition: left 0.3s ease, top 0.3s ease;
+  transition: 0.3s ease;
   z-index: 9;
   position: absolute;
   text-align: center;

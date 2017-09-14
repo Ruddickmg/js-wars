@@ -1,7 +1,7 @@
-import timeKeeper, {Time} from "./calculations/time";
-import notifications, {PubSub} from "./pubSub";
-import typeChecker, {TypeChecker} from "./validation/typeChecker";
-import validateCallbacks from "./validation/validateCallbacks";
+import timeKeeper, {Time} from "../calculations/time";
+import notifications, {PubSub} from "../pubSub";
+import typeChecker, {TypeChecker} from "../validation/typeChecker";
+import validateCallbacks from "../validation/validateCallbacks";
 
 type OscillatorCallback = (position: number) => void;
 

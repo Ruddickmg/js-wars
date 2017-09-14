@@ -1,7 +1,7 @@
 import {Position} from "../../../game/coordinates/position";
-import single from "../../../tools/singleton";
+import single from "../../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
-import createElement, {Element} from "../../dom/element";
+import createElement, {Element} from "../../dom/element/element";
 import createOption from "./options/optionElement";
 import createOptionElement, {OptionsElement} from "./options/optionsElement";
 import createTextElement, {TextElement} from "./textElement";

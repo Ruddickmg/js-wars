@@ -1,8 +1,8 @@
-import {Dimensions} from "../game/coordinates/dimensions";
-import {Position} from "../game/coordinates/position";
-import createHeap, {BinaryHeap} from "./heaps/binaryHeap";
-import {Matrix} from "./matrix/matrix";
-import matrixTracker, {MatrixTracker} from "./matrix/matrixTracking";
+import {Dimensions} from "../../game/coordinates/dimensions";
+import {Position} from "../../game/coordinates/position";
+import createHeap, {BinaryHeap} from "../storage/heaps/binaryHeap";
+import {Matrix} from "../storage/matrix/matrix";
+import matrixTracker, {MatrixTracker} from "../storage/matrix/matrixTracking";
 
 export interface PathFinder<Type> {
 

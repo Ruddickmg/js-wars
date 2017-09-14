@@ -1,5 +1,5 @@
-import single from "../../tools/singleton";
-import createElement, {Element} from "../dom/element";
+import single from "../../tools/storage/singleton";
+import createElement, {Element} from "../dom/element/element";
 import getUrlParameters from "../tools/getUrlParameters";
 import redirectToUrl from "../tools/redirect";
 

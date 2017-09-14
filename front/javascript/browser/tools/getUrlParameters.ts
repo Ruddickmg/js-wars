@@ -1,4 +1,4 @@
-import isValidIndex from "../../tools/nonNegativeIndex";
+import isValidIndex from "../../tools/validation/nonNegativeIndex";
 
 export default function(): string {
 

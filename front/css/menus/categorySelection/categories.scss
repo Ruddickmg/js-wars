@@ -12,10 +12,10 @@
   position: absolute;
 }
 
-.categorySelectionElement [pos=right] {
+#categorySelectionInnerScreen ul[position=right] {
   left:100%;
 }
 
-.categorySelectionElement [pos=left] {
+.categorySelectionElement[position=left] {
   left:-100%;
 }

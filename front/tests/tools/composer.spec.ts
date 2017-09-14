@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {Composer, default as composer} from "../../javascript/tools/composer";
+import {Composer, default as composer} from "../../javascript/tools/object/composer";
 
 describe("composer", () => {
 

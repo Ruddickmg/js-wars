@@ -1,6 +1,6 @@
 import allSettings from "../../../settings/settings";
 import timeKeeper, {Time} from "../../../tools/calculations/time";
-import {Dictionary} from "../../../tools/dictionary";
+import {Dictionary} from "../../../tools/storage/dictionary";
 import moveInDirection from "./moveInDirection";
 
 export default function() {

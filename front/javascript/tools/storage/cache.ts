@@ -1,8 +1,9 @@
-import reduceF from "./reduce";
+import reduceF from "../array/reduce";
 
 export interface Cache<Type> {
 
-    add(name: string, canvas: any): Type;
+    add(name: string, canvas: any): Cache<Type>;
+    clear(): Cache<Type>;
     contains(name: string): boolean;
     filter(callback: (item: any, key: string, self: Cache<Type>) => void): Cache<Type>;
     find(callback: (item: Type, key: string, self: Cache<Type>) => boolean): Type;
@@ -15,13 +16,14 @@ export interface Cache<Type> {
 
 export default function createCache<Type>(): Cache<Type> {
 
-    const cached: any = {};
+    let cached: any = {};
+
     const getKeys = (): any[] => Object.keys(cached);
-    const add = (name: string, item: Type): Type => {
+    const add = function(name: string, item: Type): Cache<Type> {
 
         cached[name] = item;
 
-        return item;
+        return this;
     };
     const get = (name: string): any => cached[name];
     const contains = (name: string): boolean => cached[name] !== undefined;
@@ -87,10 +89,17 @@ export default function createCache<Type>(): Cache<Type> {
             }
         }
     };
+    const clear = function(): Cache<Type> {
+
+        cached = {};
+
+        return this;
+    };
 
     return {
 
         add,
+        clear,
         contains,
         filter,
         find,

@@ -1,6 +1,6 @@
-import capitalizeFirstLetter from "../../../../tools/capitalizeFirstLetter";
+import capitalizeFirstLetter from "../../../../tools/stringManipulation/capitalizeFirstLetter";
 import createCanvasLi from "../../../canvas/canvasLi";
-import createElement, {Element} from "../../../dom/element";
+import createElement, {Element} from "../../../dom/element/element";
 
 export default function(field: string): Element<number> {
 

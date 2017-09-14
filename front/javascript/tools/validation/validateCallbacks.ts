@@ -8,16 +8,14 @@ export default (function() {
 
     return function<Type>(callbacks: Type[], className: string, method: string): Type[] {
 
-        return callbacks.filter((callback: Type): boolean => {
+        return callbacks.filter((input: Type): boolean => {
 
-            const isValid: boolean = isFunction(callback);
+            if (isFunction(input)) {
 
-            if (!isValid) {
-
-                publish("invalidInput", {className, method, input: callback});
+                return true;
             }
 
-            return isValid;
+            publish("invalidInputError", {className, method, input});
         });
     };
 }());

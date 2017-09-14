@@ -1,4 +1,4 @@
-import single from "../singleton";
+import single from "../storage/singleton";
 
 export interface Time {
 
@@ -32,7 +32,10 @@ export default single<Time>(function(): Time {
         years,
         wait(timeInMilliseconds: number= 0): Promise<any> {
 
-            return new Promise((resolve) => setTimeout(resolve, timeInMilliseconds));
+            return new Promise((resolve) => {
+
+                const timeOut: any = setTimeout(() => resolve(timeOut), timeInMilliseconds);
+            });
         },
     };
 });

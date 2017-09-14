@@ -8,7 +8,7 @@ import createDefaults, {MapElement} from "../defaults";
 import terrainDefaults from "../terrain/terrainDefaults";
 import buildingDefaults from "./buildingDefaults";
 import unitDefaults from "../unit/unitDefinitions";
-import composer, {Composer} from "../../../../tools/composer";
+import composer, {Composer} from "../../../../tools/object/composer";
 import {Building} from "./building";
 
 export interface BuildingController {

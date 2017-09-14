@@ -1,4 +1,4 @@
-import createMatrix, {Matrix} from "../../tools/matrix/matrix";
+import createMatrix, {Matrix} from "../../tools/storage/matrix/matrix";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import {Dimensions} from "../coordinates/dimensions";
 import createPosition, {Position} from "../coordinates/position";

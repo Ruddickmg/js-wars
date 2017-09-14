@@ -1,5 +1,5 @@
 import identifier, {Identifier} from "./identity";
-import single from "./singleton";
+import single from "./storage/singleton";
 import typeChecker, {TypeChecker} from "./validation/typeChecker";
 
 export interface PubSub {

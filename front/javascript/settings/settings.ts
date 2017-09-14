@@ -1,15 +1,16 @@
-import dictionary, {Dictionary} from "../tools/dictionary";
-import single from "../tools/singleton";
+import dictionary, {Dictionary} from "../tools/storage/dictionary";
+import single from "../tools/storage/singleton";
 import colors from "./colors/colorSettings";
 import canvasSettings from "./dom/canvas";
 import errorEvents from "./error/errorEvents";
+import hoverInfo from "./hud/hoverInfo";
+import position from "./hud/position";
 import factorsAllowingKeyboardInput from "./keyboard/factorsAllowingKeyboardInput";
 import factorsDenyingKeyboardInput from "./keyboard/factorsDenyingKeyboardInput";
 import keyCodeMappings from "./keyboard/keyCodeMappings";
-import mode from "./menu/mode";
 import map from "./map/mapSettings";
-import hoverInfo from "./hud/hoverInfo";
-import position from "./hud/position";
+import mode from "./menu/mode";
+import settings from "./menu/settings";
 
 export default single<Dictionary>(() => dictionary({
 
@@ -91,11 +92,11 @@ export default single<Dictionary>(() => dictionary({
 
     // list of the effects each obstacle has on each unit type
     optionsMenu: {
-        co: {name: "Co"},
-        end: {name: "End"},
-        intel: {name: "Intel"},
-        options: {name: "Options"},
-        save: {name: "Save"},
+        co: "Co",
+        end: "End",
+        intel: "Intel",
+        options: "Options",
+        save: "Save",
     },
 
     optionsMenuDisplay: ["options", "unit", "intel", "save", "end", "name"],
@@ -109,63 +110,7 @@ export default single<Dictionary>(() => dictionary({
         4: {h: 144, s: 100, l: 50},
     },
 
-    // types to look through when determining terrains effect on unit movement
-    playersDisplayElement: {
-
-    },
-
-    settingsDisplayElement: {
-
-        capt: {
-            description: "Set number of properties needed to win.",
-            inc: 1,
-            max: 45,
-            min: 7,
-            off: "OFF",
-        },
-        fog: {
-            description: "Set ON to limit vision with fog of war.",
-            off: "OFF",
-            on: "ON",
-        },
-        funds: {
-            description: "Set funds recieved per allied base.",
-            inc: 500,
-            max: 9500,
-            min: 1000,
-        },
-        power: {
-            description: "Select ON to enamble CO powers.",
-            off: "OFF",
-            on: "ON",
-        },
-        turn: {
-            description: "Set number of days to battle.",
-            inc: 1,
-            max: 99,
-            min: 5,
-            off: "OFF",
-        },
-        visuals: {
-            a: "Type A",
-            b: "Type B",
-            c: "Type C",
-            description: {
-                a: "Battle and capture animation.",
-                b: "Battle animation only.",
-                c: "Battle animation for players only.",
-                off: "No animation.",
-            },
-            off: "OFF",
-        },
-        weather: {
-            clear: "Clear",
-            description: "RANDOM causes climate to change.",
-            rain: "Rain",
-            random: "Random",
-            snow: "Snow",
-        },
-    },
+    settings,
 
     // dimensions of diplay hud
     swellIncrement: 3,

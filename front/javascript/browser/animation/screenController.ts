@@ -5,7 +5,7 @@ import notifications, {PubSub} from "../../tools/pubSub";
 import canvasCache, {CanvasCache} from "../canvas/canvasCache";
 import screenConfiguration from "../configuration/screenConfig";
 import keyboardInput, {KeyBoard} from "../input/keyboard";
-import getGameScreen, {GameScreen} from "../menus/main/gameScreen";
+import getGameScreen, {GameScreen} from "../menus/screen/gameScreen";
 
 export interface ScreenController {
 

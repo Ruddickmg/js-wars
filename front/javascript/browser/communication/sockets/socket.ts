@@ -1,4 +1,4 @@
-import single from "../../../tools/singleton";
+import single from "../../../tools/storage/singleton";
 
 export default single<any>((): any => {
 

@@ -1,5 +1,5 @@
-import capitalizeFirstLetter from "../../../../tools/capitalizeFirstLetter";
-import {Element} from "../../../dom/element";
+import capitalizeFirstLetter from "../../../../tools/stringManipulation/capitalizeFirstLetter";
+import {Element} from "../../../dom/element/element";
 import createGameMenu, {GameMenu} from "../../elements/gameMenu";
 import createField from "./buildingDisplayField";
 

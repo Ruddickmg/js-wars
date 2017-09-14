@@ -1,7 +1,7 @@
 import notifications, {PubSub} from "../../tools/pubSub";
-import createStack, {Stack} from "../../tools/stack/listStack";
+import createStack, {Stack} from "../../tools/storage/stack/listStack";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
-import createList, {List} from "../dom/list";
+import createList, {List} from "../dom/list/list";
 import keyboardInput, {KeyBoard} from "../input/keyboard";
 
 interface SelectorMethods<Type> {

@@ -1,4 +1,4 @@
-import composer, {Composer} from "../../../../tools/composer";
+import composer, {Composer} from "../../../../tools/object/composer";
 import {Position} from "../../../coordinates/position";
 import {default as createTerrain, Terrain} from "../terrain/terrain.js";
 
