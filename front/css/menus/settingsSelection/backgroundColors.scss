@@ -1,27 +1,22 @@
-#fogBackground {
-  background-color: #DDDDDD;
-}
+$colorOfFogElement: #DDDDDD;
+$colorOfWeatherElement: #66FFFF;
+$colorOfFundsElement: #A3FFA3;
+$colorOfTurnElement: #FF99FF;
+$colorOfCaptureElement: #D1A3FF;
+$colorOfPowerElement: #E8BF96;
+$colorOfVisualsElement: #D6FF5C;
 
-#weatherBackground {
-  background-color: #66FFFF;
-}
-
-#fundsBackground {
-  background-color: #A3FFA3;
-}
-
-#turnBackground {
-  background-color: #FF99FF;
-}
-
-#captBackground {
-  background-color: #D1A3FF;
-}
-
-#powerBackground {
-  background-color: #E8BF96;
-}
-
-#visualsBackground {
-  background-color: #D6FF5C;
+@each $setting, $color in zip(
+        $settings,
+        $colorOfFogElement
+        $colorOfWeatherElement
+        $colorOfFundsElement
+        $colorOfTurnElement
+        $colorOfCaptureElement
+        $colorOfPowerElement
+        $colorOfVisualsElement)
+{
+  ##{$setting}Background {
+    background-color: $color;
+  }
 }

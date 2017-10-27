@@ -1,0 +1,16 @@
+@mixin fadeToColor($name, $property, $color) {
+  @-webkit-keyframes #{$name} {
+    50% {
+      @include prefix($property, $color);
+    }
+  }
+  @keyframes #{$name} {
+    50% {
+      #{$property}: $color;
+    }
+  }
+}
+
+@mixin fadeToWhite($name, $property) {
+  @include fadeToColor($name, $property, white);
+}

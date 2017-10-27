@@ -1,0 +1,86 @@
+$amountOfRotationForDiamondShape: 45deg;
+$minimumSwellSize: 0.8;
+$maximumSwellSize: 1;
+$startingPointOfSwell: scale($minimumSwellSize) rotate($amountOfRotationForDiamondShape);
+$endingPointOfSwell: scale($maximumSwellSize) rotate($amountOfRotationForDiamondShape);
+$colorOfInsetOnSettingElement: black;
+$colorOfTextOutline: black;
+$thicknessOfTextOutline: 2;
+$sizeOfSettingElement: 80px;
+$positionOfFogTitle: 20%;
+$positionOfWeatherTitle: -20%;
+$positionOfFundsTitle: 0;
+$positionOfTurnTitle: 10%;
+$positionOfCaptureTitle: -25%;
+$positionOfPowerTitle: -10%;
+$positionOfVisualsTitle: -10%;
+
+@include swell(swellSettingBackground, $startingPointOfSwell, $endingPointOfSwell);
+
+.visible {
+  opacity: 1;
+}
+
+.invisible {
+  opacity: 0;
+}
+
+.rules, .stable {
+  @include size($sizeOfSettingElement);
+  position: absolute;
+  display: inline-block;
+  left: inherit;
+  top: inherit;
+}
+
+.rules {
+  box-shadow: 2px 0 8px 0 $colorOfInsetOnSettingElement inset, 2px 0  0 $colorOfInsetOnSettingElement;
+  border-style: solid;
+  border-width: 5px 5px 5px;
+  border-color: white;
+  animation: swellSettingBackground 1s infinite ease;
+  will-change: transform;
+  z-index: 1;
+}
+
+.stable {
+  text-align: center;
+  z-index: 2;
+  h1 {
+    font-size: 35px;
+    position: absolute;
+    top:-30px;
+    z-index: 10;
+  }
+  ul {
+    left: 5px;
+    position: absolute;
+    text-align: center;
+
+    li {
+      @include outlineText($colorOfTextOutline, $thicknessOfTextOutline);
+      @include size($sizeOfSettingElement);
+      will-change: opacity;
+      line-height: $sizeOfSettingElement;
+      color: white;
+      font-size: 26px;
+      text-align: center;
+      padding-top: 6px;
+    }
+  }
+}
+
+@each $setting, $textPosition in zip(
+    $settings,
+    $positionOfFogTitle
+    $positionOfWeatherTitle
+    $positionOfFundsTitle
+    $positionOfTurnTitle
+    $positionOfCaptureTitle
+    $positionOfPowerTitle
+    $positionOfVisualsTitle
+) {
+  ##{$setting}Display h1 {
+    left: $textPosition;
+  }
+}

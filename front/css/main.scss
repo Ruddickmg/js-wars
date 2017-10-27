@@ -1,6 +1,9 @@
 @charset "UTF-8";
 
 @import "helpers/mixins";
+@import "helpers/movement";
+@import "helpers/functions";
+@import "helpers/fader";
 
 /* --- category selection screen --- */
 
@@ -43,8 +46,10 @@
 
 /* -- game settings selection screen -- */
 
+@import "menus/settingsSelection/settings";
 @import "menus/settingsSelection/backgroundColors";
-@import "menus/settingsSelection/rules";
+@import "menus/settingsSelection/positioning";
+@import "menus/settingsSelection/settingElements";
 
 /* --- player team selection screen --- */
 

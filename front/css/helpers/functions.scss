@@ -1,0 +1,4 @@
+@function joinWithComma($currentText, $value, $index) {
+
+  @return $currentText + if($index <= 1, '', ', ') + $value;
+}

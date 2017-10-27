@@ -4,8 +4,110 @@
 
   @for $i from 1 through $depth {
 
-    $text-shadow: $text-shadow + if($i == 1, '', ', ') + "0 0 #{$thickness}px #{$color}";
+    $text-shadow: joinWithComma($text-shadow, "0 0 #{$thickness}px #{$color}", $i);
+  }
+  text-shadow: #{$text-shadow}
+}
+
+@mixin outlineText($color, $thickness) {
+
+  $text-shadow: "";
+  $above-one: 2;
+
+  @for $i from 1 through $thickness {
+
+    $text-shadow: joinWithComma($text-shadow, "0 -#{$i}px 0 #{$color}", $i);
+    $text-shadow: joinWithComma($text-shadow, "0 -#{$i}px 0 #{$color}", $above-one);
+    $text-shadow: joinWithComma($text-shadow, "-#{$i}px 0 0 #{$color}", $above-one);
+    $text-shadow: joinWithComma($text-shadow, "-#{$i}px #{$i}px 0 #{$color}", $above-one);
+    $text-shadow: joinWithComma($text-shadow, "#{$i}px -#{$i}px 0 #{$color}", $above-one);
+    $text-shadow: joinWithComma($text-shadow, "#{$i}px #{$i}px 0 #{$color}", $above-one);
+    $text-shadow: joinWithComma($text-shadow, "-#{$i}px -#{$i}px 0 #{$color}", $above-one);
   }
 
   text-shadow: #{$text-shadow}
+}
+
+@mixin size($width, $height: $width) {
+
+  width: $width;
+  height: $height;
+}
+
+@mixin sequentialPositioning($classes, $left, $top, $left_increment, $top_increment) {
+
+  @each $class in $classes {
+    .#{$class} {
+      @include transform(translate3d(0, #{$top}vh, 0));
+      left: $left#{"%"}
+    }
+    $top: $top + $top_increment;
+    $left: $left + $left_increment;
+  }
+}
+
+@mixin prefix($property, $value, $vendors: webkit moz ms o) {
+  @if $vendors {
+    @each $vendor in $vendors {
+      #{"-" + $vendor + "-" + $property}: #{$value};
+    }
+  }
+  #{$property}: #{$value};
+}
+
+@mixin toAndFrom($name, $origin, $destination) {
+
+  @-webkit-keyframes #{$name} {
+    from {
+      @include transform($origin);
+    }
+    to {
+      @include transform($destination);
+    }
+  }
+
+  @keyframes #{$name} {
+    from {
+      transform: $origin;
+    }
+    to {
+      transform: $destination;
+    }
+  }
+}
+
+@mixin scrollRight($color) {
+
+  @include toAndFrom($color, translate3d(-100vw, 0, 0), translate3d(100vw, 0, 0))
+}
+
+@mixin transform($value) {
+  @include prefix(transform, $value);
+}
+
+@mixin swell($animation_name, $min, $max) {
+
+  @-webkit-keyframes #{$animation_name} {
+    0% {
+      @include transform($min);
+    }
+    50%{
+      @include transform($max);
+    }
+    100% {
+      @include transform($min);
+    }
+  }
+
+  @keyframes #{$animation_name} {
+    0% {
+      transform: $min;
+    }
+    50% {
+      transform: $max;
+    }
+    100% {
+      transform: $min;
+    }
+  }
 }
