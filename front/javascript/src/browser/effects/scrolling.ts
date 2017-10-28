@@ -1,10 +1,10 @@
 import wrapIndex from "../../tools/array/wrapIndex";
-import {List} from "../../tools/storage/arrayList/list/list";
+import {ArrayList} from "../../tools/storage/lists/arrayList/list/list";
 import validator, {Validator} from "../../tools/validation/validator";
 import {Element} from "../dom/element/element";
 
 export type Scroller = (movingForward: boolean) => void;
-export type ScrollHandler = (list: List<Element<any>>) => Scroller;
+export type ScrollHandler = (list: ArrayList<Element<any>>) => Scroller;
 
 export default (function() {
 
@@ -16,7 +16,7 @@ export default (function() {
   const min = Math.min;
   const max = Math.max;
   const abs = Math.abs;
-  const getLastIndex = (list: List<Element<any>>): number => list.length() - 1;
+  const getLastIndex = (list: ArrayList<Element<any>>): number => list.length() - 1;
   const getValueOfDirection = (movingForward: boolean): number => movingForward ? 1 : -1;
   const showElement = (element: Element<any>): any => element.show();
   const hideElement = (element: Element<any>): any => element.hide();
@@ -24,7 +24,7 @@ export default (function() {
 
     return index > secondIndex ? abs((length - index) + secondIndex) : secondIndex - index;
   };
-  const showElements = (currentList: List<any>, beginning: number, end: number, amount: number) => {
+  const showElements = (currentList: ArrayList<any>, beginning: number, end: number, amount: number) => {
 
     const lastIndex: number = getLastIndex(currentList);
     const first: number = end > lastIndex ? lastIndex - amount : max(beginning, firstIndex);
@@ -44,7 +44,7 @@ export default (function() {
     let lastElementToShow: number;
     let amountAbove: number;
     let amountBelow: number;
-    let list: List<Element<any>>;
+    let list: ArrayList<Element<any>>;
 
     const scroll = (movingForward: boolean, currentIndex: number): any => {
 
@@ -96,7 +96,7 @@ export default (function() {
         }
       }
     };
-    const setList = (listToBeScrolled: List<Element<any>>): Scroller => {
+    const setList = (listToBeScrolled: ArrayList<Element<any>>): Scroller => {
 
       const currentIndex = listToBeScrolled.getCurrentIndex();
       const firstElement: number = currentIndex - amountAbove;

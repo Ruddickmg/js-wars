@@ -1,9 +1,9 @@
-import keyboardInput, {KeyBoard} from "../../../browser/input/keyboard";
-import notifications, {PubSub} from "../../pubSub";
-import typeChecker, {TypeChecker} from "../../validation/typeChecker";
-import validator, {Validator} from "../../validation/validator";
-import createStack, {Stack} from "../stack/listStack";
-import createList, {List} from "./list/list";
+import keyboardInput, {KeyBoard} from "../../../../browser/input/keyboard";
+import notifications, {PubSub} from "../../../pubSub";
+import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
+import validator, {Validator} from "../../../validation/validator";
+import createStack, {Stack} from "../../stack/listStack";
+import createList, {ArrayList} from "./list/list";
 
 interface SelectorMethods<Type> {
 
@@ -11,7 +11,7 @@ interface SelectorMethods<Type> {
 
   selectHorizontally(): SelectionHandler<Type>;
 
-  setSelections(selections: List<Type>): SelectionHandler<Type>;
+  setSelections(selections: ArrayList<Type>): SelectionHandler<Type>;
 
   vertical(selectionHandler: Handler): SelectionHandler<Type>;
 
@@ -31,18 +31,18 @@ export interface SelectionHandler<Type> extends SelectorMethods<Type> {
 
 type Handler = (selected: any, previous: any, selections: any) => any;
 
-export default function <Type>(container: List<Type> = createList<any>()): SelectionHandler<Type> {
+export default function <Type>(container: ArrayList<Type> = createList<any>()): SelectionHandler<Type> {
 
   const keyEvent: string = "keyPressed";
   const keyboard: KeyBoard = keyboardInput();
-  const previous: Stack<List<Type>> = createStack<List<Type>>();
+  const previous: Stack<ArrayList<Type>> = createStack<ArrayList<Type>>();
   const {validateFunction}: Validator = validator("selectionHandler");
   const {isFunction, isDefined}: TypeChecker = typeChecker();
   const {subscribe, unsubscribe}: PubSub = notifications();
 
   let subscription: number;
   let isVertical: boolean = true;
-  let selections: List<Type> = container;
+  let selections: ArrayList<Type> = container;
   let current: Type = selections.getCurrentElement();
   let verticalSelectionHandler: Handler;
   let horizontalSelectionHandler: Handler;
@@ -138,7 +138,7 @@ export default function <Type>(container: List<Type> = createList<any>()): Selec
 
       return this;
     },
-    setSelections(newSelections: List<Type>): SelectionHandler<Type> {
+    setSelections(newSelections: ArrayList<Type>): SelectionHandler<Type> {
 
       selections = newSelections;
       current = selections.getCurrentElement();

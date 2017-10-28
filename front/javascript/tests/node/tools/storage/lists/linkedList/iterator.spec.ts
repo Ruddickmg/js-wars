@@ -1,8 +1,8 @@
 import {expect} from "chai";
-import range from "../../../../../src/tools/array/range";
-import {LinkedListIterator} from "../../../../../src/tools/storage/linkedList/single/iterator";
-import linkedList, {SinglyLinkedList} from "../../../../../src/tools/storage/linkedList/single/list";
-import {LinkedListNode} from "../../../../../src/tools/storage/linkedList/single/node";
+import range from "../../../../../../src/tools/array/range";
+import {LinkedListIterator} from "../../../../../../src/tools/storage/lists/linkedList/single/iterator";
+import linkedList, {SinglyLinkedList} from "../../../../../../src/tools/storage/lists/linkedList/single/list";
+import {LinkedListNode} from "../../../../../../src/tools/storage/lists/linkedList/single/node";
 
 describe("iterator", () => {
 

@@ -54,7 +54,7 @@ export default function <Type>(
 
     return ((abs(distanceToTargetX) + abs(distanceToTargetY)) + (cross * rand));
   };
-  const getPath = (position: Position, visited: PathTracker): Position[] => {
+  const getPath = (position: Position, visited: PathTracker, allowed: number): Position[] => {
 
     const path: Position[] = [];
 
@@ -62,7 +62,10 @@ export default function <Type>(
 
     while (parentPosition) {
 
-      path.push(parentPosition);
+      if (visited.getG(parentPosition) <= allowed) {
+
+        path.push(parentPosition);
+      }
 
       parentPosition = visited.getParent(parentPosition);
     }
@@ -109,50 +112,53 @@ export default function <Type>(
   };
   const getShortestPath = (element: Type, target: Position): Position[] => {
 
+    let position = positionOfElement(element);
+
+    const startCost: number = 0;
+    const startingPosition: Position = position;
     const getCost = (currentElement: Tracker): number => visited.getF(positionOfElement(currentElement));
     const visited: PathTracker = pathTracker();
     const open: BinaryHeap<Tracker> = createHeap<Tracker>(getCost);
-    const allowed: number = allowedMovement(element);
-    const startingPosition: Position = positionOfElement(element);
-
-    let position = startingPosition;
-    let current: Tracker = visited.close(position)
+    const first: Tracker = visited.close(position)
       .setF(position, manhattanDistance(position, position, target))
+      .setG(position, startCost)
       .getPosition(position);
 
-    open.push(current);
+    open.push(first);
 
-    while (open.size() && !position.on(target)) {
+    while (open.size()) {
 
-      current = open.pop();
-      position = positionOfElement(current);
+      position = positionOfElement(open.pop());
+
+      if (position.on(target)) {
+
+        return getPath(position, visited, allowedMovement(element));
+      }
 
       getNeighbors(position, visited).forEach((neighbor: Type): void => {
 
         const positionOfNeighbor: Position = positionOfElement(neighbor);
+        const neighborHasNotBeenVisited: boolean = !visited.getPosition(positionOfNeighbor);
         const currentCost: number = visited.getG(position) || 0;
-        const costOfNeighbor: number = visited.getG(positionOfNeighbor);
-        const costOfMove: number = movementCost(neighbor, element);
-        const totalCost: number = currentCost + costOfMove;
+        const costOfPathToNeighbor: number = visited.getG(positionOfNeighbor);
+        const costOfCurrentPath: number = currentCost + movementCost(neighbor, element);
 
-        if (totalCost <= allowed && !costOfNeighbor || costOfNeighbor >= currentCost) {
+        if (neighborHasNotBeenVisited || costOfCurrentPath < costOfPathToNeighbor) {
 
           visited.close(positionOfNeighbor)
-            .setG(positionOfNeighbor, totalCost)
-            .setF(positionOfNeighbor, totalCost + manhattanDistance(
+            .setParent(positionOfNeighbor, position)
+            .setG(positionOfNeighbor, costOfCurrentPath)
+            .setF(positionOfNeighbor, costOfCurrentPath + manhattanDistance(
               positionOfNeighbor,
               startingPosition,
               target,
-            ))
-            .setParent(positionOfNeighbor, position);
+            ));
 
           open.push(visited.getPosition(positionOfNeighbor));
         }
       });
     }
-
-    // TODO figure out: is it better to return an empty array or incomplete path?
-    return position.on(target) ? getPath(position, visited) : [];
+    return [];
   };
 
   return {

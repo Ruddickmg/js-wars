@@ -7,6 +7,7 @@ import createMatrix, {Matrix} from "../../../../src/tools/storage/matrix/matrix"
 
 describe("pathfinder", () => {
 
+  const startingPoint: number = 1;
   const allowedMovement: number = 22;
   const sizeSquared: number = 10;
   const range: number = 10;
@@ -100,26 +101,40 @@ describe("pathfinder", () => {
 
     const foundPath: any[] = pathfinder.getShortestPath(testElement, endingPosition);
 
-    foundPath.forEach((currentPosition: Position, index: number): void => {
-      const expectedPosition: Position = path[index];
-      expect(currentPosition.on(expectedPosition)).to.equal(true);
+    path.forEach((currentPosition: Position, index: number): void => {
+      expect(currentPosition.on(foundPath[index])).to.equal(true);
     });
   });
 
-  it("Returns an empty path if the path could not be reached.", () => {
+  it("Returns a partial path if the path could not be reached.", () => {
 
-    testElement.movement -= 1;
+    const amountShortOfTarget: number = 3;
+    let partialPath: Position[];
 
-    expect(pathfinder.getShortestPath(testElement, endingPosition).length).to.equal(0);
+    testElement.movement -= amountShortOfTarget;
+
+    partialPath = pathfinder.getShortestPath(testElement, endingPosition);
+
+    expect(partialPath.length).to.equal(allowedMovement + startingPoint - amountShortOfTarget);
+
+    partialPath.forEach((position: Position, index: number): void => {
+
+      expect(position.on(path[index])).to.equal(true);
+    });
+  });
+
+  it("Returns an empty path if the target could not be found.", () => {
+
+    expect(pathfinder.getShortestPath(testElement, createPosition(20, 20)).length).to.equal(0);
   });
 
   it("Finds every position that can be reached from a point given an allowed amount of movement.", () => {
 
     const reachablePositions: Position[] = pathfinder.getAllReachablePositions(testElement, range);
 
-    reachablePositions.forEach((position: Position, index: number): void => {
+    expectedToBeReachable.forEach((position: Position, index: number): void => {
 
-      expect(position.on(expectedToBeReachable[index])).to.equal(true);
+      expect(position.on(reachablePositions[index])).to.equal(true);
     });
   });
 });

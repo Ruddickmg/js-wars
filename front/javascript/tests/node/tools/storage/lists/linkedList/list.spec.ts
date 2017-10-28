@@ -1,7 +1,7 @@
 import {expect} from "chai";
-import range from "../../../../../src/tools/array/range";
-import singlyLinkedList, {SinglyLinkedList} from "../../../../../src/tools/storage/linkedList/single/list";
-import doublyLinkedList from "../../../../../src/tools/storage/linkedList/single/list";
+import range from "../../../../../../src/tools/array/range";
+import singlyLinkedList, {SinglyLinkedList} from "../../../../../../src/tools/storage/lists/linkedList/single/list";
+import doublyLinkedList from "../../../../../../src/tools/storage/lists/linkedList/single/list";
 
 describe("linkedList", () => {
 

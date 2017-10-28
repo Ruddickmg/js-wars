@@ -5,7 +5,7 @@ import randomNumber from "../../../tools/calculations/random";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import isValidIndex from "../../../tools/validation/nonNegativeIndex";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
-import isList from "./isList";
+import isList from "./isList.spec";
 
 export interface List<Type> {
 

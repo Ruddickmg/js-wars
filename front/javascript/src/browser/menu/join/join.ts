@@ -5,8 +5,8 @@ import settings from "../../../settings/settings";
 import countBuildings from "../../../tools/array/propertyValueCounter";
 import zipWith from "../../../tools/array/zipWith";
 import notifications, {PubSub} from "../../../tools/pubSub";
-import createList, {List} from "../../../tools/storage/arrayList/list/list";
-import selectionHandler, {SelectionHandler} from "../../../tools/storage/arrayList/selector";
+import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list/list";
+import selectionHandler, {SelectionHandler} from "../../../tools/storage/lists/arrayList/selector";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
@@ -64,7 +64,7 @@ export default (function() {
   const categorySelectionMenu: GameMenu<any> = createGameMenu(categorySelectionId, selectionMenuType);
   const createSelectionMenu = (): GameMenu<any> => createGameMenu(mapSelectionId, selectionMenuType) as GameMenu<any>;
   const buildingsDisplay: BuildingsDisplay = createBuildingsDisplay();
-  const categoryElements: List<Element<string>> = createList<Element<string>>(
+  const categoryElements: ArrayList<Element<string>> = createList<Element<string>>(
     categories.map((category: string): Element<string> => {
 
       return createSelectionElement<string>(category)
@@ -141,7 +141,7 @@ export default (function() {
       return selections.byCategory(category).then((received: Type[] = []): any => {
 
         let count: number = 1;
-        let newSelections: List<Element<Type>>;
+        let newSelections: ArrayList<Element<Type>>;
         let selectedElement: Element<Type>;
 
         selectionMenu = createSelectionMenu();
@@ -210,7 +210,7 @@ export default (function() {
 
       updateBuildingsDisplay(map);
     };
-    const horizontalSelection = (current: any, _: any, currentCategory: List<Element<string>>): void => {
+    const horizontalSelection = (current: any, _: any, currentCategory: ArrayList<Element<string>>): void => {
 
       const category: string = current.getValue();
       const neighbors: Element<string>[] = currentCategory.getNeighboringElements(amountOfCategoryNeighbors);

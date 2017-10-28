@@ -1,8 +1,8 @@
 import getSettings from "../../../settings/settings";
 import notifications, {PubSub} from "../../../tools/pubSub";
-import createList, {List} from "../../../tools/storage/arrayList/list/list";
-import createSelector, {SelectionHandler} from "../../../tools/storage/arrayList/selector";
 import {Dictionary} from "../../../tools/storage/dictionary";
+import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list/list";
+import createSelector, {SelectionHandler} from "../../../tools/storage/lists/arrayList/selector";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
 import createElement, {Element} from "../../dom/element/element";
@@ -41,7 +41,7 @@ export default (function() {
 
     return createModeElement(id, options);
   });
-  const modeElements: List<ModeElement> = createList<ModeElement>(gameModes);
+  const modeElements: ArrayList<ModeElement> = createList<ModeElement>(gameModes);
   const selector: SelectionHandler<ModeElement> = createSelector<ModeElement>(modeElements);
 
   const isOption = (list: any): boolean => isDefined(list) && list.type === optionType;
@@ -53,7 +53,7 @@ export default (function() {
     }
   };
   const isSelectable = (mode: string): boolean => !nonSelectableElements[mode];
-  const rotateMenuElements = (list: List<ModeElement>): void => {
+  const rotateMenuElements = (list: ArrayList<ModeElement>): void => {
 
     let position = 0;
 
@@ -79,7 +79,7 @@ export default (function() {
     scrollBar.setText(messages[mode]);
   };
 
-  selector.vertical((selected: ModeElement, previous: ModeElement, selections: List<ModeElement>): void => {
+  selector.vertical((selected: ModeElement, previous: ModeElement, selections: ArrayList<ModeElement>): void => {
 
     if (!isOption(selected)) {
 

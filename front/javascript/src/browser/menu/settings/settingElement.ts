@@ -1,12 +1,12 @@
 import truthTable, {TruthTable} from "../../../tools/array/generateTruthTable";
 import generateRange from "../../../tools/array/range";
-import createList, {List} from "../../../tools/storage/arrayList/list/list";
+import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list/list";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element/element";
 import createBackground from "./background";
 import createOutline from "./outline";
 
-export interface SettingElement extends Element<string>, List<Element<any>> {
+export interface SettingElement extends Element<string>, ArrayList<Element<any>> {
 
   background: Element<any>;
   outline: Element<any>;
@@ -35,7 +35,7 @@ export default (function() {
     const settings: Element<any> = createElement(`${setting}Settings`, "ul").setClass("settingOptions");
     const type: string = setting;
     const defaultSettings: string[] = Object.keys(defaults);
-    const list: List<Element<any>> = createList<Element<any>>(defaultSettings.reduce((
+    const list: ArrayList<Element<any>> = createList<Element<any>>(defaultSettings.reduce((
       container: Element<any>[],
       currentSetting: string,
     ): Element<string>[] => {

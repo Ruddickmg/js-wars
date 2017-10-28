@@ -1,57 +1,38 @@
-import wrapIndex from "../../../array/wrapIndex";
-import randomNumber from "../../../calculations/random";
-import notifications, {PubSub} from "../../../pubSub";
-import isValidIndex from "../../../validation/nonNegativeIndex";
-import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
+import wrapIndex from "../../../../array/wrapIndex";
+import randomNumber from "../../../../calculations/random";
+import notifications, {PubSub} from "../../../../pubSub";
+import isValidIndex from "../../../../validation/nonNegativeIndex";
+import typeChecker, {TypeChecker} from "../../../../validation/typeChecker";
 import isList from "./isList";
 
-export interface List<Type> {
+export interface ArrayList<Type> {
 
-  addElement(element: Type): List<Type>;
-
-  addElements(elementsToBeAdded: Type[]): List<Type>;
-
-  filter(callback: MapCallback): List<Type>;
-
+  addElement(element: Type): ArrayList<Type>;
+  addElements(elementsToBeAdded: Type[]): ArrayList<Type>;
+  filter(callback: MapCallback): ArrayList<Type>;
   find(callback: MapCallback): Type;
-
   forEach(callback: MapCallback): void;
-
   getCurrentElement(): Type;
-
   getCurrentIndex(): number;
-
   getElementAtIndex(index: number): Type;
-
   getNeighboringElements(numberOfNeighboringElements: number): Type[];
-
   getRandom(): Type;
-
   isEmpty(): boolean;
-
   length(): number;
-
-  map(callback: MapCallback): List<any>;
-
-  modify(callback: MapCallback, beginningIndex: number, endIndex: number): List<Type>;
-
-  moveToElement(element: Type): List<Type>;
-
+  map(callback: MapCallback): ArrayList<any>;
+  modify(callback: MapCallback, beginningIndex: number, endIndex: number): ArrayList<Type>;
+  moveToElement(element: Type): ArrayList<Type>;
   moveToFirstElement(): Type;
-
   moveToLastElement(): Type;
-
   next(): Type;
-
   previous(): Type;
-
   reduce(callback: ReduceCallback): any;
-
-  sort(callback: (a: Type, b: Type) => number): List<Type>;
+  sort(callback: (a: Type, b: Type) => number): ArrayList<Type>;
+  [property: string]: any;
 }
 
-type MapCallback = <Type>(element: Type, index: number, list: List<Type>) => any;
-type ReduceCallback = <Type>(accumulator: any, value: Type, index: number, list: List<Type>) => any;
+type MapCallback = <Type>(element: Type, index: number, list: ArrayList<Type>) => any;
+type ReduceCallback = <Type>(accumulator: any, value: Type, index: number, list: ArrayList<Type>) => any;
 
 export default (function() {
 
@@ -61,7 +42,7 @@ export default (function() {
   const {isNumber, isDefined}: TypeChecker = typeChecker()
     .register("list", isList);
 
-  return function createList<Type>(initialElements: any[] = []): List<Type> {
+  return function createList<Type>(initialElements: any[] = []): ArrayList<Type> {
 
     let elements: any[] = initialElements;
     let index: number = 0;
@@ -95,7 +76,7 @@ export default (function() {
 
       return getElementAtIndex(moveToIndex(indexOfLastElement));
     };
-    const copyCurrentList = (desiredElements: any[]): List<Type> => {
+    const copyCurrentList = (desiredElements: any[]): ArrayList<Type> => {
 
       const current = getElementAtIndex(index);
       const newList = createList<Type>(desiredElements);
@@ -104,7 +85,7 @@ export default (function() {
 
       return newList;
     };
-    const filter = (callback: MapCallback): List<Type> => {
+    const filter = (callback: MapCallback): ArrayList<Type> => {
 
       return copyCurrentList(elements.filter((element: Type, currentIndex: number): any => {
 
@@ -118,7 +99,7 @@ export default (function() {
         return callback(element, currentIndex, this);
       });
     };
-    const map = function(callback: MapCallback): List<any> {
+    const map = function(callback: MapCallback): ArrayList<any> {
 
       return copyCurrentList(elements.map((element: Type, currentIndex: number): any => {
 
@@ -139,7 +120,7 @@ export default (function() {
         return callback(element, currentIndex, this);
       });
     };
-    const sort = (callback: (a: any, b: any) => number): List<Type> => {
+    const sort = (callback: (a: any, b: any) => number): ArrayList<Type> => {
 
       const copyOfElements = elements.slice();
 
@@ -174,19 +155,19 @@ export default (function() {
 
       return currentAndNeighboringElements;
     };
-    const addElement = function(element: Type): List<Type> {
+    const addElement = function(element: Type): ArrayList<Type> {
 
       elements.push(element);
 
       return this;
     };
-    const addElements = function(elementsToBeAdded: Type[]): List<Type> {
+    const addElements = function(elementsToBeAdded: Type[]): ArrayList<Type> {
 
       elements = elements.concat(elementsToBeAdded);
 
       return this;
     };
-    const moveToElement = function(element: Type): List<Type> {
+    const moveToElement = function(element: Type): ArrayList<Type> {
 
       const indexOfDesiredElement: number = elements.indexOf(element);
 
@@ -199,10 +180,10 @@ export default (function() {
     };
     const length = (): number => elements.length;
     const modify = function(
-      callback: (element: Type, index: number, list: List<Type>) => any,
+      callback: (element: Type, index: number, list: ArrayList<Type>) => any,
       beginning: number = 0,
       end: number = length(),
-    ): List<Type> {
+    ): ArrayList<Type> {
 
       let currentIndex: number = beginning;
 

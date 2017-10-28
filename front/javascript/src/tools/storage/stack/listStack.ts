@@ -1,4 +1,4 @@
-import createNode, {LinkedListNode} from "../linkedList/single/node";
+import createNode, {LinkedListNode} from "../lists/linkedList/single/node";
 
 export interface Stack<Type> {
 

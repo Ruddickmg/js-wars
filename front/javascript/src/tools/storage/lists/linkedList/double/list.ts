@@ -2,10 +2,12 @@ import createIterator, {iteratorFactory, IteratorFactory, LinkedListIterator} fr
 import createNode, {LinkedListNode} from "../single/node";
 
 type Mapping<Type> = (value: Type, node: LinkedListNode<Type>, list: SinglyLinkedList<Type>) => any;
-type Reducing<Type> = (container: any,
-                       value: Type,
-                       node: LinkedListNode<Type>,
-                       list: SinglyLinkedList<Type>,) => any;
+type Reducing<Type> = (
+  container: any,
+  value: Type,
+  node: LinkedListNode<Type>,
+  list: SinglyLinkedList<Type>,
+) => any;
 
 export interface SinglyLinkedList<Type> {
 
