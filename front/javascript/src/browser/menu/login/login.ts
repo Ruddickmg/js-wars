@@ -9,7 +9,6 @@ import getGameScreen from "../screen/gameScreen";
 export interface LoginScreen {
 
   skip(): void;
-
   display(): void;
 }
 

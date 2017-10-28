@@ -1,6 +1,7 @@
 import dictionary, {Dictionary} from "../tools/storage/dictionary";
 import single from "../tools/storage/singleton";
 import colors from "./colors/colorSettings";
+import screenConfiguration from "./configuration/screen";
 import canvasSettings from "./dom/canvas";
 import errorEvents from "./error/errorEvents";
 import hoverInfo from "./hud/hoverInfo";
@@ -109,7 +110,7 @@ export default single<Dictionary>(() => dictionary({
     3: {h: 72, s: 100, l: 50},
     4: {h: 144, s: 100, l: 50},
   },
-
+  screenConfiguration,
   settings,
 
   // dimensions of diplay hud

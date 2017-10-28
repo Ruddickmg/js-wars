@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import getUrl, {Url} from "../../../src/browser/tools/url";
+import getUrl, {Url} from "../../../src/browser/dom/url";
 
 describe("url", () => {
 

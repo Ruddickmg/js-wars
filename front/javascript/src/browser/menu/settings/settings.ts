@@ -1,16 +1,16 @@
 import {Game} from "../../../game/game";
 import getSettings from "../../../settings/settings";
 import notifications, {PubSub} from "../../../tools/pubSub";
+import createList, {List} from "../../../tools/storage/arrayList/list/list";
+import createSelector, {SelectionHandler} from "../../../tools/storage/arrayList/selector";
 import {Dictionary} from "../../../tools/storage/dictionary";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
 import createElement, {Element} from "../../dom/element/element";
 import isElement from "../../dom/element/isElement";
-import createList, {List} from "../../dom/list/list";
 import movementOfDomElements, {DomElementMover} from "../../effects/movementOfDomElements";
 import createTypeWriter, {TypeWriter} from "../../effects/typing";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
-import createSelector, {SelectionHandler} from "../../tools/selector";
 import createArrows, {Arrows} from "../arrows/arrows";
 import createFooter, {Footer} from "../footers/footer";
 import getGameScreen from "../screen/gameScreen";
@@ -40,7 +40,8 @@ export default (function() {
   const settingSelector: SelectionHandler<SettingElement> = createSelector<SettingElement>();
   const setupScreen: Element<any> = getGameScreen();
   const settings: Dictionary = getSettings();
-  const settingsElementDefinitions: any = settings.toObject(settingsMenuId);
+  const settingProperties: any = settings.toObject(settingsMenuId);
+  const settingsElementDefinitions: any = settingProperties.elements;
   const namesOfEachSetting = ["fog", "weather", "funds", "turn", "capture", "power", "visuals"];
   const settingsSelectionMenu: Element<any> = createElement<any>(settingsMenuId, settingsMenuType);
   const footer: Footer = createFooter();

@@ -1,5 +1,5 @@
+import createList, {List} from "../../../../tools/storage/arrayList/list/list";
 import createElement, {Element} from "../../../dom/element/element";
-import createList, {List} from "../../../dom/list/list";
 
 export interface OptionsElement extends List<any>, Element<any> {
 }

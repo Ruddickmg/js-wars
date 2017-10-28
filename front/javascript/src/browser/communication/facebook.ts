@@ -1,7 +1,6 @@
 import single from "../../tools/storage/singleton";
 import createElement, {Element} from "../dom/element/element";
-import getUrlParameters from "../tools/getUrlParameters";
-import redirectToUrl from "../tools/redirect";
+import getUrl, {Url} from "../dom/url";
 
 export interface FacebookApi {
 
@@ -12,6 +11,7 @@ export interface FacebookApi {
 
 export default single<FacebookApi>(() => {
 
+  const url: Url = getUrl(window);
   const appId = "1481194978837888";
   const facebookLoginVersion = "2.3";
   const scope = "public_profile";
@@ -38,10 +38,10 @@ export default single<FacebookApi>(() => {
   const getFirstElementWithTag = (tag: string): any => document.getElementsByTagName(tag)[0];
   const send = function() {
 
-    const parameters = getUrlParameters();
-    const url = `${oauthString}${parameters}`;
+    const parameters = url.parameters();
+    const returnUrl = `${oauthString}${parameters}`;
 
-    redirectToUrl(url);
+    url.redirect(returnUrl);
   };
 
   const createButton = (verifyLogin: any): Element<any> => {

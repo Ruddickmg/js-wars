@@ -1,8 +1,8 @@
 import truthTable, {TruthTable} from "../../../tools/array/generateTruthTable";
 import generateRange from "../../../tools/array/range";
+import createList, {List} from "../../../tools/storage/arrayList/list/list";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element/element";
-import createList, {List} from "../../dom/list/list";
 import createBackground from "./background";
 import createOutline from "./outline";
 
@@ -35,8 +35,10 @@ export default (function() {
     const settings: Element<any> = createElement(`${setting}Settings`, "ul").setClass("settingOptions");
     const type: string = setting;
     const defaultSettings: string[] = Object.keys(defaults);
-    const list: List<Element<any>> = createList<Element<any>>(defaultSettings.reduce((container: Element<any>[],
-                                                                                      currentSetting: string,): Element<string>[] => {
+    const list: List<Element<any>> = createList<Element<any>>(defaultSettings.reduce((
+      container: Element<any>[],
+      currentSetting: string,
+    ): Element<string>[] => {
 
       let settingElement: Element<any>;
 

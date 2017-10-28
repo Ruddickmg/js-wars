@@ -1,6 +1,6 @@
 // export default (tag: string): Element => document.getElementsByTagName(tag)[0];
 import {expect} from "chai";
-import findFirstElementWithTag from "../../../src/browser/tools/findFirstElemenWithTag";
+import findFirstElementWithTag from "../../../src/browser/dom/findFirstElemenWithTag";
 
 describe("findFirstElementWithTag", () => {
 

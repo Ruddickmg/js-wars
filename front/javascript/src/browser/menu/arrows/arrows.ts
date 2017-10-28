@@ -1,8 +1,8 @@
+import {Hsl} from "../../../../depricated/color/hsl";
 import createFader, {Fader} from "../../../../depricated/fade";
 // TODO remove fade: deprecated
 import createPosition, {Position} from "../../../game/coordinates/position";
 import settings from "../../../settings/settings";
-import {Hsl} from "../../color/hsl";
 import {ElementPosition} from "../../dom/element/element";
 import createArrow, {Arrow} from "./arrow";
 
@@ -140,7 +140,7 @@ export default (function() {
   return function(positionOfTopArrow: number = 0,
                   positionOfBottomArrow: number = 0,
                   spaceBetweenArrows: number = 0,
-                  arrowWidth: number = 30,): Arrows {
+                  arrowWidth: number = 30): Arrows {
 
     const borderWidth: number = 0;
     const methods: any = Object.create(arrowsPrototype);

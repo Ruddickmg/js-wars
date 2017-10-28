@@ -1,9 +1,9 @@
-import notifications, {PubSub} from "../../tools/pubSub";
-import createStack, {Stack} from "../../tools/storage/stack/listStack";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
-import validator, {Validator} from "../../tools/validation/validator";
-import createList, {List} from "../dom/list/list";
-import keyboardInput, {KeyBoard} from "../input/keyboard";
+import keyboardInput, {KeyBoard} from "../../../browser/input/keyboard";
+import notifications, {PubSub} from "../../pubSub";
+import typeChecker, {TypeChecker} from "../../validation/typeChecker";
+import validator, {Validator} from "../../validation/validator";
+import createStack, {Stack} from "../stack/listStack";
+import createList, {List} from "./list/list";
 
 interface SelectorMethods<Type> {
 

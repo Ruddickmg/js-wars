@@ -8,13 +8,9 @@ import createElement, {Element} from "../dom/element/element";
 export interface Canvas<Type> extends Element<Type> {
 
   clear(): Canvas<Type>;
-
   context(): any;
-
   dimensions(): Dimensions;
-
   pixels(): number;
-
   render(image: any, {x, y}: Position): Canvas<Type>;
 }
 

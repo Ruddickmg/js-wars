@@ -1,7 +1,7 @@
 import wrapIndex from "../../tools/array/wrapIndex";
+import {List} from "../../tools/storage/arrayList/list/list";
 import validator, {Validator} from "../../tools/validation/validator";
 import {Element} from "../dom/element/element";
-import {List} from "../dom/list/list";
 
 export type Scroller = (movingForward: boolean) => void;
 export type ScrollHandler = (list: List<Element<any>>) => Scroller;

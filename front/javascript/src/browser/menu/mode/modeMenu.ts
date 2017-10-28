@@ -1,12 +1,12 @@
 import getSettings from "../../../settings/settings";
 import notifications, {PubSub} from "../../../tools/pubSub";
+import createList, {List} from "../../../tools/storage/arrayList/list/list";
+import createSelector, {SelectionHandler} from "../../../tools/storage/arrayList/selector";
 import {Dictionary} from "../../../tools/storage/dictionary";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
 import createElement, {Element} from "../../dom/element/element";
-import createList, {List} from "../../dom/list/list";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
-import createSelector, {SelectionHandler} from "../../tools/selector";
 import createScrollBar, {ScrollBar} from "../footers/scrollBar";
 import getGameScreen from "../screen/gameScreen";
 import createModeElement, {ModeElement} from "./modeElement";

@@ -1,3 +1,5 @@
+// TODO test and possibly rename selector
+
 // // import notifications, {PubSub} from "../pubSub";
 // import createStack, {Stack} from "../storage/stack/listStack";
 // import typeChecker, {TypeChecker} from "../validation/typeChecker";

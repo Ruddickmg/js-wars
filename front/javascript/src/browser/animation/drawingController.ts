@@ -1,9 +1,9 @@
 import createDimensions, {Dimensions} from "../../game/coordinates/dimensions";
 import createPosition, {Position} from "../../game/coordinates/position";
-import createCache, {Cache} from "../../tools/storage/cache";
+import getSettings from "../../settings/settings";
 import notifications, {PubSub} from "../../tools/pubSub";
+import createCache, {Cache} from "../../tools/storage/cache";
 import createCanvas, {Canvas} from "../canvas/canvas";
-import screenConfiguration from "../configuration/screenConfig";
 import animations, {Animations} from "./animations";
 import createLineTool, {DrawingTool, LineController} from "./lineTool";
 
@@ -14,6 +14,7 @@ export interface DrawingController {
 
 export default function(dimensions: Dimensions, currentScreenPosition: Position): DrawingController {
 
+  const screenConfiguration: any = getSettings().toObject("screenConfiguration");
   let offset: Dimensions;
   let gridSquare: Dimensions;
   let screenPosition: Position = currentScreenPosition;

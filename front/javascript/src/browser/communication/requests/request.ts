@@ -7,9 +7,7 @@ export type IncompleteRequest = (input: any) => Promise<any>;
 export interface Request {
 
   get(url: string, input?: any): Promise<any> | IncompleteRequest;
-
   post(url: string, input?: any): Promise<any> | IncompleteRequest;
-
   del(url: string, input?: any): Promise<any> | IncompleteRequest;
 }
 

@@ -1,8 +1,8 @@
-import wrapIndex from "../../../tools/array/wrapIndex";
-import randomNumber from "../../../tools/calculations/random";
-import notifications, {PubSub} from "../../../tools/pubSub";
-import isValidIndex from "../../../tools/validation/nonNegativeIndex";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import wrapIndex from "../../../array/wrapIndex";
+import randomNumber from "../../../calculations/random";
+import notifications, {PubSub} from "../../../pubSub";
+import isValidIndex from "../../../validation/nonNegativeIndex";
+import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
 import isList from "./isList";
 
 export interface List<Type> {
@@ -198,9 +198,11 @@ export default (function() {
       return this;
     };
     const length = (): number => elements.length;
-    const modify = function(callback: (element: Type, index: number, list: List<Type>) => any,
-                            beginning: number = 0,
-                            end: number = length(),): List<Type> {
+    const modify = function(
+      callback: (element: Type, index: number, list: List<Type>) => any,
+      beginning: number = 0,
+      end: number = length(),
+    ): List<Type> {
 
       let currentIndex: number = beginning;
 

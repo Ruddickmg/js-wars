@@ -1,9 +1,9 @@
 import createDimensions, {Dimensions} from "../../game/coordinates/dimensions";
 import createPosition, {Coordinates, Position} from "../../game/coordinates/position";
+import screenConfiguration from "../../settings/configuration/screen";
 import time, {Time} from "../../tools/calculations/time";
 import notifications, {PubSub} from "../../tools/pubSub";
 import canvasCache, {CanvasCache} from "../canvas/canvasCache";
-import screenConfiguration from "../configuration/screenConfig";
 import keyboardInput, {KeyBoard} from "../input/keyboard";
 import getGameScreen from "../menu/screen/gameScreen";
 
@@ -109,7 +109,7 @@ export default function(mapDimensions: Dimensions): ScreenController {
   const cursorAtTopOrRightOfScreen = (cursorPosition: number,
                                       currentPosition: number,
                                       edgeOfScreen: number,
-                                      edgeOfMap: number,): boolean => {
+                                      edgeOfMap: number): boolean => {
 
     return cursorPosition < edgeOfMap
       && cursorPosition > currentPosition + edgeOfScreen - squaresFromEdgeBeforeMoving

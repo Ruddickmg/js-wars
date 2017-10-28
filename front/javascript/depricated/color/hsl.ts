@@ -1,14 +1,11 @@
-import single from "../../tools/storage/singleton";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import single from "../../src/tools/storage/singleton";
+import typeChecker, {TypeChecker} from "../../src/tools/validation/typeChecker";
 
 interface HslPrototype {
 
   format(): string;
-
   setHue(hue: number): Hsl;
-
   setSaturation(saturation: number): Hsl;
-
   setLightness(lightness: number): Hsl;
 }
 

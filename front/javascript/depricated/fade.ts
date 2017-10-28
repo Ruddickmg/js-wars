@@ -1,8 +1,8 @@
-import createHsl, {Hsl, isColor} from "../src/browser/color/hsl";
 import createOscillator, {Oscillator} from "../src/tools/motion/oscillator";
 import notifications, {PubSub} from "../src/tools/pubSub";
 import typeChecker, {TypeChecker} from "../src/tools/validation/typeChecker";
 import validateCallbacks from "../src/tools/validation/validateCallbacks";
+import createHsl, {Hsl, isColor} from "./color/hsl";
 
 export interface Fader extends Oscillator {
 

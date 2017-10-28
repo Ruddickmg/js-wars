@@ -1,4 +1,4 @@
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
 
 export default function isList(element: any): boolean {
 

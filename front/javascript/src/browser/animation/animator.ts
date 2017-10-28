@@ -1,7 +1,6 @@
 export interface Animator {
 
   start(): Animator;
-
   stop(): Animator;
 }
 
@@ -47,14 +46,11 @@ export default (function() {
 
           previousTime = now;
 
-          console.log("time between animations: " + timeBetweenAnimations);
-
           callback(id);
         }
       }
     };
 
-    console.log("fps: " + framesPerSecond);
     return {
       start,
       stop,

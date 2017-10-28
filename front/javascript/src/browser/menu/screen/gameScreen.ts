@@ -1,7 +1,7 @@
 import single from "../../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element/element";
-import findFirstElementWithTag from "../../tools/findFirstElemenWithTag";
+import findFirstElementWithTag from "../../dom/findFirstElemenWithTag";
 
 export default single<Element<any>>(function(): Element<any> {
 
