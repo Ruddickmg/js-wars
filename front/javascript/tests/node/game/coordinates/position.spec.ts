@@ -1,6 +1,6 @@
 import {expect} from "chai";
-import {Dimensions} from "../../../../src/game/coordinates/dimensions";
-import createPosition, {Coordinates, Position} from "../../../../src/game/coordinates/position";
+import {Dimensions} from "../../../../src/game/map/coordinates/dimensions";
+import createPosition, {Coordinates, Position} from "../../../../src/game/map/coordinates/position";
 import testMap from "../../../../src/game/map/testMap";
 
 describe("position", () => {

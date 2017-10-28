@@ -1,5 +1,5 @@
-import {Dimensions} from "../../game/coordinates/dimensions";
-import {Position} from "../../game/coordinates/position";
+import {Dimensions} from "../../game/map/coordinates/dimensions";
+import {Position} from "../../game/map/coordinates/position";
 import createHeap, {BinaryHeap} from "../storage/heaps/binaryHeap";
 import {Matrix} from "../storage/matrix/matrix";
 import pathTracker, {PathTracker, Tracker} from "./pathTracker";

@@ -1,4 +1,4 @@
-import {Position} from "../../../game/coordinates/position";
+import {Position} from "../../../game/map/coordinates/position";
 import single from "../../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element/element";

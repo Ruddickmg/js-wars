@@ -1,6 +1,6 @@
 import {expect} from "chai";
-import createDimensions from "../../../../src/game/coordinates/dimensions";
-import createPosition, {Position} from "../../../../src/game/coordinates/position";
+import createDimensions from "../../../../src/game/map/coordinates/dimensions";
+import createPosition, {Position} from "../../../../src/game/map/coordinates/position";
 import createTerrain, {Terrain} from "../../../../src/game/map/elements/terrain/terrain";
 import createPathFinder, {PathFinder} from "../../../../src/tools/pathfinding/pathFinder";
 import createMatrix, {Matrix} from "../../../../src/tools/storage/matrix/matrix";

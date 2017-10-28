@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import createPosition, {Position} from "../../../../../src/game/coordinates/position";
+import createPosition, {Position} from "../../../../../src/game/map/coordinates/position";
 import range from "../../../../../src/tools/array/range";
 import createMatrix, {Matrix} from "../../../../../src/tools/storage/matrix/matrix";
 

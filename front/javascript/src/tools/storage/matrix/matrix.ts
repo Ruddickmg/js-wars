@@ -1,4 +1,4 @@
-import createPosition, {Position} from "../../../game/coordinates/position";
+import createPosition, {Position} from "../../../game/map/coordinates/position";
 import typeChecker, {TypeChecker} from "../../validation/typeChecker";
 
 type ReduceCallback<Type> = (accumulator: any, value: any, position: Position, self: Matrix<Type>) => any;

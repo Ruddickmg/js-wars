@@ -1,4 +1,4 @@
-import {Dimensions} from "../../game/coordinates/dimensions";
+import {Dimensions} from "../../game/map/coordinates/dimensions";
 
 export type LineController = (x: number, y: number) => DrawingTool;
 

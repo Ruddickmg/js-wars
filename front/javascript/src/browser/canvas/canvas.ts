@@ -1,5 +1,5 @@
-import createDimensions, {Dimensions} from "../../game/coordinates/dimensions";
-import {Position} from "../../game/coordinates/position";
+import createDimensions, {Dimensions} from "../../game/map/coordinates/dimensions";
+import {Position} from "../../game/map/coordinates/position";
 import getSettings from "../../settings/settings";
 import notifications, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";

@@ -1,7 +1,7 @@
 import {Hsl} from "../../../../depricated/color/hsl";
 import createFader, {Fader} from "../../../../depricated/fade";
 // TODO remove fade: deprecated
-import createPosition, {Position} from "../../../game/coordinates/position";
+import createPosition, {Position} from "../../../game/map/coordinates/position";
 import settings from "../../../settings/settings";
 import {ElementPosition} from "../../dom/element/element";
 import createArrow, {Arrow} from "./arrow";

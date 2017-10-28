@@ -1,6 +1,6 @@
-import createDimensions, {Dimensions} from "../../../src/game/coordinates/dimensions";
 import single from "../../../src/tools/storage/singleton";
 import capitalizeFirstLetter from "../../../src/tools/stringManipulation/capitalizeFirstLetter";
+import createDimensions, {Dimensions} from "../../game/map/coordinates/dimensions";
 
 export interface TextWidthChecker {
 

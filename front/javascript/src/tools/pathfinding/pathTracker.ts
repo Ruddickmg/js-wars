@@ -1,4 +1,4 @@
-import createPosition, {Position} from "../../game/coordinates/position";
+import createPosition, {Position} from "../../game/map/coordinates/position";
 import createMatrix, {Matrix} from "../storage/matrix/matrix";
 
 export interface PathTracker {

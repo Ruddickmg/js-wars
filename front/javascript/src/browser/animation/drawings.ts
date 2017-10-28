@@ -1,5 +1,5 @@
-import {Dimensions} from "../../game/coordinates/dimensions";
-import createPosition, {Position} from "../../game/coordinates/position";
+import {Dimensions} from "../../game/map/coordinates/dimensions";
+import createPosition, {Position} from "../../game/map/coordinates/position";
 import {Building} from "../../game/map/elements/building/building";
 import {MapElement} from "../../game/map/elements/defaults";
 import {Terrain} from "../../game/map/elements/terrain/terrain";

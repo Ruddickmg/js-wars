@@ -1,4 +1,4 @@
-import createPosition, {Position} from "../../game/coordinates/position";
+import createPosition, {Position} from "../../game/map/coordinates/position";
 import createTerrain, {Terrain} from "../../game/map/elements/terrain/terrain";
 import getRandom from "../../tools/calculations/random";
 import notifications, {PubSub} from "../../tools/pubSub";

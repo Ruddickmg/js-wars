@@ -1,4 +1,4 @@
-import createPosition, {Position} from "../../game/coordinates/position";
+import createPosition, {Position} from "../../game/map/coordinates/position";
 import {MapElement} from "../../game/map/elements/defaults";
 import notifications, {PubSub} from "../../tools/pubSub";
 import single from "../../tools/storage/singleton";

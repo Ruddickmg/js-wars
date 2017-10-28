@@ -1,9 +1,9 @@
-import {Position} from "../../../game/coordinates/position";
+import {Position} from "../../../game/map/coordinates/position";
 import curry from "../../../tools/function/curry";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
+import pixelStringConverter, {PixelStringConversion} from "../../../tools/stringManipulation/pixelStringConversion";
 import validator, {Validator} from "../../../tools/validation/validator";
 import createElement, {Element, ElementPosition} from "../../dom/element/element";
-import pixelStringConverter, {PixelStringConversion} from "../../../tools/stringManipulation/pixelStringConversion";
 
 export interface Arrow extends Element<any> {
 

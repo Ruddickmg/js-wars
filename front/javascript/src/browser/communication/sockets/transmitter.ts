@@ -1,4 +1,4 @@
-import {Position} from "../../../game/coordinates/position";
+import {Position} from "../../../game/map/coordinates/position";
 import {User} from "../../../game/users/user";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";

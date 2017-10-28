@@ -1,5 +1,5 @@
-import createDimensions, {Dimensions} from "../../game/coordinates/dimensions";
-import createPosition, {Coordinates, Position} from "../../game/coordinates/position";
+import createDimensions, {Dimensions} from "../../game/map/coordinates/dimensions";
+import createPosition, {Coordinates, Position} from "../../game/map/coordinates/position";
 import screenConfiguration from "../../settings/configuration/screen";
 import time, {Time} from "../../tools/calculations/time";
 import notifications, {PubSub} from "../../tools/pubSub";

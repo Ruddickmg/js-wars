@@ -3,7 +3,7 @@
  */
 
 import {expect} from "chai";
-import createDimensions, {Dimensions} from "../../../../src/game/coordinates/dimensions";
+import createDimensions, {Dimensions} from "../../../../src/game/map/coordinates/dimensions";
 
 describe("dimensions", () => {
 

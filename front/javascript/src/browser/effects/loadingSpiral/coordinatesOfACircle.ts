@@ -1,4 +1,4 @@
-import {Coordinates} from "../../../game/coordinates/position";
+import {Coordinates} from "../../../game/map/coordinates/position";
 
 export default function(radius: number, degree: number): Coordinates {
 

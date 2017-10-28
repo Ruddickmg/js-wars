@@ -1,4 +1,4 @@
-import {Position} from "../../game/coordinates/position";
+import {Position} from "../../game/map/coordinates/position";
 import {MapElement} from "../../game/map/elements/defaults";
 import {isUnit} from "../../game/map/elements/unit/unit";
 import {MatrixMap} from "../../game/map/mapMatrix";

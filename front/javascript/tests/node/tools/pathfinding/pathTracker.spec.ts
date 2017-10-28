@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import createPosition, {Position} from "../../../../src/game/coordinates/position";
+import createPosition, {Position} from "../../../../src/game/map/coordinates/position";
 import pathTracker, {PathTracker} from "../../../../src/tools/pathfinding/pathTracker";
 
 describe("pathTracker", () => {

@@ -1,10 +1,10 @@
-import createPosition, {Position} from "../../../game/coordinates/position";
+import createPosition, {Position} from "../../../game/map/coordinates/position";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import createCache, {Cache} from "../../../tools/storage/cache";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
+import pixelStringConverter, {PixelStringConversion} from "../../../tools/stringManipulation/pixelStringConversion";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
-import pixelStringConverter, {PixelStringConversion} from "../../../tools/stringManipulation/pixelStringConversion";
 import isElement from "./isElement";
 
 export interface ElementPosition extends Position {
