@@ -4,16 +4,14 @@ import findFirstElementWithTag from "../../../src/browser/tools/findFirstElemenW
 
 describe("findFirstElementWithTag", () => {
 
-  // TODO set up with karma
-
   it("Finds the first dom element with a specified tag.", () => {
 
     const tag: string = "h1";
     const firstElement: Element = document.createElement(tag);
     const secondElement: Element = document.createElement(tag);
 
-    document.appendChild(firstElement);
-    document.appendChild(secondElement);
+    document.body.appendChild(firstElement);
+    document.body.appendChild(secondElement);
 
     expect(findFirstElementWithTag(tag)).to.equal(firstElement);
   });

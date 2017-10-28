@@ -5,7 +5,6 @@ import {MatrixMap} from "../../game/map/mapMatrix";
 import pathfinder, {PathFinder} from "../../tools/pathfinding/pathFinder";
 import notifications, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
-import unitController, {UnitController} from "../controller/unitController";
 
 export interface ShowPath {
 

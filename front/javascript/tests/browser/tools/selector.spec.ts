@@ -8,24 +8,16 @@
 // interface SelectorMethods<Type> {
 //
 //   selectVertically(): SelectionHandler<Type>;
-//
 //   selectHorizontally(): SelectionHandler<Type>;
-//
 //   setSelections(selections: List<Type>): SelectionHandler<Type>;
-//
 //   vertical(selectionHandler: Handler): SelectionHandler<Type>;
-//
 //   horizontal(selectionHandler: Handler): SelectionHandler<Type>;
-//
 //   stop(): SelectionHandler<Type>;
 // }
 //
 // export interface SelectionHandler<Type> extends SelectorMethods<Type> {
-//
 //   getSelected(): Type;
-//
 //   select(): void;
-//
 //   start(): SelectionHandler<Type>;
 // }
 //

@@ -1,4 +1,4 @@
-import createPosition, {Position} from "../../coordinates/position";
+import createPosition, {Position} from "../../game/coordinates/position";
 import {MapElement} from "../../game/map/elements/defaults";
 import notifications, {PubSub} from "../../tools/pubSub";
 import single from "../../tools/storage/singleton";
@@ -7,13 +7,9 @@ import keyBoardInput, {KeyBoard} from "../input/keyboard";
 export interface TargetHandler {
 
   attack(): TargetHandler;
-
   cursor(): string;
-
   drop(): TargetHandler;
-
   position(): Position;
-
   set(element: MapElement): TargetHandler;
 }
 

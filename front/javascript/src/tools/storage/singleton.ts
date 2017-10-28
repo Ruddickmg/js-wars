@@ -7,7 +7,7 @@ export default (function() {
       && object.constructor === Function;
   };
 
-  return function <Type>(object: any): () => Type {
+  return function <Type>(object: any): (...args: any[]) => Type {
 
     let stored: any;
 

@@ -1,4 +1,4 @@
-import createPosition, {Coordinates, Position} from "../../coordinates/position";
+import createPosition, {Coordinates, Position} from "../../game/coordinates/position";
 import {MapElement} from "../../game/map/elements/defaults";
 import map from "../../game/map/map";
 import notifications, {PubSub} from "../../tools/pubSub";
@@ -9,10 +9,10 @@ import getSocket from "../communication/sockets/socket";
 import keyBoardInput, {KeyBoard} from "../input/keyboard";
 import getCursor, {Cursor} from "../objects/cursor";
 
-const actions = require("./actionsController.js");
-const app = require("../configuration/settings/app.ts");
-
-app.options = require("../menu/options/optionsMenu.js");
+// const actions = require("./actionsController.js");
+// const app = require("../configuration/settings/app.ts");
+//
+// app.options = require("../menu/options/optionsMenu.js");
 
 interface KeyRanges {
 

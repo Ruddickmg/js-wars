@@ -7,22 +7,15 @@ import {Dictionary} from "../../tools/storage/dictionary";
 import singleton from "../../tools/storage/singleton";
 import createCanvas, {Canvas} from "../canvas/canvas";
 import cursorController, {CursorController} from "../controller/cursorController";
-import dom from "../dom/dom";
 
 export interface MapInfoHud {
 
   add(newElement: MapElement, attributes?: any): any;
-
   clear(): void;
-
   hidden(): boolean;
-
   hide(): void;
-
   position(): Position;
-
   setElements(elements: any): any;
-
   show(): void;
 }
 
