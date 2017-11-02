@@ -1,8 +1,8 @@
-import wrapIndex from "../../../../array/wrapIndex";
-import randomNumber from "../../../../calculations/random";
-import notifications, {PubSub} from "../../../../pubSub";
-import isValidIndex from "../../../../validation/nonNegativeIndex";
-import typeChecker, {TypeChecker} from "../../../../validation/typeChecker";
+import wrapIndex from "../../../array/wrapIndex";
+import randomNumber from "../../../calculations/random";
+import notifications, {PubSub} from "../../../pubSub";
+import isValidIndex from "../../../validation/nonNegativeIndex";
+import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
 import isList from "./isList";
 
 export interface ArrayList<Type> {
@@ -26,13 +26,13 @@ export interface ArrayList<Type> {
   moveToLastElement(): Type;
   next(): Type;
   previous(): Type;
-  reduce(callback: ReduceCallback): any;
+  reduce(callback: ReduceCallback<Type>, initialValue: any): any;
   sort(callback: (a: Type, b: Type) => number): ArrayList<Type>;
   [property: string]: any;
 }
 
 type MapCallback = <Type>(element: Type, index: number, list: ArrayList<Type>) => any;
-type ReduceCallback = <Type>(accumulator: any, value: Type, index: number, list: ArrayList<Type>) => any;
+type ReduceCallback<Type> = <Type>(accumulator: any, value: Type, index: number, list: ArrayList<Type>) => any;
 
 export default (function() {
 
@@ -106,12 +106,13 @@ export default (function() {
         return callback(element, currentIndex, this);
       }));
     };
-    const reduce = function(callback: ReduceCallback): any {
+    const reduce = function(callback: ReduceCallback<Type>, initialValue: any): any {
 
       return elements.reduce((accumulator: any, element: Type, currentIndex: number): any => {
 
         return callback(accumulator, element, currentIndex, this);
-      });
+
+      }, initialValue);
     };
     const forEach = function(callback: MapCallback): void {
 
@@ -185,16 +186,16 @@ export default (function() {
       end: number = length(),
     ): ArrayList<Type> {
 
-      let currentIndex: number = beginning;
-
       const stoppingPoint = min(end, length() - 1);
 
-      for (currentIndex; currentIndex <= stoppingPoint; currentIndex += 1) {
+      return this.map((value: Type, currentIndex: number): Type => {
 
-        callback(elements[currentIndex], currentIndex, this);
-      }
+        if (currentIndex >= beginning && currentIndex <= stoppingPoint) {
 
-      return this;
+          return callback(elements[currentIndex], currentIndex, this);
+        }
+        return value;
+      });
     };
 
     return {

@@ -2,8 +2,7 @@ import {Game} from "../../../game/game";
 import getSettings from "../../../settings/settings";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import {Dictionary} from "../../../tools/storage/dictionary";
-import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list/list";
-import createSelector, {SelectionHandler} from "../../../tools/storage/lists/arrayList/selector";
+import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
 import createElement, {Element} from "../../dom/element/element";
@@ -14,6 +13,7 @@ import keyboardInput, {KeyBoard} from "../../input/keyboard";
 import createArrows, {Arrows} from "../arrows/arrows";
 import createFooter, {Footer} from "../footers/footer";
 import getGameScreen from "../screen/gameScreen";
+import createSelector, {SelectionHandler} from "../selector";
 import gameNameInput, {NameInput, NameInputFactory} from "./gameNameInput";
 import createSettingElement, {SettingElement} from "./settingElement";
 

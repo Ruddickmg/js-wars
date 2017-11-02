@@ -9,7 +9,7 @@ describe("cache", () => {
   const end: number = 5;
   const testCache: Cache<any> = cache<any>();
   const elementName: string = "thing1";
-  const element: string = "whaaa?";
+  const element: string = "what?";
   const elements: string[] = ["1", "2", "3", "4"];
   const numbers: number[] = range(beginning, end);
   const mappingFunction = (value: number): number => value + 1;
@@ -42,7 +42,7 @@ describe("cache", () => {
 
     let index: number = 0;
     numbers.forEach((value: any): any => testCache.add(value, value));
-    testCache.forEach((value: any): void => expect(value).to.equal(numbers[index++]));
+    testCache.forEach((value: any): any => expect(value).to.equal(numbers[index++]));
   });
   it("Can be mapped.", () => {
 
@@ -54,9 +54,9 @@ describe("cache", () => {
   });
   it("Can be reduced.", () => {
 
-    const reduceFuncton: any = (previous: number, value: number): number => value + previous;
-    const expected: number = numbers.reduce(reduceFuncton, 0);
-    const reduced: number = testCache.reduce(reduceFuncton, 0);
+    const reduceFunction: any = (previous: number, value: number): number => value + previous;
+    const expected: number = numbers.reduce(reduceFunction, 0);
+    const reduced: number = testCache.reduce(reduceFunction, 0);
     expect(reduced).to.equal(expected);
   });
   it("Can be filtered.", () => {
@@ -67,17 +67,17 @@ describe("cache", () => {
     const filterFunction = (value: number): boolean => value > pivotPoint;
     const filtered: Cache<number> = testCache.filter(filterFunction);
 
-    filteredOut.forEach((value: number): void => expect(filtered.contains(`${value}`)).to.equal(false));
-    kept.forEach((value: number): void => expect(filtered.contains(`${value}`)).to.equal(true));
+    filteredOut.forEach((value: number): any => expect(filtered.contains(`${value}`)).to.equal(false));
+    kept.forEach((value: number): any => expect(filtered.contains(`${value}`)).to.equal(true));
   });
   it("Can be searched.", () => {
 
     const notInCache: number[] = range(6, 10).concat(range(-5, -1));
 
-    numbers.forEach((value: number): void => expect(testCache.find((cached: number): boolean => value === cached))
+    numbers.forEach((value: number): any => expect(testCache.find((cached: number): boolean => value === cached))
       .to.equal(value));
 
-    notInCache.forEach((value: number): void => expect(testCache.find((cached: number): boolean => value === cached))
+    notInCache.forEach((value: number): any => expect(testCache.find((cached: number): boolean => value === cached))
       .to.equal(myUndefined));
   });
 });

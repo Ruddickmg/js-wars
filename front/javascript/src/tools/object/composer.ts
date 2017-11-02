@@ -5,25 +5,26 @@ interface TruthTable {
   [index: string]: boolean;
 }
 
+type Func = (input: any) => any;
+
 export interface Composer<OutputType> {
 
-  functions(...arrayOfFunctions: Array<((input: any) => any)>): (input: any) => any;
-
+  functions(...arrayOfFunctions: Func[]): (input: any) => any;
   including(parameters: string[], ...objects: any[]): OutputType;
-
   excluding(elements: string[], ...objects: any[]): OutputType;
-
   combine(...objects: any[]): OutputType;
 }
 
-export default single(function <OutputType>(): Composer<OutputType> {
+export default single<Composer<any>>(function <OutputType>(): Composer<OutputType> {
 
   const checkIfParameterExists = (parameter: any): boolean => parameter !== undefined;
   const checkIfParameterDoesNotExist = (parameter: any): boolean => !parameter;
-  const conditionalCombination = (baseObject: any,
-                                  objectToCombineWith: any,
-                                  conditions: TruthTable,
-                                  isAllowed: (parameter: any) => boolean,): OutputType => {
+  const conditionalCombination = (
+    baseObject: any,
+    objectToCombineWith: any,
+    conditions: TruthTable,
+    isAllowed: (parameter: any) => boolean,
+  ): OutputType => {
 
     const modifiedBaseObject = Object.assign({}, baseObject);
     const parametersToCombine = Object.keys(objectToCombineWith);
@@ -42,9 +43,11 @@ export default single(function <OutputType>(): Composer<OutputType> {
 
     }, modifiedBaseObject);
   };
-  const exclusiveCombination = (unwantedParameters: TruthTable,
-                                baseObject: object,
-                                objectToCombineWith: object,): OutputType => {
+  const exclusiveCombination = (
+    unwantedParameters: TruthTable,
+    baseObject: object,
+    objectToCombineWith: object,
+  ): OutputType => {
 
     return conditionalCombination(
       baseObject,
@@ -53,9 +56,11 @@ export default single(function <OutputType>(): Composer<OutputType> {
       checkIfParameterDoesNotExist,
     );
   };
-  const inclusiveCombination = (desiredParameters: TruthTable,
-                                baseObject: object,
-                                objectToCombineWith: object,): OutputType => {
+  const inclusiveCombination = (
+    desiredParameters: TruthTable,
+    baseObject: object,
+    objectToCombineWith: object,
+  ): OutputType => {
 
     return conditionalCombination(
       baseObject,
@@ -74,16 +79,18 @@ export default single(function <OutputType>(): Composer<OutputType> {
 
     }, {}) as TruthTable;
   };
-  const functions = (...arrayOfFunctions: Array<(input: any) => any>): (input: any) => any => {
+  const functions = (...arrayOfFunctions: Func[]): (input: any) => any => {
 
     return (input: any): OutputType => arrayOfFunctions
       .slice()
       .reverse()
       .reduce((value, currentFunction) => currentFunction(value), input);
   };
-  const combineAll = (parametersToInclude: TruthTable,
-                      parametersToExclude: TruthTable,
-                      objects: any[],): OutputType => {
+  const combineAll = (
+    parametersToInclude: TruthTable,
+    parametersToExclude: TruthTable,
+    objects: any[],
+  ): OutputType => {
 
     const empty = 0;
     const baseObject: object = Object.assign({}, objects[0]);

@@ -1,5 +1,5 @@
 import wrapIndex from "../../tools/array/wrapIndex";
-import {ArrayList} from "../../tools/storage/lists/arrayList/list/list";
+import {ArrayList} from "../../tools/storage/lists/arrayList/list";
 import validator, {Validator} from "../../tools/validation/validator";
 import {Element} from "../dom/element/element";
 

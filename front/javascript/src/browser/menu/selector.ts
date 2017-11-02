@@ -1,31 +1,24 @@
-import keyboardInput, {KeyBoard} from "../../../../browser/input/keyboard";
-import notifications, {PubSub} from "../../../pubSub";
-import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
-import validator, {Validator} from "../../../validation/validator";
-import createStack, {Stack} from "../../stack/listStack";
-import createList, {ArrayList} from "./list/list";
+import notifications, {PubSub} from "../../tools/pubSub";
+import createList, {ArrayList} from "../../tools/storage/lists/arrayList/list";
+import createStack, {Stack} from "../../tools/storage/stack/listStack";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import validator, {Validator} from "../../tools/validation/validator";
+import keyboardInput, {KeyBoard} from "../input/keyboard";
 
 interface SelectorMethods<Type> {
 
   selectVertically(): SelectionHandler<Type>;
-
   selectHorizontally(): SelectionHandler<Type>;
-
   setSelections(selections: ArrayList<Type>): SelectionHandler<Type>;
-
   vertical(selectionHandler: Handler): SelectionHandler<Type>;
-
   horizontal(selectionHandler: Handler): SelectionHandler<Type>;
-
   stop(): SelectionHandler<Type>;
 }
 
 export interface SelectionHandler<Type> extends SelectorMethods<Type> {
 
   getSelected(): Type;
-
   select(): void;
-
   start(): SelectionHandler<Type>;
 }
 

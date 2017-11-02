@@ -146,7 +146,7 @@ describe("binaryHeap", () => {
 
       const mapped: BinaryHeap<number> = heap.map((element: number): number => element + numberToAdd);
 
-      mapped.forEach((element: number): void => expect(element).to.equal(heap.pop() + numberToAdd));
+      mapped.forEach((element: number): any => expect(element).to.equal(heap.pop() + numberToAdd));
     });
   });
 
@@ -177,7 +177,7 @@ describe("binaryHeap", () => {
       const reduced: number[] = heap
         .reduce((accumulator: number[], element: number): number[] => [element].concat(accumulator), []);
 
-      reduced.forEach((element: number): void => expect(element).to.equal(heap.pop()));
+      reduced.forEach((element: number): any => expect(element).to.equal(heap.pop()));
     });
   });
 

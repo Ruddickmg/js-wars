@@ -5,8 +5,7 @@ import settings from "../../../settings/settings";
 import countBuildings from "../../../tools/array/propertyValueCounter";
 import zipWith from "../../../tools/array/zipWith";
 import notifications, {PubSub} from "../../../tools/pubSub";
-import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list/list";
-import selectionHandler, {SelectionHandler} from "../../../tools/storage/lists/arrayList/selector";
+import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
@@ -17,6 +16,7 @@ import createScroller, {Scroller, ScrollHandler} from "../../effects/scrolling";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
 import createGameMenu, {GameMenu} from "../elements/gameMenu";
 import getGameScreen from "../screen/gameScreen";
+import selectionHandler, {SelectionHandler} from "../selector";
 import createBuildingsDisplay, {BuildingsDisplay} from "./buildingsDisplay/buildingsDisplay";
 import createSelectionElement from "./selectionElement";
 

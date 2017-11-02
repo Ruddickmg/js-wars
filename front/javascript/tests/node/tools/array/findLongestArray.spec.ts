@@ -12,4 +12,4 @@ describe("findLongestArray", () => {
 
     expect(longestArray(arrayOne, arrayTwo, longest, arrayThree)).to.equal(longest);
   });
-})
+});

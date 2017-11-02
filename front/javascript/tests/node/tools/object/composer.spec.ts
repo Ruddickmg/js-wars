@@ -1,37 +1,37 @@
 import {expect} from "chai";
-import {Composer, default as composer} from "../../../../src/tools/object/composer";
+import composer, {Composer} from "../../../../src/tools/object/composer";
 
 describe("composer", () => {
 
   const numberOfTests = 50;
-  const compose: Composer<any> = composer<any>();
+  const compose: Composer<any> = composer();
   const objectOne = {
-    one: true,
-    two: true,
-    three: true,
     four: true,
+    one: true,
+    three: true,
+    two: true,
   };
   const objectTwo = {
-    five: true,
-    six: true,
-    seven: true,
     eight: true,
+    five: true,
+    seven: true,
+    six: true,
   };
 
   describe("functions", () => {
 
     const addOne = (element: number) => element + 1;
-    const multByTwo = (element: number) => element * 2;
+    const multiplyByTwo = (element: number) => element * 2;
     const subtractThree = (element: number) => element - 3;
 
     it("combines multiple functions into one", () => {
 
       let testing = numberOfTests;
-      const all = compose.functions(addOne, multByTwo, subtractThree);
+      const all = compose.functions(addOne, multiplyByTwo, subtractThree);
 
       while (testing--) {
 
-        expect(all(testing)).to.equal(addOne(multByTwo(subtractThree(testing))));
+        expect(all(testing)).to.equal(addOne(multiplyByTwo(subtractThree(testing))));
       }
     });
   });

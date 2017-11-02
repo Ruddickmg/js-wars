@@ -41,7 +41,7 @@ describe("sum", () => {
 
   describe("exp", () => {
 
-    it("Sums the eulers number of each number in an array.", () => {
+    it("Sums the euler's number of each number in an array.", () => {
 
       const sum: number = summer.exp(array);
       let expected: number = 0;

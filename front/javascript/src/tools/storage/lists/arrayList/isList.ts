@@ -1,4 +1,4 @@
-import typeChecker, {TypeChecker} from "../../../../validation/typeChecker";
+import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
 
 export default function isList(element: any): boolean {
 
@@ -14,6 +14,12 @@ export default function isList(element: any): boolean {
     && isFunction(element.addElement)
     && isFunction(element.addElements)
     && isFunction(element.isEmpty)
+    && isFunction(element.reduce)
+    && isFunction(element.map)
+    && isFunction(element.filter)
+    && isFunction(element.forEach)
+    && isFunction(element.find)
+    && isFunction(element.sort)
     && isFunction(element.getRandom)
     && isFunction(element.getElementAtIndex)
     && isFunction(element.getNeighboringElements)

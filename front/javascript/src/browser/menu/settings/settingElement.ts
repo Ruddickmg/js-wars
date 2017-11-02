@@ -1,6 +1,6 @@
 import truthTable, {TruthTable} from "../../../tools/array/generateTruthTable";
 import generateRange from "../../../tools/array/range";
-import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list/list";
+import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element/element";
 import createBackground from "./background";

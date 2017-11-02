@@ -1,6 +1,6 @@
 import {expect} from "chai";
+import errorHandler from "../../../../src/tools/validation/errorHandler";
 import validateCallbacks from "../../../../src/tools/validation/validateCallbacks";
-import errorHandler, {ErrorHandler} from "../../../../src/tools/validation/errorHandler";
 
 describe("validateCallbacks", () => {
 

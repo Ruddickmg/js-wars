@@ -29,7 +29,7 @@ describe("pubSub", () => {
       router.subscribe(channel, callback);
       router.publish(channel, data);
 
-      expect(callback.calledOnce).to.be.true;
+      expect(callback.calledOnce).to.equal(true);
     });
   });
 
@@ -44,7 +44,7 @@ describe("pubSub", () => {
       it("unsubscribes a subscriber by their id", () => {
 
         const callback = sinon.spy();
-        const subscriberId = router.subscribe(channel, callback);
+        const subscriberId: number = router.subscribe(channel, callback) as number;
 
         router.publish(channel, data);
         router.unsubscribe(subscriberId);
@@ -59,7 +59,7 @@ describe("pubSub", () => {
       it("unsubscribes a subscriber from a specified channel using their id", () => {
 
         const callback = sinon.spy();
-        const subscriberId = router.subscribe(channel, callback);
+        const subscriberId: number = router.subscribe(channel, callback) as number;
 
         router.publish(channel, data);
         router.unsubscribe(subscriberId, channel);

@@ -5,17 +5,7 @@ describe("curry", () => {
 
   it("creates a curried function from a non curried function", () => {
 
-    const {
-      curriedFunction,
-      suppliedFirstAndSecondArg,
-      suppliedFirstArg,
-      testResult,
-      first,
-      second,
-      third,
-    } = scopedTest();
-
-    function scopedTest() {
+    const scopedTest = function() {
 
       const aPlusBPlusC = (a: number, b: number, c: number): number => a + b + c;
       const testFunction = (a: number, b: number, c: number): number => aPlusBPlusC(a, b, c);
@@ -38,7 +28,17 @@ describe("curry", () => {
         suppliedFirstArg,
         testResult,
       });
-    }
+    };
+
+    const {
+      curriedFunction,
+      suppliedFirstAndSecondArg,
+      suppliedFirstArg,
+      testResult,
+      first,
+      second,
+      third,
+    } = scopedTest();
 
     [
       curriedFunction(first, second, third),

@@ -34,11 +34,11 @@ describe("range", () => {
     });
     fromNegativeFiveToFive.forEach((integer: number): void => {
 
-      expect(integer).to.equal(negative++, -increment);
+      expect(integer).to.equal(negative++);
     });
     fromFiveToNegativeFive.forEach((integer: number): void => {
 
-      expect(integer).to.equal(positive--, increment);
+      expect(integer).to.equal(positive--);
     });
 
     positive = secondInterval;

@@ -9,7 +9,7 @@ export interface Cache<Type> {
   find(callback: (item: Type, key: string, self: Cache<Type>) => boolean): Type;
   forEach(callback: (item: any, key: string, self: Cache<Type>) => void): void;
   get(name: string): Type;
-  map(callback: (item: any, key: string, self: Cache<Type>) => Cache<Type>): Cache<Type>;
+  map(callback: (item: any, key: string, self: Cache<Type>) => Type): Cache<Type>;
   reduce(callback: any, initialAccumulator: any): any;
   remove(name: string): Type;
   size(): number;
@@ -60,7 +60,7 @@ export default function createCache<Type>(): Cache<Type> {
     }
     return accumulator;
   };
-  const map = function(callback: (item: any, key: string, self: Cache<Type>) => Cache<Type>): Cache<Type> {
+  const map = function(callback: (item: any, key: string, self: Cache<Type>) => Type): Cache<Type> {
 
     return this.reduce((cache: Cache<Type>, value: any, key: string, self: Cache<Type>) => {
 

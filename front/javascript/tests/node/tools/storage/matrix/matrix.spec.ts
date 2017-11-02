@@ -78,7 +78,7 @@ describe("matrix", () => {
       }
     });
 
-    filteredOut.forEach((position: Position): void => expect(filtered.get(position)).to.equal(undefined));
+    filteredOut.forEach((position: Position): any => expect(filtered.get(position)).to.equal(undefined));
     kept.forEach((position: Position): void => {
 
       const {x, y}: Position = position;

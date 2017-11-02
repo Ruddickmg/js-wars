@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import range from "../../../../../../src/tools/array/range";
 import singlyLinkedList, {SinglyLinkedList} from "../../../../../../src/tools/storage/lists/linkedList/single/list";
-import doublyLinkedList from "../../../../../../src/tools/storage/lists/linkedList/single/list";
+// import doublyLinkedList from "../../../../../../src/tools/storage/lists/linkedList/single/list";
 
 describe("linkedList", () => {
 
@@ -66,7 +66,7 @@ describe("linkedList", () => {
 
         let index: number = 0;
 
-        list.forEach((value: number): void => expect(value).to.equal(values[index++]));
+        list.forEach((value: number): any => expect(value).to.equal(values[index++]));
       });
 
       it("Can be filtered.", () => {
@@ -80,7 +80,7 @@ describe("linkedList", () => {
         const mappingFunction = (value: number): number => value + value;
         const mapped: number[] = values.map(mappingFunction);
         let index: number = 0;
-        list.map(mappingFunction).forEach((value: number): void => expect(value).to.equal(mapped[index++]));
+        list.map(mappingFunction).forEach((value: number): any => expect(value).to.equal(mapped[index++]));
       });
 
       it("Search list.", () => {
