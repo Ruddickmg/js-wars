@@ -197,8 +197,10 @@ export default function createDictionary(initialValues?: any): Dictionary {
     }
   };
 
-  const reduce = (callback: (accumulator: any, value: any, index: string, object: any) => any,
-                  accumulator?: any,): any => {
+  const reduce = (
+    callback: (accumulator: any, value: any, index: string, object: any) => any,
+    accumulator?: any,
+  ): any => {
 
     const keys = Object.keys(dictionary);
     let acc = accumulator;

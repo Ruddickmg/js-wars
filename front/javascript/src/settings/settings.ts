@@ -48,7 +48,7 @@ export default single<Dictionary>(() => dictionary({
     position,
   },
 
-  keys: {
+  keyboard: {
 
     keyCodeMappings,
     factorsAllowingKeyboardInput,

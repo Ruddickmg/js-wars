@@ -31,29 +31,20 @@ interface KeyboardSettings {
 
 export interface KeyBoard {
 
-  getAssignment(keyCode: number): string;
-
   assignKey(key: string, keyCode: number): void;
-
   clearPressedKeys(): void;
-
   clearReleasedKeys(): void;
-
-  press(key: number): void;
-
+  getAssignment(keyCode: number): string;
+  press(key: number | string): void;
   pressed(...keysToCheck: any[]): boolean;
-
   pressingAnyKey(): boolean;
-
+  release(key: number | string): boolean;
+  release(key: number | string): void;
   released(key: number | string): boolean;
-
   releasedAnyKey(): boolean;
-
-  undo(key: number | string): number;
-
-  undoKeyUp(key: number | string): number;
-
-  [index: string]: any;
+  undoPress(key: number | string): number;
+  undoRelease(key: number | string): number;
+  [index: string]: (...input: any[]) => any;
 }
 
 export default single<KeyBoard>(function() {
@@ -61,7 +52,8 @@ export default single<KeyBoard>(function() {
   let pressedKeys: Keys = {};
   let releasedKeys: Keys = {};
 
-  const {isNumber, isString}: TypeChecker = typeChecker();
+  const myUndefined: any = void 0;
+  const {isNumber, isString, isDefined}: TypeChecker = typeChecker();
   const {publish, subscribe}: PubSub = notifications();
   const settings: Dictionary = allSettings();
 
@@ -69,7 +61,7 @@ export default single<KeyBoard>(function() {
     keyCodeMappings,
     factorsAllowingKeyboardInput,
     factorsDenyingKeyboardInput,
-  }: KeyboardSettings = settings.toObject("keys");
+  }: KeyboardSettings = settings.toObject("keyboard");
 
   const keysByKeyCode: KeyCodesOfKeys = invert(keyCodeMappings);
   const factorsToAllowKeyPress: boolean[] = factorsAllowingKeyboardInput.map((): boolean => false);
@@ -84,10 +76,9 @@ export default single<KeyBoard>(function() {
 
     const keyIsString = isString(key);
 
-    if (keyIsString && isNumber(keyCode)) {
+    if (isNumber(keyCode)) {
 
-      delete keysByKeyCode[keyCode];
-
+      keysByKeyCode[keyCode] = myUndefined;
       keyCodeMappings[key] = keyCode;
       keysByKeyCode[keyCode] = key;
 
@@ -116,7 +107,7 @@ export default single<KeyBoard>(function() {
 
     return key;
   };
-  const press = (key: number): void => {
+  const press = (key: number | string): void => {
 
     const pressedKey = input(key);
 
@@ -126,6 +117,14 @@ export default single<KeyBoard>(function() {
 
       publish("keyPressed", pressedKey);
     }
+  };
+  const release = (key: number | string): number => {
+
+    const keyCode: number = input(key);
+
+    keyReleased({keyCode});
+
+    return keyCode;
   };
   const pressing = (key: number | string): boolean => {
 
@@ -159,31 +158,33 @@ export default single<KeyBoard>(function() {
 
     return checkForTruthInArray(keysToCheck, (key: any): boolean => pressing(key));
   };
-  const released = (key: number | string): boolean => releasedKeys[input(key)] || !isEmpty(releasedKeys);
+  const released = (key: number | string): boolean => isDefined(releasedKeys[input(key)]);
   const remove = (key: number | string, specifiedKeys: Keys): number => {
 
     const keyCode: number = input(key);
 
-    delete specifiedKeys[keyCode];
+    specifiedKeys[keyCode] = myUndefined;
 
     return keyCode;
   };
-  const undo = (key: number | string): number => remove(key, pressedKeys);
-  const undoKeyUp = (key: number | string) => remove(key, releasedKeys);
+  const undoPress = (key: number | string): number => remove(key, pressedKeys);
+  const undoRelease = (key: number | string): number => remove(key, releasedKeys);
   const getAssignment = (keyCode: number): string => keysByKeyCode[keyCode];
   const keyMap: any = {};
   const keyPressedMap: any = {};
+  const actions: any = {pressed, released, press, release, undoPress, undoRelease};
 
   Object.keys(keyCodeMappings).forEach((keyName: string) => {
 
     const key = keyCodeMappings[keyName];
     const capitalizedKey: string = capitalizeFirstLetter(keyName);
-    const pressedKey: string = `pressed${capitalizedKey}`;
-    const releasedKey: string = `released${capitalizedKey}`;
 
     keyMap[keyName] = (): number => key;
-    keyPressedMap[pressedKey] = (): boolean => pressed(key);
-    keyPressedMap[releasedKey] = (): boolean => released(key);
+
+    Object.keys(actions).forEach((action: string): void => {
+
+      keyPressedMap[`${action}${capitalizedKey}`] = (): boolean => actions[action](key);
+    });
   });
 
   factorsAllowingKeyboardInput.forEach((factor: string, indexOfFactor: number) => {
@@ -206,9 +207,10 @@ export default single<KeyBoard>(function() {
     press,
     pressed,
     pressingAnyKey,
+    release,
     released,
     releasedAnyKey,
-    undo,
-    undoKeyUp,
+    undoPress,
+    undoRelease,
   });
 }());
