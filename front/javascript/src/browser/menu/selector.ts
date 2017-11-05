@@ -49,8 +49,10 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
     console.log("selected: ", selected);
 
     if (isDefined(selected) && isDefined(current)) {
+      if (isDefined(handleSelection)) {
 
-      handleSelection(selected, current, selections);
+        handleSelection(selected, current, selections);
+      }
       current = selected;
     }
   };
@@ -78,8 +80,10 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
 
       if (isDefined(selected)) {
 
-        handleSelection(selected, current, selections);
+        if (isDefined(handleSelection)) {
 
+          handleSelection(selected, current, selections);
+        }
         selections = list;
         current = selected;
       }

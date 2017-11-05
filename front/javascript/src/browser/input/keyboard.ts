@@ -109,12 +109,14 @@ export default single<KeyBoard>(function() {
   };
   const press = (key: number | string): void => {
 
-    const pressedKey = input(key);
+    const pressedKey: number = input(key);
+    const keyName: string = keysByKeyCode[pressedKey];
 
     if (!pressing(pressedKey)) {
 
       pressedKeys[pressedKey] = true;
 
+      publish(`pressed${capitalizeFirstLetter(keyName)}Key`);
       publish("keyPressed", pressedKey);
     }
   };
@@ -141,10 +143,13 @@ export default single<KeyBoard>(function() {
   const releasedAnyKey = (): boolean => !isEmpty(releasedKeys);
   const keyReleased = ({keyCode}: any): void => {
 
+    const keyName: string = keysByKeyCode[keyCode];
+
     releasedKeys[keyCode] = true;
 
     removePressedKey(keyCode);
 
+    publish(`released${capitalizeFirstLetter(keyName)}Key`);
     publish("keyReleased", keyCode);
   };
   const keyPressed = ({keyCode}: any): void => {

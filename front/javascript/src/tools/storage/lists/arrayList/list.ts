@@ -57,7 +57,7 @@ export default (function() {
 
       return index;
     };
-    const getRandom = (): Type => elements[randomNumber.index(elements)];
+    const getRandom = (): Type => getElementAtIndex(moveToIndex(randomNumber.index(elements)));
     const getCurrentIndex = (): number => index;
     const getCurrentElement = (): Type => getElementAtIndex(index);
     const getElementAtIndex = (desiredIndex: number): Type => {
