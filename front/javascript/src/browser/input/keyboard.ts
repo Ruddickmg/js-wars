@@ -116,7 +116,7 @@ export default single<KeyBoard>(function() {
 
       pressedKeys[pressedKey] = true;
 
-      publish(`pressed${capitalizeFirstLetter(keyName)}Key`);
+      publish(`pressed${capitalizeFirstLetter(keyName)}Key`, pressedKey);
       publish("keyPressed", pressedKey);
     }
   };
@@ -149,7 +149,7 @@ export default single<KeyBoard>(function() {
 
     removePressedKey(keyCode);
 
-    publish(`released${capitalizeFirstLetter(keyName)}Key`);
+    publish(`released${capitalizeFirstLetter(keyName)}Key`, keyCode);
     publish("keyReleased", keyCode);
   };
   const keyPressed = ({keyCode}: any): void => {
