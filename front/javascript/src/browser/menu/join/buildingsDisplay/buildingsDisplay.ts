@@ -16,23 +16,14 @@ export interface BuildingCount {
 export interface BuildingsDisplay extends GameMenu<any> {
 
   airportCount(): number;
-
   baseCount(): number;
-
   cityCount(): number;
-
   clearCount(): BuildingsDisplay;
-
   seaportCount(): number;
-
   set(count: BuildingCount): BuildingCount;
-
   setAirportCount(amount: number): BuildingsDisplay;
-
   setBaseCount(amount: number): BuildingsDisplay;
-
   setCityCount(amount: number): BuildingsDisplay;
-
   setSeaportCount(amount: number): BuildingsDisplay;
 }
 
