@@ -23,9 +23,7 @@ import createSelectionElement from "./selectionElement";
 export interface JoinMenu<Type> {
 
   goBack(): JoinMenu<Type>;
-
   remove(): JoinMenu<Type>;
-
   update(category: string): Promise<Type[]>;
 }
 

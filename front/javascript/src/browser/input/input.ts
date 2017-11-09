@@ -6,19 +6,12 @@ import createFooter, {Footer} from "../menu/footers/footer";
 export interface GameInput {
 
   addInput(text: string): void;
-
   clear(): void;
-
   createForm(name: string, width: number, defaultText?: string): Element<any>;
-
   message(newMessage: string): any;
-
   name(text: string): any;
-
   remove(element: Element<any>): void;
-
   removeInput(): void;
-
   value(): any;
 }
 
@@ -114,7 +107,7 @@ export default (function() {
 
     return this.val || document.getElementById("nameInput").valueOfCurrentElement;
   };
-  4
+
   const message = function(newMessage: string): any {
 
     return writer.type(this.descriptions(), newMessage);

@@ -1,6 +1,6 @@
 import notifications from "../tools/pubSub";
-import initializeMenuController from "./menu/menuController";
 import initializeErrorHandler from "../tools/validation/errorHandler";
+import initializeMenuController from "./menu/menuController";
 
 window.onload = () => {
 

@@ -1,3 +1,4 @@
+import {SinonFakeXMLHttpRequest} from "sinon";
 import curry from "../../../tools/function/curry";
 import single from "../../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
@@ -11,13 +12,13 @@ export interface Request {
   del(url: string, input?: any): Promise<any> | IncompleteRequest;
 }
 
-export default single<Request>(function() {
+export default single<Request>(function(mock: SinonFakeXMLHttpRequest) {
 
   const ok: number = 200;
   const ready: number = 4;
-  const iEqual = (state: any, comparison: number): boolean => Number(state) === comparison;
-  const isReady = (state: any): boolean => iEqual(state, ready);
-  const isOk = (state: any): boolean => iEqual(state, ok);
+  const isEqual = (state: any, comparison: number): boolean => Number(state) === Number(comparison);
+  const isReady = (state: any): boolean => isEqual(state, ready);
+  const isOk = (state: any): boolean => isEqual(state, ok);
   const {isError}: TypeChecker = typeChecker();
   const requestTypes: string[] = ["Msxml2.XMLHTTP", "Microsoft.XMLHTTP"];
   const getRequest = (request: any, type?: string): any => {
@@ -33,9 +34,9 @@ export default single<Request>(function() {
   };
   const connect = () => {
 
-    return requestTypes.reduce((success: any, type: string): any => {
+    return mock || requestTypes.reduce((response: any, type: string): any => {
 
-      return isError(success) ? getRequest(ActiveXObject, type) : success;
+      return isError(response) ? getRequest(ActiveXObject, type) : response;
 
     }, getRequest(XMLHttpRequest));
   };
@@ -43,7 +44,7 @@ export default single<Request>(function() {
 
     return new Promise((resolve: any, reject: any): Promise<any> => {
 
-      const request = connect();
+      const request: any = connect();
       const now: number = new Date().getTime();
 
       if (isError(request)) {
@@ -53,9 +54,12 @@ export default single<Request>(function() {
 
       request.onreadystatechange = () => {
 
-        if (isReady(request.readyState) && isOk(request.status)) {
+        const status: number = request.status;
+        if (isReady(request.readyState)) {
 
-          return resolve(JSON.parse(request.responseText));
+          return isOk(status) ?
+            resolve(JSON.parse(request.responseText)) :
+            reject(Error(`Request failed with status: ${status}`));
         }
       };
 

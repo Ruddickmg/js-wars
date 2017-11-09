@@ -7,7 +7,6 @@ import requestHandler from "../communication/requests/requestHandler";
 export interface GameElementHandler<Type> {
 
   byCategory(category: string): Promise<Type[]>;
-
   randomCategory(): Promise<Type[]>;
 }
 
