@@ -1,8 +1,7 @@
 import {expect} from "chai";
 import * as sinon from "sinon";
 import {SinonFakeXMLHttpRequest} from "sinon";
-import requestMaker, {IncompleteRequest, Request} from "../../../../src/browser/communication/requests/request";
-import {RequestHandler} from "../../../../src/browser/communication/requests/requestHandler";
+import requestMaker, {Request} from "../../../../src/browser/communication/requests/request";
 import mapRequestHandler, {MapRequestHandler} from "../../../../src/browser/menu/join/mapRequestHandler";
 import {Coordinates} from "../../../../src/game/map/coordinates/position";
 import testMap from "../../../../src/game/map/testMap";
@@ -14,7 +13,6 @@ describe("mapRequestHandler", () => {
   let requests: SinonFakeXMLHttpRequest[];
   let request: Request;
   let requestMap: MapRequestHandler<Map>;
-  let requestHandler: (route: string, type: string) => RequestHandler;
   let xhr: SinonFakeXMLHttpRequest;
   const category: string = "Two player";
   const checkIfMapElementsAreEqual = (one: any[], two: any[]) => {
@@ -64,15 +62,7 @@ describe("mapRequestHandler", () => {
     requests = [];
     xhr.onCreate = (newXhr: SinonFakeXMLHttpRequest): any => requests.push(newXhr);
     request = requestMaker(xhr);
-    requestHandler = (route: string, routes: string) => {
-      const incompleteRequest: IncompleteRequest = request.get(route) as IncompleteRequest;
-      return {
-        [routes]: (type: string): Promise<any> => {
-          return incompleteRequest(type) as Promise<any>;
-        },
-      };
-    };
-    requestMap = mapRequestHandler("maps", "get", requestHandler);
+    requestMap = mapRequestHandler("maps", "get", request);
   });
   afterEach((): any => xhr.restore());
 

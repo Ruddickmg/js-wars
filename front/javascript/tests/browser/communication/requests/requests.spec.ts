@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import {SinonFakeXMLHttpRequest} from "sinon";
 import * as sinon from "sinon";
-import requestMaker, {Request} from "../../../src/browser/communication/requests/request";
+import requestMaker, {Request} from "../../../../src/browser/communication/requests/request";
 
 describe("requests", () => {
 

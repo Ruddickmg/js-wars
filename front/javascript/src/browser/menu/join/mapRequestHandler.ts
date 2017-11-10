@@ -1,8 +1,8 @@
 import settings from "../../../settings/settings";
 import randomNumber from "../../../tools/calculations/random";
 import notifier, {PubSub} from "../../../tools/pubSub";
-import {IncompleteRequest} from "../../communication/requests/request";
-import requestHandler, {RequestHandler} from "../../communication/requests/requestHandler";
+import createRequest, {IncompleteRequest, Request} from "../../communication/requests/request";
+import requestHandler from "../../communication/requests/requestHandler";
 
 export interface MapRequestHandler<Type> {
 
@@ -13,7 +13,7 @@ export interface MapRequestHandler<Type> {
 export default function <Type>(
   route: string,
   type: string,
-  request: (route: string, type: string) => RequestHandler = requestHandler,
+  request: Request = createRequest(),
 ): MapRequestHandler<Type> {
 
   const settingsLocation: string = "categories";
@@ -21,7 +21,7 @@ export default function <Type>(
   const categorySettings = settings().toObject("map", settingsLocation);
   const categories: string[] = Object.keys(categorySettings);
   const defaultCategory = categories[0];
-  const getMapsByCategory: IncompleteRequest = request(route, type)[type];
+  const getMapsByCategory: IncompleteRequest = requestHandler(route, [type], request)[type];
   const getRandomCategory = (): string => categories[randomNumber.index(categories)];
   const byCategory = (category: string = defaultCategory): Promise<Type[]> => {
 
