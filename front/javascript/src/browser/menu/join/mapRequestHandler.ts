@@ -1,23 +1,27 @@
-import settings from "../../settings/settings";
-import randomNumber from "../../tools/calculations/random";
-import notifier, {PubSub} from "../../tools/pubSub";
-import {IncompleteRequest} from "../communication/requests/request";
-import requestHandler from "../communication/requests/requestHandler";
+import settings from "../../../settings/settings";
+import randomNumber from "../../../tools/calculations/random";
+import notifier, {PubSub} from "../../../tools/pubSub";
+import {IncompleteRequest} from "../../communication/requests/request";
+import requestHandler, {RequestHandler} from "../../communication/requests/requestHandler";
 
-export interface GameElementHandler<Type> {
+export interface MapRequestHandler<Type> {
 
   byCategory(category: string): Promise<Type[]>;
   randomCategory(): Promise<Type[]>;
 }
 
-export default function <Type>(route: string, type: string): GameElementHandler<Type> {
+export default function <Type>(
+  route: string,
+  type: string,
+  request: (route: string, type: string) => RequestHandler = requestHandler,
+): MapRequestHandler<Type> {
 
   const settingsLocation: string = "categories";
   const {publish}: PubSub = notifier();
   const categorySettings = settings().toObject("map", settingsLocation);
   const categories: string[] = Object.keys(categorySettings);
   const defaultCategory = categories[0];
-  const getMapsByCategory: IncompleteRequest = requestHandler(route, type)[type];
+  const getMapsByCategory: IncompleteRequest = request(route, type)[type];
   const getRandomCategory = (): string => categories[randomNumber.index(categories)];
   const byCategory = (category: string = defaultCategory): Promise<Type[]> => {
 

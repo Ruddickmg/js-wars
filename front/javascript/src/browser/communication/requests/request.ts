@@ -10,6 +10,7 @@ export interface Request {
   get(url: string, input?: any): Promise<any> | IncompleteRequest;
   post(url: string, input?: any): Promise<any> | IncompleteRequest;
   del(url: string, input?: any): Promise<any> | IncompleteRequest;
+  [index: string]: any;
 }
 
 export default single<Request>(function(mock: SinonFakeXMLHttpRequest) {

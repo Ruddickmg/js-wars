@@ -9,7 +9,7 @@ import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
-import gameElementHandler, {GameElementHandler} from "../../controller/gameElementHandler";
+import gameElementHandler, {MapRequestHandler} from "./mapRequestHandler";
 import {Element} from "../../dom/element/element";
 import highlighter, {Highlighter} from "../../effects/highlighter";
 import createScroller, {Scroller, ScrollHandler} from "../../effects/scrolling";
@@ -88,7 +88,7 @@ export default (function() {
 
     let selectionMenu: GameMenu<any> = createSelectionMenu();
     let scrollThroughSelectionMenu: Scroller;
-    let selections: GameElementHandler<Type>;
+    let selections: MapRequestHandler<Type>;
 
     const selectionMenuScroller: ScrollHandler = createScroller(
       amountOfMapsToShowWhileScrolling,
