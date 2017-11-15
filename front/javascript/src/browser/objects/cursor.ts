@@ -27,5 +27,4 @@ export default single<Cursor>(function(defaultStartingPosition: Position = creat
     getPosition,
     setPosition,
   };
-
 }());
