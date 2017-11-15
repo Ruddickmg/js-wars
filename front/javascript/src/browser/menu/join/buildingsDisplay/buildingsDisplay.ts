@@ -9,7 +9,6 @@ export interface BuildingCount {
   city?: number;
   base?: number;
   seaport?: number;
-
   [feild: string]: number;
 }
 

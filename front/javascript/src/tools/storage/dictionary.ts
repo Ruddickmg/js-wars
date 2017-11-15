@@ -3,25 +3,18 @@ import typeChecker, {TypeChecker} from "../validation/typeChecker";
 export interface Dictionary {
 
   add(...keysFollowedByValue: any[]): Dictionary;
-
   get(...keys: any[]): any;
-
   lookup(...keys: any[]): boolean;
-
-  redefine(...keys: any[]): Dictionary;
-
+  set(...keys: any[]): Dictionary;
   remove(...keys: any[]): any;
-
   map(callback: (value: any, index: string, object: any) => any): Dictionary;
-
   reduce(callback: (accumulator: any, value: any, index: string, object: any) => any, accumulator?: any): any;
-
   toObject(...path: any[]): any;
 }
 
 export default function createDictionary(initialValues?: any): Dictionary {
 
-  const check: TypeChecker = typeChecker();
+  const {isObject, isDefined}: TypeChecker = typeChecker();
   const empty: any = void 0;
   const dictionary: any = initialValues || {};
   const minimumDepth: number = 1;
@@ -29,7 +22,7 @@ export default function createDictionary(initialValues?: any): Dictionary {
 
   const isValue = (element: any): boolean => {
 
-    return !check.isObject(element);
+    return !isObject(element);
   };
 
   const isEmpty = (element: any): boolean => {
@@ -98,7 +91,7 @@ export default function createDictionary(initialValues?: any): Dictionary {
 
       throw new RangeError(
         `Key "${currentKey}" is already defined, the "add" method cannot overwrite previously`
-        + ` defined keys, use the "redefine" method if this is your intention.`,
+        + ` defined keys, use the "set" method if this is your intention.`,
       );
     }
 
@@ -118,13 +111,13 @@ export default function createDictionary(initialValues?: any): Dictionary {
 
     const result = getObject(keys);
 
-    if (result) {
+    if (isDefined(result)) {
 
       return isValue(result) ? result : createDictionary(result);
     }
   };
 
-  const redefine = (...keysFollowedByValue: any[]): any => {
+  const set = (...keysFollowedByValue: any[]): any => {
 
     const value: any = keysFollowedByValue.pop();
     const lastKey = keysFollowedByValue.pop();
@@ -132,51 +125,50 @@ export default function createDictionary(initialValues?: any): Dictionary {
 
     let previousValue: any;
 
-    if (level[lastKey]) {
+    if (isDefined(level[lastKey])) {
 
       previousValue = level[lastKey];
       level[lastKey] = value;
     }
 
-    if (previousValue) {
+    if (isDefined(previousValue)) {
 
       return isValue(previousValue) ? previousValue : createDictionary(previousValue);
     }
   };
 
   const lookup = (...keys: any[]): boolean => get(...keys) !== empty;
-
   const remove = (...keys: any[]): any => {
 
     const depthOfSearch = keys.length;
     const indexOfLastKey = depthOfSearch - 1;
 
-    let levelToRemove: any = false;
+    let levelToRemove: any;
     let level: any = dictionary;
     let indexOfKey: number = 0;
     let key: any = keys[indexOfKey++];
     let result: any;
 
-    while (level[key] && indexOfKey < indexOfLastKey) {
+    while (isDefined(level[key]) && indexOfKey < indexOfLastKey) {
 
       result = level[key];
-      levelToRemove = getRemovalPoint(key, result, levelToRemove);
+      levelToRemove = getRemovalPoint(key, result);
       level = result;
       key = keys[indexOfKey++];
     }
 
-    if (levelToRemove) {
+    if (isDefined(levelToRemove)) {
 
       level = levelToRemove.level;
       key = levelToRemove.key;
     }
 
-    if (level[key]) {
+    if (isDefined(level[key])) {
 
-      delete level[key];
+      level[key] = empty;
     }
 
-    return result && result.isValue ? result : empty;
+    return isDefined(result) ? result : empty;
   };
 
   const levelIsRemovable = (level: any): any => {
@@ -189,11 +181,11 @@ export default function createDictionary(initialValues?: any): Dictionary {
     }
   };
 
-  const getRemovalPoint = (key: any, level: any, previousRemoval: any): any => {
+  const getRemovalPoint = (key: any, level: any, previousRemoval?: any): any => {
 
     if (levelIsRemovable(level)) {
 
-      return previousRemoval ? previousRemoval : {key, level};
+      return isDefined(previousRemoval) ? previousRemoval : {key, level};
     }
   };
 
@@ -234,7 +226,7 @@ export default function createDictionary(initialValues?: any): Dictionary {
     add,
     get,
     lookup,
-    redefine,
+    set,
     reduce,
     map,
     remove,

@@ -13,9 +13,7 @@ import handleGameModeSelection from "./mode/modeMenu";
 import getGameScreen from "./screen/gameScreen";
 import createTitle from "./screen/title";
 import handleSettingsSelection from "./settings/settings";
-
 export default single<any>(function() {
-
   const request: Request = requestMaker();
   const saveMap: IncompleteRequest = request.post("maps/save") as IncompleteRequest;
   const {subscribe}: PubSub = notifications();
@@ -24,12 +22,9 @@ export default single<any>(function() {
   const gameScreen: Element<any> = getGameScreen();
   const testing: boolean = settings.get("testing");
   const title: Element<string> = createTitle();
-
   subscribe("login", (): any => testing ? login.skip() : login.display());
   subscribe("beginGameSetup", () => {
-
     gameScreen.appendChild(title);
-
     handleGameModeSelection();
   });
   subscribe("finishedSelectingMap", (game: Game) => handleSettingsSelection(game));
@@ -38,27 +33,20 @@ export default single<any>(function() {
   subscribe("startNewGame", (): any => join<Map>("type", createGame()));
   subscribe("resumeSavedGame", (): any => join<Map>("saved"));
   subscribe("createNewMap", (): void => {
-
     const amountOfMaps: number = 10;
-
     let mapNumber: number = 1;
-
     for (mapNumber; mapNumber <= amountOfMaps; mapNumber += 1) {
-
       saveMap(testMap(mapNumber)).then((response: any): void => console.log(response))
         .catch((error: Error): void => console.log(error));
     }
   });
   subscribe("editCo", (): void => {
-
     alert("editing my co!");
   });
   subscribe("logOut", (): void => {
-
     alert("logging out!");
   });
   subscribe("gameStore", (): void => {
-
     alert("going to the store!");
   });
 });

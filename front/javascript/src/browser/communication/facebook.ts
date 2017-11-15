@@ -1,6 +1,7 @@
 import single from "../../tools/storage/singleton";
 import createElement, {Element} from "../dom/element/element";
 import getUrl, {Url} from "../dom/url";
+import notifications, {PubSub} from "../../tools/pubSub";
 
 export interface FacebookApi {
 
@@ -11,6 +12,7 @@ export interface FacebookApi {
 
 export default single<FacebookApi>(() => {
 
+  const {publish}: PubSub = notifications();
   const url: Url = getUrl(window);
   const appId = "1481194978837888";
   const facebookLoginVersion = "2.3";
@@ -25,7 +27,6 @@ export default single<FacebookApi>(() => {
   const facebookElementSource = "//connect.facebook.net/en_US/sdk.js";
   const onClick = "click";
   const onLogin = "login";
-
   const settings = {
 
     appId,
@@ -64,16 +65,14 @@ export default single<FacebookApi>(() => {
 
     window.fbAsyncInit = function() {
 
-      console.log("doing async...");
-
       try {
 
         FB.init(settings);
         FB.getLoginStatus(logUserIn);
 
-      } catch (e) {
+      } catch (error) {
 
-        console.log(e);
+        publish("error", error);
       }
     };
 

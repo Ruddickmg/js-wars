@@ -6,8 +6,7 @@ export default function(field: string): Element<number> {
 
   const classOfFields: string = "numberOfBuildingsItem";
   const classOfItem: string = "numberOf";
-
-  const canvas: Element<any> = createCanvasLi(`${field}Canvas`);
+  const canvas: Element<any> = createCanvasLi(field);
   const element: Element<number> = createElement<number>(field, "ul")
     .setClass(classOfFields)
     .setValue(0)

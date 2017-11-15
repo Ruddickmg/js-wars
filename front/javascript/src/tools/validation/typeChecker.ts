@@ -4,6 +4,7 @@ import capitalizeFirstLetter from "../stringManipulation/capitalizeFirstLetter";
 
 export interface TypeChecker {
 
+  isDomElement(element: any): boolean;
   isDefined(element: any): boolean;
   isError(element: any): boolean;
   isNull(element: any): boolean;
@@ -35,10 +36,13 @@ export default single<TypeChecker>(function(): TypeChecker {
     return !isNull(object) && isDefined(object) && object.constructor === Function;
   };
   const isObject = (object: any): boolean => {
-
     const call = Object.prototype.toString.call(object);
     const objectString = "[object Object]";
-
+    return !isNull(object) && isDefined(object) && call === objectString;
+  };
+  const isDomElement = (object: any): boolean => {
+    const objectString = "[object HTML";
+    const call = Object.prototype.toString.call(object).slice(0, objectString.length);
     return !isNull(object) && isDefined(object) && call === objectString;
   };
   const isString = (object: any): boolean => {
@@ -69,6 +73,7 @@ export default single<TypeChecker>(function(): TypeChecker {
     isFunction,
     isObject,
     isString,
+    isDomElement,
     register,
   };
 });

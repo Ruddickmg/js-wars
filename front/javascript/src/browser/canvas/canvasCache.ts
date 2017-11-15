@@ -8,7 +8,9 @@ export interface CanvasCache extends Cache<Canvas<any>> {
 export default function(...initialCanvasNames: string[]): CanvasCache {
 
   const {validateString}: Validator = validator("canvasCache");
-  const initialize = function(...canvasNames: string[]): CanvasCache {
+  const canvasCache: any = createCache<Canvas<any>>();
+
+  canvasCache.initialize = function(...canvasNames: string[]): CanvasCache {
 
     const cache: CanvasCache = this;
 
@@ -16,17 +18,15 @@ export default function(...initialCanvasNames: string[]): CanvasCache {
 
       if (validateString(canvasName, "initialize")) {
 
-        cache.add(canvasName, createCanvas<any>(canvasName, undefined, document.getElementById(canvasName)));
+        cache.add(canvasName, createCanvas<any>(canvasName, null, document.getElementById(canvasName)));
       }
     });
-
     return this;
   };
-  const cache: CanvasCache = Object.assign(createCache<Canvas<any>>(), {initialize});
 
   if (initialCanvasNames.length) {
 
-    cache.initialize(...initialCanvasNames);
+    canvasCache.initialize(...initialCanvasNames);
   }
-  return cache;
+  return canvasCache;
 }

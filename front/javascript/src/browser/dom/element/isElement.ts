@@ -2,8 +2,50 @@ import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 
 export default (element: any): boolean => {
 
-  const {isDefined, isFunction}: TypeChecker = typeChecker();
+  const {isDefined, isFunction, isObject, isString, isDomElement}: TypeChecker = typeChecker();
 
   return isDefined(element)
-    && isFunction(element.makeInvisible);
+    && isFunction(element.makeInvisible)
+    && isFunction(element.addEventListener)
+    && isFunction(element.appendChild)
+    && isFunction(element.appendClass)
+    && isFunction(element.removeChildren)
+    && isFunction(element.display)
+    && isFunction(element.get)
+    && isFunction(element.getChildren)
+    && isFunction(element.getClass)
+    && isFunction(element.getInput)
+    && isFunction(element.getTag)
+    && isFunction(element.getText)
+    && isFunction(element.getValue)
+    && isFunction(element.getWidth)
+    && isFunction(element.getTop)
+    && isFunction(element.hide)
+    && isFunction(element.makeInvisible)
+    && isFunction(element.makeVisible)
+    && isFunction(element.position)
+    && isFunction(element.prependClass)
+    && isFunction(element.refresh)
+    && isFunction(element.removeAttribute)
+    && isFunction(element.removeChild)
+    && isFunction(element.removeClass)
+    && isFunction(element.removeEventListener)
+    && isFunction(element.setAttribute)
+    && isFunction(element.setBackgroundColor)
+    && isFunction(element.setBorderColor)
+    && isFunction(element.setClass)
+    && isFunction(element.setHeight)
+    && isFunction(element.setId)
+    && isFunction(element.setLeft)
+    && isFunction(element.setOpacity)
+    && isFunction(element.setSpacing)
+    && isFunction(element.setText)
+    && isFunction(element.setTextColor)
+    && isFunction(element.setTop)
+    && isFunction(element.setValue)
+    && isFunction(element.setWidth)
+    && isFunction(element.show)
+    && isDomElement(element.element)
+    && isObject(element.children)
+    && isString(element.id);
 };

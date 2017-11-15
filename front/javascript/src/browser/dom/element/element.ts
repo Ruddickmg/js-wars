@@ -19,12 +19,13 @@ interface ElementMethods<Type> {
   addEventListener(id: string, listener: any): Element<Type>;
   appendChild(myElement: Element<Type>): Element<Type>;
   appendClass(className: string): Element<Type>;
-  clear(): Element<Type>[];
+  removeChildren(): Element<Type>[];
   display(displaySetting?: string): Element<Type>;
   get(id: string): Element<Type>;
   getChildren(): Element<Type>[];
   getClass(): string;
   getInput(): any;
+  getTag(): string;
   getText(): string;
   getValue(): Type;
   getWidth(width?: string): number;
@@ -54,7 +55,6 @@ interface ElementMethods<Type> {
   setValue(value: Type): Element<Type>;
   setWidth(width: any): Element<Type>;
   show(): Element<Type>;
-  transform(transformation: number): Element<Type>;
   [index: string]: any;
 }
 
@@ -144,7 +144,7 @@ export default (function() {
 
       return this;
     },
-    clear(): Element<any>[] {
+    removeChildren(): Element<any>[] {
 
       const {element, children}: any = this;
 
@@ -156,18 +156,13 @@ export default (function() {
       return children.clear();
     },
     display(elementDisplaySetting: string = null): Element<any> {
-
       if (validateStringOrNull(elementDisplaySetting, "display")) {
-
         this.element.style.display = elementDisplaySetting;
       }
-
       return this;
     },
     get(id: string): Element<any> {
-
       if (validateString(id, "get")) {
-
         return this.children.get(id);
       }
     },
@@ -183,7 +178,7 @@ export default (function() {
     },
     getClass(): string {
 
-      return this.type;
+      return this.element.className;
     },
     getHeight(type: string = "client"): number {
 
@@ -196,6 +191,10 @@ export default (function() {
     getText(): string {
 
       return this.currentlySetText;
+    },
+    getTag(): string {
+
+      return this.element.tagName.toLowerCase();
     },
     getTop(): number {
 
@@ -366,6 +365,7 @@ export default (function() {
       if (validateString(idType, "setId")) {
 
         this.element.setAttribute("id", idType);
+        this.id = idType;
       }
 
       return this;
@@ -435,15 +435,6 @@ export default (function() {
     show(): any {
 
       this.display(null);
-
-      return this;
-    },
-    transform(transformation: number = null): Element<any> {
-
-      if (validateNumberOrNull(transformation, "transform")) {
-
-        this.element.style.transform = transformation;
-      }
 
       return this;
     },

@@ -60,7 +60,7 @@ export default single<LoginScreen>(function() {
 
     if (isUser(user)) {
 
-      gameScreen.clear();
+      gameScreen.removeChildren();
 
       publish("addUser", user);
       publish(["beginGameSetup", "settingUpGame"], true);
