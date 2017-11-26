@@ -75,15 +75,12 @@ def get_maps(category):
 	session = Session()
 	try:
 		if category:
-			print ("category: ", category)
 			maps = list(map(maps_toDict, Maps.query.filter(Maps.category == category).all()))
-			print (maps)
 			if (maps):
 				return success(maps)
 		return not_found()
 	except Exception as error:
 		Teardown(error, session);
-		print(error)
 		return serverError()
 	finally:
 		session.close()
@@ -111,7 +108,6 @@ def add_map():
 		session.commit()
 		return success(maps_toDict(newMap))
 	except Exception as error:
-		print (error)
 		Teardown(error, session);
 		return serverError()
 	finally:
@@ -244,6 +240,7 @@ def save_game():
 		return success(games_toDict(newGame))
 	except Exception as error:
 		Teardown(error, session)
+		print (error)
 		return serverError()
 	finally:
 		session.close()

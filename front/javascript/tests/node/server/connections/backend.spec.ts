@@ -1,5 +1,6 @@
 import request = require("request-promise-native");
 import {expect} from "chai";
+import createGame, {Game} from "../../../../src/game/game";
 import {Map} from "../../../../src/game/map/map";
 import createTestMap from "../../../../src/game/map/testMap";
 import backend, {Backend} from "../../../../src/server/connections/backend";
@@ -7,7 +8,6 @@ import connections, {Connections} from "../../../../src/server/connections/conne
 import checkForEqualityBetweenMaps from "../../../utilities/mapEquality";
 
 describe("backend", () => {
-
   const connection: Connections = connections({});
   const url: string = connection.backend().url;
   const db: Backend = backend(url);
@@ -15,8 +15,12 @@ describe("backend", () => {
   const json: boolean = true;
   const method: any = "GET";
   const category: string = "two";
+  const name: string = "testGame";
+  const id: number = 5;
   const clear = (): any => request({uri, method, json});
-  let map: Map = createTestMap(5);
+
+  let map: Map = createTestMap(id);
+  const game: Game = createGame(name, category, map);
 
   before(clear);
   after(clear);
@@ -54,10 +58,12 @@ describe("backend", () => {
     });
   });
 
-  // it("Saves a game to the database.", () => {
-  //   // TODO
-  // });
-  //
+  it("Saves a game to the database.", () => {
+    return db.saveGame(game).then(({response}) => {
+      console.log(response);
+    });
+  });
+
   // it("Gets saved games from database.", () => {
   //   // TODO
   // });
@@ -65,7 +71,6 @@ describe("backend", () => {
   // it("Deletes a game from the database.", () => {
   //   // TODO
   // });
-  //
   //
   // it("Saves a user to the database.", () => {
   //

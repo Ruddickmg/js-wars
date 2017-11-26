@@ -2,7 +2,6 @@ export default {
   colorSwellIncrement: 1.5,
   colorSwellSpeed: 2,
   definitions: {
-
     blue: {h: 216, s: 100, l: 50},
     design: {h: 216, s: 100, l: 50},
     game: {h: 0, s: 100, l: 50},
@@ -13,5 +12,11 @@ export default {
     store: {h: 72, s: 100, l: 50},
     white: {h: 360, s: 0, l: 100},
     yellow: {h: 72, s: 100, l: 50},
+  },
+  playerColor: {
+    1: {h: 0, s: 100, l: 50},
+    2: {h: 216, s: 100, l: 50},
+    3: {h: 72, s: 100, l: 50},
+    4: {h: 144, s: 100, l: 50},
   },
 };
