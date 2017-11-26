@@ -33,9 +33,9 @@ export default function(app: any, rooms: Rooms, clients: ClientHandler, root: st
       .catch(() => repeatedlyAttemptMigration());
 
     return Promise.race([
-      repeatedlyAttemptMigration(),
-      periodOfTime.wait(secondsTillTimeout)
-        .then(() => Promise.reject(new Error(errorMessage))),
+      // repeatedlyAttemptMigration(),
+      // periodOfTime.wait(secondsTillTimeout)
+      //   .then(() => Promise.reject(new Error(errorMessage))),
     ]);
   };
 

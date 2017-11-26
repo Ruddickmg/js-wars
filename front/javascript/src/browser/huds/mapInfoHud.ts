@@ -6,7 +6,7 @@ import notifications, {PubSub} from "../../tools/pubSub";
 import {Dictionary} from "../../tools/storage/dictionary";
 import singleton from "../../tools/storage/singleton";
 import createCanvas, {Canvas} from "../canvas/canvas";
-import cursorController, {CursorController} from "../controller/cursorController";
+import cursorController, {CursorController} from "../../game/interaction/cursor/controller";
 
 export interface MapInfoHud {
 

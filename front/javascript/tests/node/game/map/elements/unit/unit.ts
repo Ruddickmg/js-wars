@@ -3,7 +3,7 @@ import composer, {Composer} from "../../../../tools/object/composer";
 import {Dictionary} from "../../../../tools/storage/dictionary";
 import identifier, {Identifier} from "../../../../tools/identity";
 import typeChecker, {TypeChecker} from "../../../../tools/validation/typeChecker";
-import createPosition, {isPosition, Position} from "../../../coordinates/position";
+import createPosition, {isPosition, Position} from "../../coordinates/position";
 import createBuilding, {Building} from "../building/building";
 
 export type UnitId = string | number;

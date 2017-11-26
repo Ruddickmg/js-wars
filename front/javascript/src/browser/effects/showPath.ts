@@ -9,9 +9,7 @@ import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 export interface ShowPath {
 
   movementRange(position: Position): void;
-
   attackRange(position: Position): void;
-
   path(position: Position): void;
 }
 

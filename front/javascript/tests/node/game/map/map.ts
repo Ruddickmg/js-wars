@@ -1,6 +1,6 @@
 import settings from "../../settings/settings";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
-import {areDimensions, Dimensions} from "../coordinates/dimensions";
+import {areDimensions, Dimensions} from "./coordinates/dimensions";
 import {Building} from "./elements/building/building";
 import {Terrain} from "./elements/terrain/terrain";
 import {Unit} from "./elements/unit/unit";

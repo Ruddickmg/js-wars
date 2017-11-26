@@ -1,14 +1,14 @@
 import {expect} from "chai";
 import initConnections from "../../../../src/server/connections/connections";
+import settings from "../../../../src/settings/settings";
 
 describe("connections", () => {
 
   const initial = {
-
-    BACKEND_PORT_8000_TCP_ADDR: "127.0.0.1",
     IP: "125.34.56.12",
     PORT: "8080",
   };
+  const connection = settings().toObject("connection");
   const connections = initConnections(initial);
 
   it("Returns a connection object with connection information on server to browser communication", () => {
@@ -25,8 +25,8 @@ describe("connections", () => {
   it("Returns a connection object with connection information on server to database communication", () => {
 
       const backendConnectionInfo = connections.backend();
-      const ip = initial.BACKEND_PORT_8000_TCP_ADDR;
-      const port = "8000";
+      const ip = connection.backendIp;
+      const port = connection.backendPort;
 
       expect(backendConnectionInfo.port).to.equal(port);
       expect(backendConnectionInfo.ip).to.equal(ip);

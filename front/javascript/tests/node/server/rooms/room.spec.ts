@@ -313,11 +313,8 @@ describe("room", () => {
     room.addPlayer(userOne);
 
     it("Removes a player then inserts another in its place.", () => {
-
       expect(room.getPlayers()[0]).to.equal(userOne);
-
       room.replacePlayer(userOne.id, userTwo);
-
       expect(room.getPlayers()[0]).to.equal(userTwo);
       expect(room.size()).to.equal(1);
     });

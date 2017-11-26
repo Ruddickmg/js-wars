@@ -1,9 +1,12 @@
 import {expect} from "chai";
+import * as sinon from "sinon";
+import {SinonFakeTimers, SinonSpy} from "sinon";
 import timeKeeper, {Time} from "../../../../src/tools/calculations/time";
 
 describe("time", () => {
 
   const time: Time = timeKeeper();
+  const clock: SinonFakeTimers = sinon.useFakeTimers();
   const millisecondsInASecond: number = 1000;
   const secondsInAMinute: number = 60;
   const minutesInAnHour: number = 60;

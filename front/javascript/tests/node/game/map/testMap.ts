@@ -1,5 +1,5 @@
-import createDimensions, {Dimensions} from "../coordinates/dimensions";
-import createPosition from "../coordinates/position";
+import createDimensions, {Dimensions} from "./coordinates/dimensions";
+import createPosition from "./coordinates/position";
 import createBuilding from "./elements/building/building";
 import createTerrain from "./elements/terrain/terrain";
 import createMap, {Map} from "./map";

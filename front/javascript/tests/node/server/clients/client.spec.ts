@@ -6,6 +6,8 @@ import createUser, {User} from "../../../../src/game/users/user";
 import createClient, {Client} from "../../../../src/server/clients/client";
 import createRoom, {Room} from "../../../../src/server/rooms/room";
 
+// TODO redo tests with actual socket.io
+
 describe("client", () => {
 
   const sinon = require("sinon");
@@ -25,7 +27,7 @@ describe("client", () => {
     name: "yoMan",
   }, "none");
   const testPlayer: Player = createPlayer(testUser, "andy");
-  const testGame: Game = createGame(testRoomName, category, map());
+  const testGame: Game = createGame(testRoomName, category, map(5));
   const testRoom: Room = createRoom(roomId, testGame);
   const join: any = sinon.spy();
   const leave: any = sinon.spy();

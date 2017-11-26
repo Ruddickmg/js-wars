@@ -3,15 +3,13 @@ import cron = require("cron");
 import express = require("express");
 import http = require("http");
 import socketIO =  require("socket.io");
-
-import notifications, {PubSub} from "../tools/pubSub";
-
 import gamePlaySocketListener from "../game/gamePlaySocketListener";
 import gameSetupSocketListener from "../game/gameSetupSocketListener";
 import aiController, {AiController} from "../game/users/ai/aiController";
 import aiSocketListener from "../game/users/ai/aiSocketListener";
 import time, {Time} from "../tools/calculations/time";
 import compiler from "../tools/compiler";
+import notifications, {PubSub} from "../tools/pubSub";
 import clientHandler, {ClientHandler} from "./clients/clients";
 import connections, {Connections} from "./connections/connections";
 import initializeRoutes from "./connections/routes";
@@ -37,7 +35,6 @@ const minutesToRememberDisconnectedSocket: number = 15;
 const timeBetweenChecksOnSocketPool: string = "0 */20 * * * *";
 const io = socketIO(server);
 const handleDisconnectedSocketConnections = new cronJob({
-
   cronTime: timeBetweenChecksOnSocketPool,
   timeZone: "America/Los_Angeles",
   onTick() {
@@ -49,10 +46,10 @@ const handleDisconnectedSocketConnections = new cronJob({
 const pathFromRoot = (relativePath: string): string => `${pathToRootDirectory}${relativePath}`;
 const esCompatibilityLevel: string = "env";
 const relativePathToMain: string = "/public";
-const relativePathToBrowserSideCode: string = "/javascript/src/browser";
+const relativePathToBrowserCode: string = "/javascript/src/browser";
 const nameForInputFile: string = "main.js";
 const nameForOutputFile: string = "index.js";
-const pathToBrowserSideCode: string = pathFromRoot(relativePathToBrowserSideCode);
+const pathToBrowserSideCode: string = pathFromRoot(relativePathToBrowserCode);
 const pathToMain: string = pathFromRoot(relativePathToMain);
 const pathToInputFile = `${pathToBrowserSideCode}/${nameForInputFile}`;
 const pathToOutputFile = `${pathToMain}/${nameForOutputFile}`;
@@ -66,23 +63,16 @@ compiler(pathToInputFile)
   })
   .watchify()
   .compile(pathToOutputFile, {debug: true});
-
 app.use(staticFileDirectory);
 app.use(bodyParser.json());
-
 socketListener.addListeners(
   roomsSocketListener(),
   aiSocketListener(clients, aiPlayers),
   gameSetupSocketListener(clients, rooms),
   gamePlaySocketListener(clients),
 );
-
 io.on("connection", socketListener.listenForSocketCommunication);
-
 handleDisconnectedSocketConnections.start();
-
 initializeRoutes(app, rooms, clients, pathToRootDirectory);
-
 subscribe("error", (error: Error): any => console.log("\n" + error + "\n"));
-
 server.listen(port, ip, () => console.log(`  - listening for requests @ ${ip}:${port}`));

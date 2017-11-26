@@ -2,6 +2,7 @@ import dictionary, {Dictionary} from "../tools/storage/dictionary";
 import single from "../tools/storage/singleton";
 import colors from "./colors/colorSettings";
 import screenConfiguration from "./configuration/screen";
+import connection from "./connection/connections";
 import canvasSettings from "./dom/canvas";
 import errorEvents from "./error/errorEvents";
 import hoverInfo from "./hud/hoverInfo";
@@ -14,26 +15,21 @@ import mode from "./menu/mode";
 import settings from "./menu/settings";
 
 export default single<Dictionary>(() => dictionary({
-
   actionsDisplay: ["attack", "capture", "wait", "load", "drop", "join", "name"],
   canvas: canvasSettings,
   capture: 20,
-
   colors,
-
   combineAbleProperties: ["fuel", "health", "ammo"],
-
+  connection,
   cursor: {
     speed: 50,
     x: 6,
     y: 4,
   },
-
   debug: true,
   defaultHealth: 100,
   errorEvents,
   game: {
-
     capt: "off",
     fog: "off",
     funds: 1000,
@@ -42,28 +38,19 @@ export default single<Dictionary>(() => dictionary({
     visuals: "off",
     weather: "random",
   },
-
   hud: {
     hoverInfo,
     position,
   },
-
   keyboard: {
-
     keyCodeMappings,
     factorsAllowingKeyboardInput,
     factorsDenyingKeyboardInput,
   },
-
   map,
   mode,
-
-  // which attributes of objects ( unit, buildings etc ) will be displayed in hud
   notSelectable: ["terrain", "hq", "city"],
-
-  // categories of maps
   obstacleStats: {
-
     infantry: {
       mountain: 2,
       plain: 1,
@@ -87,11 +74,8 @@ export default single<Dictionary>(() => dictionary({
       infantry: 1,
     },
   },
-
   obstacleTypes: ["unit", "terrain"],
   offScreen: 800,
-
-  // list of the effects each obstacle has on each unit type
   optionsMenu: {
     co: "Co",
     end: "End",
@@ -99,12 +83,8 @@ export default single<Dictionary>(() => dictionary({
     options: "Options",
     save: "Save",
   },
-
   optionsMenuDisplay: ["options", "unit", "intel", "save", "end", "name"],
-
-  // mapEditor elements that cannot be selected
   playerColor: {
-
     1: {h: 0, s: 100, l: 50},
     2: {h: 216, s: 100, l: 50},
     3: {h: 72, s: 100, l: 50},
@@ -112,24 +92,17 @@ export default single<Dictionary>(() => dictionary({
   },
   screenConfiguration,
   settings,
-
-  // dimensions of diplay hud
   swellIncrement: 3,
   swellSpeed: 1,
-
-  // speed at which color swell.. fading in and out, will cycle (lower is faster)
   testing: true,
   typesOfUnitsABuildingCanHeal: {
-
-    airport: ["flight"],
+    airport: ["air"],
     base: ["foot", "wheels"],
     city: ["foot", "wheels"],
     hq: ["foot", "wheels"],
     seaport: ["boat"],
   },
-
   typingSpeed: 4,
-
   unitInfoDisplay: [
     "movement",
     "vision",

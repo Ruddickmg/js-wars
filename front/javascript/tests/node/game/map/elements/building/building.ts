@@ -1,5 +1,5 @@
 import composer, {Composer} from "../../../../tools/object/composer";
-import {Position} from "../../../coordinates/position";
+import {Position} from "../../coordinates/position";
 import {default as createTerrain, Terrain} from "../terrain/terrain.js";
 
 export interface Building {

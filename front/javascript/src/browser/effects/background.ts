@@ -7,19 +7,12 @@ import getSocket from "../communication/sockets/socket";
 export interface Background {
 
   random(): boolean;
-
   category(): string;
-
   change(): void;
-
   set(type: string): void;
-
   type(): string;
-
   defense(): number;
-
   name(): string;
-
   drawing(): string;
 }
 
@@ -72,7 +65,6 @@ export default function() {
 
       socket.emit(changeEvent, backgroundType);
       publish(changeEvent, backgroundType);
-
       background = createBackground(backgroundType);
     }
   };
@@ -85,9 +77,7 @@ export default function() {
     } else {
 
       currentCategory = backgroundType;
-
       background = createBackground(backgroundType);
-
       publish(changeEvent, {background, type});
     }
   };

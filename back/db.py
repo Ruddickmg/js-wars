@@ -8,12 +8,9 @@ from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 if "OPENSHIFT_POSTGRESQL_DB_URL" in os.environ:
-
 	db_url = os.environ.get("OPENSHIFT_POSTGRESQL_DB_URL")
 	logging.basicConfig(filename="/var/lib/openshift/55f8fbf90c1e665752000019/app-root/logs/python.log",level=logging.DEBUG)
-
 else:
-
 	user = os.environ.get('DB_USER','user')
 	password = os.environ.get('DB_PASSWORD','password')
 	address = os.environ.get('DB_ADDR','0.0.0.0')
@@ -32,7 +29,6 @@ saved_games = Table("saved_games", Base.metadata,
 )
 
 class User(Base):
-
 	__tablename__ = "user"
 	id = Column(BigInteger, primary_key=True)
 	facebook = Column(BigInteger, unique=True)
@@ -88,7 +84,6 @@ class Maps(Base):
 		return "<Maps(name='%s')>" % (self.name)
 
 class Games(Base):
-
 	__tablename__ = "games"
 	id = Column(Integer, primary_key=True)
 	users = relationship(
@@ -118,26 +113,20 @@ def Rollback():
 	try:
 		session = Session()
 		session.rollback()
-		session.close()
-
 	except Exception as e:
 		Teardown(e, session)
-
 	finally:
-		session.close
+		session.close()
 
 # add defined orm tables to database
 def Migrate():
 	try:
 		session = Session()
 		Base.metadata.create_all(engine)
-		session.close()
 		return True
-
 	except Exception as e:
-		return False;
 		Teardown(e, session)
-
+		return False;
 	finally:
 		session.close()
 
@@ -147,27 +136,20 @@ def DropAll():
 		session = Session()
 		Base.metadata.reflect(engine)
 		Base.metadata.drop_all(engine)
-
 	except Exception as e:
 		Teardown(e, False)
 		return "not dropped"
-
 	finally:
 		session.close()
 
 def Teardown(exception, session):
-
 	if exception:
-		print ("error")
-		print (exception)
 		logging.debug(exception)
 		if session:	
 			session.rollback()
 			session.close()
-
 	if session:	
 		session.close()
 
 def GetUrl ():
-
 	return db_url	
