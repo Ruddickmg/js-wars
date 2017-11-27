@@ -3,11 +3,14 @@ import {expect} from "chai";
 import createGame, {Game} from "../../../../src/game/game";
 import {Map} from "../../../../src/game/map/map";
 import createTestMap from "../../../../src/game/map/testMap";
+import createPlayer, {Player} from "../../../../src/game/users/players/player";
+import createUser, {User} from "../../../../src/game/users/user";
 import backend, {Backend} from "../../../../src/server/connections/backend";
 import connections, {Connections} from "../../../../src/server/connections/connections";
+import checkForEqualityBetweenGames from "../../../utilities/gameEquality";
 import checkForEqualityBetweenMaps from "../../../utilities/mapEquality";
 
-describe("backend", () => {
+describe("backend", function() {
   const connection: Connections = connections({});
   const url: string = connection.backend().url;
   const db: Backend = backend(url);
@@ -16,11 +19,24 @@ describe("backend", () => {
   const method: any = "GET";
   const category: string = "two";
   const name: string = "testGame";
-  const id: number = 5;
+  const testId: number = 5;
   const clear = (): any => request({uri, method, json});
-
-  let map: Map = createTestMap(id);
+  const origin = "facebook";
+  const userProperties: any = {
+    email: "joejohn@jswars.com",
+    first_name: "joe",
+    gender: "male",
+    id: 1,
+    last_name: "john",
+    link: "https://www.whereareyourpantsjoe.com",
+    name: "joe",
+  };
+  let map: Map = createTestMap(testId);
   const game: Game = createGame(name, category, map);
+  const user: User = createUser(userProperties, origin);
+  const player: Player = createPlayer(user, "max");
+
+  game.players.push(player);
 
   before(clear);
   after(clear);
@@ -58,27 +74,33 @@ describe("backend", () => {
     });
   });
 
-  it("Saves a game to the database.", () => {
-    return db.saveGame(game).then(({response}) => {
-      console.log(response);
+  it("Saves a user to the database.", () => {
+    return db.saveUser(user).then(({response}) => {
+      expect(user).to.deep.include(response);
     });
   });
 
+  it("Get a saved user from database.", () => {
+    const {loginWebsite, id}: User = user;
+    return db.getUser(loginWebsite, id).then(({response}) => {
+      expect(user).to.deep.include(response);
+    });
+  });
+
+  // it("Saves a game to the database.", () => {
+  //   return db.saveGame(game).then(({response}) => {
+  //     checkForEqualityBetweenGames(game, response);
+  //   });
+  // });
+  //
   // it("Gets saved games from database.", () => {
-  //   // TODO
+  //   console.log(game);
+  //   return db.getGames(user.id).then(({response}) => {
+  //     checkForEqualityBetweenGames(game, response[0]);
+  //   });
   // });
   //
   // it("Deletes a game from the database.", () => {
-  //   // TODO
-  // });
-  //
-  // it("Saves a user to the database.", () => {
-  //
-  //   // TODO
-  // });
-  //
-  // it("Get a saved user from database.", () => {
-  //
   //   // TODO
   // });
   //

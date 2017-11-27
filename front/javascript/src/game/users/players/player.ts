@@ -13,17 +13,13 @@ export interface Player {
   isComputer: boolean;
   mode: string;
   number: number;
-
   [index: string]: string | boolean | number;
 }
 
 export default function(user: User, co?: string): Player {
-
   if (co && !isCo(co)) {
-
     throw new TypeError("Invalid co passed in player object creation.");
   }
-
   return {
     co,
     gold: 0,

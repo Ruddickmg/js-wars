@@ -3,7 +3,6 @@ import {Game} from "../../game/game";
 import {Map} from "../../game/map/map";
 import {User} from "../../game/users/user";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
-import {isNumber} from "util";
 
 type BackendId = number | string;
 
@@ -29,7 +28,7 @@ export interface Backend {
 }
 
 export default function(url: string): Backend {
-  const {isString}: TypeChecker = typeChecker();
+  const {isString, isNumber}: TypeChecker = typeChecker();
   const json: boolean = true;
   const formatUrl = (path: string, input: string): string => {
     return `${url}${path}${isString(input) || isNumber(input) ? `/${input}` : ""}`;
