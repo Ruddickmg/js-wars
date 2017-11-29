@@ -7,8 +7,6 @@ import {Client} from "../../../../src/server/clients/client";
 import clientHandler, {ClientHandler} from "../../../../src/server/clients/clients";
 import createRoom, {Room} from "../../../../src/server/rooms/room";
 
-// TODO redo tests with actual socket.io
-
 describe("clients", () => {
 
   const sinon = require("sinon");

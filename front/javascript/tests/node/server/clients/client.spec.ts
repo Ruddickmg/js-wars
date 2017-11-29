@@ -6,8 +6,6 @@ import createUser, {User} from "../../../../src/game/users/user";
 import createClient, {Client} from "../../../../src/server/clients/client";
 import createRoom, {Room} from "../../../../src/server/rooms/room";
 
-// TODO redo tests with actual socket.io
-
 describe("client", () => {
 
   const sinon = require("sinon");
@@ -33,17 +31,17 @@ describe("client", () => {
   const leave: any = sinon.spy();
   const moveTo: any = sinon.spy();
   const mockSocket: any = (emit) => ({
-    id: 1,
-    name: "mock socket",
-    emit,
     broadcast: {
       moveTo: (roomName: string): any => {
         moveTo(roomName);
         return {emit};
       },
     },
+    emit,
+    id: 1,
     join,
     leave,
+    name: "mock socket",
   });
   const testEmitter: any = sinon.spy();
   const testSocket: any = mockSocket(testEmitter);

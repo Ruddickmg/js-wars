@@ -16,7 +16,10 @@ import gamesAreEqual from "../../../utilities/gameEquality";
 import mapsAreEqual from "../../../utilities/mapEquality";
 
 describe("routes", function() {
-  const connection: Connections = getConnections({});
+  const connection: Connections = getConnections({
+    IP: "127.0.9.4",
+    PORT: "8050",
+  });
   const get = "get";
   const post = "post";
   const del = "delete";
