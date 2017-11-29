@@ -86,20 +86,17 @@ class Maps(Base):
 class Games(Base):
 	__tablename__ = "games"
 	id = Column(Integer, primary_key=True)
-	users = relationship(
-        "User",
-        secondary=saved_games,
-        back_populates="savedGames")
-	gameId = Column(Integer)
+	users = relationship("User", secondary=saved_games, back_populates="savedGames")
 	name = Column(String(120), unique=True)
+	category = Column(String(120))
 	map = Column(JSON)
 	settings = Column(JSON)
 	players = Column(JSON)
 	date = Column(DateTime, onupdate=datetime.utcnow())
 
-	def __init__(self, id, name, map, settings, players):
-		self.gameId = id
+	def __init__(self, name, category, map, settings, players):
 		self.name = name
+		self.category = category
 		self.map = map
 		self.settings = settings
 		self.players = players
@@ -124,27 +121,31 @@ def Migrate():
 		session = Session()
 		Base.metadata.create_all(engine)
 		return True
-	except Exception as e:
-		Teardown(e, session)
+	except Exception as error:
+		Teardown(error, session)
 		return False;
 	finally:
 		session.close()
 
 # remove all database tables
 def DropAll():
+	meta = Base.metadata
 	try:
 		session = Session()
-		Base.metadata.reflect(engine)
-		Base.metadata.drop_all(engine)
-	except Exception as e:
-		Teardown(e, False)
-		return "not dropped"
+		session.close_all()
+		meta.reflect(engine)
+		meta.drop_all(engine)
+		return True
+	except Exception as error:
+		Teardown(error, False)
+		return False
 	finally:
 		session.close()
 
 def Teardown(exception, session):
 	if exception:
 		logging.debug(exception)
+		print(exception)
 		if session:	
 			session.rollback()
 			session.close()

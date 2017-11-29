@@ -4,7 +4,6 @@ import json, logging, db, os
 from db import Maps, User, Games, Teardown, Rollback, Migrate, DropAll, Session
 
 app = Flask(__name__) 
-
 app.config["SQLALCHEMY_DATABASE_URI"] = db.GetUrl()
 
 def user_byEmail (email):
@@ -27,9 +26,9 @@ def user_toDict(user):
 def games_toDict(game):
 	if game:
 		return {
-			"id":game.gameId,
-			"db":game.id,
+			"id":game.id,
 			"name":game.name,
+			"category":game.category,
 			"map":game.map,
 			"settings":game.settings,
 			"players":[],
@@ -56,19 +55,19 @@ def weeksAgo(number):
 def hello():
 	return "Hello world!"
 
-@app.route("/rollback")
+@app.route("/rollback", methods=["GET"])
 def rollback():
 	Rollback()
 	return success("reverted")
 
-@app.route("/migrate")
+@app.route("/migrate", methods=["GET"])
 def migrate():
-	return success("migrated") if Migrate() else exception()
+	return success("migrated") if Migrate() else serverError()
 
-@app.route("/drop")
+@app.route("/drop", methods=["GET"])
 def drop():
-	DropAll()
-	return success("dropped")
+	print ("dropping!!!")
+	return success("dropped") if DropAll() else serverError()
 
 @app.route("/maps/type/<string:category>", methods=["GET"])
 def get_maps(category):
@@ -136,6 +135,7 @@ def user_byId(origin, id):
 			return success(user_toDict(user))
 		return not_found()
 	except Exception as error:
+		print (error)
 		return serverError()
 
 @app.route("/users/remove/<int:id>", methods=["DELETE"])
@@ -169,8 +169,8 @@ def user_login(email, password):
 def user_save():
 	session = Session()
 	user = request.get_json()
-	email = user["email"]
 	try:
+		email = user["email"]
 		entry = user_byEmail(email)
 		if not entry:
 			entry = User(
@@ -179,8 +179,9 @@ def user_save():
 				user["first_name"],
 				user["name"]
 			) 
-		addOriginId(entry, user["origin"], user["id"])
-		session.merge(entry)
+		entry = session.merge(entry)
+		if ("loginWebsite" in user):
+			addOriginId(entry, user["loginWebsite"], user["id"])
 		session.commit()
 		return success(user_toDict(entry))
 	except Exception as error:
@@ -188,15 +189,6 @@ def user_save():
 		return serverError()
 	finally:
 		session.close()
-
-@app.route ("/sync", methods=["GET"])
-def sync():
-	session = Session()
-	try:
-		return success([s[0] for s in session.query(Games.gameId).all()])
-	except Exception as error:
-		Teardown(error, False);
-		return serverError()
 
 @app.route ("/games/saved/<string:userId>", methods=["GET"])
 def get_games(userId):
@@ -213,11 +205,11 @@ def get_games(userId):
 def save_game():
 	session = Session()
 	game = request.get_json()
-	players = game['players']
 	try:
+		players = game['players']
 		newGame = Games(
-			game['id'],
 			game['name'],
+			game['category'],
 			game['map'],
 			game['settings'],
 			players
@@ -227,10 +219,9 @@ def save_game():
 			if (user):
 				newGame.users.append(user)
 		if newGame.users:
-			if 'saved' in game and game['saved']:
-				previous = Games.query.filter(Games.gameId, newGame.gameId).first()
+			if 'id' in game and game['id']:
+				previous = Games.query.get(game['id'])
 				if previous:
-					newGame.id = previous.id
 					session.merge(newGame)
 			else:
 				session.add(newGame)
@@ -249,7 +240,7 @@ def save_game():
 def games_remove(id):
 	session = Session()
 	try:
-		game = Maps.query.filter(game.gameId, id).first()
+		game = Games.query.get(id)
 		if game:
 			session.delete(game)
 		session.commit()
@@ -267,9 +258,9 @@ def success(response=""):
 	return Response(json.dumps({"success": True, "response": response}, separators=(',',':')), 200, mimetype="application/json")
 
 @app.errorhandler(500)
-def serverError():
+def serverError(error=""):
 	return exception(500)
 
 @app.errorhandler(404)
-def not_found():
+def not_found(error=""):
 	return exception(404)

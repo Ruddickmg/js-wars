@@ -48,8 +48,7 @@ export function isGame(element: any): boolean {
     map = element.map;
     category = element.category;
     name = element.name;
-    bool = (isString(id) || isNumber(id))
-      && (isString(name) || isNull(name))
+    bool = (isString(name) || isNull(name))
       && (isString(category) || isNull(category))
       && isNumber(element.max)
       && isArray(element.players)

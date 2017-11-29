@@ -23,7 +23,6 @@ export interface Backend {
   deleteUser(id: BackendId): Promise<any>;
   deleteGame(id: BackendId): Promise<any>;
   deleteMap(id: BackendId): Promise<any>;
-  sync(): Promise<any>;
   migrate(): Promise<any>;
 }
 
@@ -62,11 +61,6 @@ export default function(url: string): Backend {
   const saveGame = (game: Game): Promise<any> => post("/games/save", game);
   const saveMap = (map: Map): Promise<any> => post("/maps/save", map);
   const saveUser = (user: User): Promise<any> => post("/users/save", user);
-  const sync = (): Promise<any> => get("/sync").then(({error, response}): Promise<any> => {
-    return error ?
-      Promise.reject(Error("Could not sync with database.")) :
-      Promise.resolve(response);
-  });
   return {
     deleteGame,
     deleteMap,
@@ -79,6 +73,5 @@ export default function(url: string): Backend {
     saveGame,
     saveMap,
     saveUser,
-    sync,
   };
 }

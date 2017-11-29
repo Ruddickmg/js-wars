@@ -1,158 +1,125 @@
-import {Game} from "../../game/game";
-import {User} from "../../game/users/user";
-import time, {Time} from "../../tools/calculations/time";
+import express = require("express");
+import bodyParser = require("body-parser");
+import http = require("http");
+import {Game, isGame} from "../../game/game";
+import {isMap, Map} from "../../game/map/map";
+import {isUser, User} from "../../game/users/user";
 import notifications, {PubSub} from "../../tools/pubSub";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import {Client} from "../clients/client";
 import {ClientHandler} from "../clients/clients";
-import {AnyRoom, isRoom, Rooms} from "../rooms/rooms";
-import initBackend, {Backend} from "./backend";
-import connections, {Connections} from "./connections";
+import {isRoom, Rooms} from "../rooms/rooms";
+import {Backend} from "./backend";
 
-const connection: Connections = connections(process.env);
-
-export default function(app: any, rooms: Rooms, clients: ClientHandler, root: string): void {
-
+export default function(rooms: Rooms, clients: ClientHandler, backend: Backend, pathToRootDirectory: string): any {
+  const app: any = express();
+  const server: any = http.createServer(app);
+  const staticFileDirectory: any = express.static(`${pathToRootDirectory}/public`);
+  const {isDefined}: TypeChecker = typeChecker();
   const {publish}: PubSub = notifications();
-  const url: string = connection.backend().url;
-  const periodOfTime: Time = time();
-  const backend: Backend = initBackend(url);
   const errorEventId: string = "error";
   const browserErrorEventId: string = "browserError";
-  const syncDatabaseIdsWithRoomIds = (): void => {
-
-    backend.sync()
-      .then((ids) => rooms.addReservedIds(ids))
-      .catch((error: Error) => publish("error", error));
+  const handleError = (res: any) => (error: Error): any => {
+    publish(errorEventId, error);
+    res.json(error);
+    res.end();
   };
-  const initializeDatabase = (): Promise<any> => {
-
-    const errorMessage: string = "Could not initialize database, connection timed out.";
-    const secondsTillTimeout: number = periodOfTime.seconds(5);
-    const repeatedlyAttemptMigration = (): Promise<any> => backend.migrate()
-      .then((res) => Promise.resolve(res))
-      .catch(() => repeatedlyAttemptMigration());
-
-    return Promise.race([
-      // repeatedlyAttemptMigration(),
-      // periodOfTime.wait(secondsTillTimeout)
-      //   .then(() => Promise.reject(new Error(errorMessage))),
-    ]);
-  };
-
-  initializeDatabase()
-    .then(() => syncDatabaseIdsWithRoomIds())
-    .catch((error: Error) => publish(errorEventId, error));
-
-  app.get("/", (_: any, res: any): void => {
-
-    res.sendFile(`${root}/index.html`);
-  });
-
+  app.use(staticFileDirectory);
+  app.use(bodyParser.json());
+  app.get("/", (_: any, res: any): void => res.sendFile(`${pathToRootDirectory}/index.js`));
   app.get("/games/open/:category", (req: any, res: any): void => {
-
     res.json(rooms.getOpenRooms(req.params.category) || []);
     res.end();
   });
-
   app.get("/games/running/:category", (req: any, res: any): void => {
-
     res.json(rooms.getRunningRooms(req.params.category) || []);
     res.end();
   });
-
-  app.get("/games/saved/:id", (req: any): void => {
-
-    const id: string = req.params.id;
-
+  app.get("/games/saved/:id", (req: any, res: any): void => {
+    const id: any = req.params.id;
     backend.getGames(id)
-      .then((game: Game[]) => rooms.matchRunningGames(game))
-      .catch((error: Error): any => publish(errorEventId, error));
+      .then((game: Game[]) => res.json(rooms.matchRunningGames(game)))
+      .catch(handleError(res));
   });
-
   app.get("/maps/type/:category", (req: any, res: any): void => {
-
     backend.getMaps(req.params.category)
       .then((maps) => res.json(maps))
-      .catch((error: Error) => publish(errorEventId, error));
+      .catch(handleError(res));
   });
-
-  app.post("/errors", (req: any): void => publish(browserErrorEventId, req.body));
-
-  app.post("/maps/save", (req: any, res: any): void => {
-
-    backend.saveMap(req.body)
-      .then((response: any) => res.json(response))
-      .catch((error: Error) => publish(errorEventId, error));
+  app.post("/maps/save", (req: any, res: any): any => {
+    const handle = handleError(res);
+    const map: Map = req.body;
+    if (isMap(map)) {
+      return backend.saveMap(map)
+        .then((savedMap: any) => res.json(savedMap))
+        .catch(handleError(res));
+    }
+    handle(Error("Invalid map found in save attempt."));
   });
-
-  app.post("/users/save", (req: any, res: any): void => {
-
-    // TODO validate
-
-    // save the user and update its id from the database
-    backend.saveUser(req.body)
-      .then((response) => {
-
-        res.json(response);
-        clients.updateUser(response, req.body.id);
-      })
-      .catch((error: Error) => publish(errorEventId, error));
+  app.post("/users/save", (req: any, res: any): any => {
+    const handle = handleError(res);
+    const user = req.body;
+    if (isUser(user)) {
+      return backend.saveUser(user)
+        .then((response) => {
+          res.json(response);
+          clients.updateUser(response, user.id);
+        }).catch(handle);
+    }
+    res.json(user);
+    handle(Error("Invalid user found in attempt to save user."));
   });
-
-  app.post("/users/oauth", (req: any): void => {
-
-    // TODO validate
-
-    const id: string = req.body.id;
-
-    backend.getUser(req.body.origin, id)
-      .then((response) => clients.updateUser(response, id))
-      .catch((error: Error) => publish(errorEventId, error));
+  app.post("/users/oauth", (req: any, res: any): any => {
+    const handle = handleError(res);
+    const user = req.body;
+    if (isUser(user)) {
+      return backend.getUser(user.loginWebsite, user.id)
+        .then((response) => {
+          clients.updateUser(response, user.id);
+          res.json(response);
+        }).catch(handle);
+    }
+    handle(Error("Invalid user found in oauth attempt."));
   });
-
-  app.post("/games/save", (req: any, res: any): void => {
-
-    // TODO validate
-
+  app.post("/games/save", (req: any, res: any): any => {
+    const handle = handleError(res);
     const game: Game = req.body.game;
     const user: User = req.body.user;
-    const client: Client = clients.byId(user.id);
-    const room: AnyRoom = client.getRoom();
-
-    if (isRoom(room)) {
-
-      game.id = room.getGame().id;
-
-      backend.saveGame(JSON.stringify(game))
-        .then((receivedGame) => res.json(receivedGame))
-        .catch((error: Error) => publish(errorEventId, error));
+    let client: Client;
+    if (isUser(user)) {
+      if (isGame(game)) {
+        client = clients.byId(user.id);
+        if (isDefined(client) && isRoom(client.getRoom())) {
+            return backend.saveGame(game)
+              .then((receivedGame) => res.json(receivedGame))
+              .catch(handle);
+        }
+        return handle(Error("Room not found in attempt to save game."));
+      }
+      return handle(Error("Invalid game found in attempt to save."));
     }
+    handle(Error("Invalid user found in attempt to save game."));
   });
-
+  app.post("/errors", (req: any, res: any): void => {
+    const error: string = req.body;
+    publish(browserErrorEventId, error);
+    res.json(error);
+    res.end();
+  });
   app.delete("/games/remove/:id", (req: any, res: any): void => {
-
-    // TODO validate
-
     backend.deleteGame(req.params.id)
-      .then((gameRemovalStatus) => res.json(gameRemovalStatus))
-      .catch((error: Error) => publish(errorEventId, error));
+      .then((removedGame) => res.json(removedGame))
+      .catch(handleError(res));
   });
-
   app.delete("/maps/remove/:id", (req: any, res: any): void => {
-
-    // TODO validate
-
     backend.deleteMap(req.params.id)
       .then((mapRemovalStatus) => res.json(mapRemovalStatus))
-      .catch((error: Error) => publish(errorEventId, error));
+      .catch(handleError(res));
   });
-
   app.delete("/users/remove/:id", (req: any, res: any): void => {
-
-    // TODO validate
-
     backend.deleteUser(req.params.id)
       .then((userRemovalStatus) => res.json(userRemovalStatus))
-      .catch((error: Error) => publish(errorEventId, error));
+      .catch(handleError(res));
   });
+  return server;
 }
