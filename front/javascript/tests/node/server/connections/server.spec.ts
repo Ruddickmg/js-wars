@@ -9,13 +9,13 @@ import createClient, {Client} from "../../../../src/server/clients/client";
 import clientHandler, {ClientHandler} from "../../../../src/server/clients/clients";
 import initBackend, {Backend} from "../../../../src/server/connections/backend";
 import getConnections, {Connections} from "../../../../src/server/connections/connections";
-import routes from "../../../../src/server/connections/routes";
+import getServer from "../../../../src/server/connections/server";
 import createRoom, {Room} from "../../../../src/server/rooms/room";
 import roomsController, {Rooms} from "../../../../src/server/rooms/rooms";
 import gamesAreEqual from "../../../utilities/gameEquality";
 import mapsAreEqual from "../../../utilities/mapEquality";
 
-describe("routes", function() {
+describe("server", function() {
   const connection: Connections = getConnections({
     IP: "127.0.9.4",
     PORT: "8050",
@@ -61,7 +61,7 @@ describe("routes", function() {
   };
   let server: any;
   beforeEach(() => {
-    server = routes(rooms, clients, backend, pathToRootDirectory);
+    server = getServer(pathToRootDirectory);
     server.listen(frontEnd.port, frontEnd.ip);
   });
   afterEach(() => {

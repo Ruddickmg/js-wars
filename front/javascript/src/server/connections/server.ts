@@ -7,11 +7,12 @@ import {isUser, User} from "../../game/users/user";
 import notifications, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import {Client} from "../clients/client";
-import {ClientHandler} from "../clients/clients";
-import {isRoom, Rooms} from "../rooms/rooms";
-import {Backend} from "./backend";
+import getClientHandler, {ClientHandler} from "../clients/clients";
+import getRoomsHandler, {isRoom, Rooms} from "../rooms/rooms";
+import getBackend, {Backend} from "./backend";
+import connections, {Connections} from "./connections";
 
-export default function(rooms: Rooms, clients: ClientHandler, backend: Backend, pathToRootDirectory: string): any {
+export default function(pathToRootDirectory: string, connection: Connections = connections(process.env)): any {
   const app: any = express();
   const server: any = http.createServer(app);
   const staticFileDirectory: any = express.static(`${pathToRootDirectory}/public`);
@@ -24,6 +25,12 @@ export default function(rooms: Rooms, clients: ClientHandler, backend: Backend, 
     res.json(error);
     res.end();
   };
+  const frontEnd: any = connection.frontend();
+  const url: string = frontEnd.url;
+  const backendUrl: string = connection.backend().url;
+  const rooms: Rooms = getRoomsHandler(url);
+  const backend: Backend = getBackend(backendUrl);
+  const clients: ClientHandler = getClientHandler();
   app.use(staticFileDirectory);
   app.use(bodyParser.json());
   app.get("/", (_: any, res: any): void => res.sendFile(`${pathToRootDirectory}/index.js`));

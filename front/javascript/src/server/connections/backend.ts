@@ -2,6 +2,7 @@ import request = require("request-promise-native");
 import {Game} from "../../game/game";
 import {Map} from "../../game/map/map";
 import {User} from "../../game/users/user";
+import single from "../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 
 type BackendId = number | string;
@@ -26,7 +27,7 @@ export interface Backend {
   migrate(): Promise<any>;
 }
 
-export default function(url: string): Backend {
+export default single<Backend>(function(url: string): Backend {
   const {isString, isNumber}: TypeChecker = typeChecker();
   const json: boolean = true;
   const formatUrl = (path: string, input: string): string => {
@@ -74,4 +75,4 @@ export default function(url: string): Backend {
     saveMap,
     saveUser,
   };
-}
+});

@@ -5,7 +5,7 @@ import {Room} from "../rooms/room";
 import {AnyRoom, isRoom} from "../rooms/rooms";
 
 export interface Client {
-  emit: any;
+  emit(path: string, data: any): Client;
   getRoom(): AnyRoom;
   getSocket(): any;
   getPlayer(): Player;
@@ -25,6 +25,7 @@ export default function(initialSocket: any): Client {
   let user: User;
   let player: Player;
   let socket = initialSocket;
+  const lobby: string = "lobby";
   const removePlayerFromRoom = (currentPlayer: Player, currentRoom: AnyRoom): Player => {
     let id;
     if (player) {
@@ -39,38 +40,41 @@ export default function(initialSocket: any): Client {
   };
   const broadcast = function(path: string, value: any, roomName: string = room.name()): Client {
     socket.broadcast
-      .moveTo(roomName)
+      .to(roomName)
       .emit(path, value);
     return this;
   };
   const disconnect = function(): Client {
+    if (player) {
+      broadcast("disconnected", player);
+    }
     if (room && isRoom(room)) {
       socket.leave(room.name());
       if (room.isSaved()) {
         broadcast("userLeftRoom", {room: room.getGame(), player});
       }
     }
-    if (player) {
-      broadcast("disconnected", player);
-    }
     removePlayerFromRoom(player, room);
     return this;
   };
-  const emit = socket.emit;
-  const emitToLobby = function(path: string, value: any): Client {
-    broadcast(path, value, "lobby");
+  const emit = function(path: string, data: any): Client {
+    socket.emit(path, data);
     return this;
   };
-  const joinRoom = (currentRoom: AnyRoom): Room | Lobby => {
-    if (room && player) {
-      removePlayerFromRoom(player, room);
-    }
-    room = currentRoom;
-    socket.join(room.name());
+  const emitToLobby = function(path: string, value: any): Client {
+    broadcast(path, value, lobby);
+    return this;
+  };
+  const joinRoom = (selectedRoom: AnyRoom): Room | Lobby => {
     if (player) {
-      room.addPlayer(player);
+      if (isRoom(room)) {
+        removePlayerFromRoom(player, room);
+      }
+      if (isRoom(selectedRoom)) {
+        selectedRoom.addPlayer(player);
+      }
     }
-    return room;
+    return setRoom(selectedRoom);
   };
   const getPlayer = (): Player => player;
   const getRoom = (): AnyRoom => room;

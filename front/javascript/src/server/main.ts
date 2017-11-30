@@ -1,5 +1,5 @@
 import cron = require("cron");
-import socketIO =  require("socket.io");
+import socketIO = require("socket.io");
 import gamePlaySocketListener from "../game/gamePlaySocketListener";
 import gameSetupSocketListener from "../game/gameSetupSocketListener";
 import aiController, {AiController} from "../game/users/ai/aiController";
@@ -11,7 +11,7 @@ import clientHandler, {ClientHandler} from "./clients/clients";
 import initBackend, {Backend} from "./connections/backend";
 import connections, {Connections} from "./connections/connections";
 import initializeDatabase from "./connections/initializeDatabase";
-import initializeRoutes from "./connections/routes";
+import initializeServer from "./connections/server";
 import createSocketListener, {SocketListeners} from "./connections/sockets/listener";
 import roomsController, {Rooms} from "./rooms/rooms";
 import roomsSocketListener from "./rooms/roomsSocketListener";
@@ -41,7 +41,7 @@ const pathToBrowserSideCode: string = pathFromRoot(relativePathToBrowserCode);
 const pathToMain: string = pathFromRoot(relativePathToMain);
 const pathToInputFile = `${pathToBrowserSideCode}/${nameForInputFile}`;
 const pathToOutputFile = `${pathToMain}/${nameForOutputFile}`;
-const server: any = initializeRoutes(rooms, clients, backend, pathToRootDirectory);
+const server: any = initializeServer(pathToRootDirectory);
 const io = socketIO(server);
 const handleDisconnectedSocketConnections = new cronJob({
   cronTime: timeBetweenChecksOnSocketPool,

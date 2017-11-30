@@ -11,9 +11,7 @@ interface SocketIds {
 }
 
 export default function() {
-
   const sockets: SocketIds = {};
-
   return {
     getId: (socket: any): SocketId => sockets[socket],
     setId(socket: any, id: SocketId): SocketHandler {
