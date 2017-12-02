@@ -1,8 +1,8 @@
 import {Player} from "../../game/users/players/player";
 import {User} from "../../game/users/user";
 import {Lobby} from "../rooms/lobby";
-import {Room} from "../rooms/room";
-import {AnyRoom, isRoom} from "../rooms/rooms";
+import {isRoom, Room} from "../rooms/room";
+import {AnyRoom} from "../rooms/rooms";
 
 export interface Client {
   emit(path: string, data: any): Client;

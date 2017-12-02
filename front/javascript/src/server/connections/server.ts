@@ -8,7 +8,8 @@ import notifications, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import {Client} from "../clients/client";
 import getClientHandler, {ClientHandler} from "../clients/clients";
-import getRoomsHandler, {isRoom, Rooms} from "../rooms/rooms";
+import {isRoom} from "../rooms/room";
+import getRoomsHandler, {Rooms} from "../rooms/rooms";
 import getBackend, {Backend} from "./backend";
 import connections, {Connections} from "./connections";
 

@@ -2,7 +2,8 @@ import createPlayer, {Player} from "../../game/users/players/player";
 import {User, UserId} from "../../game/users/user";
 import single from "../../tools/storage/singleton";
 import socketHandler, {SocketHandler} from "../connections/sockets/socketHandler.js";
-import {AnyRoom, isRoom} from "../rooms/rooms";
+import {isRoom} from "../rooms/room";
+import {AnyRoom} from "../rooms/rooms";
 import createClient, {Client} from "./client.js";
 
 export type ClientId = string | number;
@@ -48,29 +49,19 @@ export default single<ClientHandler>(function(): ClientHandler {
   const getClientBySocket = (socket: any, listOfClients: Clients): Client => listOfClients[socketIds.getId(socket)];
   const getClientById = (id: ClientId, listOfClients: AllClients): AnyClient => listOfClients[id];
   const addClient = (client: AnyClient, id: ClientId, listOfClients: AllClients): AllClients => {
-
     const modifiedClientList: AllClients = Object.assign({}, listOfClients);
-
     modifiedClientList[id] = client;
-
     return modifiedClientList;
   };
   const removeClient = (id: ClientId, listOfClients: AllClients): AllClients => {
-
     const modifiedClientList: AllClients = Object.assign({}, listOfClients);
-
     delete modifiedClientList[id];
-
     return modifiedClientList;
   };
   const add = (socket: any, id: ClientId): Client => {
-
     const client: Client = createClient(socket);
-
     socketIds.setId(socket, id);
-
     connectedClients = addClient(client, id, connectedClients) as Clients;
-
     return client;
   };
   const byId = (id: ClientId): Client => getClientById(id, connectedClients) as Client;

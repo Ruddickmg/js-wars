@@ -1,43 +1,42 @@
+import notifications, {PubSub} from "../../../tools/pubSub";
+import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+
 export interface Listener {
-  [index: string]: (error: Error, data: any, socket: any) => void;
+  [index: string]: (data: any, socket: any) => void;
 }
 
 export interface SocketListeners {
-  addListener(listeners: Listener): void;
-  addListeners(...listeners: Listener[]): void;
-  listenForSocketCommunication(socket: any): void;
+  addListeners(...listeners: Listener[]): SocketListeners;
+  listenForSocketCommunication(socket: any): SocketListeners;
 }
 
 export default function(): SocketListeners {
-
-  let allListeners: Listener[] = [];
-
-  const addListener = (listener: Listener, listeners: Listener[]): Listener[] => {
-    const modifiedListeners: Listener[] = listeners.slice();
-    modifiedListeners.push(listener);
-    return modifiedListeners;
-  };
-
+  const {isString, isDefined, isObject}: TypeChecker = typeChecker();
+  const {publish}: PubSub = notifications();
+  const allListeners: Listener[] = [];
+  const errorEventId: string = "error";
   return {
-    addListener(listener: Listener): void {
-      allListeners = addListener(listener, allListeners);
+    addListeners(...listeners: Listener[]): SocketListeners {
+      listeners.forEach((listener: Listener): any => {
+        if (isObject(listener)) {
+          allListeners.push(listener);
+        }
+      });
+      return this;
     },
-    addListeners(...listeners: Listener[]): void {
-      allListeners = listeners.reduce((addedListeners: Listener[], listener: Listener): Listener[] => {
-        return addListener(listener, addedListeners);
-      }, allListeners);
-    },
-    listenForSocketCommunication(socket: any): void {
+    listenForSocketCommunication(socket: any): SocketListeners {
       allListeners.forEach((listener: Listener) => {
         const listenerDirectives: string[] = Object.keys(listener);
         listenerDirectives.forEach((directive: string) => {
           socket.on(directive, (message: any): void => {
-            const errorReported: string = message.error;
-            const error = errorReported ? Error(errorReported) : undefined;
-            listener[directive](error, message, socket);
+            if (isDefined(message) && isString(message.error)) {
+              return publish(errorEventId, message.error);
+            }
+            listener[directive](message, socket);
           });
         });
       });
+      return this;
     },
   };
 }

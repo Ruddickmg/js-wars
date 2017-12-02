@@ -32,10 +32,6 @@ export interface Rooms {
   matchRunningGames(games: Game[]): Game[];
 }
 
-export function isRoom(room: AnyRoom): room is Room {
-  return (room as Room).getGame !== undefined;
-}
-
 export default single<Rooms>(function(url: string): Rooms {
   const isRunning: string = "running";
   const isOpen: string = "open";

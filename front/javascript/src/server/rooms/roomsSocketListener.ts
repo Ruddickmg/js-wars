@@ -1,59 +1,51 @@
 import getAiController, {AiController} from "../../game/users/ai/aiController";
 import createPlayer, {Player} from "../../game/users/players/player";
-import createUser, {User, UserId} from "../../game/users/user";
+import {User, UserId} from "../../game/users/user";
+import notifications, {PubSub} from "../../tools/pubSub";
 import {Client} from "../clients/client";
 import getClientHandler, {ClientHandler} from "../clients/clients";
 import {Listener} from "../connections/sockets/listener";
 import {Lobby} from "./lobby";
-import {Room} from "./room";
-import getRoomHandler, {isRoom, Rooms} from "./rooms";
+import {isRoom, Room} from "./room";
+import getRoomHandler, {Rooms} from "./rooms";
 
 export default function(): Listener {
+  const {publish}: PubSub = notifications();
   const aiHandler: AiController = getAiController();
   const rooms: Rooms = getRoomHandler();
   const clients: ClientHandler = getClientHandler();
-  const addUser = (error: Error, {loginData, origin}: any, socket: any): void => {
-    const user: User = createUser(loginData, origin);
+  const addUser = (user: User, socket: any): void => {
     const player: Player = createPlayer(user);
-    const id: UserId = user.id;
+    const userId: UserId = user.id;
     let client;
-    if (error !== undefined) {
-      throw error;
-    }
-    if (clients.wasDisconnected(id)) {
-      clients.reconnect(id).setSocket(socket);
+    if (clients.wasDisconnected(userId)) {
+      clients.reconnect(userId).setSocket(socket);
     } else {
-      clients.add(socket, id)
+      clients.add(socket, userId)
         .setPlayer(player)
         .setUser(user);
     }
-    client = clients.byId(id);
+    client = clients.byId(userId);
     client.joinRoom(rooms.lobby());
     client.emit("player", player);
   };
-  const join = (error: Error, room: any, socket: any): void => {
+  const join = (room: any, socket: any): void => {
     const client: Client = clients.bySocket(socket);
     const storedRoom: Room = rooms.get(room);
-    if (error !== undefined) {
-      throw error;
-    }
-    if (storedRoom) {
+    if (isRoom(storedRoom)) {
       client.joinRoom(storedRoom);
       client.emit("joinedGame", storedRoom.getGame());
       client.broadcast("getPlayerStates", true);
       client.broadcast("userJoined", client.getPlayer());
     } else {
-      throw new Error("Room not found in join.");
+      publish("error", "Invalid room found in call to join on the roomsSocketListener.");
     }
   };
-  const newRoom = (error: Error, game: any, socket: any) => {
+  const newRoom = (game: any, socket: any) => {
     const client: Client = clients.bySocket(socket);
     const existingRoom: Room = rooms.get(game);
     let room: Room;
-    if (error !== undefined) {
-      throw error;
-    }
-    if (existingRoom) {
+    if (isRoom(existingRoom)) {
       client.emit("roomAlreadyExists", existingRoom.getGame());
     } else {
       room = rooms.add(game);
@@ -62,12 +54,9 @@ export default function(): Listener {
       client.emitToLobby("addRoom", game);
     }
   };
-  const disconnect = (error: Error, _: any, socket: any): void => {
+  const disconnect = (_: any, socket: any): void => {
     const client: Client = clients.bySocket(socket);
     const room: Room | Lobby = client.getRoom();
-    if (error !== undefined) {
-      throw error;
-    }
     clients.disconnect(socket);
     if (isRoom(room) && room.isEmpty()) {
       rooms.remove(room);
