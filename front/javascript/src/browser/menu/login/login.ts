@@ -1,9 +1,9 @@
 import createUser, {isUser, User} from "../../../game/users/user";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";
-import facebookApi, {FacebookApi} from "../../communication/facebook";
 import createElement, {Element} from "../../dom/element/element";
-import userInput from "../../input/input";
+import createInputForm from "../../input/form";
+import facebookApi, {FacebookApi} from "../../oath/facebook";
 import getGameScreen from "../screen/gameScreen";
 
 export interface LoginScreen {
@@ -15,7 +15,6 @@ export interface LoginScreen {
 export default single<LoginScreen>(function() {
 
   const gameScreen: Element<any> = getGameScreen();
-  const input: any = userInput();
   const loginScreenId: string = "login";
   const loginFormType: string = "section";
   const statusBarType: string = "div";
@@ -44,29 +43,20 @@ export default single<LoginScreen>(function() {
 
   const createStatusBar = (): Element<any> => createElement(statusBarId, statusBarType);
   const createLoginForm = function(): Element<any> {
-
     const loginForm: Element<any> = createElement(loginFormId, loginFormType);
-    const form = input.createForm(inputFormName, loginForm, defaultText);
+    const form = createInputForm(inputFormName, defaultText);
     const facebookButton: Element<any> = facebook.createButton(handleStatusChanges);
-
     loginForm.appendChild(form);
     loginForm.appendChild(facebookButton);
-
     return loginForm;
   };
   const setup = function(received: any, origin: string = ""): void {
-
     const user: User = createUser(received, origin);
-
     if (isUser(user)) {
-
       gameScreen.removeChildren();
-
       publish("addUser", user);
       publish(["beginGameSetup", "settingUpGame"], true);
-
     } else {
-
       publish("invalidInput", {className: "login", input: received, method: "setup"});
     }
   };

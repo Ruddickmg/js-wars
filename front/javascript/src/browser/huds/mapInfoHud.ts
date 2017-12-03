@@ -1,3 +1,4 @@
+import cursorController, {CursorController} from "../../game/interaction/cursor/controller";
 import {Dimensions} from "../../game/map/coordinates/dimensions";
 import createPosition, {Position} from "../../game/map/coordinates/position";
 import {MapElement} from "../../game/map/elements/defaults";
@@ -6,10 +7,8 @@ import notifications, {PubSub} from "../../tools/pubSub";
 import {Dictionary} from "../../tools/storage/dictionary";
 import singleton from "../../tools/storage/singleton";
 import createCanvas, {Canvas} from "../canvas/canvas";
-import cursorController, {CursorController} from "../../game/interaction/cursor/controller";
 
 export interface MapInfoHud {
-
   add(newElement: MapElement, attributes?: any): any;
   clear(): void;
   hidden(): boolean;
