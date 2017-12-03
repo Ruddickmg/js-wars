@@ -25,7 +25,6 @@ export default single<Receivers>(function(socket: any = getSocket()): Receivers 
   };
   const receivers: Receivers = {add};
   return receivers;
-
   // // all in game commands
   // socket.on('confirmSave', function(player) {
   //
