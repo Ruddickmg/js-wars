@@ -1,19 +1,33 @@
-import {Position} from "../../../game/map/coordinates/position";
-import {User} from "../../../game/users/user";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";
+import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import getSocket from "./socket";
 
-export default single<any>(function() {
+export type Transmitter = (value: any) => Transmitters;
 
-  const socket = getSocket();
+export interface Transmitters {
+  add(...additionalActions: string[]): Transmitters;
+ [action: string]: Transmitter;
+}
+
+export default single<Transmitters>(function(socket: any = getSocket()): Transmitters {
+  const {isString}: TypeChecker = typeChecker();
   const {subscribe}: PubSub = notifications();
-
-  const addUser = (user: User): void => socket.emit("addUser", user);
-  const cursor = (position: Position) => socket.emit("cursorMove", position);
-
-  subscribe("addUser", addUser);
-  subscribe("cursorMove", cursor);
+  const add = function(...additionalActions: string[]): Transmitters {
+    return additionalActions.reduce((transmitters: Transmitters, action: string): any => {
+      const transmitter: Transmitter = function(value: any): Transmitters {
+        socket.emit(action, value);
+        return this;
+      };
+      if (isString(action)) {
+        transmitters[action] = transmitter;
+        subscribe(action, transmitter);
+      }
+      return transmitters;
+    }, transmitters);
+  };
+  const transmitters: Transmitters = {add};
+  return transmitters;
 
   // captured(unit, building) {
   //
@@ -129,7 +143,7 @@ export default single<any>(function() {
   //
   //     app.socket.emit("addAiPlayer", player);
   // },
-
+  //
   // message: function (message) {
   //
   //     app.socket.emit("gameReadyChat", message);
@@ -168,10 +182,4 @@ export default single<any>(function() {
   //
   //     app.socket.emit("addUnit", unit);
   // }
-
-  return {
-
-    addUser,
-    cursor,
-  };
-}());
+});

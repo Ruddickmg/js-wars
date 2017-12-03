@@ -11,7 +11,7 @@ export interface Connection {
   url: string;
 }
 
-export default function(environmentVariables: any): Connections {
+export default function(environmentVariables: any = {}): Connections {
   const connectionSettings: any = settings().toObject("connection");
   const defaultPort: string = connectionSettings.port;
   const defaultIp: string = connectionSettings.ip;

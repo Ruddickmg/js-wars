@@ -2,6 +2,7 @@ import getAiController, {AiController} from "../../game/users/ai/aiController";
 import createPlayer, {Player} from "../../game/users/players/player";
 import {User, UserId} from "../../game/users/user";
 import notifications, {PubSub} from "../../tools/pubSub";
+import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import {Client} from "../clients/client";
 import getClientHandler, {ClientHandler} from "../clients/clients";
 import {Listener} from "../connections/sockets/listener";
@@ -10,6 +11,7 @@ import {isRoom, Room} from "./room";
 import getRoomHandler, {Rooms} from "./rooms";
 
 export default function(): Listener {
+  const {isDefined}: TypeChecker = typeChecker();
   const {publish}: PubSub = notifications();
   const aiHandler: AiController = getAiController();
   const rooms: Rooms = getRoomHandler();
@@ -56,11 +58,14 @@ export default function(): Listener {
   };
   const disconnect = (_: any, socket: any): void => {
     const client: Client = clients.bySocket(socket);
-    const room: Room | Lobby = client.getRoom();
+    let room: Room | Lobby;
     clients.disconnect(socket);
-    if (isRoom(room) && room.isEmpty()) {
-      rooms.remove(room);
-      aiHandler.remove(...room.getAiPlayers());
+    if (isDefined(client)) {
+      room = client.getRoom();
+      if (isRoom(room) && room.isEmpty()) {
+        rooms.remove(room);
+        aiHandler.remove(...room.getAiPlayers());
+      }
     }
   };
   return {

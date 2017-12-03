@@ -1,7 +1,11 @@
 import io = require("socket.io-client");
+import connections from "../../../server/connections/connections";
 import single from "../../../tools/storage/singleton";
-export default single<any>((): any => {
-  const local = "http://172.17.0.5:8080";
-  const remote = "http://jswars-jswars.rhcloud.com:8000";
-  return io.connect(remote) || io.connect(local);
+interface ConnectionVars {
+  IP?: string;
+  PORT?: string | number;
+}
+export default single<any>((connectionVariables: ConnectionVars = {}): any => {
+  const url: string = connections(connectionVariables).frontend().url;
+  return io.connect(url);
 });
