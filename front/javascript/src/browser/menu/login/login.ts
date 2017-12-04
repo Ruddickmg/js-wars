@@ -2,32 +2,29 @@ import createUser, {isUser, User} from "../../../game/users/user";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";
 import createElement, {Element} from "../../dom/element/element";
-import createInputForm from "../../input/form";
+import createTextInput from "../../input/text";
 import facebookApi, {FacebookApi} from "../../oath/facebook";
 import getGameScreen from "../screen/gameScreen";
 
 export interface LoginScreen {
-
   skip(): void;
   display(): void;
 }
 
 export default single<LoginScreen>(function() {
-
   const gameScreen: Element<any> = getGameScreen();
   const loginScreenId: string = "login";
   const loginFormType: string = "section";
   const statusBarType: string = "div";
   const statusBarId: string = "status";
   const loginFormId: string = "loginForm";
-  const inputFormName: string = "loginText";
+  const inputElementId: string = "loginText";
   const defaultText: string = "Guest name input.";
   const successfulConnection: string = "connected";
   const unauthorizedConnection: string = "not authorized";
   const unsuccessfulLoginMessage: string = "Invalid credentials entered, please try again.";
   const loginMessage: string = "Please log in to play.";
   const testUser: any = {
-
     email: "testUser@test.com",
     first_name: "Testy",
     gender: "male",
@@ -37,14 +34,12 @@ export default single<LoginScreen>(function() {
     locale: "en_US",
     name: "Testy McTesterson",
   };
-
   const {publish}: PubSub = notifications();
   const facebook: FacebookApi = facebookApi();
-
   const createStatusBar = (): Element<any> => createElement(statusBarId, statusBarType);
   const createLoginForm = function(): Element<any> {
     const loginForm: Element<any> = createElement(loginFormId, loginFormType);
-    const form = createInputForm(inputFormName, defaultText);
+    const form = createTextInput(inputElementId, defaultText);
     const facebookButton: Element<any> = facebook.createButton(handleStatusChanges);
     loginForm.appendChild(form);
     loginForm.appendChild(facebookButton);
@@ -61,32 +56,23 @@ export default single<LoginScreen>(function() {
     }
   };
   const handleStatusChanges = ({status}: any): void => { // TODO test and verify once able.
-
     const unauthorized: boolean = status === unauthorizedConnection;
     const message: string = unauthorized ? unsuccessfulLoginMessage : loginMessage;
-
     if (status === successfulConnection) {
-
       facebook.login(setup);
-
     } else {
-
       gameScreen.get(statusBarId).setText(message);
       gameScreen.get(loginScreenId).show();
     }
   };
   const skip = (): void => setup(testUser, "testing");
   const display = function(): void {
-
     gameScreen.appendChild(createLoginForm());
     gameScreen.appendChild(createStatusBar());
     gameScreen.get(loginScreenId).hide();
-
     facebook.setupLogin(handleStatusChanges);
   };
-
   return {
-
     display,
     skip,
   };

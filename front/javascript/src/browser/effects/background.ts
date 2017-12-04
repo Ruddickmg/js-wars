@@ -5,11 +5,10 @@ import notifications, {PubSub} from "../../tools/pubSub";
 import getSocket from "../communication/sockets/socket";
 
 export interface Background {
-
-  random(): boolean;
+  isRandom(): boolean;
   category(): string;
-  change(): void;
-  set(type: string): void;
+  change(): Background;
+  set(type: string): Background;
   type(): string;
   defense(): number;
   name(): string;
@@ -17,39 +16,33 @@ export interface Background {
 }
 
 export default function() {
-
-  const socket = getSocket();
   const {publish}: PubSub = notifications();
   const position: Position = createPosition(0, 0);
-  const changeEvent: string = "backgroundChange";
+  const changeEvent: string = "changeBackground";
   const snowType: string = "snow";
   const plainType: string = "plain";
   const randomType: string = "random";
   const rainType: string = "rain";
   const types: string[] = [snowType, plainType, rainType];
-
   let background: Terrain = createTerrain(plainType, position);
   let currentCategory: string = randomType;
-
-  const beginningNewRound = (): boolean => true; // TODO write this boolean test
   const getAmountOfDefense = (_: Terrain): number => 5; // TODO write this boolean test
-  const random = (): boolean => currentCategory === randomType;
+  const isRandom = (): boolean => currentCategory === randomType;
   const isRain = (theType: string): boolean => theType === rainType;
   const category = (): string => currentCategory;
   const type = (): string => background.type;
   const defense = (): number => getAmountOfDefense(background);
   const name = (): string => background.name;
-  const drawing = (): string => background.draw;
+  const drawing = (): string => background.drawing;
   const alias = (elementType: string): string => elementType === snowType ? snowType : plainType;
   const createBackground = (backgroundType: string): Terrain => {
-
     return createTerrain(isRain(backgroundType) ? plainType : alias(backgroundType), position);
   };
   const weighted = (): string => {
 
     const indexOfRandomType: number = getRandom.index(types);
 
-    // TODO make better after wheather effects are all worked out
+    // TODO fix after wheather effects are all worked out
     // if(calculated < 4)
     //     return 'snow';
     // else if(calculated < 6)
@@ -57,34 +50,25 @@ export default function() {
 
     return plainType || types[indexOfRandomType];
   };
-  const change = (): void => {
-
+  const change = function(): Background {
     const backgroundType: string = weighted();
-
-    if (beginningNewRound()) {
-
-      socket.emit(changeEvent, backgroundType);
-      publish(changeEvent, backgroundType);
-      background = createBackground(backgroundType);
-    }
+    publish(changeEvent, backgroundType);
+    background = createBackground(backgroundType);
+    return this;
   };
-  const set = (backgroundType: string): void => {
-
-    if (random()) {
-
+  const set = function(backgroundType: string): Background {
+    if (isRandom()) {
       change();
-
     } else {
-
       currentCategory = backgroundType;
       background = createBackground(backgroundType);
       publish(changeEvent, {background, type});
     }
+    return this;
   };
 
   return {
-
-    random,
+    isRandom,
     category,
     change,
     set,
