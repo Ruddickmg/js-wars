@@ -1,21 +1,29 @@
-import capitalizeFirstLetter from "../../../../tools/stringManipulation/capitalizeFirstLetter";
-import createElement, {Element} from "../../../dom/element/element";
+import capitalizeFirstLetter from "../../../../../tools/stringManipulation/capitalizeFirstLetter";
+import typChecker, {TypeChecker} from "../../../../../tools/validation/typeChecker";
+import createElement, {Element} from "../../../../dom/element/element";
+import isElement from "../../../../dom/element/isElement";
 
 export interface OptionElement extends Element<any> {
-
   border: Element<any>;
-
   fadeBorderColor(): Element<any>;
-
   stopFading(): Element<any>;
 }
 
-export default function(option: string, idOfOption: string): Element<string> {
+export function isOption(element: any): boolean {
+  const {isFunction}: TypeChecker = typChecker();
+  const optionType: string = "modeOption";
+  return isElement(element)
+    && isFunction(element.fadeBorderColor)
+    && isFunction(element.stopFading)
+    && element.type === optionType;
+}
+
+export default function(option: string, idOfOption: string): OptionElement<string> {
 
   const optionType: string = "li";
   const classOfElement: string = "modeOption";
   const fadingClass: string = "fadeToWhite";
-  const fadedOverClass: string = "fading";
+  const hoveredOver: string = "fading";
   const action: string = option + capitalizeFirstLetter(idOfOption);
   const element: Element<string> = createElement<string>(action, optionType).setClass(classOfElement);
   const border: Element<any> = createElement<any>(`${action}Border`, "div").setClass(`${classOfElement}Border`);
@@ -25,24 +33,14 @@ export default function(option: string, idOfOption: string): Element<string> {
   element.setText(option);
 
   return Object.assign(element, {
-    setBorderColor(color: any): Element<any> {
-
-      border.setBorderColor(color);
-
-      return this;
-    },
     fadeBorderColor(): Element<any> {
-
       border.appendClass(fadingClass);
-      element.appendClass(fadedOverClass);
-
+      element.appendClass(hoveredOver);
       return this;
     },
     stopFading(): Element<any> {
-
       border.removeClass(fadingClass);
-      element.removeClass(fadedOverClass);
-
+      element.removeClass(hoveredOver);
       return this;
     },
     border,

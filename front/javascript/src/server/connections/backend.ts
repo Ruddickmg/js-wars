@@ -54,14 +54,14 @@ export default single<Backend>(function(url: string): Backend {
   const getLogin = (email: string, password: string): Promise<any> => get("/users/login", `${email}/${password}`);
   const getMaps = (category: string): Promise<any> => get("/maps/type", category);
   const getUser = (origin: string, id: BackendId): Promise<any> => get("/users", `${origin}/${id}`);
+  const saveGame = (game: Game): Promise<any> => post("/games/save", game);
+  const saveMap = (map: Map): Promise<any> => post("/maps/save", map);
+  const saveUser = (user: User): Promise<any> => post("/users/save", user);
   const migrate = (): Promise<any> => get("/migrate").then((response) => {
     return response.success ?
       Promise.resolve(response) :
       Promise.reject(Error("Could not complete migration."));
   });
-  const saveGame = (game: Game): Promise<any> => post("/games/save", game);
-  const saveMap = (map: Map): Promise<any> => post("/maps/save", map);
-  const saveUser = (user: User): Promise<any> => post("/users/save", user);
   return {
     deleteGame,
     deleteMap,

@@ -7,7 +7,6 @@ import validator, {Validator} from "../../tools/validation/validator";
 import keyboardInput, {KeyBoard} from "../input/keyboard";
 
 interface SelectorMethods<Type> {
-
   selectVertically(): SelectionHandler<Type>;
   selectHorizontally(): SelectionHandler<Type>;
   setSelections(selections: ArrayList<Type>): SelectionHandler<Type>;
@@ -17,7 +16,6 @@ interface SelectorMethods<Type> {
 }
 
 export interface SelectionHandler<Type> extends SelectorMethods<Type> {
-
   getSelected(): Type;
   start(): SelectionHandler<Type>;
 }
@@ -25,7 +23,6 @@ export interface SelectionHandler<Type> extends SelectorMethods<Type> {
 type Handler = (selected: any, previous: any, selections: any) => any;
 
 export default function <Type>(container: ArrayList<Type> = createList<any>()): SelectionHandler<Type> {
-
   const upKey: string = "pressedUpKey";
   const downKey: string = "pressedDownKey";
   const leftKey: string = "pressedLeftKey";
@@ -35,7 +32,6 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
   const {validateFunction}: Validator = validator("selectionHandler");
   const {isFunction, isDefined}: TypeChecker = typeChecker();
   const {subscribe, unsubscribe}: PubSub = notifications();
-
   let subscriptions: any[] = [];
   let selectingVertically: boolean = true;
   let isVertical: boolean = selectingVertically;
@@ -43,40 +39,27 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
   let current: Type = selections.getCurrentElement();
   let verticalSelectionHandler: Handler;
   let horizontalSelectionHandler: Handler;
-
   const switchLists = (): void => {
-
     let list: any;
     let selected: any;
-
     const target: Type = selections.getCurrentElement();
-
     if (isList(target)) {
-
       list = target;
       previous.push(selections);
-
     } else if (!previous.isEmpty()) {
-
       list = previous.pop();
     }
-
     if (isDefined(list)) {
-
       selectingVertically = !selectingVertically;
       selected = list.getCurrentElement();
-
       if (isDefined(selected)) {
-
         selections = list;
         current = selected;
       }
     }
   };
   const elementSelection = (handleSelection: Handler, movingForward: boolean): any => {
-
     const selected = movingForward ? selections.next() : selections.previous();
-
     if (isDefined(selected) && isDefined(current)) {
       if (isFunction(handleSelection)) {
         handleSelection(selected, current, selections);
@@ -85,45 +68,33 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
     }
   };
   const handleKeyPress = (movementHandler: Handler, switchingSelections: boolean, moveForward: boolean): void => {
-
     if (switchingSelections) {
-
       switchLists();
     }
-
     elementSelection(movementHandler, moveForward);
   };
   const getSelected = (): Type => current;
   const start = function(): SelectionHandler<Type> {
-
     subscriptions = subscriptions.concat(subscribe([upKey, downKey], (): void => {
-
       handleKeyPress(verticalSelectionHandler, selectingVertically, keyboard.pressedDown());
     }));
-
     subscriptions = subscriptions.concat(subscribe([leftKey, rightKey], (): void => {
-
       handleKeyPress(horizontalSelectionHandler, !selectingVertically, keyboard.pressedRight());
     }));
-
     return this;
   };
   const methods: SelectorMethods<Type> = {
-
     selectVertically(): SelectionHandler<Type> {
-
       selectingVertically = isVertical === selectingVertically;
       isVertical = true;
       return this;
     },
     selectHorizontally(): SelectionHandler<Type> {
-
       selectingVertically = isVertical !== selectingVertically;
       isVertical = false;
       return this;
     },
     setSelections(newSelections: ArrayList<Type>): SelectionHandler<Type> {
-
       selections = newSelections;
       selectingVertically = isVertical;
       current = selections.getCurrentElement();
@@ -131,29 +102,21 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
       return this;
     },
     vertical(selectionHandler: Handler): SelectionHandler<Type> {
-
       if (validateFunction(selectionHandler, "vertical")) {
-
         verticalSelectionHandler = selectionHandler;
       }
       return this;
     },
     horizontal(selectionHandler: Handler): SelectionHandler<Type> {
-
       if (validateFunction(selectionHandler, "horizontal")) {
-
         horizontalSelectionHandler = selectionHandler;
       }
-
       return this;
     },
     stop(): SelectionHandler<Type> {
-
       subscriptions.forEach((subscription: any): any => unsubscribe(subscription));
-
       return this;
     },
   };
-
   return Object.assign(methods, {getSelected, start});
 }

@@ -19,8 +19,10 @@ export default function(environmentVariables: any = {}): Connections {
   const defaultBackendIp: string = connectionSettings.backendIp;
   const ipAddress = environmentVariables.OPENSHIFT_NODEJS_IP || environmentVariables.IP || defaultIp;
   const portAddress = environmentVariables.OPENSHIFT_NODEJS_PORT || environmentVariables.PORT || defaultPort;
-  const backendIp = environmentVariables.BACKEND_IP || defaultBackendIp;
-  const backendPort = environmentVariables.BACKEND_PORT_8000_TCP_ADDR
+  const backendIp = environmentVariables.BACKEND_PORT_8000_TCP_ADDR
+    || environmentVariables.BACKEND_IP
+    || defaultBackendIp;
+  const backendPort = environmentVariables.BACKEND_PORT_8000_TCP_PORT
     || environmentVariables.BACKEND_PORT
     || defaultBackendPort;
   const createUrl = (ip: string, port: string): string => `http://${ip}:${port}`;

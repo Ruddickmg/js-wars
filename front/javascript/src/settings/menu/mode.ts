@@ -1,4 +1,4 @@
-import modeMenuItem from "../../browser/menu/mode/modeItem";
+import modeMenuItem from "../../browser/menu/mode/modeElements/modeItem";
 
 export default {
 

@@ -1,4 +1,4 @@
-import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
+import capitalizeFirstLetter from "../../../../tools/stringManipulation/capitalizeFirstLetter";
 
 export interface ModeMenuItem {
 

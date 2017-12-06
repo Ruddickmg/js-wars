@@ -28,14 +28,15 @@ const cronJob: any = cron.CronJob;
 const connection: Connections = connections(process.env);
 const periodOfTime: Time = time();
 const pathToRootDirectory: string = __dirname ? `${__dirname}/../../../` : defaultDirectory;
-const {ip, port, url} = connection.frontend();
+const {ip, port} = connection.frontend();
+const {url} = connection.backend();
+const backend: Backend = initBackend(url);
 const clients: ClientHandler = clientHandler();
 const rooms: Rooms = roomsController(url);
 const aiPlayers: AiController = aiController();
 const socketListener: SocketListeners = createSocketListener();
 const minutesToRememberDisconnectedSocket: number = 15;
 const timeBetweenChecksOnSocketPool: string = "0 */20 * * * *";
-const backend: Backend = initBackend(connection.backend().url);
 const pathFromRoot = (relativePath: string): string => `${pathToRootDirectory}${relativePath}`;
 const pathToBrowserSideCode: string = pathFromRoot(relativePathToBrowserCode);
 const pathToMain: string = pathFromRoot(relativePathToMain);
@@ -52,7 +53,6 @@ const handleDisconnectedSocketConnections = new cronJob({
     );
   },
 });
-
 compiler(pathToInputFile)
 // .tsify({target: "ES6", debug: true})
   .babelify({
@@ -71,5 +71,6 @@ socketListener.addListeners(
 io.on("connection", socketListener.listenForSocketCommunication);
 handleDisconnectedSocketConnections.start();
 subscribe(errorEventId, (error: Error): any => console.log("\n" + error + "\n"));
-initializeDatabase(backend).catch((error: Error) => publish(errorEventId, error));
-server.listen(port, ip, () => console.log(`  - listening for requests @ ${ip}:${port}`));
+initializeDatabase(backend)
+  .then(() => server.listen(port, ip, () => console.log(`  - listening for requests @ ${ip}:${port}`)))
+  .catch((error: Error) => publish(errorEventId, error));

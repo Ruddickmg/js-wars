@@ -9,7 +9,7 @@ import requestMaker, {IncompleteRequest, Request} from "../communication/request
 import {Element} from "../dom/element/element";
 import join from "./join/join";
 import loginHandler, {LoginScreen} from "./login/login";
-import handleGameModeSelection from "./mode/modeMenu";
+import handleGameModeSelection from "./mode/modeElements/modeMenu";
 import getGameScreen from "./screen/gameScreen";
 import createTitle from "./screen/title";
 import handleSettingsSelection from "./settings/settings";
