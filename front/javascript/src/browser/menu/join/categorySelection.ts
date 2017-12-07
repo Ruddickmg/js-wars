@@ -1,17 +1,24 @@
 import getSettings from "../../../settings/settings";
 import zipWith from "../../../tools/array/zipWith";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
+import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import {Element} from "../../dom/element/element";
+import isElement from "../../dom/element/isElement";
 import createScroller, {Scroller} from "../../effects/scrolling";
+import getKeyboard, {KeyBoard} from "../../input/keyboard";
 import createGameMenu, {GameMenu} from "../elements/gameMenu";
+import createSelectionHandler, {SelectionHandler} from "../selectors/twoDimensionalSelector";
 import createSelectionElement from "./selectionElement";
 
-export interface CategorySelector extends Element<any>, Scroller {
+export interface CategorySelector extends Element<any>, Scroller, SelectionHandler<any> {
   elements: ArrayList<Element<string>>;
   switchCategory(movingForward?: boolean): CategorySelector;
+  getCategory(): string;
 }
 
 export default function() {
+  const keyboard: KeyBoard = getKeyboard();
+  const {isString}: TypeChecker = typeChecker();
   const amountOfCategoriesToShow: number = 1;
   const amountOfCategoryNeighbors: number = 2;
   const positionAttribute = "position";
@@ -29,6 +36,8 @@ export default function() {
         .setValue(category)
         .hide();
     }));
+  const categorySelection: SelectionHandler<Element<string>> = createSelectionHandler<Element<string>>(elements)
+    .selectHorizontally();
   const categoryScroller: Scroller = createScroller(amountOfCategoriesToShow)(elements);
   const switchCategory = function(movingForward: boolean = true): CategorySelector {
     const neighbors: Element<string>[] = elements.getNeighboringElements(amountOfCategoryNeighbors);
@@ -42,6 +51,26 @@ export default function() {
     });
     return this;
   };
+  const horizontalSelection = (current: Element<any>): void => {
+    let category: string;
+    if (isElement(current)) {
+      category = current.getValue();
+      if (isString(category)) {
+        switchCategory(keyboard.pressedRight());
+      }
+    }
+  };
+  const getCategory = (): string => elements.getCurrentElement().getValue();
+  categorySelection.horizontal(horizontalSelection);
   elements.forEach((element: any): any => categorySelectionMenu.appendChild(element));
-  return Object.assign(categorySelectionMenu, categoryScroller, {switchCategory, elements});
+  return Object.assign(
+    categoryScroller,
+    categorySelection,
+    categorySelectionMenu,
+    {
+      elements,
+      getCategory,
+      switchCategory,
+    },
+  );
 }

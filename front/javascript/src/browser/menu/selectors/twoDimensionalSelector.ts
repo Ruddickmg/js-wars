@@ -39,7 +39,7 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
   let current: Type = selections.getCurrentElement();
   let verticalSelectionHandler: Handler;
   let horizontalSelectionHandler: Handler;
-  const switchLists = (): void => {
+  const switchLists = (): any => {
     let list: any;
     let selected: any;
     const target: Type = selections.getCurrentElement();
@@ -48,6 +48,8 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
       previous.push(selections);
     } else if (!previous.isEmpty()) {
       list = previous.pop();
+    } else {
+      return false;
     }
     if (isDefined(list)) {
       selectingVertically = !selectingVertically;
@@ -57,6 +59,7 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
         current = selected;
       }
     }
+    return true;
   };
   const elementSelection = (handleSelection: Handler, movingForward: boolean): any => {
     const selected = movingForward ? selections.next() : selections.previous();
@@ -69,17 +72,20 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
   };
   const getSelected = (): Type => current;
   const handleKeyPress = (movementHandler: Handler, switchingSelections: boolean, moveForward: boolean): void => {
+    let switched: boolean;
     if (switchingSelections) {
-      switchLists();
+      switched = switchLists();
     }
-    elementSelection(movementHandler, moveForward);
+    if (!switchingSelections || switched) {
+      elementSelection(movementHandler, moveForward);
+    }
   };
   const listen = function(): SelectionHandler<Type> {
     subscriptions = subscriptions.concat(subscribe([upKey, downKey], (): void => {
-      handleKeyPress(verticalSelectionHandler, selectingVertically, keyboard.pressedDown());
+      handleKeyPress(verticalSelectionHandler, !selectingVertically, keyboard.pressedDown());
     }));
     subscriptions = subscriptions.concat(subscribe([leftKey, rightKey], (): void => {
-      handleKeyPress(horizontalSelectionHandler, !selectingVertically, keyboard.pressedRight());
+      handleKeyPress(horizontalSelectionHandler, selectingVertically, keyboard.pressedRight());
     }));
     return this;
   };

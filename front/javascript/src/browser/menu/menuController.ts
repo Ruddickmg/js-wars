@@ -28,10 +28,10 @@ export default single<any>(function() {
     handleGameModeSelection().listen();
   });
   subscribe("finishedSelectingMap", (game: Game) => handleSettingsSelection(game));
-  subscribe("joinNewGame", (): any => join<Game>("open"));
-  subscribe("joinContinuingGame", (): any => join<Game>("running"));
-  subscribe("startNewGame", (): any => join<Map>("type", createGame()));
-  subscribe("resumeSavedGame", (): any => join<Map>("saved"));
+  subscribe("joinNewGame", (): any => join<Game>("open").listen());
+  subscribe("joinContinuingGame", (): any => join<Game>("running").listen());
+  subscribe("startNewGame", (): any => join<Map>("type", createGame()).listen());
+  subscribe("resumeSavedGame", (): any => join<Map>("saved").listen());
   subscribe("createNewMap", (): void => {
     const amountOfMaps: number = 10;
     let mapNumber: number = 1;

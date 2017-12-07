@@ -17,7 +17,7 @@ describe("mapRequestHandler", () => {
   const category: string = "Two player";
   const testRequestMethod = (method: any): any => {
     const maps: Map[] = range(1, 12).map((id: number): Map => testMap(id));
-    const data: string = JSON.stringify(maps);
+    const data: string = JSON.stringify({success: true, response: maps});
     const response = method(category);
     expect(requests.length).to.equal(1);
     requests[0].respond(200, { "Content-Type": "application/json" }, data);
