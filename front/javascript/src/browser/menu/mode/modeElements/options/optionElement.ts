@@ -3,10 +3,10 @@ import typChecker, {TypeChecker} from "../../../../../tools/validation/typeCheck
 import createElement, {Element} from "../../../../dom/element/element";
 import isElement from "../../../../dom/element/isElement";
 
-export interface OptionElement extends Element<any> {
+export interface OptionElement<Type> extends Element<Type> {
   border: Element<any>;
-  fadeBorderColor(): Element<any>;
-  stopFading(): Element<any>;
+  fadeBorderColor(): OptionElement<Type>;
+  stopFading(): OptionElement<Type>;
 }
 
 export function isOption(element: any): boolean {

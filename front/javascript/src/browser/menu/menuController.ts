@@ -9,14 +9,14 @@ import requestMaker, {IncompleteRequest, Request} from "../communication/request
 import {Element} from "../dom/element/element";
 import join from "./join/join";
 import loginHandler, {LoginScreen} from "./login/login";
-import handleGameModeSelection from "./mode/modeElements/modeMenu";
+import handleGameModeSelection from "./mode/modeSelection";
 import getGameScreen from "./screen/gameScreen";
 import createTitle from "./screen/title";
 import handleSettingsSelection from "./settings/settings";
 export default single<any>(function() {
   const request: Request = requestMaker();
   const saveMap: IncompleteRequest = request.post("maps/save") as IncompleteRequest;
-  const {subscribe}: PubSub = notifications();
+  const {publish, subscribe}: PubSub = notifications();
   const login: LoginScreen = loginHandler();
   const settings: Dictionary = getSettings();
   const gameScreen: Element<any> = getGameScreen();
@@ -25,7 +25,7 @@ export default single<any>(function() {
   subscribe("login", (): any => testing ? login.skip() : login.display());
   subscribe("beginGameSetup", () => {
     gameScreen.appendChild(title);
-    handleGameModeSelection();
+    handleGameModeSelection().listen();
   });
   subscribe("finishedSelectingMap", (game: Game) => handleSettingsSelection(game));
   subscribe("joinNewGame", (): any => join<Game>("open"));
@@ -36,8 +36,8 @@ export default single<any>(function() {
     const amountOfMaps: number = 10;
     let mapNumber: number = 1;
     for (mapNumber; mapNumber <= amountOfMaps; mapNumber += 1) {
-      saveMap(testMap(mapNumber)).then((response: any): void => console.log(response))
-        .catch((error: Error): void => console.log(error));
+      saveMap(testMap(mapNumber))
+        .catch(({message}: Error): void => publish("serverError", message));
     }
   });
   subscribe("editCo", (): void => {

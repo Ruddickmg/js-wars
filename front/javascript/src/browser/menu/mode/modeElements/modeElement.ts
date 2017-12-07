@@ -91,7 +91,7 @@ export default single<ModeElementFactory>(() => {
         // app.touch(optionElement).modeOptions().doubleTap();
         // app.click(optionElement).modeOptions().doubleClick();
       });
-      options.forEach((option: OptionElement) => options.appendChild(option.border));
+      options.forEach((option: OptionElement<string>) => options.appendChild(option.border));
       mode.appendChild(options);
     }
     return Object.assign({

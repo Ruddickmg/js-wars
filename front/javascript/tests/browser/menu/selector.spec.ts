@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import keyBoardInput, {KeyBoard} from "../../../src/browser/input/keyboard";
-import selector, {SelectionHandler} from "../../../src/browser/menu/selector";
+import selector, {SelectionHandler} from "../../../src/browser/menu/selectors/twoDimensionalSelector";
 import createList, {ArrayList} from "../../../src/tools/storage/lists/arrayList/list";
 
 describe("selector", () => {
@@ -45,7 +45,7 @@ describe("selector", () => {
       const select: SelectionHandler<any> = getSelector();
 
       expect(select.getSelected()).to.equal(first);
-      select.start();
+      select.listen();
       keyboard.pressRight();
       expect(select.getSelected()).to.not.equal(first);
       keyboard.clearPressedKeys();
@@ -59,7 +59,7 @@ describe("selector", () => {
 
       selected = select.getSelected();
 
-      select.start();
+      select.listen();
       keyboard.pressRight();
       expect(select.getSelected()).to.not.equal(selected);
       selected = select.getSelected();
@@ -72,7 +72,7 @@ describe("selector", () => {
 
       const select: SelectionHandler<any> = getSelector()
         .selectVertically()
-        .start();
+        .listen();
 
       list.forEach((_: ArrayList<number>, index: number): any => {
 
@@ -86,7 +86,7 @@ describe("selector", () => {
 
       const select: SelectionHandler<any> = getSelector()
         .selectHorizontally()
-        .start();
+        .listen();
 
       list.forEach((_: ArrayList<number>, index: number): any => {
         const indexOfNextElement: number = index + 1;
@@ -101,7 +101,7 @@ describe("selector", () => {
 
       const select: SelectionHandler<any> = getSelector()
         .selectVertically()
-        .start();
+        .listen();
 
       list.forEach((listElement: ArrayList<number>): any => {
 
@@ -125,7 +125,7 @@ describe("selector", () => {
 
       const select: SelectionHandler<any> = getSelector()
         .selectHorizontally()
-        .start();
+        .listen();
 
       list.forEach((listElement: ArrayList<number>): any => {
 
@@ -150,7 +150,7 @@ describe("selector", () => {
 
       const select: SelectionHandler<any> = getSelector()
         .selectVertically()
-        .start();
+        .listen();
 
       const length: number = list.getElementAtIndex(0).length();
       const halfWay: number = Math.round(length / 2);
@@ -251,7 +251,7 @@ describe("selector", () => {
           expect(current).to.equal(secondElement.getElementAtIndex(1));
           expect(selections).to.equal(secondElement);
         })
-        .start();
+        .listen();
 
       keyboard.pressRight();
       keyboard.pressDown();
@@ -272,7 +272,7 @@ describe("selector", () => {
           expect(current).to.equal(secondElement);
           expect(selections).to.equal(list);
         })
-        .start();
+        .listen();
 
       keyboard.pressDown();
       keyboard.pressRight();

@@ -66,7 +66,6 @@ def migrate():
 
 @app.route("/drop", methods=["GET"])
 def drop():
-	print ("dropping!!!")
 	return success("dropped") if DropAll() else serverError()
 
 @app.route("/maps/type/<string:category>", methods=["GET"])

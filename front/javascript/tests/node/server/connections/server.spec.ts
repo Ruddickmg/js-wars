@@ -159,15 +159,12 @@ describe("server", function() {
   });
   it("Responds to its home route with appropriate html.", () => {
     return request(createUrlCall(get, "/")).then((response: string) => expect(response).to.equal(`<!DOCTYPE html>
-
 <head>
-	    <meta charset="UTF-8"/>
-	    <title>JS Wars</title>
-	    <link rel="stylesheet" type="text/css" href="base.css">
+	<meta charset="UTF-8"/>
+	<title>JS Wars</title>
+	<link rel="stylesheet" type="text/css" href="base.css">
 </head>
-
 <body>
-
 	<canvas class="gameScreen" id="background"></canvas>
 	<canvas class="gameScreen" id="landforms"></canvas>
 	<canvas class="gameScreen" id="buildings"></canvas>
@@ -175,11 +172,9 @@ describe("server", function() {
 	<canvas class="gameScreen" id="effects"></canvas>
 	<canvas class="gameScreen" id="units"></canvas>
 	<canvas class="gameScreen" id="cursor">
-		"You can play this game as soon as your computer can process javascript and html5."
+		"This game requires javascript and html5."
 	</canvas>
 	<article class="gameScreen" id="gameScreen"></article>
-
-	<script src="/socket.io/socket.io.js"></script>
 	<script src="index.js"></script>
 </body>`));
   });

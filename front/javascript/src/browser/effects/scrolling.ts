@@ -3,8 +3,14 @@ import {ArrayList} from "../../tools/storage/lists/arrayList/list";
 import validator, {Validator} from "../../tools/validation/validator";
 import {Element} from "../dom/element/element";
 
-export type Scroller = (movingForward: boolean) => void;
+export interface Scroller {
+  next(): Scroller;
+  previous(): Scroller;
+  scroll(movingForward: boolean): Scroller;
+}
+
 export type ScrollHandler = (list: ArrayList<Element<any>>) => Scroller;
+
 export default (function() {
   const className: string = "scrolling";
   const {validateBoolean, validateNumber, validateList}: Validator = validator(className);
@@ -28,7 +34,7 @@ export default (function() {
     currentList.modify(showElement, first, last);
     return {first, last};
   };
-  return (numberOfElementsToShow: number = 1, amountOfBuffering: number = 1): ScrollHandler => {
+  return function(numberOfElementsToShow: number = 1, amountOfBuffering: number = 1): ScrollHandler {
     let numberOfNeighbors: number;
     let buffer: number;
     let amountOfElementsToShow: number;
@@ -37,7 +43,7 @@ export default (function() {
     let amountAbove: number;
     let amountBelow: number;
     let list: ArrayList<Element<any>>;
-    const scroll = (movingForward: boolean, currentIndex: number): any => {
+    const scrollThroughList = (movingForward: boolean, currentIndex: number): any => {
       let elementToShow: number;
       const length: number = list.length();
       const movement: number = getValueOfDirection(movingForward);
@@ -54,7 +60,7 @@ export default (function() {
         list.getElementAtIndex(elementToHide).hide();
       }
     };
-    const scroller = (movingForward: boolean): void => {
+    const scroll = function(movingForward: boolean): Scroller {
       let elementPositions: any;
       const index: number = list.getCurrentIndex();
       const lastIndex: number = getLastIndex(list);
@@ -69,11 +75,20 @@ export default (function() {
           firstElementToShow = elementPositions.first;
           lastElementToShow = elementPositions.last;
         } else if (withinScrollBoundaries) {
-          scroll(movingForward, index);
+          scrollThroughList(movingForward, index);
         }
       }
+      return this;
     };
-    const setList = (listToBeScrolled: ArrayList<Element<any>>): Scroller => {
+    const next = function() {
+      scroll(true);
+      return this;
+    };
+    const previous = function() {
+      scroll(false);
+      return this;
+    };
+    const setList = function(listToBeScrolled: ArrayList<Element<any>>): Scroller {
       const currentIndex = listToBeScrolled.getCurrentIndex();
       const firstElement: number = currentIndex - amountAbove;
       const lastElement: number = currentIndex + amountBelow;
@@ -83,7 +98,11 @@ export default (function() {
         elementPositions = showElements(list, firstElement, lastElement, numberOfNeighbors);
         firstElementToShow = elementPositions.first;
         lastElementToShow = elementPositions.last;
-        return scroller;
+        return {
+          next,
+          previous,
+          scroll,
+        };
       }
     };
     if (validateNumber(numberOfElementsToShow, className) && validateNumber(amountOfBuffering, className)) {

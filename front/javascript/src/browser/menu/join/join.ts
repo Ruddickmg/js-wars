@@ -1,27 +1,26 @@
 import {Game} from "../../../game/game";
 import {Building} from "../../../game/map/elements/building/building";
 import {Map} from "../../../game/map/map";
-import settings from "../../../settings/settings";
 import countBuildings from "../../../tools/array/propertyValueCounter";
-import zipWith from "../../../tools/array/zipWith";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
-import gameElementHandler, {MapRequestHandler} from "./mapRequestHandler";
 import {Element} from "../../dom/element/element";
+import isElement from "../../dom/element/isElement";
 import highlighter, {Highlighter} from "../../effects/highlighter";
 import createScroller, {Scroller, ScrollHandler} from "../../effects/scrolling";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
 import createGameMenu, {GameMenu} from "../elements/gameMenu";
 import getGameScreen from "../screen/gameScreen";
-import selectionHandler, {SelectionHandler} from "../selector";
+import selectionHandler, {SelectionHandler} from "../selectors/twoDimensionalSelector";
 import createBuildingsDisplay, {BuildingsDisplay} from "./buildingsDisplay/buildingsDisplay";
+import createCategorySelector, {CategorySelector} from "./categorySelection";
+import gameElementHandler, {MapRequestHandler} from "./mapRequestHandler";
 import createSelectionElement from "./selectionElement";
 
 export interface JoinMenu<Type> {
-
   goBack(): JoinMenu<Type>;
   remove(): JoinMenu<Type>;
   update(category: string): Promise<Type[]>;
@@ -30,66 +29,33 @@ export interface JoinMenu<Type> {
 export default (function() {
 
   const idOfTitle: string = "title";
-  const positionAttribute = "position";
   const defaultCategory: string = "two";
-  const selectionMenuType: string = "section";
   const mapSelectionId: string = "mapSelection";
   const classOfMapSelectionElement: string = "mapSelectionElement";
   const mapSelectionType = "map";
   const gameSelectionType = "game";
-  const categorySelectionId: string = "categorySelection";
-  const classOfCategoryScreen: string = "categorySelectionElement";
-  const keyPressEvent = "keyPressed";
   const className: string = "join";
-  const {isDefined, isArray}: TypeChecker = typeChecker();
+  const bufferAmountForMapScrolling: number = 1;
+  const amountOfMapsToShowWhileScrolling: number = 5;
+  const selectionMenuType: string = "section";
+
+  const {isDefined, isArray, isString}: TypeChecker = typeChecker();
   const {validateString}: Validator = validator(className);
   const {subscribe, publish, unsubscribe}: PubSub = notifications();
   const {highlight, deHighlight}: Highlighter = highlighter();
   const keyBoard: KeyBoard = keyboardInput();
   const setupScreen: Element<any> = getGameScreen();
-  const bufferAmountForMapScrolling: number = 1;
-  const amountOfMapsToShowWhileScrolling: number = 5;
-  const amountOfCategoryNeighbors: number = 2;
-  const amountOfCategoriesToShow: number = 1;
-  const categoryPlusLeftAndRight: number = 1;
-  const configurations = settings();
-  const {
-    list: categories,
-    definitions: categoryDefinitions,
-    positions,
-  } = configurations.toObject("map", "categories");
-  const categoryPositions: string[] = positions.slice();
-  const categorySelectionMenu: GameMenu<any> = createGameMenu(categorySelectionId, selectionMenuType);
   const createSelectionMenu = (): GameMenu<any> => createGameMenu(mapSelectionId, selectionMenuType) as GameMenu<any>;
   const buildingsDisplay: BuildingsDisplay = createBuildingsDisplay();
-  const categoryElements: ArrayList<Element<string>> = createList<Element<string>>(
-    categories.map((category: string): Element<string> => {
+  const categorySelector: CategorySelector = createCategorySelector();
 
-      return createSelectionElement<string>(category)
-        .setClass(classOfCategoryScreen)
-        .setText(categoryDefinitions[category])
-        .setValue(category)
-        .hide();
-    }));
-  const addElementToCategorySelection = (element: Element<any>): any => {
-
-    categorySelectionMenu.appendChild(element);
-  };
-  const scrollThroughCategories: Scroller = createScroller(amountOfCategoriesToShow)(categoryElements);
-  const positionCategoryElements = (elements: Element<string>[]): Element<string>[] => {
-
-    return zipWith(elements, categoryPositions, (element: Element<string>, position: string): Element<string> => {
-
-      return element.setAttribute(positionAttribute, position);
-    });
-  };
-
-  return function <Type>(type: string, game?: Game): JoinMenu<Type> {
+  return function<Type>(type: string, game?: Game): JoinMenu<Type> {
 
     let selectionMenu: GameMenu<any> = createSelectionMenu();
     let scrollThroughSelectionMenu: Scroller;
     let selections: MapRequestHandler<Type>;
 
+    const subscriptions: number[] = [];
     const selectionMenuScroller: ScrollHandler = createScroller(
       amountOfMapsToShowWhileScrolling,
       bufferAmountForMapScrolling,
@@ -100,148 +66,101 @@ export default (function() {
     const title: Element<any> = setupScreen.get(idOfTitle);
     const getMap = (element: any): Map => selectingMaps ? element : element.map;
     const selector: SelectionHandler<Element<Type>> = selectionHandler<Element<Type>>();
-    const categorySelection: SelectionHandler<Element<string>> = selectionHandler<Element<string>>(categoryElements)
+    const categorySelection: SelectionHandler<Element<string>> = selectionHandler<Element<string>>(categorySelector.elements)
       .selectHorizontally();
     const selectableElement = <Type>(element: any, category: string, count: number): any => {
-
       return createSelectionElement<Type>(`${category}${selectionType}#${count}`)
         .setClass(classOfMapSelectionElement)
         .setText(element.name)
         .setValue(element);
     };
     const updateBuildingsDisplay = ({buildings}: Map): void => {
-
       buildingsDisplay.set(countBuildings(buildings, ({name}: Building): string => name));
     };
     const remove = function(): JoinMenu<Type> {
-
       setupScreen.removeChild(selectionMenu);
-      setupScreen.removeChild(categorySelectionMenu);
+      setupScreen.removeChild(categorySelector);
       setupScreen.removeChild(buildingsDisplay);
       categorySelection.stop();
       selector.stop();
-      unsubscribe(subscription, keyPressEvent);
-
+      subscriptions.forEach((subscription: number): any => unsubscribe(subscription));
       return this;
     };
     const goBack = function(): JoinMenu<Type> {
-
       remove();
       setupScreen.removeChild(setupScreen.get(idOfTitle));
       publish(["beginGameSetup", "settingUpGame"], true);
-
       return this;
     };
     const update = function(category: string): Promise<Type[]> {
-
       const current: Element<Type> = selector.getSelected();
-
-      return selections.byCategory(category).then((received: Type[] = []): any => {
-
+      return selections.byCategory(category).then((response: any[] = []): any => {
         let count: number = 1;
         let newSelections: ArrayList<Element<Type>>;
         let selectedElement: Element<Type>;
-
         selectionMenu = createSelectionMenu();
-
-        if (isArray(received)) {
-
-          newSelections = createList<Element<Type>>(received.map((element: Type): Element<Type> => {
-
+        if (isArray(response) && response.length) {
+          newSelections = createList<Element<Type>>(response.map((element: Type): Element<Type> => {
             const selectionElement: Element<Type> = selectableElement<Type>(element, category, count++);
-
             selectionMenu.appendChild(selectionElement);
-
             return selectionElement.hide();
-
           })).moveToElement(current);
-
           scrollThroughSelectionMenu = selectionMenuScroller(newSelections);
           selectedElement = selector.setSelections(newSelections).getSelected();
-
           highlight(selectedElement);
           updateBuildingsDisplay(getMap(selectedElement.getValue()));
-
         } else {
-
           buildingsDisplay.clearCount();
         }
-
         setupScreen.refresh(selectionMenu);
-
-        return Promise.resolve(received);
-      });
+        return Promise.resolve(response);
+      }).catch((error) => console.log(error));
     };
-    const subscription: number = subscribe(keyPressEvent, () => {
-
-      const selected: Element<Type> = selector.getSelected();
-
-      let element: Type;
-
-      if (keyBoard.pressedEnter() && isDefined(selected)) {
-
-        element = selected.getValue();
-
-        if (selectingMaps) {
-
-          game.map = getMap(element);
+    const verticalSelection = (current: Element<any>, previous: any) => {
+      if (isElement(current)) {
+        if (isElement(previous)) {
+          deHighlight(previous);
         }
-
-        remove();
-
-        publish(finishedSelecting, game || element);
+        highlight(current);
+        updateBuildingsDisplay(getMap(current.getValue()));
+        scrollThroughSelectionMenu.scroll(keyBoard.pressedDown());
       }
-
-      if (keyBoard.pressedEscape()) {
-
-        goBack();
-      }
-
-    }) as number;
-    const verticalSelection = (current: any, previous: any) => {
-
-      const map: Map = getMap(current.getValue());
-
-      deHighlight(previous);
-      scrollThroughSelectionMenu(keyBoard.pressedDown());
-      highlight(current);
-
-      updateBuildingsDisplay(map);
     };
-    const horizontalSelection = (current: any, _: any, currentCategory: ArrayList<Element<string>>): void => {
-
-      const category: string = current.getValue();
-      const neighbors: Element<string>[] = currentCategory.getNeighboringElements(amountOfCategoryNeighbors);
-      const movingForward: boolean = keyBoard.pressedRight();
-      const firstElement: Element<string> = neighbors.shift();
-      const lastElement: Element<string> = neighbors.pop();
-
-      (movingForward ? firstElement : lastElement)
-        .removeAttribute(positionAttribute);
-
-      scrollThroughCategories(movingForward);
-      positionCategoryElements(neighbors);
-
-      update(category).catch(({message}: Error): any => {
-
-        publish("customError", {className, method: "horizontalSelection", input: category, message});
-      });
+    const horizontalSelection = (current: Element<any>): void => {
+      let category: string;
+      if (isElement(current)) {
+        category = current.getValue();
+        if (isString(category)) {
+          categorySelector.switchCategory(keyBoard.pressedRight());
+          update(category).catch(({message}: Error): any => {
+            publish("customError", {className, method: "horizontalSelection", input: category, message});
+          });
+        }
+      }
     };
     const category: string = categorySelection.horizontal(horizontalSelection)
-      .start()
+      .listen()
       .getSelected()
       .show()
       .getValue();
 
     if (validateString(type, "constructor")) {
-
+      subscriptions.push(subscribe("pressedEnterKey", () => {
+        const selected: Element<Type> = selector.getSelected();
+        let element: Type;
+        if (isDefined(selected)) {
+          element = selected.getValue();
+          if (selectingMaps) {
+            game.map = getMap(element);
+          }
+          remove();
+          publish(finishedSelecting, game || element);
+        }
+      }) as number);
+      subscriptions.push(subscribe("pressedEscKey", goBack) as number);
       selections = gameElementHandler<Type>(`${selectionType}s`, type);
-
-      selector.vertical(verticalSelection)
-        .start();
-
+      selector.vertical(verticalSelection).listen();
       update(category).catch(({message}: Error): any => {
-
         publish("customError", {
           className,
           input: defaultCategory,
@@ -249,18 +168,12 @@ export default (function() {
           method: "update",
         });
       });
-
-      categoryElements.forEach(addElementToCategorySelection);
-      positionCategoryElements(categoryElements.getNeighboringElements(categoryPlusLeftAndRight));
-
+      categorySelector.switchCategory();
       setupScreen.appendChild(selectionMenu);
       setupScreen.appendChild(buildingsDisplay);
-      setupScreen.appendChild(categorySelectionMenu);
-
+      setupScreen.appendChild(categorySelector);
       title.setText(`Select*${selectionType}`);
-
       return {
-
         goBack,
         update,
         remove,

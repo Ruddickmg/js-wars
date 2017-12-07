@@ -5,7 +5,6 @@ import createRequest, {IncompleteRequest, Request} from "../../communication/req
 import requestHandler from "../../communication/requests/requestHandler";
 
 export interface MapRequestHandler<Type> {
-
   byCategory(category: string): Promise<Type[]>;
   randomCategory(): Promise<Type[]>;
 }
@@ -15,7 +14,6 @@ export default function <Type>(
   type: string,
   request: Request = createRequest(),
 ): MapRequestHandler<Type> {
-
   const settingsLocation: string = "categories";
   const {publish}: PubSub = notifier();
   const categorySettings = settings().toObject("map", settingsLocation);
@@ -24,24 +22,19 @@ export default function <Type>(
   const getMapsByCategory: IncompleteRequest = requestHandler(route, [type], request)[type];
   const getRandomCategory = (): string => categories[randomNumber.index(categories)];
   const byCategory = (category: string = defaultCategory): Promise<Type[]> => {
-
-    return getMapsByCategory(category).then((elements: Type[]): Promise<Type[]> => {
-
-      publish("selectionsUpdated", elements);
-
-      return Promise.resolve(elements);
+    return getMapsByCategory(category).then(({success, response}): Promise<Type[]> => {
+      if (success) {
+        publish("selectionsUpdated", response);
+        return Promise.resolve(response);
+      }
     });
   };
   const randomCategory = (): Promise<Type[]> => {
-
     return byCategory(getRandomCategory()).then((receivedMaps: Type[]) => {
-
       return Promise.resolve(receivedMaps);
     });
   };
-
   return {
-
     byCategory,
     randomCategory,
   };

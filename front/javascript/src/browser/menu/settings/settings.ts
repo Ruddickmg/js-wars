@@ -13,7 +13,7 @@ import keyboardInput, {KeyBoard} from "../../input/keyboard";
 import createArrows, {Arrows} from "../arrows/arrows";
 import createFooter, {Footer} from "../footers/footer";
 import getGameScreen from "../screen/gameScreen";
-import createSelector, {SelectionHandler} from "../selector";
+import createSelector, {SelectionHandler} from "../selectors/twoDimensionalSelector";
 import gameNameInput, {NameInput, NameInputFactory} from "./gameNameInput";
 import createSettingElement, {SettingElement} from "./settingElement";
 
@@ -100,7 +100,7 @@ export default (function() {
     const continueSelection = function(): SettingsMenu {
 
       listenForSelection();
-      settingSelector.start();
+      settingSelector.listen();
       arrows.show().fade();
 
       return this;
@@ -190,7 +190,7 @@ export default (function() {
       .vertical(verticalSelection)
       .horizontal(horizontalSelection)
       .selectHorizontally()
-      .start();
+      .listen();
 
     setupScreen.appendChild(footer);
     setupScreen.get(titleId).setText(titleText);
