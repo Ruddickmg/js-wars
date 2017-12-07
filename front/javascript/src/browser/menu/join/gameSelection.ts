@@ -43,18 +43,23 @@ export default function<Type>(type: string, selectionType: string) {
     return selections.byCategory(category).then((response: any[] = []): Promise<ArrayList<Element<Type>>> => {
       let count: number = 1;
       let selectedElement: Element<Type>;
+      let received: Element<Type>[] = [];
       menu = createGameMenu<any>(mapSelectionId, selectionMenuType);
       if (isArray(response) && response.length) {
-        elements = createList<Element<Type>>(response.map((element: Type): Element<Type> => {
+        received = response.map((element: Type): Element<Type> => {
           const selectionElement: Element<Type> = selectableElement<Type>(element, category, count++);
           menu.appendChild(selectionElement);
           return selectionElement.hide();
-        }));
-        scroller = selectionScroller(elements);
-        selectedElement = selector.setSelections(elements).getSelected().show();
-        highlight(selectedElement);
+        });
       }
       this.menu = menu;
+      elements = createList<Element<Type>>(received);
+      scroller = selectionScroller(elements);
+      selectedElement = selector.setSelections(elements).getSelected();
+      if (isElement(selectedElement)) {
+        selectedElement.show();
+        highlight(selectedElement);
+      }
       return Promise.resolve(elements);
     });
   };

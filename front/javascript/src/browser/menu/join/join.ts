@@ -70,9 +70,11 @@ export default (function() {
     };
     const updateSelections = (selection: ArrayList<Element<Type>>): void => {
       const current: Element<Type> = selection.getCurrentElement();
+      console.log("current", current);
       if (isElement(current)) {
         updateBuildingsDisplay(getMap(current.getValue()));
       } else {
+        console.log("clear");
         buildingsDisplay.clearCount();
       }
       selection.moveToElement(current);

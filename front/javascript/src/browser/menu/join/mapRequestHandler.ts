@@ -22,11 +22,9 @@ export default function <Type>(
   const getMapsByCategory: IncompleteRequest = requestHandler(route, [type], request)[type];
   const getRandomCategory = (): string => categories[randomNumber.index(categories)];
   const byCategory = (category: string = defaultCategory): Promise<Type[]> => {
-    return getMapsByCategory(category).then(({success, response}): Promise<Type[]> => {
-      if (success) {
-        publish("selectionsUpdated", response);
-        return Promise.resolve(response);
-      }
+    return getMapsByCategory(category).then(({response}): Promise<Type[]> => {
+      publish("selectionsUpdated", response);
+      return Promise.resolve(response);
     });
   };
   const randomCategory = (): Promise<Type[]> => {

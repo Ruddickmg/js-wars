@@ -1,24 +1,15 @@
 .aboveScreen {
-
    transform: translate3d(0, -100vh, 0) !important;
 }
-
 .belowScreen {
-
    transform: translate3d(0, 100vh, 0) !important;
 }
-
 .leftOfScreen {
-
    transform: translate3d(100vw, 0, 0) !important;
 }
-
 .rightOfScreen {
-
    transform: translate3d(-100vw, 0, 0) !important;
 }
-
 .animated {
-
    transition: transform 700ms ease;
 }
