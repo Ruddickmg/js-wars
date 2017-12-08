@@ -1,7 +1,6 @@
 export default {
 
   defaults: {
-
     capt: "off",
     fog: "off",
     funds: 1000,
@@ -42,10 +41,10 @@ export default {
       b: "Type B",
       c: "Type C",
       description: [
-        "No animation.",
         "Battle and capture animation.",
         "Battle animation only.",
         "Battle animation for players only.",
+        "No animation.",
       ],
       off: "OFF",
     },
@@ -57,4 +56,5 @@ export default {
       snow: "Snow",
     },
   },
+  names: ["fog", "weather", "funds", "turn", "capture", "power", "visuals"],
 };

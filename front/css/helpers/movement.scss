@@ -1,15 +1,21 @@
+$above-screen: translate3d(0, -100vh, 0);
+$below-screen: translate3d(0, 100vh, 0);
+$left-screen: translate3d(100vw, 0, 0);
+$right-screen: translate3d(-100vw, 0, 0);
 .aboveScreen {
-   transform: translate3d(0, -100vh, 0) !important;
+   transform: $above-screen;
 }
 .belowScreen {
-   transform: translate3d(0, 100vh, 0) !important;
+   transform: $below-screen;
 }
 .leftOfScreen {
-   transform: translate3d(100vw, 0, 0) !important;
+   transform: $left-screen;
 }
 .rightOfScreen {
-   transform: translate3d(-100vw, 0, 0) !important;
+   transform: $right-screen;
 }
 .animated {
    transition: transform 700ms ease;
 }
+
+

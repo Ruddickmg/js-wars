@@ -17,7 +17,7 @@ export interface ElementPosition extends Position {
 interface ElementMethods<Type> {
   addEventListener(id: string, listener: any): Element<Type>;
   appendChild(myElement: Element<Type>): Element<Type>;
-  appendClass(className: string): Element<Type>;
+  appendClass(...className: string[]): Element<Type>;
   removeChildren(): Element<Type>[];
   display(displaySetting?: string): Element<Type>;
   get(id: string): Element<Type>;
@@ -33,11 +33,11 @@ interface ElementMethods<Type> {
   makeInvisible(): Element<Type>;
   makeVisible(): Element<Type>;
   position(): ElementPosition;
-  prependClass(className: string): Element<Type>;
+  prependClass(...className: string[]): Element<Type>;
   refresh(replacement: Element<any>): Element<Type>;
   removeAttribute(attribute: string): Element<Type>;
   removeChild(removed: Element<any>): Element<Type>;
-  removeClass(className: string): Element<Type>;
+  removeClass(...className: string[]): Element<Type>;
   removeEventListener(id: string, listener?: any): Element<Type>;
   setAttribute(attribute: string, value: string): Element<Type>;
   setBackgroundColor(color: string): Element<Type>;
@@ -116,10 +116,12 @@ export default (function() {
       }
       return this;
     },
-    appendClass(additionalClassName: string): Element<any> {
-      if (validateString(additionalClassName, "appendClass")) {
-        this.element.className += ` ${additionalClassName}`;
-      }
+    appendClass(...additionalClassName: string[]): Element<any> {
+      additionalClassName.forEach((name: string): any => {
+        if (validateString(name, "appendClass") && name.length) {
+          this.element.className += ` ${name}`;
+        }
+      });
       return this;
     },
     removeChildren(): Element<any>[] {
@@ -193,10 +195,12 @@ export default (function() {
         top: getNumericalValue(top),
       });
     },
-    prependClass(additionalClassName: string): Element<any> {
-      if (validateString(additionalClassName, "prependClass")) {
-        this.element.className = `${additionalClassName} ` + this.element.className;
-      }
+    prependClass(...additionalClassName: string[]): Element<any> {
+      additionalClassName.forEach((name: string): any => {
+        if (validateString(name, "prependClass") && name.length) {
+          this.element.className = `${name} ` + this.element.className;
+        }
+      });
       return this;
     },
     refresh(replacement: Element<any>): Element<any> {
@@ -225,17 +229,19 @@ export default (function() {
         return removedChild;
       }
     },
-    removeClass(classToRemove: string): Element<any> {
+    removeClass(...classesToRemove: string[]): Element<any> {
       const emptyString: string = "";
       const emptySpace: string = " ";
       const element: any = this.element;
-      let classNameOfElement: string = element.className;
-      if (validateString(classToRemove, "removeClass") && classNameOfElement.length) {
-        classNameOfElement = classNameOfElement.replace(new RegExp("(?:^|\\s)" + classToRemove), emptyString);
-        element.className = classNameOfElement[0] === emptySpace ?
-          classNameOfElement.slice(1) :
-          classNameOfElement;
-      }
+      classesToRemove.forEach((classToRemove: string) => {
+        let classNameOfElement: string = element.className;
+        if (validateString(classToRemove, "removeClass") && classNameOfElement.length) {
+          classNameOfElement = classNameOfElement.replace(new RegExp("(?:^|\\s)" + classToRemove), emptyString);
+          element.className = classNameOfElement[0] === emptySpace ?
+            classNameOfElement.slice(1) :
+            classNameOfElement;
+        }
+      });
       return this;
     },
     removeEventListener(id: string, listener?: any): Element<any> {

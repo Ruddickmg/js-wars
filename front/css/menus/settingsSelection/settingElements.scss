@@ -14,8 +14,15 @@ $positionOfTurnTitle: 10%;
 $positionOfCaptureTitle: -25%;
 $positionOfPowerTitle: -10%;
 $positionOfVisualsTitle: -10%;
+$vertical_starting_point: 50;
+$horizontal_starting_point: 5;
+$vertical_space_between_elements: -6;
+$horizontal_space_between_elements: 13;
+$starting-delay: 0;
+$animation-delay: 100;
 
 @include swell(swellSettingBackground, $startingPointOfSwell, $endingPointOfSwell);
+$swelling: swellSettingBackground 1s infinite ease;
 
 .visible {
   opacity: 1;
@@ -38,7 +45,6 @@ $positionOfVisualsTitle: -10%;
   border-style: solid;
   border-width: 5px 5px 5px;
   border-color: white;
-  animation: swellSettingBackground 1s infinite ease;
   will-change: transform;
   z-index: 1;
 }
@@ -83,4 +89,43 @@ $positionOfVisualsTitle: -10%;
   ##{$setting}Display h1 {
     left: $textPosition;
   }
+}
+
+$top: $vertical_starting_point;
+$top-increment: $vertical_space_between_elements;
+$left: $horizontal_starting_point;
+$left-increment: $horizontal_space_between_elements;
+$delay: $starting-delay;
+$delay-increment: $animation-delay;
+
+
+@each $setting in $settings {
+  $position: translate3d(0, #{$top}vh, 0);
+  $movements: (moveUpOnScreen, $below-screen, $position),
+          (moveDownOnScreen, $above-screen, $position),
+          (moveUpOffScreen, $position, $above-screen),
+          (moveDownOffScreen, $position, $below-screen);
+  @each $movement, $start, $end in $movements {
+    @include move(#{$setting}-#{$movement}, $start, $end);
+    .#{$setting}-#{$movement} {
+      @include transform($start);
+      left: $left#{"%"};
+      animation: #{$setting}-#{$movement} 1s ease;
+      animation-delay: #{$delay}ms;
+      animation-fill-mode: forwards;
+      .rules {
+        animation: $swelling;
+      }
+    }
+  }
+  .#{$setting} {
+    @include transform(translate3d(0, #{$top}vh, 0));
+    left: $left#{"%"};
+    .rules {
+      animation: $swelling;
+    }
+  }
+  $top: $top + $top-increment;
+  $left: $left + $left-increment;
+  $delay: $delay + $delay-increment;
 }

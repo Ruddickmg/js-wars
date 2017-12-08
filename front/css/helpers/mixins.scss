@@ -1,21 +1,15 @@
 @mixin thick-text-shadow($color, $thickness, $depth) {
-
   $text-shadow: '';
-
   @for $i from 1 through $depth {
-
     $text-shadow: joinWithComma($text-shadow, "0 0 #{$thickness}px #{$color}", $i);
   }
   text-shadow: #{$text-shadow}
 }
 
 @mixin outlineText($color, $thickness) {
-
   $text-shadow: "";
   $above-one: 2;
-
   @for $i from 1 through $thickness {
-
     $text-shadow: joinWithComma($text-shadow, "0 -#{$i}px 0 #{$color}", $i);
     $text-shadow: joinWithComma($text-shadow, "0 -#{$i}px 0 #{$color}", $above-one);
     $text-shadow: joinWithComma($text-shadow, "-#{$i}px 0 0 #{$color}", $above-one);
@@ -24,18 +18,15 @@
     $text-shadow: joinWithComma($text-shadow, "#{$i}px #{$i}px 0 #{$color}", $above-one);
     $text-shadow: joinWithComma($text-shadow, "-#{$i}px -#{$i}px 0 #{$color}", $above-one);
   }
-
   text-shadow: #{$text-shadow}
 }
 
 @mixin size($width, $height: $width) {
-
   width: $width;
   height: $height;
 }
 
 @mixin sequentialPositioning($classes, $left, $top, $left_increment, $top_increment) {
-
   @each $class in $classes {
     .#{$class} {
       @include transform(translate3d(0, #{$top}vh, 0));
@@ -56,7 +47,6 @@
 }
 
 @mixin toAndFrom($name, $origin, $destination) {
-
   @-webkit-keyframes #{$name} {
     from {
       @include transform($origin);
@@ -65,7 +55,6 @@
       @include transform($destination);
     }
   }
-
   @keyframes #{$name} {
     from {
       transform: $origin;
@@ -77,7 +66,6 @@
 }
 
 @mixin scrollRight($color) {
-
   @include toAndFrom($color, translate3d(-100vw, 0, 0), translate3d(100vw, 0, 0))
 }
 
@@ -85,8 +73,26 @@
   @include prefix(transform, $value);
 }
 
-@mixin swell($animation_name, $min, $max) {
+@mixin move($animation_name, $starting_position, $ending_position) {
+  @-webkit-keyframes #{$animation_name} {
+    0% {
+      @include transform($starting_position);
+    }
+    100% {
+      @include transform($ending_position);
+    }
+  }
+  @keyframes #{$animation_name} {
+    0% {
+      transform: $starting_position;
+    }
+    100% {
+      transform: $ending_position;
+    }
+  }
+}
 
+@mixin swell($animation_name, $min, $max) {
   @-webkit-keyframes #{$animation_name} {
     0% {
       @include transform($min);
@@ -98,7 +104,6 @@
       @include transform($min);
     }
   }
-
   @keyframes #{$animation_name} {
     0% {
       transform: $min;
