@@ -5,7 +5,6 @@ describe("arrayList", () => {
 
   const pivotPoint: number = 2;
   const notInList: number = 5;
-  const list: ArrayList<any> = createList<any>();
   const firstElement: number = 1;
   const secondElement: number = 2;
   const thirdElement: number = 3;
@@ -16,57 +15,89 @@ describe("arrayList", () => {
     fourthElement,
   ];
   const values: number[] = [firstElement].concat(elementsToAdd);
+  let list: ArrayList<any>;
+  beforeEach(() => {
+    list = createList<any>();
+  });
 
   it("Starts out empty.", () => expect(list.isEmpty()).to.equal(true));
   it("Adds an element to the list.", () => {
-
     list.addElement(firstElement);
-
     expect(list.isEmpty()).to.equal(false);
   });
   it("Retrieves an element from a specified position (index) in the list.", () => {
-
     const indexOfFirstElement: number = 0;
-
+    list.addElement(firstElement);
     expect(list.getElementAtIndex(indexOfFirstElement)).to.equal(firstElement);
   });
   it("Can add multiple elements at a time.", () => {
-
-    list.addElements(elementsToAdd);
-
+    list.addElements(values);
     expect(list.getElementAtIndex(1)).to.equal(secondElement);
     expect(list.getElementAtIndex(2)).to.equal(thirdElement);
     expect(list.getElementAtIndex(3)).to.equal(fourthElement);
   });
-  it("Reports its length.", () => expect(list.length()).to.equal(4));
+  it("Reports its length.", () => {
+    list.addElements(values);
+    expect(list.length()).to.equal(4);
+  });
   it("Can move forward through the list.", () => {
-
+    list.addElements(values);
     expect(list.next()).to.equal(secondElement);
     expect(list.next()).to.equal(thirdElement);
     expect(list.next()).to.equal(fourthElement);
   });
-  it("Can move backward through the list.", () => expect(list.previous()).to.equal(thirdElement));
-  it("Report its current index.", () => expect(list.getCurrentIndex()).to.equal(2));
-  it("Return its currently selected element.", () => expect(list.getCurrentElement()).to.equal(thirdElement));
-  it("Can move to its first element.", () => expect(list.moveToFirstElement()).to.equal(firstElement));
-  it("Can move to its last element.", () => expect(list.moveToLastElement()).to.equal(fourthElement));
-  it("Can move to a specified element.", () => expect(list.moveToElement(secondElement).getCurrentIndex()).to.equal(1));
-  it("Can retrieve neighboring elements", () => {
-
-    const neighbors: number[] = list.getNeighboringElements(1);
-    const expectedNeighbors: number[] = [firstElement, secondElement, thirdElement];
-
-    expectedNeighbors.forEach((expected: number, index: number): any => expect(expected).to.equal(neighbors[index]));
+  it("Can move backward through the list.", () => {
+    list.addElements(values);
+    expect(list.previous()).to.equal(fourthElement);
   });
-  it("Can retrieve a random element.", () => expect(elementsToAdd.concat([firstElement])).to.contain(list.getRandom()));
+  it("Report its current index.", () => {
+    list.addElements(values);
+    list.next();
+    list.next();
+    expect(list.getCurrentIndex()).to.equal(2);
+  });
+  it("Return its currently selected element.", () => {
+    list.addElements(values);
+    expect(list.getCurrentElement()).to.equal(firstElement);
+  });
+  it("Can move to its first element.", () => {
+    list.addElements(values);
+    list.next();
+    expect(list.moveToFirstElement()).to.equal(firstElement);
+  });
+  it("Can move to its last element.", () => {
+    list.addElements(values);
+    expect(list.moveToLastElement()).to.equal(fourthElement);
+  });
+  it("Can find an index based on the return of a callback", () => {
+    list.addElements(values);
+    expect(list.findIndex((element: any) => element === secondElement)).to.equal(1);
+  });
+  it("Can move to a specified element.", () => {
+    let currentIndex: number;
+    list.addElements(values);
+    currentIndex = list.findIndex((element: any): boolean => element === secondElement);
+    expect(currentIndex).to.equal(1);
+  });
+  it("Can retrieve neighboring elements", () => {
+    const expectedNeighbors: number[] = [firstElement, secondElement, thirdElement];
+    let neighbors: number[];
+    list.addElements(values);
+    list.next();
+    neighbors = list.getNeighboringElements(1);
+    expect(expectedNeighbors).to.deep.equal(neighbors);
+  });
+  it("Can retrieve a random element.", () => {
+    list.addElements(values);
+    expect(values).to.contain(list.getRandom());
+  });
   it("Can be sorted.", () => {
-
     const comparisonFunction = (a: number, b: number): number => b - a;
-    const sortedArrayList: ArrayList<any> = list.sort(comparisonFunction);
-    const reversedValues: number[] = [firstElement].concat(elementsToAdd).sort(comparisonFunction);
-
+    let sortedArrayList: ArrayList<any>;
+    const reversedValues: number[] = values.slice().sort(comparisonFunction);
+    list.addElements(values);
+    sortedArrayList = list.sort(comparisonFunction);
     reversedValues.forEach((value: number, index: number): void => {
-
       expect(sortedArrayList.getElementAtIndex(index)).to.equal(value);
     });
   });
@@ -89,39 +120,41 @@ describe("arrayList", () => {
     });
   });
   it("Can be reduced.", () => {
-
     const reduceFunction = (total: number, value: number): number => total + value;
     const reducedValues: number = values.reduce(reduceFunction, 0);
-    const reducedMatrix: number = list.reduce(reduceFunction, 0);
-
+    let reducedMatrix: number;
+    list.addElements(values);
+    reducedMatrix = list.reduce(reduceFunction, 0);
     expect(reducedMatrix).to.equal(reducedValues);
   });
   it("Can be iterated over with a forEach.", () => {
-
+    list.addElements(values);
     list.forEach((value: number, index: number): any => expect(value).to.equal(values[index]));
   });
   it("Can be mapped.", () => {
-
     const mapFunction = (value: number): number => value * value;
-    const mapped: ArrayList<any> = list.map(mapFunction);
-
+    let mapped: ArrayList<any>;
+    list.addElements(values);
+    mapped = list.map(mapFunction);
     mapped.forEach((value: number, index: number): any => expect(value).to.equal(mapFunction(values[index])));
   });
   it("Can be filtered.", () => {
 
     const filterFunction = (value: number): boolean => value > pivotPoint;
-    const filtered: ArrayList<any> = list.filter(filterFunction);
     const filteredOut: number[] = [];
     const kept: number[] = [];
-    const size: number = list.length();
-
+    let size: number;
+    let filtered: ArrayList<any>;
+    list.addElements(values);
+    size = list.length();
+    filtered = list.filter(filterFunction);
     list.forEach((value: number): any => filterFunction(value) ? kept.push(value) : filteredOut.push(value));
 
     kept.forEach((value: number, index: number): any => expect(filtered.getElementAtIndex(index)).to.equal(value));
     expect(filtered.length()).to.equal(size - filteredOut.length);
   });
   it("Can be searched.", () => {
-
+    list.addElements(values);
     expect(list.find((value: number): boolean => value === pivotPoint)).to.equal(pivotPoint);
     expect(list.find((value: number): boolean => value > notInList)).to.equal(undefined);
   });

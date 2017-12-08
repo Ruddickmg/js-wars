@@ -55,7 +55,7 @@ export default (function() {
 
   typeWriter.setSpeed(typingSpeed);
 
-  return function(_: Game, selectingSettings: boolean = true, movingForward: boolean = true): SettingsMenu {
+  return function(game: Game, selectingSettings: boolean = true, movingForward: boolean = true): SettingsMenu {
 
     let nameInput: NameInput;
     const subscriptions: number[] = [];
@@ -150,7 +150,7 @@ export default (function() {
     };
     const goBack = function(): SettingsMenu {
       remove();
-      publish("startNewGame");
+      publish("startNewGame", game);
       return this;
     };
     const listen = function(): SettingsMenu {

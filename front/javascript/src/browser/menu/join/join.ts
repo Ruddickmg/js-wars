@@ -1,4 +1,3 @@
-import {Game} from "../../../game/game";
 import {Building} from "../../../game/map/elements/building/building";
 import {Map} from "../../../game/map/map";
 import countBuildings from "../../../tools/array/propertyValueCounter";
@@ -6,7 +5,6 @@ import zipWith from "../../../tools/array/zipWith";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
 import {Element} from "../../dom/element/element";
 import isElement from "../../dom/element/isElement";
@@ -32,16 +30,17 @@ export default (function() {
   const mapSelectionType = "map";
   const gameSelectionType = "game";
   const className: string = "join";
-  const {isDefined}: TypeChecker = typeChecker();
+  const mapSelection: string = "type";
   const {validateString}: Validator = validator(className);
   const {subscribe, publish, unsubscribe}: PubSub = notifications();
   const setupScreen: Element<any> = getGameScreen();
   const buildingsDisplay: BuildingsDisplay = createBuildingsDisplay();
   const categories: CategorySelector = createCategorySelector();
+  const isSelectingMaps = (selectionType: string): boolean => selectionType === mapSelection;
 
-  return function<Type>(type: string, game?: Game): JoinMenu<Type> {
+  return function<Type>(type: string, game?: Type): JoinMenu<Type> {
     const horizontalKeys: string[] = ["pressedLeftKey", "pressedRightKey"];
-    const selectingMaps: boolean = isDefined(game);
+    const selectingMaps: boolean = isSelectingMaps(type);
     const selectionType: string = selectingMaps ? mapSelectionType : gameSelectionType;
     const selections: GameSelector<Type> = createGameSelector<Type>(type, selectionType);
     const finishedSelecting: string = `finishedSelecting${capitalizeFirstLetter(selectionType)}`;
@@ -76,7 +75,9 @@ export default (function() {
       } else {
         buildingsDisplay.clearCount();
       }
-      selection.moveToElement(current);
+      selection.moveToElement((currentElement: Element<Type>): boolean => {
+        return currentElement === current;
+      });
       setupScreen.refresh(selections.menu);
     };
     const update = function(): JoinMenu<Type> {
@@ -113,6 +114,8 @@ export default (function() {
     };
     let subscriptions: number[] = [];
     validateString(type, "constructor");
+    selections.elements.moveToElement((element: Element<Type>) => element.getValue() === game);
+
     return {
       categories,
       goBack,

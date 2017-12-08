@@ -1,5 +1,4 @@
 import createGame, {Game} from "../../game/game";
-import {Map} from "../../game/map/map";
 import testMap from "../../game/map/testMap";
 import getSettings from "../../settings/settings";
 import notifications, {PubSub} from "../../tools/pubSub";
@@ -22,16 +21,17 @@ export default single<any>(function() {
   const gameScreen: Element<any> = getGameScreen();
   const testing: boolean = settings.get("testing");
   const title: Element<string> = createTitle();
+  const gameSelection = (type: string, game: Game): any => join<Game>(type, game).listen();
   subscribe("login", (): any => testing ? login.skip() : login.display());
   subscribe("beginGameSetup", () => {
     gameScreen.appendChild(title);
     handleGameModeSelection().listen();
   });
   subscribe("finishedSelectingMap", (game: Game) => handleSettingsSelection(game));
-  subscribe("joinNewGame", (): any => join<Game>("open").listen());
-  subscribe("joinContinuingGame", (): any => join<Game>("running").listen());
-  subscribe("startNewGame", (): any => join<Map>("type", createGame()).listen());
-  subscribe("resumeSavedGame", (): any => join<Map>("saved").listen());
+  subscribe("joinNewGame", (game: Game): any => gameSelection("open", game));
+  subscribe("joinContinuingGame", (game: Game): any => gameSelection("running", game));
+  subscribe("startNewGame", (game: Game = createGame()): any => gameSelection("type", game));
+  subscribe("resumeSavedGame", (game: Game): any => gameSelection("saved", game));
   subscribe("createNewMap", (): void => {
     const amountOfMaps: number = 10;
     let mapNumber: number = 1;

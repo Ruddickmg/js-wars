@@ -38,13 +38,11 @@ export default function(name: string = null, category: string = null, map: Map =
 
 export function isGame(element: any): boolean {
   const {isString, isNumber, isNull, isArray, isBoolean, isDefined, isObject}: TypeChecker = typeChecker();
-  let id: RoomId;
   let map: Map;
   let category: string;
   let name: string;
   let bool: boolean = false;
   if (isDefined(element)) {
-    id = element.id;
     map = element.map;
     category = element.category;
     name = element.name;

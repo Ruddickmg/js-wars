@@ -65,7 +65,7 @@ export default (function() {
     }
 
     text.setText(setting).setValue(setting);
-    list.moveToElement(defaultSetting)
+    list.moveToElement((currentSetting: any) => currentSetting === defaultSetting)
       .getCurrentElement()
       .setClass(show);
     outline.appendChild(text)
