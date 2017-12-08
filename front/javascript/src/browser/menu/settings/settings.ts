@@ -1,5 +1,6 @@
 import {Game} from "../../../game/game";
 import getSettings from "../../../settings/settings";
+import zipWith from "../../../tools/array/zipWith";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import {Dictionary} from "../../../tools/storage/dictionary";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
@@ -8,7 +9,6 @@ import validator, {Validator} from "../../../tools/validation/validator";
 import createElement, {Element} from "../../dom/element/element";
 import isElement from "../../dom/element/isElement";
 import createTypeWriter, {TypeWriter} from "../../effects/typing";
-import keyboardInput, {KeyBoard} from "../../input/keyboard";
 import createArrows, {Arrows} from "../arrows/arrows";
 import createFooter, {Footer} from "../footers/footer";
 import getGameScreen from "../screen/gameScreen";
@@ -17,12 +17,12 @@ import gameNameInput, {NameInput, NameInputFactory} from "./gameNameInput";
 import createSettingElement, {SettingElement} from "./settingElement";
 
 export interface SettingsMenu {
+  goBack(): SettingsMenu;
   remove(): SettingsMenu;
-  listenForSelection(): SettingsMenu;
+  listen(): SettingsMenu;
 }
 
 export default (function() {
-
   const offScreen: number = 4;
   const typingSpeed: number = 30;
   const distanceBetweenArrows: number = 40;
@@ -32,9 +32,7 @@ export default (function() {
   const titleText: string = "rules";
   const widthType: string = "offset";
   const classOfSettingOptions: string = "settingOptions";
-  const exitingSettingsEvent: string = "exitingSettingSelection";
   const defaultTextForNameInput: string = "Enter name here.";
-  const keyboard: KeyBoard = keyboardInput();
   const settingSelector: SelectionHandler<SettingElement> = createSelector<SettingElement>();
   const setupScreen: Element<any> = getGameScreen();
   const settings: Dictionary = getSettings();
@@ -52,8 +50,7 @@ export default (function() {
   const {validateBoolean}: Validator = validator("settingsSelection");
   const typeWriter: TypeWriter = createTypeWriter();
   const upOnScreen: string = "moveUpOnScreen";
-  const downOnScreen: string = "moveUpOnScreen";
-  const upOffScreen: string = "moveUpOffScreen";
+  const downOnScreen: string = "moveDownOnScreen";
   const downOffScreen: string = "moveDownOffScreen";
 
   typeWriter.setSpeed(typingSpeed);
@@ -61,8 +58,7 @@ export default (function() {
   return function(_: Game, selectingSettings: boolean = true, movingForward: boolean = true): SettingsMenu {
 
     let nameInput: NameInput;
-    let subscription: number;
-
+    const subscriptions: number[] = [];
     const isSettingOption = (settingOption: Element<any>): boolean => {
       return isElement(settingOption)
         && isElement(settingOption.parent)
@@ -84,8 +80,8 @@ export default (function() {
         element.setText(text);
       });
     };
-    const stopSelection = function(): SettingsMenu {
-      unsubscribe(subscription);
+    const stop = function(): SettingsMenu {
+      subscriptions.forEach((subscription: number): any => unsubscribe(subscription));
       settingSelector.stop();
       if (selectingSettings) {
         arrows.hide().stopFading();
@@ -93,13 +89,13 @@ export default (function() {
       return this;
     };
     const continueSelection = function(): SettingsMenu {
-      listenForSelection();
+      listen();
       settingSelector.listen();
       arrows.show().fade();
       return this;
     };
     const remove = function(): SettingsMenu {
-      stopSelection();
+      stop();
       setupScreen.removeChild(footer);
       setupScreen.removeChild(settingsSelectionMenu);
       if (selectingSettings) {
@@ -143,16 +139,24 @@ export default (function() {
       typeTextIntoFooter(description, current.getCurrentIndex())
         .catch(publishError);
     };
-    const listenForSelection = function(): SettingsMenu {
-      subscription = subscribe("keyPress", () => {
-        if (keyboard.pressedEscape()) {
-          remove();
-          publish(exitingSettingsEvent);
-        } else if (keyboard.pressedEnter() && selectingSettings) {
-          stopSelection();
-          footer.appendChild(nameInput);
-        }
-      }) as number;
+    const selected = () => {
+      // if (selectingSettings) {
+      //   stop();
+      //   footer.appendChild(nameInput);
+      // }
+      settingElements.forEach((element: Element<any>) => {
+        element.setClass(`${element.getValue()}-${downOffScreen}`);
+      });
+    };
+    const goBack = function(): SettingsMenu {
+      remove();
+      publish("startNewGame");
+      return this;
+    };
+    const listen = function(): SettingsMenu {
+      zipWith(["pressedEscKey", "pressedEnterKey"], [goBack, selected], (eventId: string, method: any) => {
+        subscriptions.push(subscribe(eventId, method) as number);
+      });
       return this;
     };
 
@@ -175,10 +179,11 @@ export default (function() {
 
       setupScreen.appendChild(settingsSelectionMenu);
     }
-    listenForSelection();
+    listen();
     return {
+      goBack,
+      listen,
       remove,
-      listenForSelection,
     };
   };
 }());

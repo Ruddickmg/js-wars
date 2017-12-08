@@ -2,6 +2,7 @@ import {Game} from "../../../game/game";
 import {Building} from "../../../game/map/elements/building/building";
 import {Map} from "../../../game/map/map";
 import countBuildings from "../../../tools/array/propertyValueCounter";
+import zipWith from "../../../tools/array/zipWith";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
@@ -100,8 +101,9 @@ export default (function() {
       categories.switchCategory().listen();
       selections.listen();
       update();
-      subscriptions.push(subscribe("pressedEnterKey", select) as number);
-      subscriptions.push(subscribe("pressedEscKey", goBack) as number);
+      zipWith(["pressedEscKey", "pressedEnterKey"], [goBack, select], (eventId: string, method: any) => {
+        subscriptions.push(subscribe(eventId, method) as number);
+      });
       subscriptions = subscriptions.concat(subscribe(horizontalKeys, update));
       setupScreen.appendChild(selections.menu);
       setupScreen.appendChild(buildingsDisplay);
