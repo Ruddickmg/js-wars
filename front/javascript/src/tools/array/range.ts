@@ -17,9 +17,7 @@ export default (function() {
     || !positiveIncrement && !incrementing ? increment : -increment;
 
     if (validateNumber(start) && validateNumber(ending) && validateNumber(change)) {
-
       while (incrementing ? start <= ending : start >= ending) {
-
         range[index++] = start;
         start += change;
       }

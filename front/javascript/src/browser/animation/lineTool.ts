@@ -3,36 +3,24 @@ import {Dimensions} from "../../game/map/coordinates/dimensions";
 export type LineController = (x: number, y: number) => DrawingTool;
 
 export interface DrawingTool {
-
   width: number;
   height: number;
   x: number;
   y: number;
-
   random(min: number, max: number): number;
-
   moveRight(amount?: number): number;
-
   moveLeft(amount?: number): number;
-
   moveDown(amount?: number): number;
-
   moveUp(amount?: number): number;
 }
 
 export default function({width, height}: Dimensions, numberOfPixels: number): LineController {
-
   const adjustMovementForPixelAmount = (dimension: number, value: number = 1): number => {
-
     return (numberOfPixels / dimension) * value;
   };
-
   return function(x: number, yAxis: number): DrawingTool {
-
     const y = yAxis + height;
-
     return {
-
       height,
       width,
       x, y,

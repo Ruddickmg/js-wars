@@ -40,7 +40,7 @@ export default (function() {
   const min = Math.min;
   const minimumIndex: number = 0;
   const {publish}: PubSub = notifications();
-  const {isNumber}: TypeChecker = typeChecker()
+  const {isNumber, isFunction}: TypeChecker = typeChecker()
     .register("list", isList);
 
   return function createList<Type>(initialElements: any[] = []): ArrayList<Type> {
@@ -74,9 +74,11 @@ export default (function() {
     };
     const findIndex = (callback: MapCallback): number => {
       let desiredIndex: number = elements.length;
-      while (desiredIndex--) {
-        if (callback(elements[desiredIndex], desiredIndex, this)) {
-          return desiredIndex;
+      if (isFunction(callback)) {
+        while (desiredIndex--) {
+          if (callback(elements[desiredIndex], desiredIndex, this)) {
+            return desiredIndex;
+          }
         }
       }
     };

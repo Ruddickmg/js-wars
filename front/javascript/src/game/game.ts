@@ -42,7 +42,7 @@ export function isGame(element: any): boolean {
   let category: string;
   let name: string;
   let bool: boolean = false;
-  if (isDefined(element)) {
+  if (isDefined(element) && !isNull(element)) {
     map = element.map;
     category = element.category;
     name = element.name;

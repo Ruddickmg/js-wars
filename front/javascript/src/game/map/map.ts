@@ -25,12 +25,9 @@ export function isMap(element: any): boolean {
   const {isArray, isString, isNumber, isNull, isDefined}: TypeChecker = typeChecker();
   let id: MapId;
   let bool: boolean = false;
-  let creator: any;
 
-  if (isDefined(element)) {
-
+  if (isDefined(element) && !isNull(element)) {
     id = element.id;
-    creator = element.creator;
     bool = (isNumber(id) || isString(id) || isNull(id))
       && isString(element.name)
       && isNumber(element.maximumAmountOfPlayers)
@@ -38,8 +35,7 @@ export function isMap(element: any): boolean {
       && areDimensions(element.dimensions)
       && isArray(element.terrain)
       && isArray(element.buildings)
-      && isArray(element.units)
-      && (isString(creator) || isNumber(creator) || isNull(creator));
+      && isArray(element.units);
   }
 
   return bool;

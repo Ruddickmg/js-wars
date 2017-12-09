@@ -1,7 +1,7 @@
-import timeKeeper, {Time} from "../../tools/calculations/time";
-import timedIterator, {TimedIterator} from "../../tools/timedIterator";
-import getValidator, {Validator} from "../../tools/validation/validator";
-import {Element} from "../dom/element/element";
+import {Element} from "../src/browser/dom/element/element";
+import timeKeeper, {Time} from "../src/tools/calculations/time";
+import timedIterator, {TimedIterator} from "../src/tools/timedIterator";
+import getValidator, {Validator} from "../src/tools/validation/validator";
 
 export interface DomElementMover {
   animate(): DomElementMover;

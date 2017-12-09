@@ -71,13 +71,13 @@ describe("arrayList", () => {
   });
   it("Can find an index based on the return of a callback", () => {
     list.addElements(values);
-    expect(list.findIndex((element: any) => element === secondElement)).to.equal(1);
+    expect(list.findIndex((element: any) => element === thirdElement)).to.equal(2);
   });
   it("Can move to a specified element.", () => {
     let currentIndex: number;
     list.addElements(values);
-    currentIndex = list.findIndex((element: any): boolean => element === secondElement);
-    expect(currentIndex).to.equal(1);
+    currentIndex = list.findIndex((element: any): boolean => element === thirdElement);
+    expect(currentIndex).to.equal(2);
   });
   it("Can retrieve neighboring elements", () => {
     const expectedNeighbors: number[] = [firstElement, secondElement, thirdElement];

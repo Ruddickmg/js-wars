@@ -20,6 +20,7 @@ export default function isList(element: any): boolean {
     && isFunction(element.forEach)
     && isFunction(element.find)
     && isFunction(element.sort)
+    && isFunction(element.findIndex)
     && isFunction(element.getRandom)
     && isFunction(element.getElementAtIndex)
     && isFunction(element.getNeighboringElements)

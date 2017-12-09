@@ -99,8 +99,8 @@ export default (function() {
       setupScreen.removeChild(footer);
       setupScreen.removeChild(settingsSelectionMenu);
       if (selectingSettings) {
-        setupScreen.removeChild(arrows.topArrow);
-        setupScreen.removeChild(arrows.bottomArrow);
+        // setupScreen.removeChild(arrows.topArrow);
+        // setupScreen.removeChild(arrows.bottomArrow);
         unsubscribe(nameInputSubscription);
       }
       return this;

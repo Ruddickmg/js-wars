@@ -5,7 +5,6 @@ import {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import single from "../../../tools/storage/singleton";
 import validator, {Validator} from "../../../tools/validation/validator";
 import {Element} from "../../dom/element/element";
-import keyboardInput, {KeyBoard} from "../../input/keyboard";
 import createScrollBar, {ScrollBar} from "../footers/scrollBar";
 import getGameScreen from "../screen/gameScreen";
 import createSelector, {SelectionHandler} from "../selectors/modeSelector";
@@ -24,7 +23,7 @@ export interface ModeSelection {
 
 export default single<ModeSelection>(function(): ModeSelection {
   let subscription: number;
-  const keyEvent: string = "keyPressed";
+  const keyEvent: string = "pressedEnterKey";
   const screenName: string = "setupScreen";
   const titleOfScreen: string = "Select*Mode";
   const modeSettings: string = "mode";
@@ -35,7 +34,6 @@ export default single<ModeSelection>(function(): ModeSelection {
   };
   const settings: Dictionary = getSettings();
   const {validateString}: Validator = validator("modeSelection");
-  const keyboard: KeyBoard = keyboardInput();
   const {publish, subscribe, unsubscribe}: PubSub = notifications();
   const setupScreen: Element<any> = getGameScreen();
   const {positions, messages, events}: any = settings.toObject(modeSettings);
@@ -89,9 +87,9 @@ export default single<ModeSelection>(function(): ModeSelection {
     const current: Element<any> = selector.getSelected();
     subscription = subscribe(keyEvent, (): void => {
       const mode: any = selector.getSelected().getValue();
-      if (keyboard.pressedEnter() && isSelectable(mode)) {
+      if (isSelectable(mode)) {
         remove();
-        publish(events[mode], mode);
+        publish(events[mode]);
       }
     }) as number;
     switchOptions(current, current);
