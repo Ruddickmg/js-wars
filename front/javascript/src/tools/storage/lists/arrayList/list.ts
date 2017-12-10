@@ -6,7 +6,6 @@ import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
 import isList from "./isList";
 
 export interface ArrayList<Type> {
-
   addElement(element: Type): ArrayList<Type>;
   addElements(elementsToBeAdded: Type[]): ArrayList<Type>;
   filter(callback: MapCallback): ArrayList<Type>;

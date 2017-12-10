@@ -12,8 +12,9 @@ import createSelectionElement from "./selectionElement";
 
 export interface CategorySelector extends Element<any>, Scroller, SelectionHandler<any> {
   elements: ArrayList<Element<string>>;
-  switchCategory(movingForward?: boolean): CategorySelector;
   getCategory(): string;
+  moveToCategory(category: string): CategorySelector;
+  switchCategory(movingForward?: boolean): CategorySelector;
 }
 
 export default function() {
@@ -28,6 +29,7 @@ export default function() {
   const categorySelectionMenu: GameMenu<any> = createGameMenu(categorySelectionId, selectionMenuType);
   const {list: categories, definitions: categoryDefinitions, positions} = getSettings().toObject("map", "categories");
   const categoryPositions: string[] = positions.slice();
+  const buffer: number = 1;
   const elements: ArrayList<Element<string>> = createList<Element<string>>(
     categories.map((category: string): Element<string> => {
       return createSelectionElement<string>(category)
@@ -38,7 +40,7 @@ export default function() {
     }));
   const categorySelection: SelectionHandler<Element<string>> = createSelectionHandler<Element<string>>(elements)
     .selectHorizontally();
-  const categoryScroller: Scroller = createScroller(amountOfCategoriesToShow)(elements);
+  const categoryScroller: Scroller = createScroller(amountOfCategoriesToShow, buffer, elements);
   const switchCategory = function(movingForward: boolean = true): CategorySelector {
     const neighbors: Element<string>[] = elements.getNeighboringElements(amountOfCategoryNeighbors);
     const firstElement: Element<string> = neighbors.shift();
@@ -49,6 +51,14 @@ export default function() {
     zipWith(neighbors, categoryPositions, (element: Element<string>, position: string): Element<string> => {
       return element.setAttribute(positionAttribute, position);
     });
+    return this;
+  };
+  const moveToCategory = function(category: string): CategorySelector {
+    if (isString(category)) {
+      categories.elements.moveToElement((element: Element<string>): any => {
+        return element.getValue() === category;
+      });
+    }
     return this;
   };
   const horizontalSelection = (current: Element<any>): void => {
@@ -70,6 +80,7 @@ export default function() {
     {
       elements,
       getCategory,
+      moveToCategory,
       switchCategory,
     },
   );

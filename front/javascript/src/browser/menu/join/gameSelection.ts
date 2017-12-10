@@ -3,7 +3,7 @@ import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import {Element} from "../../dom/element/element";
 import isElement from "../../dom/element/isElement";
 import highlighter, {Highlighter} from "../../effects/highlighter";
-import createScroller, {Scroller, ScrollHandler} from "../../effects/scrolling";
+import createScroller, {Scroller} from "../../effects/scrolling";
 import getKeyboard, {KeyBoard} from "../../input/keyboard";
 import createGameMenu, {GameMenu} from "../elements/gameMenu";
 import createSelectionHandler, {SelectionHandler} from "../selectors/twoDimensionalSelector";
@@ -29,7 +29,7 @@ export default function<Type>(type: string, selectionType: string) {
   const bufferAmountForMapScrolling: number = 1;
   const amountOfMapsToShowWhileScrolling: number = 5;
   const {highlight, deHighlight}: Highlighter = highlighter();
-  const selectionScroller: ScrollHandler = createScroller(
+  const selectionScroller: (value: ArrayList<any>) => Scroller = createScroller(
     amountOfMapsToShowWhileScrolling,
     bufferAmountForMapScrolling,
   );

@@ -4,7 +4,7 @@ import createScroller, {Scroller} from "../../../src/browser/effects/scrolling";
 import range from "../../../src/tools/array/range";
 import createList, {ArrayList} from "../../../src/tools/storage/lists/arrayList/list";
 
-describe("scroller", () => {
+describe("scrolling", () => {
   const elements: Element<number>[] = range(1, 10)
     .map((value: number): Element<number> => {
       return createElement<number>(`element#${value}`, `div`)
@@ -33,7 +33,7 @@ describe("scroller", () => {
   beforeEach(() => {
     elements.forEach((element: Element<number>): any => element.hide());
     list = createList<Element<number>>(elements);
-    scroller = createScroller(numberOfElements, buffer)(list);
+    scroller = createScroller(list, numberOfElements, buffer);
   });
   it("Keeps a buffer from the edges moving downward.", () => {
     const length: number = list.length();

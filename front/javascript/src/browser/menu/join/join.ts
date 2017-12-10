@@ -125,10 +125,12 @@ export default (function() {
       }
     };
     const listen = function(): JoinMenu<Type> {
-      categories.switchCategory().listen();
+      if (isGame(game)) {
+        categories.moveToCategory(game.category).switchCategory().listen();
+      }
       selections.listen();
       validateString(type, "constructor");
-      selections.changeCategory(isGame(game) ? game.category : categories.getCategory())
+      selections.changeCategory(categories.getCategory())
         .then(updateSelections)
         .then(moveToSelected);
       zipWith(["pressedEscKey", "pressedEnterKey"], [goBack, select], (eventId: string, method: any) => {
