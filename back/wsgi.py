@@ -6,19 +6,19 @@ virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
 
 try:
 
-  exec_namespace = dict(__file__=virtualenv)
+    exec_namespace = dict(__file__=virtualenv)
 
-  with open(virtualenv, 'rb') as exec_file:
+    with open(virtualenv, 'rb') as exec_file:
 
-    file_contents = exec_file.read()
+        file_contents = exec_file.read()
 
-  compiled_code = compile(file_contents, virtualenv, 'exec')
+    compiled_code = compile(file_contents, virtualenv, 'exec')
 
-  exec(compiled_code, exec_namespace)
+    exec(compiled_code, exec_namespace)
 
 except IOError:
 
-  pass
+    pass
 
 #
 # IMPORTANT: Put any additional includes below this line.  If placed above this
@@ -32,7 +32,6 @@ from backend import app as application
 #
 
 if __name__ == '__main__':
-
     from wsgiref.simple_server import make_server
 
     httpd = make_server('localhost', 8051, application)

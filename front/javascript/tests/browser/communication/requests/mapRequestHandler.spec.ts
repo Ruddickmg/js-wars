@@ -1,8 +1,7 @@
 import {expect} from "chai";
-import * as sinon from "sinon";
-import {SinonFakeXMLHttpRequest} from "sinon";
+import {SinonFakeXMLHttpRequest, useFakeXMLHttpRequest} from "sinon";
+import mapRequestHandler, {MapRequestHandler} from "../../../../src/browser/communication/requests/mapRequestHandler";
 import requestMaker, {Request} from "../../../../src/browser/communication/requests/request";
-import mapRequestHandler, {MapRequestHandler} from "../../../../src/browser/menu/join/mapRequestHandler";
 import testMap from "../../../../src/game/map/testMap";
 import range from "../../../../src/tools/array/range";
 import {Map} from "../../../node/game/map/map";
@@ -28,7 +27,7 @@ describe("mapRequestHandler", () => {
     });
   };
   beforeEach(() => {
-    xhr = sinon.useFakeXMLHttpRequest();
+    xhr = useFakeXMLHttpRequest();
     requests = [];
     xhr.onCreate = (newXhr: SinonFakeXMLHttpRequest): any => requests.push(newXhr);
     request = requestMaker(xhr);

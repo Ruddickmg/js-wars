@@ -1,8 +1,8 @@
-$amountOfRotationForDiamondShape: 45deg;
-$minimumSwellSize: 0.8;
-$maximumSwellSize: 1;
-$startingPointOfSwell: scale($minimumSwellSize) rotate($amountOfRotationForDiamondShape);
-$endingPointOfSwell: scale($maximumSwellSize) rotate($amountOfRotationForDiamondShape);
+$amount-of-rotation-for-diamond-shape: 45deg;
+$minimum-swell-size: 0.8;
+$maximum-swell-size: 1;
+$startingPointOfSwell: scale($minimum-swell-size) rotate($amount-of-rotation-for-diamond-shape);
+$ending-point-of-swell: scale($maximum-swell-size) rotate($amount-of-rotation-for-diamond-shape);
 $colorOfInsetOnSettingElement: black;
 $colorOfTextOutline: black;
 $thicknessOfTextOutline: 2;
@@ -20,8 +20,9 @@ $vertical_space_between_elements: -6;
 $horizontal_space_between_elements: 13;
 $starting-delay: 0;
 $animation-delay: 100;
+$movement-speed: .8s;
 
-@include swell(swellSettingBackground, $startingPointOfSwell, $endingPointOfSwell);
+@include swell(swellSettingBackground, $startingPointOfSwell, $ending-point-of-swell);
 $swelling: swellSettingBackground 1s infinite ease;
 
 .visible {
@@ -110,7 +111,7 @@ $delay-increment: $animation-delay;
     .#{$setting}-#{$movement} {
       @include transform($start);
       left: $left#{"%"};
-      animation: #{$setting}-#{$movement} 1s ease;
+      animation: #{$setting}-#{$movement} $movement-speed ease;
       animation-delay: #{$delay}ms;
       animation-fill-mode: forwards;
       .rules {

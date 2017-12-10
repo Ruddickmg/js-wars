@@ -1,8 +1,8 @@
 import settings from "../../../settings/settings";
 import randomNumber from "../../../tools/calculations/random";
 import notifier, {PubSub} from "../../../tools/pubSub";
-import createRequest, {IncompleteRequest, Request} from "../../communication/requests/request";
-import requestHandler from "../../communication/requests/requestHandler";
+import createRequest, {IncompleteRequest, Request} from "./request";
+import requestHandler from "./requestHandler";
 
 export interface MapRequestHandler<Type> {
   byCategory(category: string): Promise<Type[]>;

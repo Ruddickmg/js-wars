@@ -985,7 +985,7 @@ h1 {
   -o-transform: translate3d(0, 100vh, 0);
   transform: translate3d(0, 100vh, 0);
   left: 5%;
-  animation: fog-moveUpOnScreen 1s ease;
+  animation: fog-moveUpOnScreen 0.8s ease;
   animation-delay: 0ms;
   animation-fill-mode: forwards; }
   .fog-moveUpOnScreen .rules {
@@ -1016,7 +1016,7 @@ h1 {
   -o-transform: translate3d(0, -100vh, 0);
   transform: translate3d(0, -100vh, 0);
   left: 5%;
-  animation: fog-moveDownOnScreen 1s ease;
+  animation: fog-moveDownOnScreen 0.8s ease;
   animation-delay: 0ms;
   animation-fill-mode: forwards; }
   .fog-moveDownOnScreen .rules {
@@ -1047,7 +1047,7 @@ h1 {
   -o-transform: translate3d(0, 50vh, 0);
   transform: translate3d(0, 50vh, 0);
   left: 5%;
-  animation: fog-moveUpOffScreen 1s ease;
+  animation: fog-moveUpOffScreen 0.8s ease;
   animation-delay: 0ms;
   animation-fill-mode: forwards; }
   .fog-moveUpOffScreen .rules {
@@ -1078,7 +1078,7 @@ h1 {
   -o-transform: translate3d(0, 50vh, 0);
   transform: translate3d(0, 50vh, 0);
   left: 5%;
-  animation: fog-moveDownOffScreen 1s ease;
+  animation: fog-moveDownOffScreen 0.8s ease;
   animation-delay: 0ms;
   animation-fill-mode: forwards; }
   .fog-moveDownOffScreen .rules {
@@ -1119,7 +1119,7 @@ h1 {
   -o-transform: translate3d(0, 100vh, 0);
   transform: translate3d(0, 100vh, 0);
   left: 18%;
-  animation: weather-moveUpOnScreen 1s ease;
+  animation: weather-moveUpOnScreen 0.8s ease;
   animation-delay: 100ms;
   animation-fill-mode: forwards; }
   .weather-moveUpOnScreen .rules {
@@ -1150,7 +1150,7 @@ h1 {
   -o-transform: translate3d(0, -100vh, 0);
   transform: translate3d(0, -100vh, 0);
   left: 18%;
-  animation: weather-moveDownOnScreen 1s ease;
+  animation: weather-moveDownOnScreen 0.8s ease;
   animation-delay: 100ms;
   animation-fill-mode: forwards; }
   .weather-moveDownOnScreen .rules {
@@ -1181,7 +1181,7 @@ h1 {
   -o-transform: translate3d(0, 44vh, 0);
   transform: translate3d(0, 44vh, 0);
   left: 18%;
-  animation: weather-moveUpOffScreen 1s ease;
+  animation: weather-moveUpOffScreen 0.8s ease;
   animation-delay: 100ms;
   animation-fill-mode: forwards; }
   .weather-moveUpOffScreen .rules {
@@ -1212,7 +1212,7 @@ h1 {
   -o-transform: translate3d(0, 44vh, 0);
   transform: translate3d(0, 44vh, 0);
   left: 18%;
-  animation: weather-moveDownOffScreen 1s ease;
+  animation: weather-moveDownOffScreen 0.8s ease;
   animation-delay: 100ms;
   animation-fill-mode: forwards; }
   .weather-moveDownOffScreen .rules {
@@ -1253,7 +1253,7 @@ h1 {
   -o-transform: translate3d(0, 100vh, 0);
   transform: translate3d(0, 100vh, 0);
   left: 31%;
-  animation: funds-moveUpOnScreen 1s ease;
+  animation: funds-moveUpOnScreen 0.8s ease;
   animation-delay: 200ms;
   animation-fill-mode: forwards; }
   .funds-moveUpOnScreen .rules {
@@ -1284,7 +1284,7 @@ h1 {
   -o-transform: translate3d(0, -100vh, 0);
   transform: translate3d(0, -100vh, 0);
   left: 31%;
-  animation: funds-moveDownOnScreen 1s ease;
+  animation: funds-moveDownOnScreen 0.8s ease;
   animation-delay: 200ms;
   animation-fill-mode: forwards; }
   .funds-moveDownOnScreen .rules {
@@ -1315,7 +1315,7 @@ h1 {
   -o-transform: translate3d(0, 38vh, 0);
   transform: translate3d(0, 38vh, 0);
   left: 31%;
-  animation: funds-moveUpOffScreen 1s ease;
+  animation: funds-moveUpOffScreen 0.8s ease;
   animation-delay: 200ms;
   animation-fill-mode: forwards; }
   .funds-moveUpOffScreen .rules {
@@ -1346,7 +1346,7 @@ h1 {
   -o-transform: translate3d(0, 38vh, 0);
   transform: translate3d(0, 38vh, 0);
   left: 31%;
-  animation: funds-moveDownOffScreen 1s ease;
+  animation: funds-moveDownOffScreen 0.8s ease;
   animation-delay: 200ms;
   animation-fill-mode: forwards; }
   .funds-moveDownOffScreen .rules {
@@ -1387,7 +1387,7 @@ h1 {
   -o-transform: translate3d(0, 100vh, 0);
   transform: translate3d(0, 100vh, 0);
   left: 44%;
-  animation: turn-moveUpOnScreen 1s ease;
+  animation: turn-moveUpOnScreen 0.8s ease;
   animation-delay: 300ms;
   animation-fill-mode: forwards; }
   .turn-moveUpOnScreen .rules {
@@ -1418,7 +1418,7 @@ h1 {
   -o-transform: translate3d(0, -100vh, 0);
   transform: translate3d(0, -100vh, 0);
   left: 44%;
-  animation: turn-moveDownOnScreen 1s ease;
+  animation: turn-moveDownOnScreen 0.8s ease;
   animation-delay: 300ms;
   animation-fill-mode: forwards; }
   .turn-moveDownOnScreen .rules {
@@ -1449,7 +1449,7 @@ h1 {
   -o-transform: translate3d(0, 32vh, 0);
   transform: translate3d(0, 32vh, 0);
   left: 44%;
-  animation: turn-moveUpOffScreen 1s ease;
+  animation: turn-moveUpOffScreen 0.8s ease;
   animation-delay: 300ms;
   animation-fill-mode: forwards; }
   .turn-moveUpOffScreen .rules {
@@ -1480,7 +1480,7 @@ h1 {
   -o-transform: translate3d(0, 32vh, 0);
   transform: translate3d(0, 32vh, 0);
   left: 44%;
-  animation: turn-moveDownOffScreen 1s ease;
+  animation: turn-moveDownOffScreen 0.8s ease;
   animation-delay: 300ms;
   animation-fill-mode: forwards; }
   .turn-moveDownOffScreen .rules {
@@ -1521,7 +1521,7 @@ h1 {
   -o-transform: translate3d(0, 100vh, 0);
   transform: translate3d(0, 100vh, 0);
   left: 57%;
-  animation: capture-moveUpOnScreen 1s ease;
+  animation: capture-moveUpOnScreen 0.8s ease;
   animation-delay: 400ms;
   animation-fill-mode: forwards; }
   .capture-moveUpOnScreen .rules {
@@ -1552,7 +1552,7 @@ h1 {
   -o-transform: translate3d(0, -100vh, 0);
   transform: translate3d(0, -100vh, 0);
   left: 57%;
-  animation: capture-moveDownOnScreen 1s ease;
+  animation: capture-moveDownOnScreen 0.8s ease;
   animation-delay: 400ms;
   animation-fill-mode: forwards; }
   .capture-moveDownOnScreen .rules {
@@ -1583,7 +1583,7 @@ h1 {
   -o-transform: translate3d(0, 26vh, 0);
   transform: translate3d(0, 26vh, 0);
   left: 57%;
-  animation: capture-moveUpOffScreen 1s ease;
+  animation: capture-moveUpOffScreen 0.8s ease;
   animation-delay: 400ms;
   animation-fill-mode: forwards; }
   .capture-moveUpOffScreen .rules {
@@ -1614,7 +1614,7 @@ h1 {
   -o-transform: translate3d(0, 26vh, 0);
   transform: translate3d(0, 26vh, 0);
   left: 57%;
-  animation: capture-moveDownOffScreen 1s ease;
+  animation: capture-moveDownOffScreen 0.8s ease;
   animation-delay: 400ms;
   animation-fill-mode: forwards; }
   .capture-moveDownOffScreen .rules {
@@ -1655,7 +1655,7 @@ h1 {
   -o-transform: translate3d(0, 100vh, 0);
   transform: translate3d(0, 100vh, 0);
   left: 70%;
-  animation: power-moveUpOnScreen 1s ease;
+  animation: power-moveUpOnScreen 0.8s ease;
   animation-delay: 500ms;
   animation-fill-mode: forwards; }
   .power-moveUpOnScreen .rules {
@@ -1686,7 +1686,7 @@ h1 {
   -o-transform: translate3d(0, -100vh, 0);
   transform: translate3d(0, -100vh, 0);
   left: 70%;
-  animation: power-moveDownOnScreen 1s ease;
+  animation: power-moveDownOnScreen 0.8s ease;
   animation-delay: 500ms;
   animation-fill-mode: forwards; }
   .power-moveDownOnScreen .rules {
@@ -1717,7 +1717,7 @@ h1 {
   -o-transform: translate3d(0, 20vh, 0);
   transform: translate3d(0, 20vh, 0);
   left: 70%;
-  animation: power-moveUpOffScreen 1s ease;
+  animation: power-moveUpOffScreen 0.8s ease;
   animation-delay: 500ms;
   animation-fill-mode: forwards; }
   .power-moveUpOffScreen .rules {
@@ -1748,7 +1748,7 @@ h1 {
   -o-transform: translate3d(0, 20vh, 0);
   transform: translate3d(0, 20vh, 0);
   left: 70%;
-  animation: power-moveDownOffScreen 1s ease;
+  animation: power-moveDownOffScreen 0.8s ease;
   animation-delay: 500ms;
   animation-fill-mode: forwards; }
   .power-moveDownOffScreen .rules {
@@ -1789,7 +1789,7 @@ h1 {
   -o-transform: translate3d(0, 100vh, 0);
   transform: translate3d(0, 100vh, 0);
   left: 83%;
-  animation: visuals-moveUpOnScreen 1s ease;
+  animation: visuals-moveUpOnScreen 0.8s ease;
   animation-delay: 600ms;
   animation-fill-mode: forwards; }
   .visuals-moveUpOnScreen .rules {
@@ -1820,7 +1820,7 @@ h1 {
   -o-transform: translate3d(0, -100vh, 0);
   transform: translate3d(0, -100vh, 0);
   left: 83%;
-  animation: visuals-moveDownOnScreen 1s ease;
+  animation: visuals-moveDownOnScreen 0.8s ease;
   animation-delay: 600ms;
   animation-fill-mode: forwards; }
   .visuals-moveDownOnScreen .rules {
@@ -1851,7 +1851,7 @@ h1 {
   -o-transform: translate3d(0, 14vh, 0);
   transform: translate3d(0, 14vh, 0);
   left: 83%;
-  animation: visuals-moveUpOffScreen 1s ease;
+  animation: visuals-moveUpOffScreen 0.8s ease;
   animation-delay: 600ms;
   animation-fill-mode: forwards; }
   .visuals-moveUpOffScreen .rules {
@@ -1882,7 +1882,7 @@ h1 {
   -o-transform: translate3d(0, 14vh, 0);
   transform: translate3d(0, 14vh, 0);
   left: 83%;
-  animation: visuals-moveDownOffScreen 1s ease;
+  animation: visuals-moveDownOffScreen 0.8s ease;
   animation-delay: 600ms;
   animation-fill-mode: forwards; }
   .visuals-moveDownOffScreen .rules {

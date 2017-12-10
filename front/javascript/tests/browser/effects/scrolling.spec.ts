@@ -33,7 +33,7 @@ describe("scrolling", () => {
   beforeEach(() => {
     elements.forEach((element: Element<number>): any => element.hide());
     list = createList<Element<number>>(elements);
-    scroller = createScroller(list, numberOfElements, buffer);
+    scroller = createScroller(numberOfElements, buffer, list);
   });
   it("Keeps a buffer from the edges moving downward.", () => {
     const length: number = list.length();

@@ -6,5 +6,5 @@ setup(name='js-wars',
       author='Marcus Ruddick',
       author_email='ruddickmg@gmail.com',
       url='http://www.python.org/sigs/distutils-sig/',
-#      install_requires=['Django>=1.3'],
-     )
+      #      install_requires=['Django>=1.3'],
+      )

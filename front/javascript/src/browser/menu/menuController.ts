@@ -6,7 +6,7 @@ import {Dictionary} from "../../tools/storage/dictionary";
 import single from "../../tools/storage/singleton";
 import requestMaker, {IncompleteRequest, Request} from "../communication/requests/request";
 import {Element} from "../dom/element/element";
-import join from "./join/join";
+import join from "./join/joinMenu";
 import loginHandler, {LoginScreen} from "./login/login";
 import handleGameModeSelection from "./mode/modeSelection";
 import getGameScreen from "./screen/gameScreen";

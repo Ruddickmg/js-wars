@@ -10,7 +10,7 @@ import createScroller, {Scroller} from "../../effects/scrolling";
 import getKeyboard, {KeyBoard} from "../../input/keyboard";
 import createGameMenu, {GameMenu} from "../elements/gameMenu";
 import createSelectionHandler, {SelectionHandler} from "../selectors/twoDimensionalSelector";
-import gameElementHandler, {MapRequestHandler} from "./mapRequestHandler";
+import gameElementHandler, {MapRequestHandler} from "../../communication/requests/mapRequestHandler";
 import createSelectionElement from "./selectionElement";
 
 export interface GameSelector<Type> extends SelectionHandler<Element<Type>>, Scroller {
