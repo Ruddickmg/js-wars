@@ -3,7 +3,6 @@ import {Building} from "../../../game/map/elements/building/building";
 import {isMap, Map} from "../../../game/map/map";
 import countBuildings from "../../../tools/array/propertyValueCounter";
 import zipWith from "../../../tools/array/zipWith";
-import getAllowedRange from "../../../tools/calculations/getAllowedRange";
 import notifications, {PubSub} from "../../../tools/pubSub";
 import {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
@@ -108,22 +107,6 @@ export default (function() {
       }
       return this;
     };
-    const moveToSelected = (elements: ArrayList<Element<Type>>) => {
-      const comparison: Map | Game = selectingMaps ? getMap(game) : game;
-      const neighboringElements: number = 2;
-      let position: number;
-      if (isMap(comparison) || isGame(comparison)) {
-        deHighlight(elements.getCurrentElement());
-        elements.moveToElement((element: Element<any>) => {
-          return element.getValue().id === comparison.id;
-        });
-        position = elements.getCurrentIndex();
-        highlight(elements.getCurrentElement());
-        elements.forEach((element: Element<Type>): any => element.hide());
-        getAllowedRange(elements.length(), position - neighboringElements, position + neighboringElements)
-          .forEach((index: number): any => elements.getElementAtIndex(index).show());
-      }
-    };
     const listen = function(): JoinMenu<Type> {
       if (isGame(game)) {
         categories.moveToCategory(game.category).switchCategory().listen();
@@ -132,7 +115,14 @@ export default (function() {
       validateString(type, "constructor");
       selections.changeCategory(categories.getCategory())
         .then(updateSelections)
-        .then(moveToSelected);
+        .then((elements) => {
+          const selected: Map | Game = selectingMaps ? getMap(game) : game;
+          if (isMap(selected) || isGame(selected)) {
+            deHighlight(elements.getCurrentElement());
+            selections.moveToSelected(selected);
+            highlight(elements.getCurrentElement());
+          }
+        });
       zipWith(["pressedEscKey", "pressedEnterKey"], [goBack, select], (eventId: string, method: any) => {
         subscriptions.push(subscribe(eventId, method) as number);
       });

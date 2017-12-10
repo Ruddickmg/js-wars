@@ -1,3 +1,6 @@
+import {Game, isGame} from "../../../game/game";
+import {isMap, Map} from "../../../game/map/map";
+import getAllowedRange from "../../../tools/calculations/getAllowedRange";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import {Element} from "../../dom/element/element";
@@ -16,6 +19,7 @@ export interface GameSelector<Type> extends SelectionHandler<Element<Type>>, Scr
   changeCategory(category: string): Promise<ArrayList<Element<Type>>>;
   changeSelection(current: Element<any>, previous: any): GameSelector<Type>;
   getSelected(): Element<Type>;
+  moveToSelected(selected: Map | Game): GameSelector<Type>;
 }
 
 export default function<Type>(type: string, selectionType: string) {
@@ -73,6 +77,24 @@ export default function<Type>(type: string, selectionType: string) {
     }
     return this;
   };
+  const moveToSelected = function(comparison: Map | Game): GameSelector<Type> {
+    const neighboringElements: number = 2;
+    const currentPosition: number = elements.getCurrentIndex();
+    let position: number;
+    if (isMap(comparison) || isGame(comparison)) {
+      elements.moveToElement((element: Element<any>) => {
+        return element.getValue().id === comparison.id;
+      });
+      position = elements.getCurrentIndex();
+      if (currentPosition !== position) {
+        elements.forEach((element: Element<Type>): any => element.hide());
+        getAllowedRange(elements.length(), position - neighboringElements, position + neighboringElements)
+          .forEach((index: number): any => elements.getElementAtIndex(index).show());
+        selector.setSelections(elements);
+      }
+      return this;
+    }
+  };
   const getSelected = (): Element<Type> => elements.getCurrentElement();
   let elements: ArrayList<Element<Type>> = createList<Element<Type>>();
   let menu: GameMenu<any> = createGameMenu<any>(mapSelectionId, selectionMenuType);
@@ -87,6 +109,7 @@ export default function<Type>(type: string, selectionType: string) {
       getSelected,
       elements,
       menu,
+      moveToSelected,
     },
   );
 }
