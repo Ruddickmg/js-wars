@@ -18,6 +18,5 @@ export default curry(function(url: string, path: string, args: any = {}): string
       }
     });
   }
-  console.log("uri", uri);
   return uri;
 });
