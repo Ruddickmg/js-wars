@@ -3,11 +3,9 @@ import * as sinon from "sinon";
 import {SinonSpy} from "sinon";
 import createElement, {Element} from "../../../src/browser/dom/element/element";
 import nameInput from "../../../src/browser/input/gameNameEntry";
-import pubSub, {PubSub} from "../../../src/tools/pubSub";
+import {subscribe} from "../../../src/tools/pubSub";
 
 describe("gameNameEntry", () => {
-
-  const {subscribe}: PubSub = pubSub();
   const element: Element<any> = createElement<any>("testing", "input");
   const allowedName: string = "This name is cool";
   const disallowedName: string = "ab";

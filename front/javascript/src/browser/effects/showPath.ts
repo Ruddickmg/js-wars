@@ -3,7 +3,7 @@ import {MapElement} from "../../game/map/elements/defaults";
 import {isUnit} from "../../game/map/elements/unit/unit";
 import {MatrixMap} from "../../game/map/mapMatrix";
 import pathfinder, {PathFinder} from "../../tools/pathfinding/pathFinder";
-import notifications, {PubSub} from "../../tools/pubSub";
+import {publish, subscribe} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 
 export interface ShowPath {
@@ -14,8 +14,13 @@ export interface ShowPath {
 
 export default function(map: MatrixMap<MapElement>) {
   const {movementCost, allowedMovement}: UnitController = unitController();
-  const findPath: PathFinder<any> = pathfinder(map, map.dimensions(), map.get, movementCost, allowedMovement);
-  const {publish, subscribe}: PubSub = notifications();
+  const findPath: PathFinder<any> = pathfinder(
+    map,
+    map.dimensions(),
+    map.positionOfElement,
+    movementCost,
+    allowedMovement,
+  );
   const {isArray}: TypeChecker = typeChecker();
   const getRangeOfElementAtPosition = (position: Position): Position[] => {
     const topElement: MapElement = map.get(position);
@@ -24,9 +29,9 @@ export default function(map: MatrixMap<MapElement>) {
     }
   };
   const animate = (position: Position, animation: string) => {
-    const path: Position[] = getRangeOfElementAtPosition(position);
-    if (isArray(path)) {
-      publish(animation, path);
+    const pathToAnimate: Position[] = getRangeOfElementAtPosition(position);
+    if (isArray(pathToAnimate)) {
+      publish(animation, pathToAnimate);
     }
   };
   const movementRange = (position: Position): void => animate(position, "animateMovementRange");

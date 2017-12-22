@@ -2,45 +2,28 @@ import createDimensions, {Dimensions} from "../../game/map/coordinates/dimension
 import createPosition, {Coordinates, Position} from "../../game/map/coordinates/position";
 import screenConfiguration from "../../settings/configuration/screen";
 import time, {Time} from "../../tools/calculations/time";
-import notifications, {PubSub} from "../../tools/pubSub";
+import {publish, subscribe} from "../../tools/pubSub";
 import canvasCache, {CanvasCache} from "../canvas/canvasCache";
 import keyboardInput, {KeyBoard} from "../input/keyboard";
 import getGameScreen from "../menu/screen/gameScreen";
 
 export interface ScreenController {
-
   width(): number;
-
   height(): number;
-
   pixels(): number;
-
   dimensions(): Dimensions;
-
   position(): Position;
-
   top(): number;
-
   bottom(): number;
-
   left(): number;
-
   right(): number;
-
   focused(): boolean;
-
   setDimensions(newWidth: number, newHeight: number): ScreenController;
-
   reset(): ScreenController;
-
   scroll(cursorPosition: Position): ScreenController;
-
   moveTo(coordinates: Coordinates): ScreenController;
-
   focus(): void;
-
   unFocus(): void;
-
   withinDimensions({x, y}: Position): boolean;
 }
 
@@ -68,7 +51,6 @@ export default function(mapDimensions: Dimensions): ScreenController {
 
   const periodOfTime: Time = time();
   const keyboard: KeyBoard = keyboardInput();
-  const {publish, subscribe}: PubSub = notifications();
 
   const width = (): number => screenDimensions.width;
   const height = (): number => screenDimensions.height;
@@ -233,22 +215,22 @@ export default function(mapDimensions: Dimensions): ScreenController {
 
   return {
 
-    width,
-    height,
-    pixels,
-    dimensions,
-    position,
-    top,
     bottom,
-    left,
-    right,
-    focused,
-    setDimensions,
-    reset,
-    scroll,
-    moveTo,
+    dimensions,
     focus,
+    focused,
+    height,
+    left,
+    moveTo,
+    pixels,
+    position,
+    reset,
+    right,
+    scroll,
+    setDimensions,
+    top,
     unFocus,
+    width,
     withinDimensions,
   };
 }

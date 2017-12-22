@@ -1,4 +1,4 @@
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {subscribe, unsubscribe} from "../../../tools/pubSub";
 import isList from "../../../tools/storage/lists/arrayList/isList";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import createStack, {Stack} from "../../../tools/storage/stack/listStack";
@@ -24,7 +24,6 @@ export interface SelectionHandler<Type> extends SelectorMethods<Type> {
 type Handler = (selected: any, previous: any, selections: any) => any;
 
 export default function <Type>(container: ArrayList<Type> = createList<any>()): SelectionHandler<Type> {
-
   const upKey: string = "pressedUpKey";
   const downKey: string = "pressedDownKey";
   const leftKey: string = "pressedLeftKey";
@@ -32,7 +31,6 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
   const previous: Stack<ArrayList<Type>> = createStack<ArrayList<Type>>();
   const {validateFunction}: Validator = validator("selectionHandler");
   const {isDefined}: TypeChecker = typeChecker();
-  const {subscribe, unsubscribe}: PubSub = notifications();
 
   let subscriptions: number[] = [];
   let selectingVertically: boolean = true;

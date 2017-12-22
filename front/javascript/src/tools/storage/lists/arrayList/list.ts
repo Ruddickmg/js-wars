@@ -1,6 +1,6 @@
 import wrapIndex from "../../../array/wrapIndex";
 import randomNumber from "../../../calculations/random";
-import notifications, {PubSub} from "../../../pubSub";
+import {publish} from "../../../pubSub";
 import isValidIndex from "../../../validation/nonNegativeIndex";
 import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
 import isList from "./isList";
@@ -38,7 +38,6 @@ export default (function() {
 
   const min = Math.min;
   const minimumIndex: number = 0;
-  const {publish}: PubSub = notifications();
   const {isNumber, isFunction}: TypeChecker = typeChecker()
     .register("list", isList);
 

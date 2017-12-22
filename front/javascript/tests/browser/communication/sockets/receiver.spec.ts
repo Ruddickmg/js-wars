@@ -1,9 +1,8 @@
 import {expect} from "chai";
 import getReceivers, {Receivers} from "../../../../src/browser/communication/sockets/reciever";
-import notifications, {PubSub} from "../../../../src/tools/pubSub";
+import {subscribe} from "../../../../src/tools/pubSub";
 
 describe("transmitter", () => {
-  const {subscribe}: PubSub = notifications();
   const actions: string[] = ["addUser", "cursorMove"];
   const on: any = () => true;
   const mockSocket: any = {on};

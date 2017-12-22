@@ -1,4 +1,4 @@
-import notifications, {PubSub} from "../../tools/pubSub";
+import {publish} from "../../tools/pubSub";
 import single from "../../tools/storage/singleton";
 import createElement, {Element} from "../dom/element/element";
 import getUrl, {Url} from "../dom/url";
@@ -10,7 +10,6 @@ export interface FacebookApi {
 }
 
 export default single<FacebookApi>(() => {
-  const {publish}: PubSub = notifications();
   const url: Url = getUrl(window);
   const appId = "1481194978837888";
   const facebookLoginVersion = "2.3";

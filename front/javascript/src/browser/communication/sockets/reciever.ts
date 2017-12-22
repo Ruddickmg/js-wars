@@ -1,4 +1,4 @@
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import getSocket from "./socket";
@@ -9,18 +9,17 @@ export interface Receivers {
 }
 export default single<Receivers>(function(socket: any = getSocket()): Receivers {
   const {isString}: TypeChecker = typeChecker();
-  const {publish}: PubSub = notifications();
   const add = function(...additionalActions: string[]): Receivers {
-    return additionalActions.reduce((receivers: Receivers, action: string): any => {
+    return additionalActions.reduce((receiving: Receivers, action: string): any => {
       const receiver: Receiver = function(value: any): Receivers {
         publish(action, value);
         return this;
       };
       if (isString(action)) {
-        receivers[action] = receiver;
+        receiving[action] = receiver;
         socket.on(action, receiver);
       }
-      return receivers;
+      return receiving;
     }, receivers);
   };
   const receivers: Receivers = {add};

@@ -14,9 +14,8 @@ interface Functors<Type> {
 }
 
 export interface Matrix<Type> extends Functors<Type> {
-
   get(position: Position): Type;
-  insert(position: Position, value: Type): Type;
+  insert(value: Type, position: Position): Type;
   remove(position: Position): Type;
 }
 
@@ -24,7 +23,7 @@ export default function createMatrix<Type>(): Matrix<Type> {
 
   const {isDefined}: TypeChecker = typeChecker();
   const matrix: any = {};
-  const insert = ({x, y}: Position, value: Type): Type => {
+  const insert = (value: Type, {x, y}: Position): Type => {
 
     if (!matrix[x]) {
 
@@ -68,7 +67,7 @@ export default function createMatrix<Type>(): Matrix<Type> {
 
         if (callback(value, position, self)) {
 
-          newMatrix.insert(position, value);
+          newMatrix.insert(value, position);
         }
 
         return newMatrix;
@@ -120,7 +119,7 @@ export default function createMatrix<Type>(): Matrix<Type> {
         self: Matrix<Type>,
       ): Matrix<Type> => {
 
-        mappedMatrix.insert(position, callback(value, position, self));
+        mappedMatrix.insert(callback(value, position, self), position);
 
         return mappedMatrix;
 

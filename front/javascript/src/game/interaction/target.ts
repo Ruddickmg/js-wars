@@ -1,9 +1,9 @@
+import keyBoardInput, {KeyBoard} from "../../browser/input/keyboard";
+import wrapIndex from "../../tools/array/wrapIndex";
+import {publish, subscribe} from "../../tools/pubSub";
+import single from "../../tools/storage/singleton";
 import createPosition, {Position} from "../map/coordinates/position";
 import {MapElement} from "../map/elements/defaults";
-import wrapIndex from "../../tools/array/wrapIndex";
-import notifications, {PubSub} from "../../tools/pubSub";
-import single from "../../tools/storage/singleton";
-import keyBoardInput, {KeyBoard} from "../../browser/input/keyboard";
 
 export interface TargetHandler {
 
@@ -24,7 +24,6 @@ export default single<TargetHandler>(function(): TargetHandler {
   const actions: any = {attack: "target", drop: "pointer"};
   const keys: any = {left: -1, down: -1, up: 1, right: 1};
   const keyboard: KeyBoard = keyBoardInput();
-  const {publish, subscribe}: PubSub = notifications();
   const setAction = (actionType: string) => {
 
     if (actions[actionType]) {

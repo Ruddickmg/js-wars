@@ -1,5 +1,5 @@
 import settings from "../../settings/settings";
-import notifications, {PubSub} from "../pubSub";
+import {publish, subscribe} from "../pubSub";
 import single from "../storage/singleton";
 
 interface PublishedError {
@@ -22,7 +22,6 @@ export interface ErrorHandler {
 export default single<ErrorHandler>(function(): ErrorHandler {
 
   const debugging: boolean = settings().get("debug");
-  const {publish, subscribe}: PubSub = notifications();
   const handleError = (message: string, fatal: boolean = false): void => {
 
     if (debugging) {

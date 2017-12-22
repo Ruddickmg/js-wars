@@ -3,7 +3,7 @@ import {Dimensions} from "../../game/map/coordinates/dimensions";
 import createPosition, {Position} from "../../game/map/coordinates/position";
 import {MapElement} from "../../game/map/elements/defaults";
 import getSettings from "../../settings/settings";
-import notifications, {PubSub} from "../../tools/pubSub";
+import {publish, subscribe} from "../../tools/pubSub";
 import {Dictionary} from "../../tools/storage/dictionary";
 import singleton from "../../tools/storage/singleton";
 import createCanvas, {Canvas} from "../canvas/canvas";
@@ -26,7 +26,6 @@ export default singleton<MapInfoHud>(function(initialElements: any[], dimensions
   const unitType: string = "unit";
   const screenWidth: number = dimensions.width;
   const isUnit = (element: MapElement): boolean => element.type === unitType;
-  const {publish, subscribe}: PubSub = notifications();
   const cursor: CursorController = cursorController();
   const settings: Dictionary = getSettings();
   const hudWidth: number = settings.get("hudWidth");

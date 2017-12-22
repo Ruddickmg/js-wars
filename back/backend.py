@@ -11,7 +11,6 @@ db_arg = "database"
 
 def handle_request(get=None, post=None, delete=None):
     database = request.args.get("database")
-    print("database: %s, method: %s" % (database, request.method))
     session = get_session(database)
     handler = {
         "GET": get,
@@ -53,7 +52,7 @@ def game_requests():
     return handle_request(get_games, save_game, remove_game)
 
 
-@app.route("/users", methods=["GET", "DELETE", "POST"])
+@app.route("/users", methods=["GET", "POST", "DELETE"])
 def users():
     return handle_request(get_user, save_user, remove_user)
 

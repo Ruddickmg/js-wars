@@ -5,7 +5,7 @@ import tsify = require("tsify");
 import uglify = require("uglify-js");
 import watchify = require("watchify");
 
-import notifications, {PubSub} from "./pubSub";
+import {publish} from "./pubSub";
 
 export interface Compiler {
 
@@ -27,7 +27,6 @@ export default function compiler(pathToInputFile: string): Compiler {
   let globalOptions: Options;
 
   const errorEventId: string = "error";
-  const {publish}: PubSub = notifications();
   const bundler = browserify({
 
     cache: {},

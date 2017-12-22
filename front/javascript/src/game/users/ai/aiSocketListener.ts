@@ -2,13 +2,12 @@ import {Client} from "../../../server/clients/client";
 import {ClientHandler} from "../../../server/clients/clients";
 import {Listener} from "../../../server/connections/sockets/listener";
 import {isRoom, Room} from "../../../server/rooms/room";
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish} from "../../../tools/pubSub";
 import {AnyPlayer, isAiPlayer} from "../players/playerSocketListener";
 import {AiController} from "./aiController";
 import {AiPlayer} from "./aiPlayer";
 
 export default function(clients: ClientHandler, aiHandler: AiController): Listener {
-  const {publish}: PubSub = notifications();
   const aiTurn = ({aiPlayer, game}: AiPlayer): void => aiHandler.get(aiPlayer.id).play(game);
   const addAiPlayer = (player: any, socket: any): void => {
     const client: Client = clients.bySocket(socket);

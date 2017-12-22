@@ -3,7 +3,7 @@ import {Building} from "../../../game/map/elements/building/building";
 import {isMap, Map} from "../../../game/map/map";
 import countBuildings from "../../../tools/array/propertyValueCounter";
 import zipWith from "../../../tools/array/zipWith";
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish, subscribe, unsubscribe} from "../../../tools/pubSub";
 import {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
 import validator, {Validator} from "../../../tools/validation/validator";
@@ -35,7 +35,6 @@ export default (function() {
   const mapSelection: string = "type";
   const {highlight, deHighlight}: Highlighter = highlighter();
   const {validateString}: Validator = validator(className);
-  const {subscribe, publish, unsubscribe}: PubSub = notifications();
   const setupScreen: Element<any> = getGameScreen();
   const buildingsDisplay: BuildingsDisplay = createBuildingsDisplay();
   const categories: CategorySelector = createCategorySelector();

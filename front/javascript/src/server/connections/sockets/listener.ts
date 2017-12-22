@@ -1,4 +1,4 @@
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish} from "../../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 
 export interface Listener {
@@ -12,7 +12,6 @@ export interface SocketListeners {
 
 export default function(): SocketListeners {
   const {isString, isDefined, isObject}: TypeChecker = typeChecker();
-  const {publish}: PubSub = notifications();
   const allListeners: Listener[] = [];
   const errorEventId: string = "error";
   return {

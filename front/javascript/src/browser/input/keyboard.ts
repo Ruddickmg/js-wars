@@ -1,7 +1,7 @@
 import allSettings from "../../settings/settings";
 import checkForTruthInArray from "../../tools/array/checkForTruthInArray";
 import invert from "../../tools/object/inverter";
-import notifications, {PubSub} from "../../tools/pubSub";
+import {publish, subscribe} from "../../tools/pubSub";
 import {Dictionary} from "../../tools/storage/dictionary";
 import single from "../../tools/storage/singleton";
 import capitalizeFirstLetter from "../../tools/stringManipulation/capitalizeFirstLetter";
@@ -49,7 +49,6 @@ export default single<KeyBoard>(function() {
 
   const myUndefined: any = void 0;
   const {isNumber, isString, isDefined}: TypeChecker = typeChecker();
-  const {publish, subscribe}: PubSub = notifications();
   const settings: Dictionary = allSettings();
 
   const {

@@ -1,4 +1,4 @@
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {subscribe} from "../../../tools/pubSub";
 import createElement, {Element} from "../../dom/element/element";
 import createGameMenu, {GameMenu} from "../elements/gameMenu";
 
@@ -12,7 +12,6 @@ export interface Footer extends GameMenu<string> {
 
 export default function() {
 
-  const {subscribe}: PubSub = notifications();
   const footer: GameMenu<string> = createGameMenu<string>("footer", "section");
   const description: Element<string> = createElement<string>("descriptions", "h1");
   const chat: Element<any> = createElement("chat", "ul");
@@ -30,8 +29,8 @@ export default function() {
   subscribe("setFooterDescription", setDescription);
 
   return Object.assign(footer, {
-    description,
     chat,
+    description,
     setDescription,
   });
 }

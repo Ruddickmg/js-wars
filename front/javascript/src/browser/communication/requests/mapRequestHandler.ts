@@ -1,6 +1,6 @@
 import settings from "../../../settings/settings";
 import randomNumber from "../../../tools/calculations/random";
-import notifier, {PubSub} from "../../../tools/pubSub";
+import {publish} from "../../../tools/pubSub";
 import createRequest, {IncompleteRequest, Request} from "./request";
 import requestHandler from "./requestHandler";
 
@@ -15,7 +15,6 @@ export default function <Type>(
   request: Request = createRequest(),
 ): MapRequestHandler<Type> {
   const settingsLocation: string = "categories";
-  const {publish}: PubSub = notifier();
   const categorySettings = settings().toObject("map", settingsLocation);
   const categories: string[] = Object.keys(categorySettings);
   const defaultCategory = categories[0];

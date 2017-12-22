@@ -1,7 +1,7 @@
 import createPosition, {Position} from "../../game/map/coordinates/position";
 import createTerrain, {Terrain} from "../../game/map/elements/terrain/terrain";
 import getRandom from "../../tools/calculations/random";
-import notifications, {PubSub} from "../../tools/pubSub";
+import {publish} from "../../tools/pubSub";
 import getTransmitters, {Transmitters} from "../communication/sockets/transmitter";
 
 export interface Background {
@@ -17,7 +17,6 @@ export interface Background {
 
 export default function() {
   const transmitters: Transmitters = getTransmitters();
-  const {publish}: PubSub = notifications();
   const position: Position = createPosition(0, 0);
   const changeEvent: string = "changeBackground";
   const snowType: string = "snow";
@@ -61,13 +60,13 @@ export default function() {
   let currentCategory: string = randomType;
   transmitters.add(changeEvent);
   return {
-    isRandom,
     category,
     change,
+    defense,
+    drawing,
+    isRandom,
+    name,
     set,
     type,
-    defense,
-    name,
-    drawing,
   };
 }

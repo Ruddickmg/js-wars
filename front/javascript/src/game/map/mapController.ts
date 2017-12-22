@@ -1,6 +1,6 @@
 import settings from "../../settings/settings";
+import {publish} from "../../tools/pubSub";
 import {Dictionary} from "../../tools/storage/dictionary";
-import notifier, {PubSub} from "../../tools/pubSub";
 import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import createPosition, {Position} from "./coordinates/position";
 import createBuilding, {Building} from "./elements/building/building";
@@ -11,57 +11,40 @@ import {Map} from "./map";
 import createMapMatrix, {MatrixMap} from "./mapMatrix";
 
 export interface MapController {
-
   addUnit(unit: Unit, currentMap: Map): void;
-
   applyDamageToUnit(unit: Unit, damage: number, map: Map): void;
-
   changeHqToCity(hq: Building, {buildings}: Map): void;
-
   changeOwner(element: Building | Unit, currentOwner: number): void;
-
   getUnit(unit: Unit, {units}: Map): Unit;
-
   initialize({units, buildings, terrain}: Map): void;
-
   moveUnit(unit: Unit, target: Position, {units}: Map): Unit;
-
   getNeighbors(position: Position, {dimensions}: Map): MapElement[];
-
   removeUnit(unit: Unit, {units}: Map): Unit;
-
   getOccupantsOfPosition(position: Position, {units, buildings, terrain}: Map): any;
-
   topElementAtPosition(position: Position, currentMap: Map): MapElement;
 }
 
 export default function(map: Map): MapController {
 
   const mapSettings: Dictionary = settings().get("map");
-  const notifications: PubSub = notifier();
-  const matrix: MatrixMap = createMapMatrix(map);
+  const matrix: MatrixMap<MapElement> = createMapMatrix<MapElement>(map);
   const {isUnit}: TypeChecker = typeChecker();
   const isSamePosition = ({x, y}: Position, {x: x2, y: y2}: Position) => x === x2 && y === y2;
   const restore = (element: Building | Unit): Building | Unit => {
 
     element.health = mapSettings.get(element.type, element.name, "health");
-
     return element;
   };
   const getIndex = ({type, position}: MapElement, elements: any): number => {
-
     return elements.findIndex((comparison: MapElement) => {
-
       return position.on(comparison.position) && type === comparison.type;
     });
   };
   const addUnit = (unit: Unit, currentMap: Map) => {
-
     const stored: Unit = matrix.insert(unit) as Unit;
-
     currentMap.units.push(stored);
 
-    notifications.publish("unitAdded", stored);
+    publish("unitAdded", stored);
 
     // refresh(); // TODO handle with notifications
   };
@@ -70,7 +53,7 @@ export default function(map: Map): MapController {
     const health = unit.health;
     const stored: Unit = matrix.getElement(unit) as Unit;
 
-    notifications.publish("unitDamaged", {unit, health, damage});
+    publish("unitDamaged", {unit, health, damage});
 
     stored.health -= damage;
     units[getIndex(unit, units)].health -= damage; // TODO make sure these are the same reference
@@ -85,43 +68,31 @@ export default function(map: Map): MapController {
     matrix.insert(building);
   };
   const changeOwner = (element: Building | Unit, currentOwner: number): void => {
-
     const stored: Building | Unit = matrix.getElement(element) as Building | Unit;
-
     stored.playerNumber = currentOwner;
-
     restore(stored);
-
-    notifications.publish("ownershipChange", {currentOwner, element});
+    publish("ownershipChange", {currentOwner, element});
     // refresh(); // TODO handle with pub sub?
   };
   const getUnit = (unit: Unit, {units}: Map): Unit => units[getIndex(unit, units)];
   const initialize = ({units, buildings, terrain}: Map) => {
-
     terrain.forEach((element: Terrain) => matrix.insert(element));
     buildings.forEach((building: Building) => matrix.insert(building));
     units.forEach((unit: Unit) => matrix.insert(unit));
   };
   const moveUnit = (unit: Unit, target: Position, {units}: Map): Unit => {
-
     const indexOfUnitBeingMoved = getIndex(unit, units);
     const unitBeingMoved = units[indexOfUnitBeingMoved];
-    const mapElementAtDestination = matrix.position(target);
+    const mapElementAtDestination = matrix.get(target);
 
     if (unitBeingMoved) {
-
       matrix.remove(unitBeingMoved);
-
       unitBeingMoved.position = target;
-
       if (!isUnit(mapElementAtDestination)) {
-
         matrix.insert(unitBeingMoved);
       }
-
       units.splice(indexOfUnitBeingMoved, 1, unitBeingMoved);
-
-      notifications.publish("unitMoved", {unit, target});
+      publish("unitMoved", {unit, target});
     }
     // refresh() // TODO make pub sub
     return unitBeingMoved;
@@ -131,7 +102,7 @@ export default function(map: Map): MapController {
     return position.neighbors(dimensions)
       .reduce((existingNeighbors: MapElement[], neighbor: Position) => {
 
-        const element: MapElement = matrix.position(neighbor);
+        const element: MapElement = matrix.get(neighbor);
 
         if (element) {
 
@@ -143,42 +114,31 @@ export default function(map: Map): MapController {
       }, []);
   };
   const removeUnit = (unit: Unit, {units}: Map) => {
-
     const index = getIndex(unit, units);
     const element = matrix.getElement(unit);
 
     let removed: Unit;
 
     if (isUnit(element) && isSamePosition(element.position, unit.position)) {
-
       matrix.remove(unit);
-
       removed = units.splice(index, 1)[0];
     }
 
-    notifications.publish("unitRemoved", unit);
+    publish("unitRemoved", unit);
     // refresh(); // TODO pub sub
 
     return removed;
   };
   const getOccupantsOfPosition = (position: Position, {units, buildings, terrain}: Map): any => {
-
     const mapElements = [units, buildings, terrain];
-
     return mapElements.reduce((occupants: any, elements: MapElement[]): any => {
-
       const occupant: MapElement = elements.find((element: MapElement): boolean => {
-
         return isSamePosition(position, element.position);
       });
-
       if (occupant) {
-
         occupants[occupant.type] = occupant;
       }
-
       return occupants;
-
     }, {});
   };
   const topElementAtPosition = (position: Position, currentMap: Map): MapElement => {
@@ -190,7 +150,6 @@ export default function(map: Map): MapController {
   };
 
   return {
-
     addUnit,
     applyDamageToUnit,
     changeHqToCity,

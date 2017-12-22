@@ -1,7 +1,7 @@
 import animationHandler, {CanvasCache} from "../../../browser/canvas/canvasCache";
 import getSocket from "../../../browser/communication/sockets/socket";
 import keyBoardInput, {KeyBoard} from "../../../browser/input/keyboard";
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish, subscribe} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import createPosition, {Coordinates, Position} from "../../map/coordinates/position";
@@ -52,7 +52,6 @@ export default single<CursorController>(function() {
   const topSide: string = "top";
   const bottomSide: string = "bottom";
   const cursor: Cursor = getCursor();
-  const {publish, subscribe}: PubSub = notifications();
   const keyboard: KeyBoard = keyBoardInput();
   const socket: any = getSocket();
   const check: TypeChecker = typeChecker();

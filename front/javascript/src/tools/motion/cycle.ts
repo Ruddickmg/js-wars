@@ -1,7 +1,7 @@
-import validator, {Validator} from "../validation/validator";
 import timeKeeper, {Time} from "../calculations/time";
-import notifications, {PubSub} from "../pubSub";
+import {publish} from "../pubSub";
 import typeChecker, {TypeChecker} from "../validation/typeChecker";
+import validator, {Validator} from "../validation/validator";
 
 type CycleCallback = (position: number) => any;
 
@@ -29,7 +29,6 @@ export default (function() {
   const pivotPoint: number = 0;
   const className: string = "cycle";
   const {validateNumber, validateFunction}: Validator = validator(className);
-  const {publish}: PubSub = notifications();
   const {isNumber, isDefined}: TypeChecker = typeChecker();
   const time: Time = timeKeeper();
   const validateIncrement = (input: number, method: string): boolean => {
@@ -53,7 +52,7 @@ export default (function() {
                   endingPoint?: number,
                   cycleFunction?: CycleCallback,
                   initialSpeed: number = 1,
-                  initialIncrement: number = 1,): Cycle {
+                  initialIncrement: number = 1): Cycle {
 
     let decrementing: boolean = false;
     let cycling: boolean = false;

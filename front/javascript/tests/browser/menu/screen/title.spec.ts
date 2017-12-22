@@ -2,12 +2,10 @@ import {expect} from "chai";
 import {Element} from "../../../../src/browser/dom/element/element";
 import createTitle from "../../../../src/browser/menu/screen/title";
 import getSettings from "../../../../src/settings/settings";
-import notifications, {PubSub} from "../../../../src/tools/pubSub";
+import {subscribe} from "../../../../src/tools/pubSub";
 import {Dictionary} from "../../../../src/tools/storage/dictionary";
 
 describe("title", () => {
-
-  const {subscribe}: PubSub = notifications();
   const settings: Dictionary = getSettings();
   const tag: string = "h1";
   const text: string = "title";

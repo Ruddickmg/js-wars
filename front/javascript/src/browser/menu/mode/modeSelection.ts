@@ -1,5 +1,5 @@
 import getSettings from "../../../settings/settings";
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish, subscribe, unsubscribe} from "../../../tools/pubSub";
 import {Dictionary} from "../../../tools/storage/dictionary";
 import {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import single from "../../../tools/storage/singleton";
@@ -34,7 +34,6 @@ export default single<ModeSelection>(function(): ModeSelection {
   };
   const settings: Dictionary = getSettings();
   const {validateString}: Validator = validator("modeSelection");
-  const {publish, subscribe, unsubscribe}: PubSub = notifications();
   const setupScreen: Element<any> = getGameScreen();
   const {positions, messages, events}: any = settings.toObject(modeSettings);
   const scrollBar: ScrollBar = createScrollBar().listen();
@@ -105,10 +104,10 @@ export default single<ModeSelection>(function(): ModeSelection {
   rotateMenuElements(modeElements);
   return {
     listen,
-    stop,
     remove,
-    switchOptions,
-    switchMode,
     rotateMenuElements,
+    stop,
+    switchMode,
+    switchOptions,
   };
 });

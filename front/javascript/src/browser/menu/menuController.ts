@@ -1,7 +1,7 @@
 import createGame, {Game} from "../../game/game";
 import testMap from "../../game/map/testMap";
 import getSettings from "../../settings/settings";
-import notifications, {PubSub} from "../../tools/pubSub";
+import {publish, subscribe} from "../../tools/pubSub";
 import {Dictionary} from "../../tools/storage/dictionary";
 import single from "../../tools/storage/singleton";
 import requestMaker, {IncompleteRequest, Request} from "../communication/requests/request";
@@ -15,7 +15,6 @@ import handleSettingsSelection from "./settings/settings";
 export default single<any>(function() {
   const request: Request = requestMaker();
   const saveMap: IncompleteRequest = request.post("maps/save") as IncompleteRequest;
-  const {publish, subscribe}: PubSub = notifications();
   const login: LoginScreen = loginHandler();
   const settings: Dictionary = getSettings();
   const gameScreen: Element<any> = getGameScreen();

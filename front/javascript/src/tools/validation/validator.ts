@@ -1,5 +1,5 @@
 import setName from "../function/setName";
-import notifications, {PubSub} from "../pubSub";
+import {publish} from "../pubSub";
 import typeChecker, {TypeChecker} from "./typeChecker";
 
 type Validation = (input: any, methodName?: string) => boolean;
@@ -10,7 +10,6 @@ export interface Validator {
 
 export default (function() {
   const typeCheckerPrefix: string = "is";
-  const {publish}: PubSub = notifications();
   const publishInputError = (className: string, method: string, input: any): void => {
     publish("invalidInputError", {className, method, input});
   };

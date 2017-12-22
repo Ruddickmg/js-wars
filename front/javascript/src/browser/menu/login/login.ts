@@ -1,5 +1,5 @@
 import createUser, {isUser, User} from "../../../game/users/user";
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";
 import createElement, {Element} from "../../dom/element/element";
 import createTextInput from "../../input/text";
@@ -34,7 +34,6 @@ export default single<LoginScreen>(function() {
     locale: "en_US",
     name: "Testy McTesterson",
   };
-  const {publish}: PubSub = notifications();
   const facebook: FacebookApi = facebookApi();
   const createStatusBar = (): Element<any> => createElement(statusBarId, statusBarType);
   const createLoginForm = function(): Element<any> {

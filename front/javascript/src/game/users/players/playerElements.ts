@@ -1,8 +1,6 @@
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {} from "../../../tools/pubSub";
 
 export default function() {
-
-  const {}: PubSub = notifications();
 
   // TODO
   // ----------- decouple ------------ //

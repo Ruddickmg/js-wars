@@ -1,4 +1,4 @@
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {subscribe, unsubscribe} from "../../../tools/pubSub";
 import isList from "../../../tools/storage/lists/arrayList/isList";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import createStack, {Stack} from "../../../tools/storage/stack/listStack";
@@ -31,7 +31,6 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
   const previous: Stack<ArrayList<Type>> = createStack<ArrayList<Type>>();
   const {validateFunction}: Validator = validator("selectionHandler");
   const {isFunction, isDefined}: TypeChecker = typeChecker();
-  const {subscribe, unsubscribe}: PubSub = notifications();
   let subscriptions: any[] = [];
   let selectingVertically: boolean = true;
   let isVertical: boolean = selectingVertically;

@@ -1,14 +1,19 @@
-import notifications, {PubSub} from "../pubSub";
+import {publish} from "../pubSub";
 import typeChecker, {TypeChecker} from "../validation/typeChecker";
 
 export default (function() {
-
-  const {publish}: PubSub = notifications();
   const {isArray}: TypeChecker = typeChecker();
-
-  return function(firstInputArray: any[],
-                  secondInputArray: any[],
-                  callback: (firstValue?: any, secondValue?: any, index?: number, firstArray?: any[], secondArray?: any[]) => any,): any[] {
+  return function(
+    firstInputArray: any[],
+    secondInputArray: any[],
+    callback: (
+      firstValue?: any,
+      secondValue?: any,
+      index?: number,
+      firstArray?: any[],
+      secondArray?: any[],
+    ) => any,
+  ): any[] {
 
     let firstValue: any;
     let secondValue: any;

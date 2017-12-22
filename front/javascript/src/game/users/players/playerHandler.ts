@@ -1,11 +1,10 @@
-import notifier, {PubSub} from "../../../tools/pubSub";
+import {publish, subscribe} from "../../../tools/pubSub";
 import createAiPlayer from "../ai/aiPlayer";
 import {UserId} from "../user";
 import {Player} from "./player";
 import {AnyPlayer} from "./playerSocketListener";
 
 export interface PlayerHandler {
-
   addPlayer(player: AnyPlayer): PlayerHandler;
   addPlayers(multiplePlayers: AnyPlayer[]): PlayerHandler;
   allPlayersAreReady(): boolean;
@@ -35,7 +34,6 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
   let gameHasStarted: boolean;
   let indexOfLastPlayer: number = maximumAmountOfPlayers - 1;
 
-  const notifications: PubSub = notifier();
   const finishedPlayers: Player[] = [];
   const numberOfPlayersRequiredForGame = 2;
 
@@ -78,7 +76,7 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
         players[index] = Object.assign(player, players[index]);
       }
 
-      notifications.publish("playerAdded", player);
+      publish("playerAdded", player);
 
       return this;
     }
@@ -87,16 +85,11 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
   };
 
   const addPlayers = (multiplePlayers: AnyPlayer[]): PlayerHandler => {
-
     const wasEmpty = empty();
-
     multiplePlayers.forEach((player: Player) => addPlayer(player));
-
     if (wasEmpty) {
-
       current = first();
     }
-
     return this;
   };
 
@@ -129,48 +122,31 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
     const amountOfPlayers: number = allPlayers.length;
 
     return allPlayers.reduce((stringOfPlayerNames: string, {name}: Player, index: number): string => {
-
       let transition: string = "";
-
       const isNotLastPlayer = index + 1 < amountOfPlayers;
       const isBeforeLastPlayer = index + 2 < amountOfPlayers;
-
       if (isNotLastPlayer) {
-
         transition = isBeforeLastPlayer ? ", " : " and ";
       }
-
       return `${stringOfPlayerNames}${name}${transition}`;
-
     }, "");
   };
   const next = (): AnyPlayer => {
-
     current = getNext();
-
     return current;
   };
   const numberOfActivePlayers = (): number => players.length;
   const playerDefeated = (player: AnyPlayer): AnyPlayer => {
-
     const indexOfDefeatedPlayer: number = indexOfPlayer(player, players);
-
     let removedPlayer: AnyPlayer;
-
     if (isNaN(indexOfDefeatedPlayer)) {
-
       throw Error(`Argument passed to playerDefeated(${player}) was not found in the array of active players.`);
     }
-
     removedPlayer = players.splice(indexOfDefeatedPlayer, 1)[0];
-
     finishedPlayers.push(removedPlayer);
-
     if (numberOfActivePlayers() < numberOfPlayersRequiredForGame) {
-
       finishedPlayers.push(players.pop());
-
-      notifications.publish("gameOver", {players: finishedPlayers});
+      publish("gameOver", {players: finishedPlayers});
       // TODO -- make this report that the game needs to end
       // return app.game.end();
     }
@@ -180,82 +156,54 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
     return removedPlayer;
   };
   const removePlayer = (player: AnyPlayer): AnyPlayer => {
-
     let removedPlayer: AnyPlayer;
-
     const indexOfRemovedPlayer = indexOfPlayer(player, players);
-
     if (gameHasStarted && !player.isComputer) {
-
       removedPlayer = replacePlayer(player, createAiPlayer(player));
-
     } else if (!isNaN(indexOfRemovedPlayer)) {
-
       removedPlayer = players.splice(indexOfRemovedPlayer, 1)[0];
-
-      notifications.publish("playerRemovedFromGame", removedPlayer);
+      publish("playerRemovedFromGame", removedPlayer);
       // transmit.removeAi(removedPlayer);
 
       if (numberOfActivePlayers() >= indexOfRemovedPlayer + 1) {
-
         shiftPlayers(indexOfRemovedPlayer, players);
       }
-
       indexOfLastPlayer -= 1;
     }
-
     return removedPlayer;
   };
   const replacePlayer = (player: Player, replacement: AnyPlayer): AnyPlayer => {
-
     const index = indexOfPlayer(player, players);
     const replacedPlayer = players[index];
-
     if (isNaN(index)) {
-
       throw Error("Not able to replace player, player not found.");
     }
-
     // transmit.boot(players[index]);
-
-    notifications.publish("playerReplaced", {player, replacement});
-
+    publish("playerReplaced", {player, replacement});
     players[index] = replacement;
-
     return replacedPlayer;
   };
   const setCurrentPlayer = (player: AnyPlayer): AnyPlayer => {
-
     if (current) {
-
       current.isTurn = false;
     }
-
     player.isTurn = true;
-
     current = player;
-
     return current;
   };
   const updatePlayer = (player: AnyPlayer): AnyPlayer => {
-
     const index: number = indexOfPlayer(player, players);
-
     if (!isNaN(index)) {
-
       players[index] = player;
     }
-
     return player;
   };
 
-  notifications.subscribe("gameHasStarted", () => {
-
+  subscribe("gameHasStarted", () => {
     gameHasStarted = true;
   });
 
   return {
-
     addPlayer,
     addPlayers,
     allPlayersAreReady,

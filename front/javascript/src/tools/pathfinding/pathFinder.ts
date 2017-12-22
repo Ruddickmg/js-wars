@@ -1,11 +1,11 @@
 import {Dimensions} from "../../game/map/coordinates/dimensions";
 import {Position} from "../../game/map/coordinates/position";
+import {MatrixMap} from "../../game/map/mapMatrix";
 import createHeap, {BinaryHeap} from "../storage/heaps/binaryHeap";
 import {Matrix} from "../storage/matrix/matrix";
 import pathTracker, {PathTracker, Tracker} from "./pathTracker";
 
 export interface PathFinder<Type> {
-
   getAllReachablePositions(element: Type, movement?: number): Position[];
   getShortestPath(element: Type, target: Position): Position[];
 }
@@ -15,7 +15,7 @@ type GetAllowed = <Type>(element: Type) => number;
 type GetPosition = <Type>(element: Type) => Position;
 
 export default function <Type>(
-  matrix: Matrix<Type>,
+  matrix: Matrix<Type> | MatrixMap<Type>,
   dimensions: Dimensions,
   positionOfElement: GetPosition,
   movementCost: GetCost,
@@ -29,17 +29,12 @@ export default function <Type>(
 
     return position.neighbors(dimensions)
       .reduce((neighbors: Type[], currentPosition: Position): Type[] => {
-
         const neighbor: Type = matrix.get(currentPosition);
         const positionOfNeighbor: Position = positionOfElement(neighbor);
-
         if (neighbor && !visited.getPosition(positionOfNeighbor)) {
-
           neighbors.push(neighbor);
         }
-
         return neighbors;
-
       }, []);
   };
   const manhattanDistance = (position: Position, origin: Position, target: Position) => {
@@ -55,25 +50,19 @@ export default function <Type>(
     return ((abs(distanceToTargetX) + abs(distanceToTargetY)) + (cross * rand));
   };
   const getPath = (position: Position, visited: PathTracker, allowed: number): Position[] => {
-
     const path: Position[] = [];
-
     let parentPosition: Position = position;
 
     while (parentPosition) {
-
       if (visited.getG(parentPosition) <= allowed) {
-
         path.push(parentPosition);
       }
-
       parentPosition = visited.getParent(parentPosition);
     }
 
     return path.reverse();
   };
   const getAllReachablePositions = (element: Type, movement?: number): Position[] => {
-
     const visited: PathTracker = pathTracker();
     const getCost = (currentElement: Tracker): number => visited.getF(positionOfElement(currentElement));
     const open: BinaryHeap<Tracker> = createHeap<Tracker>(getCost);
@@ -87,22 +76,14 @@ export default function <Type>(
     open.push(visited.close(position).getPosition(position));
 
     while (open.size()) {
-
       current = open.pop();
       position = positionOfElement(current);
-
       getNeighbors(positionOfElement(current), visited).forEach((neighbor: Type) => {
-
         const positionOfNeighbor: Position = positionOfElement(neighbor);
-
         cost = (visited.getF(position) || 0) + movementCost(neighbor, element);
-
         if (cost <= allowed) {
-
           visited.close(positionOfNeighbor).setF(positionOfNeighbor, cost);
-
           open.push(visited.getPosition(positionOfNeighbor));
-
           reachable.push(positionOfNeighbor);
         }
       });
@@ -127,16 +108,11 @@ export default function <Type>(
     open.push(first);
 
     while (open.size()) {
-
       position = positionOfElement(open.pop());
-
       if (position.on(target)) {
-
         return getPath(position, visited, allowedMovement(element));
       }
-
       getNeighbors(position, visited).forEach((neighbor: Type): void => {
-
         const positionOfNeighbor: Position = positionOfElement(neighbor);
         const neighborHasNotBeenVisited: boolean = !visited.getPosition(positionOfNeighbor);
         const currentCost: number = visited.getG(position) || 0;
@@ -162,7 +138,6 @@ export default function <Type>(
   };
 
   return {
-
     getAllReachablePositions,
     getShortestPath,
   };

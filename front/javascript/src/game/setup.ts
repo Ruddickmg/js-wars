@@ -1,4 +1,4 @@
-import notifications, {PubSub} from "../tools/pubSub";
+import {subscribe} from "../tools/pubSub";
 import single from "../tools/storage/singleton";
 import {Map} from "./map/map";
 import {Player} from "./users/players/player";
@@ -15,8 +15,6 @@ export default single<GameSetup>(function() {
   let map: Map;
 
   const players: Player[] = [];
-  const {subscribe}: PubSub = notifications();
-
   const isFull = (): boolean => map.maximumAmountOfPlayers <= players.length;
   const setUser = (currentUser: User): void => {
 
@@ -40,9 +38,9 @@ export default single<GameSetup>(function() {
 
   return {
 
-    setUser,
-    setMap,
     isFull,
     players,
+    setMap,
+    setUser,
   };
 });

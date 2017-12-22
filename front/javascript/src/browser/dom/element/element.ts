@@ -1,5 +1,5 @@
 import createPosition, {Position} from "../../../game/map/coordinates/position";
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish} from "../../../tools/pubSub";
 import createCache, {Cache} from "../../../tools/storage/cache";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
 import pixelStringConverter, {PixelStringConversion} from "../../../tools/stringManipulation/pixelStringConversion";
@@ -80,7 +80,6 @@ export default (function() {
     validateFunction,
     validateElement,
   }: Validator = validator(className);
-  const {publish}: PubSub = notifications();
   const validateStringOrNull = (element: any, methodName: string): boolean => {
     return isNull(element) || validateString(element, methodName);
   };

@@ -1,7 +1,7 @@
 import {Game} from "../../../game/game";
 import getSettings from "../../../settings/settings";
 import zipWith from "../../../tools/array/zipWith";
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish, subscribe, unsubscribe} from "../../../tools/pubSub";
 import {Dictionary} from "../../../tools/storage/dictionary";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
@@ -41,7 +41,6 @@ export default (function() {
   const namesOfEachSetting = settingProperties.names;
   const settingsSelectionMenu: Element<any> = createElement<any>(settingsMenuId, settingsMenuType);
   const footer: Footer = createFooter();
-  const {subscribe, unsubscribe, publish}: PubSub = notifications();
   const {isString, isArray}: TypeChecker = typeChecker();
   const height: number = setupScreen.getHeight(widthType);
   const middle: number = height / 2;

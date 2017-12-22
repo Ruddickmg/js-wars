@@ -1,14 +1,13 @@
 import createDimensions, {Dimensions} from "../../game/map/coordinates/dimensions";
 import createPosition, {Position} from "../../game/map/coordinates/position";
 import getSettings from "../../settings/settings";
-import notifications, {PubSub} from "../../tools/pubSub";
+import {subscribe} from "../../tools/pubSub";
 import createCache, {Cache} from "../../tools/storage/cache";
 import createCanvas, {Canvas} from "../canvas/canvas";
 import animations, {Animations} from "./animations";
 import createLineTool, {DrawingTool, LineController} from "./lineTool";
 
 export interface DrawingController {
-
   [key: string]: any;
 }
 
@@ -27,7 +26,6 @@ export default function(dimensions: Dimensions, currentScreenPosition: Position)
 
   const max = Math.max;
   const drawings: Cache<any> = createCache<any>();
-  const {subscribe}: PubSub = notifications();
 
   const offsetDrawing = (dimension: number): number => dimension * offsetNeededToCenterDrawing;
   const centerDrawing = (dimension: number): number => dimension / offsetNeededToCenterDrawing;
@@ -137,12 +135,11 @@ export default function(dimensions: Dimensions, currentScreenPosition: Position)
   changeScreenDimensions(dimensions);
 
   return {
-
     changeGridDimensions,
     changeScreenDimensions,
     changeScreenPosition,
-    fill,
-    drawToCanvas,
     drawImageToCanvas,
+    drawToCanvas,
+    fill,
   };
 }
