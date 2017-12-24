@@ -1,4 +1,3 @@
-import {isCo} from "../co/co";
 import {User, UserId} from "../user";
 
 export interface Player {
@@ -16,9 +15,7 @@ export interface Player {
 }
 
 export default function(user: User, co?: string): Player {
-  if (co && !isCo(co)) {
-    throw new TypeError("Invalid co passed in player object creation.");
-  }
+  // TODO validate co
   return {
     co,
     gold: 0,
