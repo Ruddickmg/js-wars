@@ -4,7 +4,7 @@ import mapRequestHandler, {MapRequestHandler} from "../../../../src/browser/comm
 import requestMaker, {Request} from "../../../../src/browser/communication/requests/request";
 import testMap from "../../../../src/game/map/testMap";
 import range from "../../../../src/tools/array/range";
-import {Map} from "../../../node/game/map/map";
+import {Map} from "../../../game/map/map";
 import checkEqualityBetweenTwoMaps from "../../../utilities/mapEquality";
 
 describe("mapRequestHandler", () => {
