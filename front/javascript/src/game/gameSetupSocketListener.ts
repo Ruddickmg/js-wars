@@ -4,6 +4,7 @@ import {isRoom, Room} from "../server/rooms/room";
 import {Rooms} from "../server/rooms/rooms";
 import {Game} from "./game";
 import {Player} from "./users/players/player";
+
 export default function(clients: ClientHandler, rooms: Rooms) {
   return {
     background(type: string, socket: any): void {

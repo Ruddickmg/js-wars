@@ -1,5 +1,4 @@
 export default {
-
   airport: "building",
   base: "building",
   hq: "building",

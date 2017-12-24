@@ -1,5 +1,4 @@
 export default {
-
   defaults: {
     capt: "off",
     fog: "off",

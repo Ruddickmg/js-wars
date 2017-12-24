@@ -15,16 +15,12 @@ export interface SettingElement extends Element<string>, ArrayList<Element<any>>
 }
 
 export default (function() {
-
   const {isDefined}: TypeChecker = typeChecker();
   const allowed: TruthTable = truthTable("on", "off", "num", "clear", "rain", "snow", "random", "a", "b", "c");
   const hide: string = "invisible";
   const show: string = "visible";
-
   return function(setting: string, defaults: any): SettingElement {
-
     let numberOfSettings: number = 1;
-
     const generateNameOfSetting = (): string => `${setting}Setting#${numberOfSettings++}`;
     const {description, range, defaultSetting}: any = defaults;
     const element: Element<string> = createElement<string>(`${setting}Settings`, "section");
@@ -38,9 +34,7 @@ export default (function() {
       container: Element<any>[],
       currentSetting: string,
     ): Element<string>[] => {
-
       let settingElement: Element<any>;
-
       if (allowed[currentSetting]) {
         settingElement = createElement(generateNameOfSetting(), "li")
           .setValue(currentSetting)
@@ -51,7 +45,6 @@ export default (function() {
       }
       return container;
     }, []));
-
     if (isDefined(range)) {
       generateRange(range.minimum, range.maximum, range.increment)
         .forEach((currentNumber: number) => {
@@ -63,7 +56,6 @@ export default (function() {
           list.addElement(numericalSelection);
         });
     }
-
     text.setText(setting).setValue(setting);
     list.moveToElement((currentSetting: any) => currentSetting === defaultSetting)
       .getCurrentElement()
@@ -74,22 +66,19 @@ export default (function() {
       .appendChild(background)
       .setClass(setting)
       .setValue(type);
-
     return Object.assign(element, list, {
-      type,
-      description,
       background,
+      description,
       outline,
-      text,
       settings,
+      text,
+      type,
     });
   };
 }());
-
 // app.touch(this.background())
 //     .element()
 //     .scroll(list);
-
 // app.click(this.background())
 //     .element()
 //     .scroll(list);

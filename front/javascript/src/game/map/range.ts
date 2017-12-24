@@ -1,25 +1,19 @@
 import {Dimensions} from "./coordinates/dimensions";
 import createPosition, {Position} from "./coordinates/position";
-import {isUnit} from "./elements/unit/unit";
-import {PathTracker, default as pathTracker} from "../../tools/pathfinding/pathTracker";
 
 export default function(dimensions: Dimensions) {
-
   const iterateThroughDiamond = (
     position: Position,
     allowed: number,
     callback: (position: Position) => any,
   ): void => {
-
     const xAxis: number = position.x;
     const yAxis: number = position.y;
     const range: number = (allowed * 2);
-    const right: number = xAxis + allowed;
     const left: number = xAxis - allowed;
     const minimumIndex: number = 0;
     const verticalLimit: number = dimensions.y;
     const horizontalLimit: number = dimensions.x;
-
     let index: number;
     let top: number;
     let bottom: number;
@@ -27,33 +21,25 @@ export default function(dimensions: Dimensions) {
     let y: number;
     let increment: number;
     let result: any;
-
     // get the diamond pattern of squares
     for (x = left, increment = minimumIndex; /* x <= right, */ increment <= range; x += 1, increment += 1) {
-
       index = increment > allowed ? range - increment : increment;
       top = yAxis - index;
       top = top > minimumIndex ? top : minimumIndex; // top
       bottom = yAxis + index;
       bottom = bottom < verticalLimit ? bottom : verticalLimit - 1; // bottom
-
       // add all reachable squares to array
       if (x >= minimumIndex && x <= horizontalLimit) {
         for (y = top; y <= bottom; y += 1) {
-
           result = callback(createPosition(x, y));
-
           if (result) {
-
             return result;
           }
         }
       }
     }
   };
-
   return {iterateThroughDiamond};
-
   // const movement =  function(unit, map, distance) {
   //
   //   return this.reachable(unit, distance === undefined ? app.path.reachable(unit, true) :

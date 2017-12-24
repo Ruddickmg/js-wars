@@ -43,20 +43,16 @@ export interface KeyBoard {
 }
 
 export default single<KeyBoard>(function() {
-
   let pressedKeys: Keys = {};
   let releasedKeys: Keys = {};
-
   const myUndefined: any = void 0;
   const {isNumber, isString, isDefined}: TypeChecker = typeChecker();
   const settings: Dictionary = allSettings();
-
   const {
     keyCodeMappings,
     factorsAllowingKeyboardInput,
     factorsDenyingKeyboardInput,
   }: KeyboardSettings = settings.toObject("keyboard");
-
   const keysByKeyCode: KeyCodesOfKeys = invert(keyCodeMappings);
   const factorsToAllowKeyPress: boolean[] = factorsAllowingKeyboardInput.map((): boolean => false);
   const factorsThatDenyKeyPress: boolean[] = factorsDenyingKeyboardInput.map((): boolean => false);
@@ -141,7 +137,6 @@ export default single<KeyBoard>(function() {
   const keyMap: any = {};
   const keyPressedMap: any = {};
   const actions: any = {pressed, released, press, release, undoPress, undoRelease};
-
   Object.keys(keyCodeMappings).forEach((keyName: string) => {
     const key = keyCodeMappings[keyName];
     const capitalizedKey: string = capitalizeFirstLetter(keyName);
@@ -150,18 +145,14 @@ export default single<KeyBoard>(function() {
       keyPressedMap[`${action}${capitalizedKey}`] = (): boolean => actions[action](key);
     });
   });
-
   factorsAllowingKeyboardInput.forEach((factor: string, indexOfFactor: number) => {
     subscribe(factor, (status: boolean) => {
       factorsToAllowKeyPress[indexOfFactor] = status;
     });
   });
-
   window.addEventListener("keydown", keyPressed, false);
   window.addEventListener("keyup", keyReleased, false);
-
   return Object.assign(keyMap, keyPressedMap, {
-
     assignKey,
     clearPressedKeys,
     clearReleasedKeys,

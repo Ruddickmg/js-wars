@@ -3,7 +3,6 @@ import capitalizeFirstLetter from "../../../../src/tools/stringManipulation/capi
 import validator, {Validator} from "../../../../src/tools/validation/validator";
 
 describe("validator", () => {
-
   const testName: string = "validatorTest";
   const validation: Validator = validator(testName);
   const types: any[] = [
@@ -55,14 +54,10 @@ describe("validator", () => {
       valid: null,
     },
   ];
-
   it("Throws an error if it encounters an invalid type.", () => {
-
     types.forEach(({type, valid, invalid}: any): void => {
-
       const validationName: string = `validate${capitalizeFirstLetter(type)}`;
       const validate: any = validation[validationName];
-
       expect(validate(valid, validationName)).to.equal(true);
       expect(validate.bind(validate, invalid, validationName))
         .to.throw(`Invalid input: ${invalid} found on call to ${validationName} in ${testName}.`);

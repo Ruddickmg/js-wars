@@ -1,7 +1,6 @@
 import modeMenuItem from "../../browser/menu/mode/modeElements/modeItem";
 
 export default {
-
   events: {
     codesign: "editCo",
     continuegame: "resumeSavedGame",

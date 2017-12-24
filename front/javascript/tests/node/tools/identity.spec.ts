@@ -1,6 +1,7 @@
 import {expect} from "chai";
 import random from "../../../src/tools/calculations/random";
 import identifier, {Identifier} from "../../../src/tools/identity";
+
 describe("identity", () => {
   const incrementId = (n: number) => n + 1;
   const decrementId = (n: number) => n - 1;
@@ -43,7 +44,7 @@ describe("identity", () => {
     }
     it("adds ids to the pool of used ids", () => {
       const ids = Object.keys(reservedIds)
-        .map((id: string) => Number(id));
+        .map((current: string) => Number(current));
       let currentNumber = numberOfTests;
       let id;
       identity.reserveIds(ids);

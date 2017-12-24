@@ -1,4 +1,5 @@
 import createElement, {Element} from "../dom/element/element";
+
 export default (name: string, defaultText?: string): Element<any> => {
   const input: Element<any> = createElement(`${name}Form`, "p");
   const text: Element<any> = createElement(`${name}Input`, "input");

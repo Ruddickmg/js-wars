@@ -13,7 +13,7 @@ describe("typing", () => {
     clock.restore();
     typewriter.reset();
   });
-  it ("Types a message to an element over time.", () => {
+  it("Types a message to an element over time.", () => {
     let i: number = 0;
     return typewriter.type(message, (text: string) => {
       expect(text).to.equal(message[i++]);

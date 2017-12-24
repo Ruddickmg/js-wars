@@ -21,7 +21,6 @@ export interface SelectionHandler<Type> extends SelectorMethods<Type> {
 }
 
 type Handler = (selected: any, previous: any, selections: any) => any;
-
 export default function <Type>(container: ArrayList<Type> = createList<any>()): SelectionHandler<Type> {
   const upKey: string = "pressedUpKey";
   const downKey: string = "pressedDownKey";

@@ -1,6 +1,7 @@
 import {expect} from "chai";
 import getCursor, {Cursor} from "../../../../../src/game/interaction/cursor/cursor";
 import createPosition, {Position} from "../../../../../src/game/map/coordinates/position";
+
 describe("cursor", () => {
   const firstPosition: Position = createPosition(0, 0);
   const secondPosition: Position = createPosition(0, 1);

@@ -2,11 +2,14 @@ import {publish} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 import getSocket from "./socket";
+
 export type Receiver = (value: any) => Receivers;
+
 export interface Receivers {
   add(...actions: string[]): Receivers;
   [action: string]: Receiver;
 }
+
 export default single<Receivers>(function(socket: any = getSocket()): Receivers {
   const {isString}: TypeChecker = typeChecker();
   const add = function(...additionalActions: string[]): Receivers {

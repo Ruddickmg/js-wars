@@ -2,7 +2,6 @@ import {isCo} from "../co/co";
 import {User, UserId} from "../user";
 
 export interface Player {
-
   id: UserId;
   name: string;
   ready: boolean;

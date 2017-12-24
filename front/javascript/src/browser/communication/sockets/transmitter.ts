@@ -7,7 +7,7 @@ export type Transmitter = (value: any) => Transmitters;
 
 export interface Transmitters {
   add(...additionalActions: string[]): Transmitters;
- [action: string]: Transmitter;
+  [action: string]: Transmitter;
 }
 
 export default single<Transmitters>(function(socket: any = getSocket()): Transmitters {
@@ -27,7 +27,6 @@ export default single<Transmitters>(function(socket: any = getSocket()): Transmi
   };
   const transmitters: Transmitters = {add};
   return transmitters;
-
   // captured(unit, building) {
   //
   //     if (app.user.turn()) {

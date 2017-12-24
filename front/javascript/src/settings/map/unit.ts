@@ -1,5 +1,5 @@
 export default {
-  displayedInformation:  [
+  displayedInformation: [
     "movement",
     "vision",
     "fuel",

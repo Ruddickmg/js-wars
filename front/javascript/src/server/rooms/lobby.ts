@@ -3,7 +3,6 @@ import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
 import {RoomId} from "./room";
 
 export interface Lobby {
-
   id(): RoomId;
   name(): string;
   size(): number;
@@ -14,20 +13,15 @@ export interface Lobby {
 }
 
 export default function(identity: RoomId): Lobby {
-
   let length: number = 0;
-
   const roomId: RoomId = identity;
   const nameOfRoom: string = "lobby";
   const players: any = {};
   const addPlayer = function(player: Player): Lobby {
-
     const playerId: RoomId = player.id;
-
     length += 1;
     player.getPlayerByNumber = length;
     players[playerId] = player;
-
     return this;
   };
   const getPlayers = (): Player[] => Object.keys(players).map((key: string) => players[key]);
@@ -36,28 +30,21 @@ export default function(identity: RoomId): Lobby {
   const id = (): RoomId => roomId;
   const name = (): string => nameOfRoom;
   const removePlayer = (playerId: RoomId): Player => {
-
     const removed: Player = players[playerId];
-
     delete players[playerId];
-
     if (removed) {
-
       length -= 1;
     }
-
     return removed;
   };
-
   return {
-
     addPlayer,
-    getPlayers,
-    size,
     getPlayer,
+    getPlayers,
     id,
     name,
     removePlayer,
+    size,
   };
 }
 

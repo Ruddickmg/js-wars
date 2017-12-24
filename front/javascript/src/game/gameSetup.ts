@@ -1,33 +1,25 @@
 import createGame, {Game, isGame} from "./game";
+import {Map} from "./map/map";
 
-const setupGame = ({name, map, players, id}: Game): Game => {
-
+export const setupGame = ({name, map, id}: Game): Game => {
   // const user = app.user.raw();
   const {category}: Map = map;
-
   // players.push(user); // TODO figure this out
-
   // app.game.setSettings(received.settings);
   // app.game.setJoined(true);
-
   return createGame(name, category, map, id);
 };
-const setupJoinedGame = (game: Game): Game => {
 
+export const setupJoinedGame = (game: Game): Game => {
   // transmit.join(game);
-
   return setupGame(game);
 };
-const setup = function(received: Map | Game) {
 
-  const map: Map = isGame(received) ? received.map : received;
-
+export const setup = function(received: Map | Game) {
+  const map: Map = isGame(received) ? (received as Game).map : received as Map;
   if (isGame(received)) {
-
     setupGame(received);
   }
-
   this.removePlayer();
-
   return received;
 };

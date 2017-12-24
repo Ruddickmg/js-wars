@@ -3,6 +3,7 @@ import {isMap, Map} from "../../../game/map/map";
 import getAllowedRange from "../../../tools/calculations/getAllowedRange";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import gameElementHandler, {MapRequestHandler} from "../../communication/requests/mapRequestHandler";
 import {Element} from "../../dom/element/element";
 import isElement from "../../dom/element/isElement";
 import highlighter, {Highlighter} from "../../effects/highlighter";
@@ -10,7 +11,6 @@ import createScroller, {Scroller} from "../../effects/scrolling";
 import getKeyboard, {KeyBoard} from "../../input/keyboard";
 import createGameMenu, {GameMenu} from "../elements/gameMenu";
 import createSelectionHandler, {SelectionHandler} from "../selectors/twoDimensionalSelector";
-import gameElementHandler, {MapRequestHandler} from "../../communication/requests/mapRequestHandler";
 import createSelectionElement from "./selectionElement";
 
 export interface GameSelector<Type> extends SelectionHandler<Element<Type>>, Scroller {
@@ -22,7 +22,7 @@ export interface GameSelector<Type> extends SelectionHandler<Element<Type>>, Scr
   moveToSelected(selected: Map | Game): GameSelector<Type>;
 }
 
-export default function<Type>(type: string, selectionType: string) {
+export default function <Type>(type: string, selectionType: string) {
   const selections: MapRequestHandler<Type> = gameElementHandler<Type>(`${selectionType}s`, type);
   const selector: SelectionHandler<Element<Type>> = createSelectionHandler<Element<Type>>();
   const {isArray}: TypeChecker = typeChecker();
@@ -37,7 +37,7 @@ export default function<Type>(type: string, selectionType: string) {
     amountOfMapsToShowWhileScrolling,
     bufferAmountForMapScrolling,
   );
-  const selectableElement = <Type>(element: any, category: string, count: number): any => {
+  const selectableElement = (element: any, category: string, count: number): any => {
     return createSelectionElement<Type>(`${category}${selectionType}#${count}`)
       .setClass(classOfMapSelectionElement)
       .setText(element.name)
@@ -51,7 +51,7 @@ export default function<Type>(type: string, selectionType: string) {
       menu = createGameMenu<any>(mapSelectionId, selectionMenuType);
       if (isArray(response) && response.length) {
         received = response.map((element: Type): Element<Type> => {
-          const selectionElement: Element<Type> = selectableElement<Type>(element, category, count++);
+          const selectionElement: Element<Type> = selectableElement(element, category, count++);
           menu.appendChild(selectionElement);
           return selectionElement.hide();
         });
@@ -106,8 +106,8 @@ export default function<Type>(type: string, selectionType: string) {
     {
       changeCategory,
       changeSelection,
-      getSelected,
       elements,
+      getSelected,
       menu,
       moveToSelected,
     },

@@ -97,9 +97,9 @@ export default function(pathToRootDirectory: string, connection: Connections = c
       if (isGame(game)) {
         client = clients.byId(user.id);
         if (isDefined(client) && isRoom(client.getRoom())) {
-            return backend.saveGame(game)
-              .then((receivedGame) => res.json(receivedGame))
-              .catch(handle);
+          return backend.saveGame(game)
+            .then((receivedGame) => res.json(receivedGame))
+            .catch(handle);
         }
         return handle(Error("Room not found in attempt to save game."));
       }

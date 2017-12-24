@@ -5,16 +5,12 @@ import createElement, {Element} from "../../dom/element/element";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
 
 export interface NameInput extends Element<any> {
-
   listen(): NameInput;
-
   stop(): NameInput;
 }
 
 export type NameInputFactory = (defaultText: string) => NameInput;
-
 export default single<NameInputFactory>(function(): NameInputFactory {
-
   const inputHolderType: string = "p";
   const inputHolderId: string = "nameForm";
   const inputHolderClass: string = "inputForm";
@@ -27,56 +23,34 @@ export default single<NameInputFactory>(function(): NameInputFactory {
   const keyboard: KeyBoard = keyboardInput();
   const inputHolder = createElement<any>(inputHolderId, inputHolderType).setClass(inputHolderClass);
   const input = createElement<any>(inputId, inputType).setClass(inputClass);
-
   return function(defaultText: string): NameInput {
-
     let subscription: number;
-
     const listen = function(): NameInput {
-
       subscription = subscribe("keyPress", () => {
-
         let name: string;
-
         if (keyboard.pressedEnter()) {
-
           name = input.getText();
-
           if (isString(name)) {
-
             stop();
           }
-
           publish(nameWasSelectedEvent, true);
-
         } else if (keyboard.pressedEscape()) {
-
           stop();
           publish(nameWasSelectedEvent, false);
         }
-
       }) as number;
-
       return this;
     };
-
     const stop = function(): NameInput {
-
       if (isNumber(subscription) || isString(subscription)) {
-
         unsubscribe(subscription);
       }
-
       return this;
     };
-
     inputHolder.appendChild(input);
-
     if (isString(defaultText)) {
-
       input.setAttribute("placeholder", defaultText);
     }
-
     return Object.assign(inputHolder, {
       listen,
       stop,

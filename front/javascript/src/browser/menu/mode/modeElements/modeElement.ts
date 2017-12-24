@@ -23,7 +23,6 @@ export interface ModeElement extends ModesElementPrototype, Element<any> {
 }
 
 export type ModeElementFactory = (id: string, options?: string[]) => ModeElement;
-
 export default single<ModeElementFactory>(() => {
   let counter: number = 1;
   const fadingClass: string = "fadeToWhite";
@@ -62,7 +61,6 @@ export default single<ModeElementFactory>(() => {
       outlineDisplay(this.outline, null);
     },
   };
-
   return function(id: string, modeOptions?: string[]): ModeElement {
     const count: number = counter++;
     const border: Element<any> = createElement<any>(`${id}Border`, "div").setClass("modeBorder");
@@ -75,14 +73,12 @@ export default single<ModeElementFactory>(() => {
     mode.appendChild(background)
       .appendChild(text)
       .appendChild(border);
-
     // app.touch(text).changeMode().doubleTap();
     // app.touch(background).changeMode().doubleTap();
     // app.touch(li.element()).scroll();
     // app.click(text).changeMode().doubleClick();
     // app.click(background).changeMode().doubleClick();
     // app.click(li.element()).scroll();
-
     if (isDefined(modeOptions) && !isNull(modeOptions)) {
       modeOptions.forEach((option: string): void => {
         const optionElement: Element<string> = createOption(option, id);
@@ -96,8 +92,8 @@ export default single<ModeElementFactory>(() => {
     }
     return Object.assign({
       background,
-      text,
       border,
+      text,
     }, options, mode, methods);
   };
 })();

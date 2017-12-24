@@ -3,7 +3,6 @@ import single from "../storage/singleton";
 import capitalizeFirstLetter from "../stringManipulation/capitalizeFirstLetter";
 
 export interface TypeChecker {
-
   isDomElement(element: any): boolean;
   isDefined(element: any): boolean;
   isError(element: any): boolean;
@@ -19,7 +18,6 @@ export interface TypeChecker {
 }
 
 export default single<TypeChecker>(function(): TypeChecker {
-
   const numberType = "number";
   const myUndefined: undefined = void 0;
   const isDefined = (object: any): boolean => object !== myUndefined;
@@ -27,12 +25,10 @@ export default single<TypeChecker>(function(): TypeChecker {
   const isNull = (object: any): boolean => object === null;
   const isNumber = (object: any): boolean => typeof object === numberType;
   const isArray = (object: any): boolean => {
-
     return !isNull(object) && isDefined(object) && object.constructor === Array;
   };
   const isBoolean = (object: any): boolean => object === false || object === true;
   const isFunction = (object: any): boolean => {
-
     return !isNull(object) && isDefined(object) && object.constructor === Function;
   };
   const isObject = (object: any): boolean => {
@@ -46,34 +42,27 @@ export default single<TypeChecker>(function(): TypeChecker {
     return !isNull(object) && isDefined(object) && call === objectString;
   };
   const isString = (object: any): boolean => {
-
     return !isNull(object) && isDefined(object) && object.constructor === String;
   };
   const formatToIsType = (type: string): string => `is${capitalizeFirstLetter(type)}`;
   const register = function(type: string, typeCheck: (object: any) => boolean): TypeChecker {
-
     const formattedName: string = formatToIsType(type);
-
     if (isString(type) && isFunction(typeCheck)) {
-
       this[formattedName] = setName(typeCheck, formattedName);
     }
-
     return this;
   };
-
   return {
-
-    isDefined,
-    isError,
-    isNull,
-    isNumber,
     isArray,
     isBoolean,
+    isDefined,
+    isDomElement,
+    isError,
     isFunction,
+    isNull,
+    isNumber,
     isObject,
     isString,
-    isDomElement,
     register,
   };
 });

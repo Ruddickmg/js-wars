@@ -5,7 +5,6 @@ import createTerrain from "./elements/terrain/terrain";
 import createMap, {Map} from "./map";
 
 export default function(id: number, amountOfPlayers: number = 2): Map {
-
   const creatorId: number = 0;
   const terrain = [
     createTerrain("tallMountain", createPosition(5, 6)),
@@ -36,6 +35,5 @@ export default function(id: number, amountOfPlayers: number = 2): Map {
     createBuilding("base", createPosition(16, 9), 2),
   ];
   const dimensions: Dimensions = createDimensions(20, 20);
-
   return createMap(`test map #${id}`, creatorId, amountOfPlayers, dimensions, terrain, buildings);
 }

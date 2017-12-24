@@ -1,5 +1,6 @@
 import request = require("request-promise-native");
 import typeChecker, {TypeChecker} from "../../src/tools/validation/typeChecker";
+
 export default function(url: string) {
   const {isString}: TypeChecker = typeChecker();
   const json: boolean = true;

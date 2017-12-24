@@ -6,7 +6,6 @@ import validator, {Validator} from "../../tools/validation/validator";
 import createElement, {Element} from "../dom/element/element";
 
 export interface Canvas<Type> extends Element<Type> {
-
   clear(): Canvas<Type>;
   context(): any;
   dimensions(): Dimensions;
@@ -25,13 +24,10 @@ export function isCanvas(element: any) {
 }
 
 export default (function() {
-
   const {validateString}: Validator = validator("canvas");
   const animationContext: string = getSettings().get("canvas", "context");
   const {isDefined, isNull}: TypeChecker = typeChecker();
-
   return function <Type>(elementName: string, canvasDimensions?: Dimensions, existing?: any): Canvas<Type> {
-
     const canvas: Element<Type> = createElement<Type>(elementName, existing || "canvas").setClass("canvas");
     const currentContext: any = canvas.element.getContext(animationContext);
     const {paddingLeft, paddingRight}: any = window.getComputedStyle(canvas.element);
@@ -47,33 +43,24 @@ export default (function() {
     const width: number = canvasDimensions ? canvasDimensions.width : elementWidth;
     const height: number = canvasDimensions ? canvasDimensions.height : elementHeight;
     const clear = function(): Canvas<Type> {
-
       currentContext.clearRect(0, 0, width, height);
-
       return this;
     };
     const context = (): any => currentContext;
     const pixels = (): number => width * height;
     const dimensions = (): Dimensions => createDimensions(width, height);
     const render = function(image: any, {x, y}: Position): Canvas<Type> {
-
       currentContext.drawImage(image, x, y);
       return this;
     };
     if (validateString(elementName, "constructor")) {
-
       if (isDefined(existing) && !isNull(existing)) {
-
         canvas.element = existing;
-
       } else {
-
         canvas.setWidth(width);
         canvas.setHeight(height);
       }
-
       return Object.assign(canvas, {
-
         clear,
         context,
         dimensions,

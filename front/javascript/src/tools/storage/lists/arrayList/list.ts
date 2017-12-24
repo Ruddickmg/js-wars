@@ -32,20 +32,15 @@ export interface ArrayList<Type> {
 }
 
 type MapCallback = <Type>(element: Type, index: number, list: ArrayList<Type>) => any;
-type ReduceCallback<Type> = <Type>(accumulator: any, value: Type, index: number, list: ArrayList<Type>) => any;
-
+type ReduceCallback<Type> = (accumulator: any, value: Type, index: number, list: ArrayList<Type>) => any;
 export default (function() {
-
   const min = Math.min;
   const minimumIndex: number = 0;
   const {isNumber, isFunction}: TypeChecker = typeChecker()
     .register("list", isList);
-
   return function createList<Type>(initialElements: any[] = []): ArrayList<Type> {
-
     let elements: any[] = initialElements;
     let index: number = 0;
-
     const addElement = function(element: Type): ArrayList<Type> {
       elements.push(element);
       return this;
@@ -91,24 +86,20 @@ export default (function() {
       return elements[wrapIndexAroundLength(desiredIndex)];
     };
     const getNeighboringElements = (numberOfNeighboringElements: number = 1): Type[] => {
-
       const amountOfElements = elements.length;
       const amountOfCurrentElements = 1;
       const amountOfNeighboringElements = numberOfNeighboringElements * 2;
       const notEnoughElementsInList = amountOfElements < amountOfNeighboringElements + amountOfCurrentElements;
-      const length = index + numberOfNeighboringElements;
+      const amountOfNeighbors = index + numberOfNeighboringElements;
       const currentAndNeighboringElements = [];
       const error: string = `Not enough elements in list to accommodate ${numberOfNeighboringElements} neighbors`;
-
       let indexOfNeighbor = index - numberOfNeighboringElements;
       let wrappedIndex;
       let neighbor;
-
       if (notEnoughElementsInList) {
         publish("customError", {message: error, className: "List<Type>", method: "getNeighboringElements"});
       }
-
-      for (indexOfNeighbor; indexOfNeighbor <= length; indexOfNeighbor += 1) {
+      for (indexOfNeighbor; indexOfNeighbor <= amountOfNeighbors; indexOfNeighbor += 1) {
         wrappedIndex = wrapIndexAroundLength(indexOfNeighbor);
         neighbor = elements[wrappedIndex];
         currentAndNeighboringElements.push(neighbor);
@@ -168,9 +159,7 @@ export default (function() {
       return copyCurrentList(copyOfElements.sort(callback));
     };
     const wrapIndexAroundLength = (unwrappedIndex: number): number => wrapIndex(unwrappedIndex, elements.length);
-
     return {
-
       addElement,
       addElements,
       filter,

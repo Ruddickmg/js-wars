@@ -2,7 +2,6 @@ import {expect} from "chai";
 import createList, {ArrayList} from "../../../../../../src/tools/storage/lists/arrayList/list";
 
 describe("arrayList", () => {
-
   const pivotPoint: number = 2;
   const notInList: number = 5;
   const firstElement: number = 1;
@@ -19,7 +18,6 @@ describe("arrayList", () => {
   beforeEach(() => {
     list = createList<any>();
   });
-
   it("Starts out empty.", () => expect(list.isEmpty()).to.equal(true));
   it("Adds an element to the list.", () => {
     list.addElement(firstElement);
@@ -102,20 +100,16 @@ describe("arrayList", () => {
     });
   });
   it("Can have specified portions of it modified.", () => {
-
     const modification: number = 2;
     const beginningIndex: number = 1;
     const endingIndex: number = 2;
     const modifyFunction = (value: number): number => value + modification;
     const modifiedList: ArrayList<any> = list.modify(modifyFunction, beginningIndex, endingIndex);
-
     modifiedList.forEach((value: number, index: number): void => {
-
       const valueAtIndex: number = list.getElementAtIndex(index);
       const expectedValue: number = index >= beginningIndex && index <= endingIndex ?
         modifyFunction(valueAtIndex) :
         valueAtIndex;
-
       expect(value).to.equal(expectedValue);
     });
   });
@@ -139,7 +133,6 @@ describe("arrayList", () => {
     mapped.forEach((value: number, index: number): any => expect(value).to.equal(mapFunction(values[index])));
   });
   it("Can be filtered.", () => {
-
     const filterFunction = (value: number): boolean => value > pivotPoint;
     const filteredOut: number[] = [];
     const kept: number[] = [];
@@ -149,7 +142,6 @@ describe("arrayList", () => {
     size = list.length();
     filtered = list.filter(filterFunction);
     list.forEach((value: number): any => filterFunction(value) ? kept.push(value) : filteredOut.push(value));
-
     kept.forEach((value: number, index: number): any => expect(filtered.getElementAtIndex(index)).to.equal(value));
     expect(filtered.length()).to.equal(size - filteredOut.length);
   });

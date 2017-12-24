@@ -27,18 +27,15 @@ interface DisconnectedClient {
 }
 
 interface Clients {
-
   [index: string]: Client;
 }
 
 interface DisconnectedClients {
-
   [index: string]: DisconnectedClient;
 }
 
 type AllClients = Clients | DisconnectedClients;
 type AnyClient = Client | DisconnectedClient;
-
 export default single<ClientHandler>(function(): ClientHandler {
   let connectedClients: Clients = {};
   let disconnectedClients: DisconnectedClients = {};

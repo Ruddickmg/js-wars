@@ -1,6 +1,4 @@
-import {} from "../../../tools/pubSub";
-
-export default function() {
+// import {} from "../../../tools/pubSub";
 
   // TODO
   // ----------- decouple ------------ //
@@ -8,12 +6,10 @@ export default function() {
   //     .co()
   //     .changeCurrent(player.co);
   // });
-
   // if (indexOfRemovedPlayer < playerNumber) {
   //
   //     Teams.arrows.setPosition(Teams.playerElement(app.user.number()).co());
   // }
-
   // TODO decouple - changePropertyOnPlayer
   // const changeProperty = (property) => { // change this its weird
   //
@@ -29,7 +25,6 @@ export default function() {
   //
   //     playerController.setProperty(player, property, value);
   // }
-
   // TODO - playerAdded
   // var element = Teams.playerElement(player.number);
   //
@@ -38,28 +33,18 @@ export default function() {
   //     player.co = element.coName();
   // }
 
-  let elements = [];
+import {Player} from "./player";
 
-  const setElements = function(newElements: any): void {
+let elements: Player[] = [];
 
-    elements = newElements;
-
-    return this;
-  };
-
-  const addElement = function(e) {
-
-    elements.push(e);
-
-    return this;
-  };
-
-  const getElement = (elementNumber) => elements[elementNumber - 1];
-
-  return {
-
-    setElements,
-    addElement,
-    getElement,
-  };
+export function setElements(newElements: Player[]): void {
+  elements = newElements;
+  return this;
 }
+
+export function  addElement(element: Player) {
+  elements.push(element);
+  return this;
+}
+
+export const getElement = (elementNumber: number) => elements[elementNumber - 1];

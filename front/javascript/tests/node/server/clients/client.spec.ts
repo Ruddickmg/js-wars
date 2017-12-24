@@ -51,8 +51,8 @@ describe("client", () => {
   const testSocket: any = mockSocket(testEmitter);
   const socketOptions: any = {
     "force new connection": true,
-    "reconnection delay" : 0,
-    "reopen delay" : 0,
+    "reconnection delay": 0,
+    "reopen delay": 0,
     "transports": ["websocket"],
   };
   const pathToRootDirectory: string = `${__dirname}/../../../../../`;
@@ -158,7 +158,6 @@ describe("client", () => {
     client.setPlayer(testPlayer);
     expect(client.getPlayer()).to.equal(testPlayer);
   });
-
   it("Sets the socket used by the client", () => {
     client.setSocket(testSocket);
     expect(client.getSocket()).to.equal(testSocket);

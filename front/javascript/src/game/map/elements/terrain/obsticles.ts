@@ -1,7 +1,6 @@
 import obstacle from "./obsticle";
 
 export default {
-
   building: obstacle("building", 2),
   mountain: obstacle("mountain", 2),
   plain: obstacle("plain", 1),

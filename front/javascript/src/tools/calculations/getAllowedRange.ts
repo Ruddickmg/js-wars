@@ -1,4 +1,5 @@
 import range from "../array/range";
+
 export default function(length: number, beginning: number, end: number): number[] {
   const amount: number = Math.abs(end - beginning);
   const firstIndex: number = 0;

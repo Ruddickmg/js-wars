@@ -1,6 +1,7 @@
 import {expect} from "chai";
 import {Game} from "../../src/game/game";
 import checkForMapEquality from "./mapEquality";
+
 export default function(gameOne: Game, gameTwo: Game): any {
   expect(gameOne.category).to.equal(gameTwo.category);
   expect(gameOne.settings).to.deep.equal(gameTwo.settings);

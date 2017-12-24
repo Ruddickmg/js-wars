@@ -17,16 +17,12 @@ export interface MatrixMap<Type> extends Matrix<Type> {
 }
 
 const getPosition = (element: any): Position => element.position;
-
 export default function <Type>(map: Map, positionOfElement: (element: any) => Position = getPosition): MatrixMap<Type> {
-
   let placeHolders: any[] = [];
-
   const {getOccupantsOfPosition}: MapController = mapController(map);
   const {isUnit, isTerrain}: TypeChecker = typeChecker();
   const matrix: Matrix<Type> = createMatrix<Type>();
   const isSame = (currentElement: any, comparison: any) => {
-
     return currentElement && comparison && currentElement.id === comparison.id;
   };
   const insert = (element: Type, position?: Position): Type => {
@@ -43,7 +39,6 @@ export default function <Type>(map: Map, positionOfElement: (element: any) => Po
   };
   const getElement = (element: Type): Type => get(positionOfElement(element));
   const get = (coordinates: Position): any => {
-
     const minimumIndex: number = 0;
     const {x, y}: Position = coordinates;
     const {width, height}: Dimensions = map.dimensions;
@@ -62,7 +57,6 @@ export default function <Type>(map: Map, positionOfElement: (element: any) => Po
     const position: Position = isPosition(element) ? element as Position : positionOfElement(element as Type);
     const {unit, building, terrain} = getOccupantsOfPosition(position, map);
     const {x, y} = position;
-
     if (isUnit(element) && isSame(unit, element)) {
       matrix.insert(
         building
@@ -74,7 +68,6 @@ export default function <Type>(map: Map, positionOfElement: (element: any) => Po
     }
   };
   const dimensions = (): Dimensions => map.dimensions;
-
   return Object.assign(matrix, {
     clean,
     dimensions,

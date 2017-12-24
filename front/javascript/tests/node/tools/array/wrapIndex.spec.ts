@@ -2,12 +2,9 @@ import {expect} from "chai";
 import wrapIndex from "../../../../src/tools/array/wrapIndex";
 
 describe("wrapIndex", () => {
-
   it("keeps index within range by wrapping indices out of range to the beginning or end of the array", () => {
-
     const limit: number = 100;
     const doubleLimit: number = limit * 2;
-
     expect(wrapIndex(limit, limit)).to.equal(0);
     expect(wrapIndex(limit + 1, limit)).to.equal(1);
     expect(wrapIndex(-1, limit)).to.equal(limit - 1);

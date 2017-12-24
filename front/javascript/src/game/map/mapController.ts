@@ -25,13 +25,11 @@ export interface MapController {
 }
 
 export default function(map: Map): MapController {
-
   const mapSettings: Dictionary = settings().get("map");
   const matrix: MatrixMap<MapElement> = createMapMatrix<MapElement>(map);
   const {isUnit}: TypeChecker = typeChecker();
   const isSamePosition = ({x, y}: Position, {x: x2, y: y2}: Position) => x === x2 && y === y2;
   const restore = (element: Building | Unit): Building | Unit => {
-
     element.health = mapSettings.get(element.type, element.name, "health");
     return element;
   };
@@ -43,27 +41,20 @@ export default function(map: Map): MapController {
   const addUnit = (unit: Unit, currentMap: Map) => {
     const stored: Unit = matrix.insert(unit) as Unit;
     currentMap.units.push(stored);
-
     publish("unitAdded", stored);
-
     // refresh(); // TODO handle with notifications
   };
   const applyDamageToUnit = (unit: Unit, damage: number, {units}: Map): void => {
-
     const health = unit.health;
     const stored: Unit = matrix.getElement(unit) as Unit;
-
     publish("unitDamaged", {unit, health, damage});
-
     stored.health -= damage;
     units[getIndex(unit, units)].health -= damage; // TODO make sure these are the same reference
   };
   const changeHqToCity = (hq: Building, {buildings}: Map): void => {
-
     const index = getIndex(hq, buildings);
     const {position, playerNumber} = hq;
     const building: Building = createBuilding("city", position, playerNumber, index);
-
     buildings.splice(index, 1, building);
     matrix.insert(building);
   };
@@ -84,7 +75,6 @@ export default function(map: Map): MapController {
     const indexOfUnitBeingMoved = getIndex(unit, units);
     const unitBeingMoved = units[indexOfUnitBeingMoved];
     const mapElementAtDestination = matrix.get(target);
-
     if (unitBeingMoved) {
       matrix.remove(unitBeingMoved);
       unitBeingMoved.position = target;
@@ -98,35 +88,25 @@ export default function(map: Map): MapController {
     return unitBeingMoved;
   };
   const getNeighbors = (position: Position, {dimensions}: Map) => {
-
     return position.neighbors(dimensions)
       .reduce((existingNeighbors: MapElement[], neighbor: Position) => {
-
         const element: MapElement = matrix.get(neighbor);
-
         if (element) {
-
           existingNeighbors.push(element);
         }
-
         return existingNeighbors;
-
       }, []);
   };
   const removeUnit = (unit: Unit, {units}: Map) => {
     const index = getIndex(unit, units);
     const element = matrix.getElement(unit);
-
     let removed: Unit;
-
     if (isUnit(element) && isSamePosition(element.position, unit.position)) {
       matrix.remove(unit);
       removed = units.splice(index, 1)[0];
     }
-
     publish("unitRemoved", unit);
     // refresh(); // TODO pub sub
-
     return removed;
   };
   const getOccupantsOfPosition = (position: Position, {units, buildings, terrain}: Map): any => {
@@ -142,13 +122,10 @@ export default function(map: Map): MapController {
     }, {});
   };
   const topElementAtPosition = (position: Position, currentMap: Map): MapElement => {
-
     const {x, y}: Position = position;
     const {unit, building, terrain} = getOccupantsOfPosition(position, currentMap);
-
     return unit || building || terrain || createTerrain("plain", createPosition(x, y));
   };
-
   return {
     addUnit,
     applyDamageToUnit,
@@ -163,15 +140,12 @@ export default function(map: Map): MapController {
     topElementAtPosition,
   };
 }
-
 // TODO testing
-
 // //, TODO this belongs in view/animation logic
 // setBackground: (type: string, currentMap: Map) => {
 //
 //     currentMap.background = createTerrain(type);
 // },
-
 // refresh: function () { // TODO pub sub
 //
 //     app.animate(["unit","building"]);
@@ -180,7 +154,6 @@ export default function(map: Map): MapController {
 //
 //     notifications.publish("animate", {elements: ["unit"], hide});
 // };
-
 // unitsInfo: function(units: Unit[]) { // TODO this doesn't belong here, move it to "view" logic
 //
 //     return units.map((unit: Unit) => {

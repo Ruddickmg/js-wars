@@ -1,7 +1,6 @@
 import createNode, {LinkedListNode} from "./node";
 
 export interface LinkedListIterator<Type> {
-
   current(): LinkedListNode<Type>;
   end(): LinkedListNode<Type>;
   insert(value: Type): LinkedListIterator<Type>;
@@ -22,8 +21,8 @@ export function iteratorFactory<Type>(
   ) => LinkedListIterator<Type>,
   head: LinkedListNode<Type>,
   tail: LinkedListNode<Type>,
-  increment: any,
-  decrement: any,
+  increment?: any,
+  decrement?: any,
 ): IteratorFactory {
   return (): LinkedListIterator<Type> => iteratorConstructor(head, tail, increment, decrement);
 }
@@ -34,53 +33,41 @@ export default function <Type>(
   increment?: any,
   decrement?: any,
 ): LinkedListIterator<Type> {
-
   let currentNode: LinkedListNode<Type> = head;
   let previousNode: LinkedListNode<Type> = tail;
-
-  const insertIntoNode = (value: Type, insertLocation: LinkedListNode<Type>): void => {
-
-    const node: LinkedListNode<Type> = createNode<Type>(value);
+  const insertIntoNode = (element: Type, insertLocation: LinkedListNode<Type>): void => {
+    const node: LinkedListNode<Type> = createNode<Type>(element);
     increment();
     node.next = insertLocation.next;
     insertLocation.next = node;
   };
   const next = (): LinkedListNode<Type> => {
-
     previousNode = currentNode;
     currentNode = currentNode.next;
-
     return currentNode;
   };
   const end = (): LinkedListNode<Type> => tail;
   const current = (): LinkedListNode<Type> => currentNode;
-  const insert = function(value: Type): LinkedListIterator<Type> {
-
-    insertIntoNode(value, currentNode);
-
+  const insert = function(element: Type): LinkedListIterator<Type> {
+    insertIntoNode(element, currentNode);
     return this;
   };
-  const insertBefore = function(value: Type): LinkedListIterator<Type> {
-
-    insertIntoNode(value, previousNode);
-
+  const insertBefore = function(element: Type): LinkedListIterator<Type> {
+    insertIntoNode(element, previousNode);
     return this;
   };
   const remove = (): LinkedListNode<Type> => {
     decrement();
     previousNode.next = currentNode.next;
-
     return currentNode;
   };
   const value = (): Type => currentNode.value;
-
   return {
-
-    next,
     current,
     end,
     insert,
     insertBefore,
+    next,
     remove,
     value,
   };

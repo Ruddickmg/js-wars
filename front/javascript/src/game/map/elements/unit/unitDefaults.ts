@@ -1,5 +1,4 @@
 export interface UnitDefaults {
-
   ammo(): number;
   fuel(): number;
   health(): number;
@@ -8,23 +7,17 @@ export interface UnitDefaults {
 }
 
 export default function(properties: any): UnitDefaults {
-
   const ammo: number = properties.ammo;
   const fuel: number = properties.fuel;
   const movement: number = properties.movement;
   const vision: number = properties.vision;
   const defaultHealth: number = 100;
-
   [ammo, fuel, movement, vision, defaultHealth].forEach((property: number) => {
-
     if (isNaN(property)) {
-
       throw new Error("One of the default properties is not defined.");
     }
   });
-
   return {
-
     ammo: (): number => ammo,
     fuel: (): number => fuel,
     health: (): number => defaultHealth,

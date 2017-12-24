@@ -12,6 +12,7 @@ import handleGameModeSelection from "./mode/modeSelection";
 import getGameScreen from "./screen/gameScreen";
 import createTitle from "./screen/title";
 import handleSettingsSelection from "./settings/settings";
+
 export default single<any>(function() {
   const request: Request = requestMaker();
   const saveMap: IncompleteRequest = request.post("maps/save") as IncompleteRequest;

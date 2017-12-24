@@ -12,7 +12,6 @@ describe("gameNameEntry", () => {
   const channel: string = "setGameName";
   const emptyError: string = "A name must be entered for the game.";
   const lengthError: string = "Name must be at least three letters long.";
-
   it("Types a string stating that a name must be entered if none has", () => {
     expect(nameInput(element)).to.equal(emptyError);
   });

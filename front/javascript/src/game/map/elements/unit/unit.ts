@@ -11,16 +11,12 @@ export type Target = Unit | Building;
 export type Action = string;
 
 interface Actions {
-
   [index: string]: Action;
 }
 
-export interface Unit {
-
+export interface Unit extends Building {
   action?: string;
-
   [index: string]: any;
-
   actions: Actions;
   damage: number[];
   drawing: string;
@@ -41,9 +37,7 @@ export interface Unit {
 }
 
 export function isUnit(element: any): boolean {
-
   const {isString, isNumber, isArray, isDefined, isObject, isBoolean}: TypeChecker = typeChecker();
-
   return isDefined(element)
     && isString(element.action)
     && isObject(element.actions)
@@ -66,7 +60,6 @@ export function isUnit(element: any): boolean {
 }
 
 export default function(type: string, position: Position, playerNumber: number): Unit {
-
   const increment = (id: number) => id + 1;
   const decrement = (id: number) => id - 1;
   const identity: Identifier<number> = identifier<number>(1, increment, decrement);
@@ -79,9 +72,7 @@ export default function(type: string, position: Position, playerNumber: number):
   const damage: number[] = [];
   const moves: Position[] = [];
   const targets: Target[] = [];
-
   const unitProperties = {
-
     actions: {},
     ammo,
     damage,
@@ -97,7 +88,6 @@ export default function(type: string, position: Position, playerNumber: number):
     targets,
     vision,
   };
-
   return selectivelyCombineObjects.excluding(
     ["type", "health", "index"],
     unitNameAndType,

@@ -24,21 +24,18 @@ describe("lobby", () => {
     link: "www.testLink.com",
     name: "testy",
   }, "twitter"), "max");
-
   describe("id", () => {
     const room: Lobby = createLobby(roomId);
     it("Returns the id of the room.", () => {
       expect(room.id()).to.equal(roomId);
     });
   });
-
   describe("name", () => {
     const room: Lobby = createLobby(roomId);
     it("Returns the name of the room.", () => {
       expect(room.name()).to.equal(name);
     });
   });
-
   describe("size", () => {
     const room: Lobby = createLobby(roomId);
     it("Returns the amount of players in the room.", () => {
@@ -47,7 +44,6 @@ describe("lobby", () => {
       expect(room.size()).to.equal(2);
     });
   });
-
   describe("addPlayer", () => {
     const room = createLobby(roomId);
     it("Adds a player to the room.", () => {
@@ -55,7 +51,6 @@ describe("lobby", () => {
       expect(room.getPlayers()[0]).to.equal(userOne);
     });
   });
-
   describe("getPlayers", () => {
     const room: Lobby = createLobby(roomId);
     room.addPlayer(userOne);
@@ -67,7 +62,6 @@ describe("lobby", () => {
       expect(players.length).to.equal(2);
     });
   });
-
   describe("getPlayer", () => {
     const room: Lobby = createLobby(roomId);
     room.addPlayer(userOne);
@@ -76,7 +70,6 @@ describe("lobby", () => {
       expect(room.getPlayer(userTwo.id)).to.equal(userTwo);
     });
   });
-
   describe("removePlayer", () => {
     const room: Lobby = createLobby(roomId);
     room.addPlayer(userTwo);

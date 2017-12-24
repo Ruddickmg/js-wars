@@ -1,5 +1,6 @@
 import {expect} from "chai";
 import getRange from "../../../../src/tools/calculations/getAllowedRange";
+
 describe("getAllowedRange", () => {
   const array: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   it("Gets the desired range allowed if over length.", () => {

@@ -6,14 +6,11 @@ import {Player} from "./player";
 export type AnyPlayer = Player | AiPlayer;
 
 export function isAiPlayer(player: AnyPlayer): player is AiPlayer {
-
   return (player as AiPlayer).emit !== undefined;
 }
 
 export default function() {
-
   const broadcast = (playerSocket: any, action: string, value: any): void => {
-
     playerSocket.broadcast.moveTo(playerSocket.getRoom.name).emit(action, value);
   };
   const addUnit = (unit: Unit, socket: any): void => broadcast(socket, "addUnit", unit);
@@ -32,7 +29,6 @@ export default function() {
   const moveUnit = (move: any, socket: any): void => broadcast(socket, "moveUnit", move);
   const save = (game: Game, socket: any): void => broadcast(socket, "confirmSave", game);
   const unload = (transport: any, socket: any): void => broadcast(socket, "unload", transport);
-
   return {
     addUnit,
     attack,

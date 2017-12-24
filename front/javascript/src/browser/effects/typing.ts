@@ -1,11 +1,14 @@
 import appSettings from "../../settings/settings";
 import {Dictionary} from "../../tools/storage/dictionary";
 import timedIterator, {TimedIterator} from "../../tools/timedIterator";
+
 type CallBack = (text: string, index: number, wholeString: string) => any;
+
 export interface TypeWriter extends TimedIterator {
   restoreDefaults(): TypeWriter;
   type(sentence: string, callback?: CallBack): Promise<string>;
 }
+
 export default (function() {
   const settings: Dictionary = appSettings();
   const defaultSpeed: number = settings.get("typingSpeed");

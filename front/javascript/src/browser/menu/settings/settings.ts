@@ -51,11 +51,8 @@ export default (function() {
   const upOnScreen: string = "moveUpOnScreen";
   const downOnScreen: string = "moveDownOnScreen";
   const downOffScreen: string = "moveDownOffScreen";
-
   typeWriter.setSpeed(typingSpeed);
-
   return function(game: Game, selectingSettings: boolean = true, movingForward: boolean = true): SettingsMenu {
-
     let nameInput: NameInput;
     const subscriptions: number[] = [];
     const isSettingOption = (settingOption: Element<any>): boolean => {
@@ -158,24 +155,20 @@ export default (function() {
       });
       return this;
     };
-
     settingSelector.setSelections(listOfSettingElements)
       .vertical(verticalSelection)
       .horizontal(horizontalSelection)
       .selectHorizontally()
       .listen();
-
     setupScreen.appendChild(footer);
     setupScreen.get(titleId).setText(titleText);
     typeTextIntoFooter(listOfSettingElements.getCurrentElement().description)
       .catch((error: Error): any => publish("error", error));
-
     if (selectingSettings) {
       nameInput = getNameInput(defaultTextForNameInput);
       arrows.setSpaceBetweenArrows(distanceBetweenArrows)
         .setTop((movingForward ? -offScreen : offScreen) + middle)
         .fade();
-
       setupScreen.appendChild(settingsSelectionMenu);
     }
     listen();

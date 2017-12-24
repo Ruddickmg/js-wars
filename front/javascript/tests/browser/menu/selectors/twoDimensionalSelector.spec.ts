@@ -4,7 +4,6 @@ import selector, {SelectionHandler} from "../../../../src/browser/menu/selectors
 import createList, {ArrayList} from "../../../../src/tools/storage/lists/arrayList/list";
 
 describe("selector", () => {
-
   const keyboard: KeyBoard = keyBoardInput();
   const arrOne: number[] = [1, 2, 3, 4, 5];
   const arrTwo: number[] = [6, 7, 8, 9, 10];
@@ -24,7 +23,6 @@ describe("selector", () => {
     getSelector: () => SelectionHandler<ArrayList<number>>,
     first: ArrayList<number>,
   ) => {
-
     it("Can retrieve it's currently selected element.", () => {
       const select: SelectionHandler<any> = getSelector();
       expect(select.getSelected()).to.equal(first);
@@ -84,11 +82,9 @@ describe("selector", () => {
       select.stop();
     });
     it("will move vertically through values of a selected list when set horizontal selection.", () => {
-
       const select: SelectionHandler<any> = getSelector()
         .selectHorizontally()
         .listen();
-
       list.forEach((listElement: ArrayList<number>): any => {
         const length: number = listElement.length();
         let index: number = 1;
@@ -104,37 +100,30 @@ describe("selector", () => {
       select.stop();
     });
     it("Will move through values of a selected list horizontally when set to vertical selection.", () => {
-
       const select: SelectionHandler<any> = getSelector()
         .selectVertically()
         .listen();
-
       list.forEach((listElement: ArrayList<number>): any => {
         const length: number = listElement.length();
         let index: number = 1;
-
         for (index; index < length; index += 1) {
           keyboard.pressRight();
           expect(select.getSelected())
             .to.equal(listElement.getElementAtIndex(index));
           keyboard.releaseRight();
         }
-
         keyboard.pressDown();
         keyboard.releaseDown();
       });
       select.stop();
     });
     it("Can switch between vertical and horizontal selection.", () => {
-
       const select: SelectionHandler<any> = getSelector()
         .selectHorizontally()
         .listen();
-
       const length: number = list.getElementAtIndex(0).length();
       const halfWay: number = Math.round(length / 2);
       let index: number = 1;
-
       for (index; index < length; index += 1) {
         keyboard.pressDown();
         expect(select.getSelected())
@@ -144,36 +133,26 @@ describe("selector", () => {
       keyboard.pressDown();
       keyboard.pressRight();
       keyboard.clearPressedKeys();
-
       index = 1;
-
       for (index; index < halfWay; index += 1) {
-
         keyboard.pressDown();
         expect(select.getSelected())
           .to.equal(list.getElementAtIndex(1).getElementAtIndex(index));
         keyboard.releaseDown();
       }
-
       select.selectVertically();
-
       for (index; index < length; index += 1) {
-
         keyboard.pressRight();
         expect(select.getSelected())
           .to.equal(list.getElementAtIndex(1).getElementAtIndex(index));
         keyboard.releaseRight();
       }
-
       keyboard.pressRight();
       keyboard.pressDown();
       keyboard.clearPressedKeys();
-
       select.selectHorizontally();
       index = 1;
-
       for (index; index < length; index += 1) {
-
         keyboard.pressDown();
         expect(select.getSelected())
           .to.equal(list.getElementAtIndex(2).getElementAtIndex(index));
@@ -185,12 +164,10 @@ describe("selector", () => {
       keyboard.pressDown();
       keyboard.releaseDown();
       expect(select.getSelected()).to.equal(list.getElementAtIndex(0));
-
       select.selectHorizontally();
       keyboard.pressRight();
       keyboard.releaseRight();
       expect(select.getSelected()).to.equal(list.getElementAtIndex(1));
-
       select.selectVertically();
       index = 1;
       for (index; index < halfWay; index += 1) {
@@ -199,37 +176,30 @@ describe("selector", () => {
           .to.equal(list.getElementAtIndex(1).getElementAtIndex(index));
         keyboard.releaseRight();
       }
-
       select.selectHorizontally();
-
       for (index; index < length; index += 1) {
         keyboard.pressDown();
         expect(select.getSelected())
           .to.equal(list.getElementAtIndex(1).getElementAtIndex(index));
         keyboard.releaseDown();
       }
-
       select.stop();
     });
     it("Can have callbacks set to be called on its movements when selecting vertically.", () => {
-
       const firstElement = list.getElementAtIndex(0);
       const secondElement = list.getElementAtIndex(1);
       const select: SelectionHandler<ArrayList<number>> = getSelector().selectVertically()
         .vertical((current: any, previous: any, selections: any) => {
-
           expect(previous).to.equal(firstElement);
           expect(current).to.equal(secondElement);
           expect(selections).to.equal(list);
         })
         .horizontal((current: any, previous: any, selections: any): any => {
-
           expect(previous).to.equal(firstElement.getElementAtIndex(0));
           expect(current).to.equal(firstElement.getElementAtIndex(1));
           expect(selections).to.equal(firstElement);
         })
         .listen();
-
       keyboard.pressRight();
       keyboard.pressDown();
       select.stop();
@@ -270,7 +240,6 @@ describe("selector", () => {
       testSelector.stop();
     });
   };
-
   describe("Will operate on settings set from constructor.", () => {
     beforeEach(() => {
       reset(normalList);

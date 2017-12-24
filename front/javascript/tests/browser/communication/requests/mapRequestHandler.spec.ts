@@ -8,7 +8,6 @@ import {Map} from "../../../node/game/map/map";
 import checkEqualityBetweenTwoMaps from "../../../utilities/mapEquality";
 
 describe("mapRequestHandler", () => {
-
   let requests: SinonFakeXMLHttpRequest[];
   let request: Request;
   let requestMap: MapRequestHandler<Map>;
@@ -19,7 +18,7 @@ describe("mapRequestHandler", () => {
     const data: string = JSON.stringify({success: true, response: maps});
     const response = method(category);
     expect(requests.length).to.equal(1);
-    requests[0].respond(200, { "Content-Type": "application/json" }, data);
+    requests[0].respond(200, {"Content-Type": "application/json"}, data);
     return response.then((received: Map[]): any => {
       maps.forEach((map: Map, index: number): any => {
         checkEqualityBetweenTwoMaps(received[index], map);
@@ -34,7 +33,6 @@ describe("mapRequestHandler", () => {
     requestMap = mapRequestHandler("maps", "get", request);
   });
   afterEach((): any => xhr.restore());
-
   it("Retrieves maps or games from server.", (): any => testRequestMethod(requestMap.byCategory));
   it("Retrieves maps from a random category", (): any => testRequestMethod(requestMap.randomCategory));
 });

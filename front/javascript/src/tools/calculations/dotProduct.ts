@@ -1,19 +1,12 @@
 import validator, {Validator} from "../validation/validator";
 
 export default (function() {
-
   const {validateArray}: Validator = validator("dotProduct");
-
   return function(firstArray: number[], secondArray: number[]): number {
-
     const length = firstArray.length;
-
     if (validateArray(firstArray) && validateArray(secondArray)) {
-
       if (length <= secondArray.length) {
-
         return firstArray.reduce((current: number, value: number, index: number) => {
-
           return current + value * secondArray[index];
         }, 0);
       }

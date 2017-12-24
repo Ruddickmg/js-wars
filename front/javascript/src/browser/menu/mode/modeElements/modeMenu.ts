@@ -8,7 +8,7 @@ export interface ModeMenu<Type> extends Element<Type> {
   elements: ArrayList<ModeElement>;
 }
 
-export default function<Type>() {
+export default function <Type>() {
   const modeMenuId: string = "selectModeMenu";
   const modeMenuType: string = "ul";
   const modes: any = getSettings().toObject("mode", "modes");

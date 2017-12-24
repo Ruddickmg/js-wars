@@ -8,7 +8,6 @@ import {Unit} from "./elements/unit/unit";
 export type MapId = string | number;
 
 export interface Map {
-
   id?: MapId;
   name: string;
   maximumAmountOfPlayers: number;
@@ -21,11 +20,9 @@ export interface Map {
 }
 
 export function isMap(element: any): boolean {
-
   const {isArray, isString, isNumber, isNull, isDefined}: TypeChecker = typeChecker();
   let id: MapId;
   let bool: boolean = false;
-
   if (isDefined(element) && !isNull(element)) {
     id = element.id;
     bool = (isNumber(id) || isString(id) || isNull(id))
@@ -37,14 +34,11 @@ export function isMap(element: any): boolean {
       && isArray(element.buildings)
       && isArray(element.units);
   }
-
   return bool;
 }
 
 export default (function() {
-
   const categories: any = settings().toObject("map", "numberToCategoryMappings");
-
   return function(
     name: string,
     creator: number = null,
@@ -56,17 +50,15 @@ export default (function() {
     id: MapId = null,
   ) {
     const category: string = units.length ? "preDeployed" : categories[maximumAmountOfPlayers];
-
     return {
-
-      id,
-      name,
-      creator,
-      maximumAmountOfPlayers,
-      category,
-      dimensions,
-      terrain,
       buildings,
+      category,
+      creator,
+      dimensions,
+      id,
+      maximumAmountOfPlayers,
+      name,
+      terrain,
       units,
     };
   };

@@ -4,7 +4,6 @@ import {SinonSpy} from "sinon";
 import createElement, {Element} from "../../../../src/browser/dom/element/element";
 
 describe("element", () => {
-
   const id: string = "testElement";
   const childId: string = "testChild";
   const type: string = "div";
@@ -21,9 +20,7 @@ describe("element", () => {
   const width: number = 50;
   const eventListener: SinonSpy = sinon.spy();
   const text: string = "this is some text!";
-
   window.document.body.appendChild(element.element);
-
   it("Starts out with no children.", () => expect(element.children.size()).to.equal(0));
   it("Can add children.", () => {
     element.appendChild(childElement);
@@ -151,7 +148,6 @@ describe("element", () => {
     element.setLeft(width);
     expect(element.element.style.left).to.equal(`${width}px`);
   });
-
   // TODO test these remaining four methods.
 // getInput(): any;
 // position(): ElementPosition;

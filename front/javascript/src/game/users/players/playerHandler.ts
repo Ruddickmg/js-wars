@@ -29,61 +29,39 @@ export interface PlayerHandler {
 }
 
 export default function(players: Player[] = [], maximumAmountOfPlayers: number): PlayerHandler {
-
   let current: Player;
   let gameHasStarted: boolean;
   let indexOfLastPlayer: number = maximumAmountOfPlayers - 1;
-
   const finishedPlayers: Player[] = [];
   const numberOfPlayersRequiredForGame = 2;
-
   const getNext = (): Player => {
-
     const playerIndex: number = indexOfPlayer(current, players);
-
     return playerIndex >= indexOfLastPlayer ? first() : players[playerIndex + 1];
   };
-
   const shiftPlayers = (indexOfRemovedPlayer: number, currentPlayers: Player[]) => {
-
     currentPlayers.slice(indexOfRemovedPlayer).forEach((player: Player, index: number): void => {
-
       player.number = index + 1;
     });
   };
-
   const gameIsFull = () => numberOfActivePlayers() >= maximumAmountOfPlayers;
   const indexOfPlayer = (player: Player, currentPlayers: Player[]) => {
-
     const playerId = player.id;
-
     return currentPlayers.findIndex(({id}: Player) => playerId === id);
   };
-
   const addPlayer = function(player: AnyPlayer): PlayerHandler {
-
     const index: number = indexOfPlayer(player, players);
-
     if (!gameIsFull()) {
-
       if (isNaN(index)) {
-
         player.number = numberOfActivePlayers() + 1;
         players.push(player);
-
       } else {
-
         players[index] = Object.assign(player, players[index]);
       }
-
       publish("playerAdded", player);
-
       return this;
     }
-
     throw Error("Game is full.");
   };
-
   const addPlayers = (multiplePlayers: AnyPlayer[]): PlayerHandler => {
     const wasEmpty = empty();
     multiplePlayers.forEach((player: Player) => addPlayer(player));
@@ -92,35 +70,27 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
     }
     return this;
   };
-
   const allPlayersAreReady = (): boolean => {
-
     return players.reduce((allAreReady: boolean, {ready}: Player) => ready && allAreReady, true);
   };
-
   const defeatedPlayers = (): AnyPlayer[] => finishedPlayers;
   const empty = (): boolean => !numberOfActivePlayers();
   const first = (): AnyPlayer => players[0];
   const getAllPlayers = (): AnyPlayer[] => players.concat(finishedPlayers);
   const getCurrentPlayer = (): AnyPlayer => current || first();
   const getOtherPlayers = ({id: userId}: AnyPlayer): AnyPlayer[] => {
-
     return players.filter(({id}: Player): boolean => id !== userId);
   };
   const getPlayer = (player: AnyPlayer): AnyPlayer => getPlayerById(player.id);
   const getPlayerById = (id: UserId): AnyPlayer => {
-
     return getAllPlayers().find(({id: userId}: AnyPlayer) => userId === id);
   };
   const getPlayerByNumber = (playerNumber: number): AnyPlayer => {
-
     return players.find((player: AnyPlayer) => player.number === playerNumber);
   };
   const last = (): AnyPlayer => players[indexOfLastPlayer];
   const namesOfEachPlayerToString = (allPlayers: AnyPlayer[]): string => {
-
     const amountOfPlayers: number = allPlayers.length;
-
     return allPlayers.reduce((stringOfPlayerNames: string, {name}: Player, index: number): string => {
       let transition: string = "";
       const isNotLastPlayer = index + 1 < amountOfPlayers;
@@ -150,9 +120,7 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
       // TODO -- make this report that the game needs to end
       // return app.game.end();
     }
-
     indexOfLastPlayer -= 1;
-
     return removedPlayer;
   };
   const removePlayer = (player: AnyPlayer): AnyPlayer => {
@@ -164,7 +132,6 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
       removedPlayer = players.splice(indexOfRemovedPlayer, 1)[0];
       publish("playerRemovedFromGame", removedPlayer);
       // transmit.removeAi(removedPlayer);
-
       if (numberOfActivePlayers() >= indexOfRemovedPlayer + 1) {
         shiftPlayers(indexOfRemovedPlayer, players);
       }
@@ -198,11 +165,9 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
     }
     return player;
   };
-
   subscribe("gameHasStarted", () => {
     gameHasStarted = true;
   });
-
   return {
     addPlayer,
     addPlayers,
@@ -225,7 +190,6 @@ export default function(players: Player[] = [], maximumAmountOfPlayers: number):
     replacePlayer,
     setCurrentPlayer,
     updatePlayer,
-
     // TODO - move somewhere else
     // unconfirm: function() {
     //

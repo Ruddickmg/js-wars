@@ -95,49 +95,33 @@ export default (function() {
         } else {
           publish("invalidInput", {className: "oscillator", method: "setMinimum", input: newMinimum});
         }
-
         return this;
       },
       setPosition(position: number): Oscillator {
-
         if (isNumber(position)) {
-
           current = position;
-
         } else {
-
           publish("invalidInput", {className: "oscillator", method: "setPosition", input: position});
         }
-
         return this;
       },
       setSpeed(newSpeed: number): Oscillator {
-
         if (isNumber(newSpeed)) {
-
           speed = newSpeed;
-
         } else {
-
           publish("invalidInput", {className: "oscillator", method: "setSpeed", input: newSpeed});
         }
-
         return this;
       },
       start(): Oscillator {
-
         if (!oscillating) {
-
           oscillating = true;
           oscillator();
         }
-
         return this;
       },
       stop(): Oscillator {
-
         oscillating = false;
-
         return this;
       },
     };

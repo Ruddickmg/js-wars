@@ -1,9 +1,7 @@
 import typeChecker, {TypeChecker} from "../../../validation/typeChecker";
 
 export default function isList(element: any): boolean {
-
   const {isDefined, isFunction}: TypeChecker = typeChecker();
-
   return isDefined(element)
     && isFunction(element.modify)
     && isFunction(element.next)

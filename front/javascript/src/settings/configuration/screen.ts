@@ -1,5 +1,4 @@
 export default {
-
   listOfCanvasAnimations: [
     "background",
     "effects",

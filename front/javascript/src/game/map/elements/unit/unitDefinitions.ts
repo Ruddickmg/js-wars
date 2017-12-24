@@ -4,9 +4,7 @@ const movable = {
   foot: ["plain", "river", "mountain", "wood", "road", "building"],
   wheels: ["plain", "wood", "road", "building"],
 };
-
 export default {
-
   antiAir: {
     cost: 8000,
     name: "Anti-Aircraft",
@@ -305,7 +303,6 @@ export default {
     },
   },
   infantry: {
-
     cost: 1000,
     name: "Infantry",
     properties: {

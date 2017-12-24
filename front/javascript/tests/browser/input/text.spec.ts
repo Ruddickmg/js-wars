@@ -2,6 +2,7 @@ import {expect} from "chai";
 import {Element} from "../../../src/browser/dom/element/element";
 import isElement from "../../../src/browser/dom/element/isElement";
 import textInput from "../../../src/browser/input/text";
+
 describe("text", () => {
   const id: string = "test";
   const defaultText: string = "default";

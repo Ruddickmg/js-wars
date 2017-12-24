@@ -1,5 +1,4 @@
 export default {
-
   eight: "8 Player",
   five: "5 Player",
   four: "4 Player",

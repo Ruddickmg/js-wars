@@ -25,7 +25,6 @@ interface Event {
 }
 
 type Emitter = (data: any, timeSinceLastUpdate: number) => any;
-
 const nonExistentIndex = -1;
 const elementsToRemoveFromEvents = 1;
 const firstElementInReturnedArray = 0;

@@ -22,23 +22,22 @@ export interface SelectionHandler<Type> extends SelectorMethods<Type> {
 }
 
 type Handler = (selected: any, previous: any, selections: any) => any;
-
 export default function <Type>(container: ArrayList<Type> = createList<any>()): SelectionHandler<Type> {
   const upKey: string = "pressedUpKey";
   const downKey: string = "pressedDownKey";
   const leftKey: string = "pressedLeftKey";
-  const rightKey: string = "pressedRightKey";  const keyboard: KeyBoard = keyboardInput();
+  const rightKey: string = "pressedRightKey";
+  const keyboard: KeyBoard = keyboardInput();
   const previous: Stack<ArrayList<Type>> = createStack<ArrayList<Type>>();
   const {validateFunction}: Validator = validator("selectionHandler");
   const {isDefined}: TypeChecker = typeChecker();
-
   let subscriptions: number[] = [];
   let selectingVertically: boolean = true;
-  let isVertical: boolean = selectingVertically;  let selections: ArrayList<Type> = container;
+  let isVertical: boolean = selectingVertically;
+  let selections: ArrayList<Type> = container;
   let current: Type = selections.getCurrentElement();
   let verticalSelectionHandler: Handler;
   let horizontalSelectionHandler: Handler;
-
   const elementSelection = (handleSelection: Handler, movingForward: boolean): any => {
     const selected = movingForward ? selections.next() : selections.previous();
     if (isDefined(selected) && isDefined(current)) {
@@ -85,7 +84,6 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
     return this;
   };
   const methods: SelectorMethods<Type> = {
-
     selectVertically(): SelectionHandler<Type> {
       selectingVertically = isVertical === selectingVertically;
       isVertical = true;

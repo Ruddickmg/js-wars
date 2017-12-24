@@ -8,18 +8,16 @@ import clientHandler, {ClientHandler} from "../../../../src/server/clients/clien
 import createRoom, {Room} from "../../../../src/server/rooms/room";
 
 describe("clients", () => {
-
   const sinon = require("sinon");
   const testId = 1;
   const category = "testCategory";
   const testRoomName = "testRoom";
-  const testGame: Game = createGame(testRoomName, category, map());
+  const testGame: Game = createGame(testRoomName, category, map(testId));
   const testRoom: Room = createRoom(testId, testGame);
   const join: any = sinon.spy();
   const leave: any = sinon.spy();
   const moveTo: any = sinon.spy();
   const testUser: User = createUser({
-
     email: "test@email.com",
     first_name: "firstOne",
     gender: "male",
@@ -29,7 +27,6 @@ describe("clients", () => {
     name: "yoMan",
   }, "none");
   const secondTestUser: User = createUser({
-
     email: "test@email.com",
     first_name: "name",
     gender: "famale",
@@ -46,34 +43,28 @@ describe("clients", () => {
         return {emit};
       },
     },
-    id: 1,
-    name: "mock socket",
     emit,
+    id: 1,
     join,
     leave,
+    name: "mock socket",
   });
   const testEmitter: any = sinon.spy();
   const testSocket: any = mockSocket(testEmitter);
   const clients: ClientHandler = clientHandler();
-
   it("Adds a client to the client handler.", () => {
-
     const client: Client = clients.add(testSocket, testId);
-
     expect(clients.byId(testId)).to.equal(client);
     expect(clients.bySocket(testSocket)).to.equal(client);
   });
-
   it("Returns a client by their assigned id.", () => {
     const client = clients.add(testSocket, testId);
     expect(clients.byId(testId)).to.equal(client);
   });
-
   it("Returns a client by the socket it uses.", () => {
     const client: Client = clients.add(testSocket, testId);
     expect(clients.bySocket(testSocket)).to.equal(client);
   });
-
   it("disconnects a client based on the socket it uses.", () => {
     const client: Client = clients.add(testSocket, testId);
     client.joinRoom(testRoom);
@@ -82,7 +73,6 @@ describe("clients", () => {
     expect(clients.bySocket(testSocket)).to.equal(undefined);
     expect(clients.byId(testId)).to.equal(undefined);
   });
-
   it("Reconnects a client that had been disconnected", () => {
     const client: Client = clients.add(testSocket, testId);
     client.joinRoom(testRoom);
@@ -94,14 +84,12 @@ describe("clients", () => {
     expect(clients.bySocket(testSocket)).to.equal(client);
     expect(clients.byId(testId)).to.equal(client);
   });
-
   it("Removes a client by their id", () => {
     const client: Client = clients.add(testSocket, testId);
     expect(clients.byId(testId)).to.equal(client);
     clients.remove(testId);
     expect(clients.byId(testId)).to.equal(undefined);
   });
-
   it("Removes all clients that have been disconnected for a certain time period", () => {
     const client: Client = clients.add(testSocket, testId);
     client.joinRoom(testRoom);
@@ -112,7 +100,6 @@ describe("clients", () => {
     expect(clients.wasDisconnected(testId)).to.equal(false);
     expect(clients.reconnect(testId)).to.equal(undefined);
   });
-
   it("Updates client user data for real time synchronization.", () => {
     let updatedPlayer;
     const client: Client = clients.add(testSocket, testId);
@@ -126,7 +113,6 @@ describe("clients", () => {
     expect(updatedPlayer !== testPlayer).to.equal(true);
     expect(join.calledWith(testRoomName)).to.equal(true);
   });
-
   it("Checks list of disconnected clients to see if a client is reconnecting.", () => {
     const client: Client = clients.add(testSocket, testId);
     client.joinRoom(testRoom);

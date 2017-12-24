@@ -27,7 +27,6 @@ export interface JoinMenu<Type> {
 }
 
 export default (function() {
-
   const idOfTitle: string = "title";
   const mapSelectionType = "map";
   const gameSelectionType = "game";
@@ -39,8 +38,7 @@ export default (function() {
   const buildingsDisplay: BuildingsDisplay = createBuildingsDisplay();
   const categories: CategorySelector = createCategorySelector();
   const isSelectingMaps = (selectionType: string): boolean => selectionType === mapSelection;
-
-  return function<Type>(type: string, game?: Game): JoinMenu<Type> {
+  return function <Type>(type: string, game?: Game): JoinMenu<Type> {
     const horizontalKeys: string[] = ["pressedLeftKey", "pressedRightKey"];
     const selectingMaps: boolean = isSelectingMaps(type);
     const selectionType: string = selectingMaps ? mapSelectionType : gameSelectionType;
@@ -133,7 +131,6 @@ export default (function() {
       return this;
     };
     let subscriptions: number[] = [];
-
     return {
       categories,
       goBack,

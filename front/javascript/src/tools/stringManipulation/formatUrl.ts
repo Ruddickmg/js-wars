@@ -1,5 +1,6 @@
 import curry from "../function/curry";
 import typeChecker, {TypeChecker} from "../validation/typeChecker";
+
 export default curry(function(url: string, path: string, args: any = {}): string {
   const {isString, isBoolean, isNumber}: TypeChecker = typeChecker();
   const parameters: string[] = Object.keys(args);

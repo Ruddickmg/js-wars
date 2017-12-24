@@ -38,11 +38,11 @@ describe("roomsSocketListener", () => {
         return {emit};
       },
     },
-    id: 1,
-    name: "mock socket",
     emit,
+    id: 1,
     join,
     leave,
+    name: "mock socket",
   };
   const name: string = "testing";
   const category: string = "two";
@@ -69,7 +69,7 @@ describe("roomsSocketListener", () => {
         mockery.restore();
       });
   });
-  it ("Handles new connections, creating/adding a user object for incoming users", () => {
+  it("Handles new connections, creating/adding a user object for incoming users", () => {
     mockedClients.expects("wasDisconnected").once().withExactArgs(userId).returns(false);
     mockedClients.expects("add").once().withExactArgs(testSocket, userId).returns(client);
     mockedClient.expects("setPlayer").once().returns(client);

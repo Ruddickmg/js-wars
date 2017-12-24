@@ -1,17 +1,13 @@
 import units from "../unit/unitDefinitions";
 
 export default {
-
   airport: {
-
     bCopter: units.bCopter,
     bomber: units.bomber,
     fighter: units.fighter,
     tCopter: units.tCopter,
   },
-
   base: {
-
     antiAir: units.antiAir,
     apc: units.apc,
     artillery: units.artillery,
@@ -24,9 +20,7 @@ export default {
     rockets: units.rockets,
     tank: units.tank,
   },
-
   seaport: {
-
     bShip: units.bShip,
     cruiser: units.cruiser,
     lander: units.lander,

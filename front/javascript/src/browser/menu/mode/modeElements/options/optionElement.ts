@@ -19,7 +19,6 @@ export function isOption(element: any): boolean {
 }
 
 export default function(option: string, idOfOption: string): OptionElement<string> {
-
   const optionType: string = "li";
   const classOfElement: string = "modeOption";
   const fadingClass: string = "fadeToWhite";
@@ -27,11 +26,9 @@ export default function(option: string, idOfOption: string): OptionElement<strin
   const action: string = option + capitalizeFirstLetter(idOfOption);
   const element: Element<string> = createElement<string>(action, optionType).setClass(classOfElement);
   const border: Element<any> = createElement<any>(`${action}Border`, "div").setClass(`${classOfElement}Border`);
-
   element.setClass(classOfElement);
   element.setValue(option + idOfOption);
   element.setText(option);
-
   return Object.assign(element, {
     fadeBorderColor(): Element<any> {
       border.appendClass(fadingClass);

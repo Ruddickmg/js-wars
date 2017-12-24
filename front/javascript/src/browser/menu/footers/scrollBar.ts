@@ -12,7 +12,6 @@ export default function() {
   const text: Element<any> = createElement("scrollingInfo", "p").setClass("scrolling");
   const scrollBar: Element<any> = createElement("scrollBar", "footer")
     .appendChild(text);
-
   const setText = function(message: string): ScrollBar {
     text.setText(message).setValue(message);
     scrollBar.setValue(message);

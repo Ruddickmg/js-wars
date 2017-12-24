@@ -6,10 +6,8 @@ export interface Identifier<Id> {
   reserveIds(reservedIds: Id[]): Identifier<Id>;
 }
 
-export default function<Id>(initialId: Id, incrementId: (id: Id) => Id, decrementId: (id: Id) => Id): Identifier<Id> {
-
+export default function <Id>(initialId: Id, incrementId: (id: Id) => Id, decrementId: (id: Id) => Id): Identifier<Id> {
   let id: Id = initialId;
-
   const usableIds: BinaryHeap<Id> = binaryHeap<Id>().setToMax();
   const recycleId = (): Id => usableIds.pop();
   const outOfStoredIds = (): boolean => !usableIds.size();
@@ -41,7 +39,6 @@ export default function<Id>(initialId: Id, incrementId: (id: Id) => Id, decremen
     });
     return this;
   };
-
   return {
     get,
     remove,
