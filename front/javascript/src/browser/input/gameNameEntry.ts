@@ -1,11 +1,10 @@
 import {publish} from "../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isDefined, isString} from "../../tools/validation/typeChecker";
 import {Element} from "../dom/element/element";
 import typeWriter, {TypeWriter} from "../effects/typing";
 
 export default (function() {
   const writer: TypeWriter = typeWriter();
-  const {isString, isDefined}: TypeChecker = typeChecker();
   const minimumNameLength = 3;
   const textElementId: string = "description";
   return (gameNameInput: Element<any>): string => {

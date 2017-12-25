@@ -1,5 +1,5 @@
 import createPosition, {Position} from "../../../game/map/coordinates/position";
-import typeChecker, {TypeChecker} from "../../validation/typeChecker";
+import {isDefined} from "../../validation/typeChecker";
 
 type ReduceCallback<Type> = (accumulator: any, value: any, position: Position, self: Matrix<Type>) => any;
 type MappingCallback<Type> = (value: any, position: Position, self: Matrix<Type>) => any;
@@ -19,7 +19,6 @@ export interface Matrix<Type> extends Functors<Type> {
 }
 
 export default function createMatrix<Type>(): Matrix<Type> {
-  const {isDefined}: TypeChecker = typeChecker();
   const matrix: any = {};
   const insert = (value: Type, {x, y}: Position): Type => {
     if (!matrix[x]) {

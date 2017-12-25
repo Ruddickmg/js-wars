@@ -1,5 +1,5 @@
 import capitalizeFirstLetter from "../../../../../tools/stringManipulation/capitalizeFirstLetter";
-import typChecker, {TypeChecker} from "../../../../../tools/validation/typeChecker";
+import {isFunction} from "../../../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../../../dom/element/element";
 import isElement from "../../../../dom/element/isElement";
 
@@ -10,7 +10,6 @@ export interface OptionElement<Type> extends Element<Type> {
 }
 
 export function isOption(element: any): boolean {
-  const {isFunction}: TypeChecker = typChecker();
   const optionType: string = "modeOption";
   return isElement(element)
     && isFunction(element.fadeBorderColor)

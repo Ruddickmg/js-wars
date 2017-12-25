@@ -1,4 +1,4 @@
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isNumber} from "../../../tools/validation/typeChecker";
 import {Dimensions} from "./dimensions";
 
 export interface Coordinates {
@@ -19,7 +19,6 @@ export interface Position extends Coordinates {
 }
 
 export function isPosition(element: any): boolean {
-  const {isNumber}: TypeChecker = typeChecker();
   const {x, y}: any = element;
   return isNumber(x) && isNumber(y);
 }

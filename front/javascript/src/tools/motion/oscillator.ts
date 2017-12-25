@@ -1,6 +1,6 @@
 import timeKeeper, {Time} from "../calculations/time";
 import {publish} from "../pubSub";
-import typeChecker, {TypeChecker} from "../validation/typeChecker";
+import {isFunction, isNumber} from "../validation/typeChecker";
 import validateCallbacks from "../validation/validateCallbacks";
 
 type OscillatorCallback = (position: number) => void;
@@ -21,7 +21,6 @@ export interface Oscillator {
 
 export default (function() {
   const time: Time = timeKeeper();
-  const {isFunction, isNumber}: TypeChecker = typeChecker();
   return function(min: number = 50, max: number = 100, initial: number = max): Oscillator {
     let maximum: number = max;
     let minimum: number = min;

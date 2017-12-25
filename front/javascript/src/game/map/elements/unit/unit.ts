@@ -2,7 +2,7 @@ import settings from "../../../../settings/settings";
 import identifier, {Identifier} from "../../../../tools/identity";
 import composer, {Composer} from "../../../../tools/object/composer";
 import {Dictionary} from "../../../../tools/storage/dictionary";
-import typeChecker, {TypeChecker} from "../../../../tools/validation/typeChecker";
+import {isArray, isBoolean, isDefined, isNumber, isObject, isString} from "../../../../tools/validation/typeChecker";
 import createPosition, {isPosition, Position} from "../../coordinates/position";
 import createBuilding, {Building} from "../building/building";
 
@@ -37,7 +37,6 @@ export interface Unit extends Building {
 }
 
 export function isUnit(element: any): boolean {
-  const {isString, isNumber, isArray, isDefined, isObject, isBoolean}: TypeChecker = typeChecker();
   return isDefined(element)
     && isString(element.action)
     && isObject(element.actions)
@@ -59,7 +58,7 @@ export function isUnit(element: any): boolean {
     && isNumber(element.vision);
 }
 
-export default function(type: string, position: Position, playerNumber: number): Unit {
+export default function createUnit(type: string, position: Position, playerNumber: number): Unit {
   const increment = (id: number) => id + 1;
   const decrement = (id: number) => id - 1;
   const identity: Identifier<number> = identifier<number>(1, increment, decrement);

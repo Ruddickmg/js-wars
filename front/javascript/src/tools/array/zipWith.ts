@@ -1,8 +1,7 @@
 import {publish} from "../pubSub";
-import typeChecker, {TypeChecker} from "../validation/typeChecker";
+import {isArray} from "../validation/typeChecker";
 
 export default (function() {
-  const {isArray}: TypeChecker = typeChecker();
   return function(
     firstInputArray: any[],
     secondInputArray: any[],

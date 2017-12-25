@@ -2,13 +2,12 @@ import {expect} from "chai";
 import createElement, {Element} from "../../../../src/browser/dom/element/element";
 import isElement from "../../../../src/browser/dom/element/isElement";
 import random from "../../../../src/tools/calculations/random";
-import typeChecker, {TypeChecker} from "../../../../src/tools/validation/typeChecker";
+import {isFunction} from "../../../../src/tools/validation/typeChecker";
 
 describe("isElement", () => {
   const id: string = "testing";
   const type: string = "div";
   const element: Element<any> = createElement<any>(id, type);
-  const {isFunction}: TypeChecker = typeChecker();
   it("Reports when an object is a dom element.", () => {
     expect(isElement(element)).to.equal(true);
   });

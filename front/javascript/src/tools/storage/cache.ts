@@ -1,4 +1,4 @@
-import typeChecker, {TypeChecker} from "../validation/typeChecker";
+import {isDefined} from "../validation/typeChecker";
 
 export interface Cache<Type> {
   add(name: string, canvas: any): Cache<Type>;
@@ -18,7 +18,6 @@ export default function createCache<Type>(): Cache<Type> {
   let cached: any = {};
   let amount: number = 0;
   const size = (): number => amount;
-  const {isDefined}: TypeChecker = typeChecker();
   const getKeys = (): any[] => Object.keys(cached);
   const add = function(name: string, item: Type): Cache<Type> {
     cached[name] = item;

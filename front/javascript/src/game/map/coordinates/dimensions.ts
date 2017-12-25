@@ -1,4 +1,4 @@
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isNumber} from "../../../tools/validation/typeChecker";
 
 export interface Dimensions {
   width: number;
@@ -7,7 +7,6 @@ export interface Dimensions {
 }
 
 export function areDimensions(element: any): boolean {
-  const {isNumber}: TypeChecker = typeChecker();
   const {width, height}: any = element;
   return isNumber(width) && isNumber(height);
 }

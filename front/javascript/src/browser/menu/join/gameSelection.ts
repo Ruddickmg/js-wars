@@ -2,7 +2,7 @@ import {Game, isGame} from "../../../game/game";
 import {isMap, Map} from "../../../game/map/map";
 import getAllowedRange from "../../../tools/calculations/getAllowedRange";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isArray} from "../../../tools/validation/typeChecker";
 import gameElementHandler, {MapRequestHandler} from "../../communication/requests/mapRequestHandler";
 import {Element} from "../../dom/element/element";
 import isElement from "../../dom/element/isElement";
@@ -25,7 +25,6 @@ export interface GameSelector<Type> extends SelectionHandler<Element<Type>>, Scr
 export default function <Type>(type: string, selectionType: string) {
   const selections: MapRequestHandler<Type> = gameElementHandler<Type>(`${selectionType}s`, type);
   const selector: SelectionHandler<Element<Type>> = createSelectionHandler<Element<Type>>();
-  const {isArray}: TypeChecker = typeChecker();
   const keyboard: KeyBoard = getKeyboard();
   const classOfMapSelectionElement: string = "mapSelectionElement";
   const mapSelectionId: string = "mapSelection";

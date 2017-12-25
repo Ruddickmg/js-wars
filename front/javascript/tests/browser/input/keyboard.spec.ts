@@ -3,7 +3,7 @@ import keyboardInput, {KeyBoard} from "../../../src/browser/input/keyboard";
 import getSettings from "../../../src/settings/settings";
 import {Dictionary} from "../../../src/tools/storage/dictionary";
 import capitalizeFirstLetter from "../../../src/tools/stringManipulation/capitalizeFirstLetter";
-import typeChecker, {TypeChecker} from "../../../src/tools/validation/typeChecker";
+import {isFunction} from "../../../src/tools/validation/typeChecker";
 
 describe("keyboard", () => {
   const upKey: string = "up";
@@ -13,7 +13,6 @@ describe("keyboard", () => {
   const keyboardMappings: any = settings.toObject("keyboard", "keyCodeMappings");
   const keys: string[] = Object.keys(keyboardMappings);
   const getMethodName = (key: string, type: string): string => `${type}${capitalizeFirstLetter(key)}`;
-  const {isFunction}: TypeChecker = typeChecker();
   it("Starts without any pressed keys.", () => expect(keyboard.pressingAnyKey()).to.equal(false));
   it("Starts without any released keys.", () => expect(keyboard.releasedAnyKey()).to.equal(false));
   it("Can manually press a key.", () => {

@@ -2,7 +2,7 @@ import {Game} from "../../game/game";
 import {AiPlayer} from "../../game/users/ai/aiPlayer";
 import {Player} from "../../game/users/players/player";
 import {AnyPlayer, isAiPlayer} from "../../game/users/players/playerSocketListener";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isDefined, isFunction} from "../../tools/validation/typeChecker";
 
 export type RoomId = number | string;
 
@@ -28,7 +28,6 @@ export interface Room {
 }
 
 export function isRoom(room: any): room is Room {
-  const {isDefined, isFunction}: TypeChecker = typeChecker();
   return isDefined(room)
     && isFunction(room.addAi)
     && isFunction(room.category)
@@ -70,7 +69,7 @@ export default function(roomId: RoomId, game: Game): Room {
     }, []);
   };
   const getGame = (): Game => game;
-  const getPlayer = (id: RoomId): AnyPlayer => players[indexOf(id)];
+  const getPlayer = (idOfRoom: RoomId): AnyPlayer => players[indexOf(idOfRoom)];
   const getPlayers = (): Player[] => players.slice();
   const getUsers = (): Player[] => {
     return players.reduce((allUsers: Player[], player: Player): Player[] => {

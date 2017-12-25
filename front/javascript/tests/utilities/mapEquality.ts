@@ -1,8 +1,8 @@
 import {expect} from "chai";
+import {isNumber} from "util";
 import {Coordinates} from "../../src/game/map/coordinates/position";
 import {Map} from "../../src/game/map/map";
-import typeChecker, {TypeChecker} from "../../src/tools/validation/typeChecker";
-import {isNumber} from "util";
+import {isString} from "../../src/tools/validation/typeChecker";
 
 export function checkIfMapElementsAreEqual(one: any[], two: any[]) {
   one.forEach((element: any, index: number) => {
@@ -20,7 +20,6 @@ export function checkIfMapElementsAreEqual(one: any[], two: any[]) {
 }
 
 export default function(receivedMap: Map, map: Map): any {
-  const {isString}: TypeChecker = typeChecker();
   if (isNumber(receivedMap.id) && isNumber(map.id)) {
     expect(receivedMap.id).to.equal(map.id);
   }

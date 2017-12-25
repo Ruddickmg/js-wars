@@ -1,7 +1,7 @@
 import createPlayer, {Player} from "../../game/users/players/player";
 import {User, UserId} from "../../game/users/user";
 import single from "../../tools/storage/singleton";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isDefined} from "../../tools/validation/typeChecker";
 import socketHandler, {SocketHandler} from "../connections/sockets/socketHandler.js";
 import {isRoom} from "../rooms/room";
 import {AnyRoom} from "../rooms/rooms";
@@ -39,7 +39,6 @@ type AnyClient = Client | DisconnectedClient;
 export default single<ClientHandler>(function(): ClientHandler {
   let connectedClients: Clients = {};
   let disconnectedClients: DisconnectedClients = {};
-  const {isDefined}: TypeChecker = typeChecker();
   const socketIds: SocketHandler = socketHandler();
   const getClientBySocket = (socket: any, listOfClients: Clients): Client => listOfClients[socketIds.getId(socket)];
   const getClientById = (id: ClientId, listOfClients: AllClients): AnyClient => listOfClients[id];

@@ -5,7 +5,7 @@ import {publish, subscribe} from "../../tools/pubSub";
 import {Dictionary} from "../../tools/storage/dictionary";
 import single from "../../tools/storage/singleton";
 import capitalizeFirstLetter from "../../tools/stringManipulation/capitalizeFirstLetter";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isDefined, isNumber, isString} from "../../tools/validation/typeChecker";
 
 interface Keys {
   [index: string]: boolean;
@@ -46,7 +46,6 @@ export default single<KeyBoard>(function() {
   let pressedKeys: Keys = {};
   let releasedKeys: Keys = {};
   const myUndefined: any = void 0;
-  const {isNumber, isString, isDefined}: TypeChecker = typeChecker();
   const settings: Dictionary = allSettings();
   const {
     keyCodeMappings,

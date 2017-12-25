@@ -1,7 +1,5 @@
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
-
-export const isElement = (element: any): boolean => {
-  const {isDefined, isFunction, isObject, isString, isDomElement}: TypeChecker = typeChecker();
+import {isDefined, isDomElement, isFunction, isObject, isString, register} from "../../../tools/validation/typeChecker";
+export default function isElement(element: any): boolean {
   return isDefined(element)
     && isFunction(element.makeInvisible)
     && isFunction(element.addEventListener)
@@ -46,4 +44,5 @@ export const isElement = (element: any): boolean => {
     && isDomElement(element.element)
     && isObject(element.children)
     && isString(element.id);
-};
+}
+register("element", isElement);

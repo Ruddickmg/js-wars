@@ -1,5 +1,5 @@
 import {Player} from "../../game/users/players/player";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isDefined, isFunction} from "../../tools/validation/typeChecker";
 import {RoomId} from "./room";
 
 export interface Lobby {
@@ -49,7 +49,6 @@ export default function(identity: RoomId): Lobby {
 }
 
 export function isLobby(element: any) {
-  const {isDefined, isFunction}: TypeChecker = typeChecker();
   const nameOfLobby: string = "lobby";
   return isDefined(element)
     && isFunction(element.addPlayer)

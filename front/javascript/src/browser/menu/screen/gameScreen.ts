@@ -1,12 +1,11 @@
 import single from "../../../tools/storage/singleton";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isDefined} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element/element";
 import findFirstElementWithTag from "../../dom/findFirstElemenWithTag";
 
 const className: string = "gameScreen";
 const screenType: string = "article";
 const scriptTag: string = "script";
-const {isDefined}: TypeChecker = typeChecker();
 
 export default single<Element<any>>(function(): Element<any> {
   const existingGameScreen: any = document.getElementById(className);

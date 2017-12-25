@@ -1,7 +1,7 @@
 import createDimensions, {Dimensions} from "../../game/map/coordinates/dimensions";
 import {Position} from "../../game/map/coordinates/position";
 import getSettings from "../../settings/settings";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isDefined, isFunction, isNull} from "../../tools/validation/typeChecker";
 import validator, {Validator} from "../../tools/validation/validator";
 import createElement, {Element} from "../dom/element/element";
 
@@ -14,7 +14,6 @@ export interface Canvas<Type> extends Element<Type> {
 }
 
 export function isCanvas(element: any) {
-  const {isDefined, isFunction}: TypeChecker = typeChecker();
   return isDefined(element)
     && isFunction(element.clear)
     && isFunction(element.context)
@@ -26,7 +25,6 @@ export function isCanvas(element: any) {
 export default (function() {
   const {validateString}: Validator = validator("canvas");
   const animationContext: string = getSettings().get("canvas", "context");
-  const {isDefined, isNull}: TypeChecker = typeChecker();
   return function <Type>(elementName: string, canvasDimensions?: Dimensions, existing?: any): Canvas<Type> {
     const canvas: Element<Type> = createElement<Type>(elementName, existing || "canvas").setClass("canvas");
     const currentContext: any = canvas.element.getContext(animationContext);

@@ -1,7 +1,6 @@
-import typeChecker, {TypeChecker} from "../validation/typeChecker";
+import {isDefined} from "../validation/typeChecker";
 
 export default (function() {
-  const {isDefined}: TypeChecker = typeChecker();
   return (array: any[], getProperty: (object: any) => any): any => {
     return array.reduce((count: any, element: any): any => {
       const property: any = getProperty(element);

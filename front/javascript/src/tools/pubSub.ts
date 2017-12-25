@@ -1,5 +1,5 @@
 import identifier, {Identifier} from "./identity";
-import typeChecker, {TypeChecker} from "./validation/typeChecker";
+import {isFunction, isString} from "./validation/typeChecker";
 
 export interface PubSub {
   publish(eventId: string | string[], data?: any): void;
@@ -29,7 +29,6 @@ const nonExistentIndex = -1;
 const elementsToRemoveFromEvents = 1;
 const firstElementInReturnedArray = 0;
 const errorEventId: string = "error";
-const check: TypeChecker = typeChecker();
 const events: Events = {};
 const isEmpty = (subscribers: Subscriber[]): boolean => subscribers.length < elementsToRemoveFromEvents;
 const increment = (id: SubscriptionId) => id + 1;
@@ -92,8 +91,8 @@ const addSubscriber = (subscribers: Subscriber[], eventHandler: Emitter): Subscr
 };
 const getSubscribers = (name: string) => getEvent(name).subscribers;
 const addSubscription = (eventId: string, handler: Emitter): SubscriptionId => {
-  if (check.isString(eventId)) {
-    if (check.isFunction(handler)) {
+  if (isString(eventId)) {
+    if (isFunction(handler)) {
       return addSubscriber(getSubscribers(eventId), handler);
     }
     publish(errorEventId, Error("Invalid callback provided to subscribe method of pubSub."));
@@ -106,7 +105,7 @@ const addEvent = (eventId: string, data?: any): void => {
   const currentTime: Date = new Date();
   const timeOfLastUpdate: Date = event.timeOfLastUpdate;
   const timeSinceLastUpdate = Number(currentTime) - Number(timeOfLastUpdate);
-  if (check.isString(eventId)) {
+  if (isString(eventId)) {
     event.timeOfLastUpdate = currentTime;
     subscribers.forEach((subscriber: Subscriber): void => {
       subscriber.emit(data, timeSinceLastUpdate);
@@ -118,7 +117,7 @@ const addEvent = (eventId: string, data?: any): void => {
 const handleArrayOrString = (event: string | string[], data: any, action: (id: string, data: any) => void): any => {
   const arr = event as string[];
   const str = event as string;
-  if (check.isString(event)) {
+  if (isString(event)) {
     return action(str, data);
   }
   return arr.map((eventId: string) => action(eventId, data));

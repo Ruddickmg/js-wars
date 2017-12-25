@@ -1,6 +1,6 @@
 import timeKeeper, {Time} from "../calculations/time";
 import {publish} from "../pubSub";
-import typeChecker, {TypeChecker} from "../validation/typeChecker";
+import {isDefined, isNumber} from "../validation/typeChecker";
 import validator, {Validator} from "../validation/validator";
 
 type CycleCallback = (position: number) => any;
@@ -20,7 +20,6 @@ export default (function() {
   const pivotPoint: number = 0;
   const className: string = "cycle";
   const {validateNumber, validateFunction}: Validator = validator(className);
-  const {isNumber, isDefined}: TypeChecker = typeChecker();
   const time: Time = timeKeeper();
   const validateIncrement = (input: number, method: string): boolean => {
     if (validateNumber(input, method)) {

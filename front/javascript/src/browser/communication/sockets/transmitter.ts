@@ -1,6 +1,6 @@
 import {subscribe} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isString} from "../../../tools/validation/typeChecker";
 import getSocket from "./socket";
 
 export type Transmitter = (value: any) => Transmitters;
@@ -11,7 +11,6 @@ export interface Transmitters {
 }
 
 export default single<Transmitters>(function(socket: any = getSocket()): Transmitters {
-  const {isString}: TypeChecker = typeChecker();
   const add = function(...additionalActions: string[]): Transmitters {
     return additionalActions.reduce((transmitting: Transmitters, action: string): any => {
       const transmitter: Transmitter = function(value: any): Transmitters {

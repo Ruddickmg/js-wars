@@ -1,7 +1,7 @@
 import {SinonFakeXMLHttpRequest} from "sinon";
 import curry from "../../../tools/function/curry";
 import single from "../../../tools/storage/singleton";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isError} from "../../../tools/validation/typeChecker";
 
 export type IncompleteRequest = (input: any) => Promise<any>;
 
@@ -18,7 +18,6 @@ export default single<Request>(function(mock: SinonFakeXMLHttpRequest) {
   const isEqual = (state: any, comparison: number): boolean => Number(state) === Number(comparison);
   const isReady = (state: any): boolean => isEqual(state, ready);
   const isOk = (state: any): boolean => isEqual(state, ok);
-  const {isError}: TypeChecker = typeChecker();
   const requestTypes: string[] = ["Msxml2.XMLHTTP", "Microsoft.XMLHTTP"];
   const getRequest = (request: any, type?: string): any => {
     try {

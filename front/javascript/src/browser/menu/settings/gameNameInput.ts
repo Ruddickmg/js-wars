@@ -1,6 +1,6 @@
-import notifications, {PubSub} from "../../../tools/pubSub";
+import {publish, subscribe, unsubscribe} from "../../../tools/pubSub";
 import single from "../../../tools/storage/singleton";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isNumber, isString} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element/element";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
 
@@ -18,8 +18,6 @@ export default single<NameInputFactory>(function(): NameInputFactory {
   const inputType: string = "input";
   const inputClass: string = "textInput";
   const nameWasSelectedEvent: string = "nameInput";
-  const {isString, isNumber}: TypeChecker = typeChecker();
-  const {subscribe, unsubscribe, publish}: PubSub = notifications();
   const keyboard: KeyBoard = keyboardInput();
   const inputHolder = createElement<any>(inputHolderId, inputHolderType).setClass(inputHolderClass);
   const input = createElement<any>(inputId, inputType).setClass(inputClass);

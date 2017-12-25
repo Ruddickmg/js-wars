@@ -1,5 +1,5 @@
 import composer, {Composer} from "../../tools/object/composer";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isNumber, isString} from "../../tools/validation/typeChecker";
 
 export type UserId = number | string;
 
@@ -20,7 +20,6 @@ export interface User extends Login {
 }
 
 export function isUser(element: any): boolean {
-  const {isString, isNumber}: TypeChecker = typeChecker();
   const id: UserId = element.id;
   const origin: string = element.loginWebsite;
   const loginWebsites: string[] = ["facebook", "testing"];

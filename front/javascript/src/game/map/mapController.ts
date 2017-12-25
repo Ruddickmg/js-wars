@@ -27,7 +27,7 @@ export interface MapController {
 export default function(map: Map): MapController {
   const mapSettings: Dictionary = settings().get("map");
   const matrix: MatrixMap<MapElement> = createMapMatrix<MapElement>(map);
-  const {isUnit}: TypeChecker = typeChecker();
+  const {isUnit}: TypeChecker = typeChecker;
   const isSamePosition = ({x, y}: Position, {x: x2, y: y2}: Position) => x === x2 && y === y2;
   const restore = (element: Building | Unit): Building | Unit => {
     element.health = mapSettings.get(element.type, element.name, "health");

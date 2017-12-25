@@ -1,6 +1,6 @@
 import {RoomId} from "../server/rooms/room";
 import getSettings from "../settings/settings";
-import typeChecker, {TypeChecker} from "../tools/validation/typeChecker";
+import {isArray, isBoolean, isDefined, isNull, isNumber, isObject, isString} from "../tools/validation/typeChecker";
 import {isMap, Map} from "./map/map";
 import {Player} from "./users/players/player";
 
@@ -24,11 +24,11 @@ export default function(name: string = null, category: string = null, map: Map =
   const started: boolean = false;
   const settings: any = Object.assign({}, getSettings().toObject("game", "settings"));
   return {
-    id,
-    name,
     category,
+    id,
     map,
     max,
+    name,
     players,
     saved,
     settings,
@@ -37,7 +37,6 @@ export default function(name: string = null, category: string = null, map: Map =
 }
 
 export function isGame(element: any): boolean {
-  const {isString, isNumber, isNull, isArray, isBoolean, isDefined, isObject}: TypeChecker = typeChecker();
   let map: Map;
   let category: string;
   let name: string;

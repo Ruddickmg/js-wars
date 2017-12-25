@@ -1,7 +1,7 @@
 import truthTable, {TruthTable} from "../../../tools/array/generateTruthTable";
 import generateRange from "../../../tools/array/range";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isDefined} from "../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../dom/element/element";
 import createBackground from "./background";
 import createOutline from "./outline";
@@ -15,7 +15,6 @@ export interface SettingElement extends Element<string>, ArrayList<Element<any>>
 }
 
 export default (function() {
-  const {isDefined}: TypeChecker = typeChecker();
   const allowed: TruthTable = truthTable("on", "off", "num", "clear", "rain", "snow", "random", "a", "b", "c");
   const hide: string = "invisible";
   const show: string = "visible";

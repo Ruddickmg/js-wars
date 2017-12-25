@@ -1,6 +1,6 @@
 import {Position} from "../../../../game/map/coordinates/position";
 import single from "../../../../tools/storage/singleton";
-import typeChecker, {TypeChecker} from "../../../../tools/validation/typeChecker";
+import {isDefined, isNull} from "../../../../tools/validation/typeChecker";
 import createElement, {Element} from "../../../dom/element/element";
 import createOption, {OptionElement} from "./options/optionElement";
 import createOptionElement, {OptionsElement} from "./options/optionsElement";
@@ -28,7 +28,6 @@ export default single<ModeElementFactory>(() => {
   const fadingClass: string = "fadeToWhite";
   const fadedOverClass: string = "fading";
   const positionTag: string = "position";
-  const {isDefined, isNull}: TypeChecker = typeChecker();
   const outlineDisplay = (outline: any, type: string): void => {
     outline.display(type);
   };

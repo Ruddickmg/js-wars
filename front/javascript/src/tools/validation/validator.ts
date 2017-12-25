@@ -14,9 +14,8 @@ export default (function() {
     publish("invalidInputError", {className, method, input});
   };
   return function(className: string): Validator {
-    const checker: TypeChecker = typeChecker();
-    const {isString}: TypeChecker = checker;
-    const validations: any = Object.keys(checker);
+    const {isString}: TypeChecker = typeChecker;
+    const validations: any = Object.keys(typeChecker);
     if (isString(className)) {
       return validations.reduce((validation: Validator, property: string): Validator => {
         const prefix: string = property.slice(0, 2);
@@ -24,7 +23,7 @@ export default (function() {
         const validationName: string = `validate${type}`;
         if (prefix === typeCheckerPrefix) {
           validation[validationName] = setName((input: any, method: string = className): boolean => {
-            if (checker[property](input)) {
+            if (typeChecker[property](input)) {
               return true;
             }
             publishInputError(className, method, input);

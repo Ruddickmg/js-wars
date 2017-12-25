@@ -5,7 +5,7 @@ import {Game, isGame} from "../../game/game";
 import {isMap, Map} from "../../game/map/map";
 import {isUser, User} from "../../game/users/user";
 import {publish} from "../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isDefined} from "../../tools/validation/typeChecker";
 import {Client} from "../clients/client";
 import getClientHandler, {ClientHandler} from "../clients/clients";
 import {isRoom} from "../rooms/room";
@@ -17,7 +17,6 @@ export default function(pathToRootDirectory: string, connection: Connections = c
   const app: any = express();
   const server: any = http.createServer(app);
   const staticFileDirectory: any = express.static(`${pathToRootDirectory}/public`);
-  const {isDefined}: TypeChecker = typeChecker();
   const errorEventId: string = "error";
   const browserErrorEventId: string = "browserError";
   const handleError = (res: any) => (error: Error): any => {

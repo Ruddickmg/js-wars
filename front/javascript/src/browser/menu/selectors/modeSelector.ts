@@ -2,7 +2,7 @@ import {subscribe, unsubscribe} from "../../../tools/pubSub";
 import isList from "../../../tools/storage/lists/arrayList/isList";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
 import createStack, {Stack} from "../../../tools/storage/stack/listStack";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isDefined} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
 import {SelectionHandler} from "./twoDimensionalSelector";
@@ -30,7 +30,6 @@ export default function <Type>(container: ArrayList<Type> = createList<any>()): 
   const keyboard: KeyBoard = keyboardInput();
   const previous: Stack<ArrayList<Type>> = createStack<ArrayList<Type>>();
   const {validateFunction}: Validator = validator("selectionHandler");
-  const {isDefined}: TypeChecker = typeChecker();
   let subscriptions: number[] = [];
   let selectingVertically: boolean = true;
   let isVertical: boolean = selectingVertically;

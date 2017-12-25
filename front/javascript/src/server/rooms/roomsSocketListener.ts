@@ -2,7 +2,7 @@ import getAiController, {AiController} from "../../game/users/ai/aiController";
 import createPlayer, {Player} from "../../game/users/players/player";
 import {User, UserId} from "../../game/users/user";
 import {publish} from "../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isDefined} from "../../tools/validation/typeChecker";
 import {Client} from "../clients/client";
 import getClientHandler, {ClientHandler} from "../clients/clients";
 import {Listener} from "../connections/sockets/listener";
@@ -11,7 +11,6 @@ import {isRoom, Room} from "./room";
 import getRoomHandler, {Rooms} from "./rooms";
 
 export default function(): Listener {
-  const {isDefined}: TypeChecker = typeChecker();
   const aiHandler: AiController = getAiController();
   const rooms: Rooms = getRoomHandler();
   const clients: ClientHandler = getClientHandler();

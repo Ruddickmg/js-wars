@@ -2,7 +2,7 @@ import createPosition, {Position} from "../../game/map/coordinates/position";
 import createTerrain, {Terrain} from "../../game/map/elements/terrain/terrain";
 import getRandom from "../../tools/calculations/random";
 import {publish} from "../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isString} from "../../tools/validation/typeChecker";
 import getTransmitters, {Transmitters} from "../communication/sockets/transmitter";
 
 export interface Background {
@@ -14,7 +14,6 @@ export interface Background {
   drawing(): string;
 }
 
-const {isString}: TypeChecker = typeChecker();
 const transmitters: Transmitters = getTransmitters();
 const position: Position = createPosition(0, 0);
 const changeEvent: string = "changeBackground";

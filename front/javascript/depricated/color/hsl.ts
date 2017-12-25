@@ -1,5 +1,5 @@
 import single from "../../src/tools/storage/singleton";
-import typeChecker, {TypeChecker} from "../../src/tools/validation/typeChecker";
+import {isDefined, isFunction, isNumber} from "../../src/tools/validation/typeChecker";
 
 interface HslPrototype {
 
@@ -65,9 +65,6 @@ export default single<HslFactory>(function() {
 })();
 
 export function isColor(element: any): boolean {
-
-  const {isNumber, isFunction, isDefined}: TypeChecker = typeChecker();
-
   return isDefined(element)
     && isNumber(element.hue)
     && isNumber(element.lightness)

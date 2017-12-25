@@ -1,7 +1,7 @@
 import {Game} from "../../game/game";
 import identifier, {Identifier} from "../../tools/identity";
 import single from "../../tools/storage/singleton";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isObject} from "../../tools/validation/typeChecker";
 import connectToBackend, {Backend} from "../connections/backend";
 import createLobby, {Lobby} from "./lobby";
 import createRoom, {Room, RoomId} from "./room";
@@ -35,7 +35,6 @@ export interface Rooms {
 export default single<Rooms>(function(url: string): Rooms {
   const isRunning: string = "running";
   const isOpen: string = "open";
-  const {isObject}: TypeChecker = typeChecker();
   const backend: Backend = connectToBackend(url);
   const restrictedRoomNames: string[] = ["lobby"];
   const restricted: any = restrictedRoomNames.reduce((roomNames: any, name: string): object => {

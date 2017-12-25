@@ -1,5 +1,5 @@
 import {publish} from "../../../tools/pubSub";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isDefined, isObject, isString} from "../../../tools/validation/typeChecker";
 
 export interface Listener {
   [index: string]: (data: any, socket: any) => void;
@@ -11,7 +11,6 @@ export interface SocketListeners {
 }
 
 export default function(): SocketListeners {
-  const {isString, isDefined, isObject}: TypeChecker = typeChecker();
   const allListeners: Listener[] = [];
   const errorEventId: string = "error";
   return {

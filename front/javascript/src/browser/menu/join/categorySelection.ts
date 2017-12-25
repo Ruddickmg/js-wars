@@ -1,7 +1,7 @@
 import getSettings from "../../../settings/settings";
 import zipWith from "../../../tools/array/zipWith";
 import createList, {ArrayList} from "../../../tools/storage/lists/arrayList/list";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isString} from "../../../tools/validation/typeChecker";
 import {Element} from "../../dom/element/element";
 import isElement from "../../dom/element/isElement";
 import createScroller, {Scroller} from "../../effects/scrolling";
@@ -19,7 +19,6 @@ export interface CategorySelector extends Element<any>, Scroller, SelectionHandl
 
 export default function() {
   const keyboard: KeyBoard = getKeyboard();
-  const {isString}: TypeChecker = typeChecker();
   const amountOfCategoriesToShow: number = 1;
   const amountOfCategoryNeighbors: number = 2;
   const positionAttribute = "position";

@@ -1,4 +1,4 @@
-import typeChecker, {TypeChecker} from "../validation/typeChecker";
+import {isDefined, isObject} from "../validation/typeChecker";
 
 export interface Dictionary {
   add(...keysFollowedByValue: any[]): Dictionary;
@@ -12,7 +12,6 @@ export interface Dictionary {
 }
 
 export default function createDictionary(initialValues?: any): Dictionary {
-  const {isObject, isDefined}: TypeChecker = typeChecker();
   const empty: any = void 0;
   const dictionary: any = initialValues || {};
   const minimumDepth: number = 1;

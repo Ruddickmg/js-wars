@@ -1,5 +1,5 @@
 import settings from "../../settings/settings";
-import typeChecker, {TypeChecker} from "../../tools/validation/typeChecker";
+import {isArray, isDefined, isNull, isNumber, isString} from "../../tools/validation/typeChecker";
 import {areDimensions, Dimensions} from "./coordinates/dimensions";
 import {Building} from "./elements/building/building";
 import {Terrain} from "./elements/terrain/terrain";
@@ -20,7 +20,6 @@ export interface Map {
 }
 
 export function isMap(element: any): boolean {
-  const {isArray, isString, isNumber, isNull, isDefined}: TypeChecker = typeChecker();
   let id: MapId;
   let bool: boolean = false;
   if (isDefined(element) && !isNull(element)) {

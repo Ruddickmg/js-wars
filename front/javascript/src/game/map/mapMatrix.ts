@@ -20,7 +20,7 @@ const getPosition = (element: any): Position => element.position;
 export default function <Type>(map: Map, positionOfElement: (element: any) => Position = getPosition): MatrixMap<Type> {
   let placeHolders: any[] = [];
   const {getOccupantsOfPosition}: MapController = mapController(map);
-  const {isUnit, isTerrain}: TypeChecker = typeChecker();
+  const {isUnit, isTerrain}: TypeChecker = typeChecker;
   const matrix: Matrix<Type> = createMatrix<Type>();
   const isSame = (currentElement: any, comparison: any) => {
     return currentElement && comparison && currentElement.id === comparison.id;

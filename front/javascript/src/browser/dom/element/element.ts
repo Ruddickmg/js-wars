@@ -3,7 +3,7 @@ import {publish} from "../../../tools/pubSub";
 import createCache, {Cache} from "../../../tools/storage/cache";
 import capitalizeFirstLetter from "../../../tools/stringManipulation/capitalizeFirstLetter";
 import pixelStringConverter, {PixelStringConversion} from "../../../tools/stringManipulation/pixelStringConversion";
-import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
+import {isDefined, isFunction, isNull, isString} from "../../../tools/validation/typeChecker";
 import validator, {Validator} from "../../../tools/validation/validator";
 import isElement from "./isElement";
 
@@ -72,8 +72,6 @@ export default (function() {
   const visible: number = 1;
   const invisible: number = 0;
   const {formatPixelString, getNumericalValue}: PixelStringConversion = pixelStringConverter();
-  const {isString, isDefined, isNull, isFunction}: TypeChecker = typeChecker()
-    .register("element", isElement);
   const {
     validateString,
     validateDefined,
