@@ -7,7 +7,7 @@ import single from "../../tools/storage/singleton";
 import requestMaker, {IncompleteRequest, Request} from "../communication/requests/request";
 import {Element} from "../dom/element/element";
 import join from "./join/joinMenu";
-import loginHandler, {LoginScreen} from "./login/login";
+import {display, skip} from "./login/login";
 import handleGameModeSelection from "./mode/modeSelection";
 import getGameScreen from "./screen/gameScreen";
 import createTitle from "./screen/title";
@@ -16,13 +16,12 @@ import handleSettingsSelection from "./settings/settings";
 export default single<any>(function() {
   const request: Request = requestMaker();
   const saveMap: IncompleteRequest = request.post("maps/save") as IncompleteRequest;
-  const login: LoginScreen = loginHandler();
   const settings: Dictionary = getSettings();
   const gameScreen: Element<any> = getGameScreen();
   const testing: boolean = settings.get("testing");
   const title: Element<string> = createTitle();
   const gameSelection = (type: string, game: Game): any => join<Game>(type, game).listen();
-  subscribe("login", (): any => testing ? login.skip() : login.display());
+  subscribe("login", (): any => testing ? skip() : display());
   subscribe("beginGameSetup", () => {
     gameScreen.appendChild(title);
     handleGameModeSelection().listen();

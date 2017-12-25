@@ -72,7 +72,8 @@ export default (function() {
   const visible: number = 1;
   const invisible: number = 0;
   const {formatPixelString, getNumericalValue}: PixelStringConversion = pixelStringConverter();
-  const {isString, isDefined, isNull, isFunction}: TypeChecker = typeChecker().register("element", isElement);
+  const {isString, isDefined, isNull, isFunction}: TypeChecker = typeChecker()
+    .register("element", isElement);
   const {
     validateString,
     validateDefined,

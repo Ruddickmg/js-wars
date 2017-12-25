@@ -1,6 +1,6 @@
 import typeChecker, {TypeChecker} from "../../../tools/validation/typeChecker";
 
-export default (element: any): boolean => {
+export const isElement = (element: any): boolean => {
   const {isDefined, isFunction, isObject, isString, isDomElement}: TypeChecker = typeChecker();
   return isDefined(element)
     && isFunction(element.makeInvisible)
