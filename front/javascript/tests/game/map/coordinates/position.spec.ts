@@ -1,7 +1,7 @@
 import {expect} from "chai";
-import {Dimensions} from "../../../../../src/game/map/coordinates/dimensions";
-import createPosition, {Coordinates, Position} from "../../../../../src/game/map/coordinates/position";
-import testMap from "../../../../../src/game/map/testMap";
+import {Dimensions} from "../../../../src/game/map/coordinates/dimensions";
+import createPosition, {Coordinates, Position} from "../../../../src/game/map/coordinates/position";
+import testMap from "../../../../src/game/map/testMap";
 
 describe("position", () => {
   const map = testMap(1);

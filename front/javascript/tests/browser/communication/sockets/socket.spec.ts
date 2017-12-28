@@ -10,5 +10,7 @@ describe("socket", () => {
       done();
     });
   });
-  it("Only makes one connection to be used.", () => expect(getSocket()).to.equal(getSocket()));
+  it("Only makes one connection to be used.", () => {
+    expect(getSocket()).to.equal(getSocket());
+  });
 });

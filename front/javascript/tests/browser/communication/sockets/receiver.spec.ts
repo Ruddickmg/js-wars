@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import getReceivers, {Receivers} from "../../../../src/browser/communication/sockets/reciever";
-import {subscribe} from "../../../../src/tools/pubSub";
+import {subscribe, unsubscribe} from "../../../../src/tools/pubSub";
 
 describe("transmitter", () => {
   const actions: string[] = ["addUser", "cursorMove"];
@@ -16,10 +16,11 @@ describe("transmitter", () => {
   it("Triggers a socket emit when calling a transmitter.", () => {
     const value: string = "OkOkOkOK";
     actions.forEach((transmitter: string): any => {
-      subscribe(transmitter, (receivedValue: any): any => {
+      const id: any = subscribe(transmitter, (receivedValue: any): any => {
         expect(receivedValue).to.equal(value);
       });
       receivers[transmitter](value);
+      unsubscribe(id);
     });
   });
 });

@@ -11,7 +11,6 @@ export default function gameSetup(currentUser: any, origin: string = ""): void {
   const user: User = createUser(currentUser, origin);
   if (validateUser(user)) {
     gameScreen.removeChildren();
-    publish("addUser", user);
-    publish(["beginGameSetup", "settingUpGame"], true);
+    publish(["addUser", "beginGameSetup", "settingUpGame"], user);
   }
 }

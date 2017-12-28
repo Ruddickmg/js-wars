@@ -1,5 +1,5 @@
 import identifier, {Identifier} from "./identity";
-import {isFunction, isString} from "./validation/typeChecker";
+import {isArray, isFunction, isString} from "./validation/typeChecker";
 
 export interface PubSub {
   publish(eventId: string | string[], data?: any): void;
@@ -26,7 +26,8 @@ interface Event {
 
 type Emitter = (data: any, timeSinceLastUpdate: number) => any;
 const nonExistentIndex = -1;
-const elementsToRemoveFromEvents = 1;
+const singleElement: number = 1;
+const elementsToRemoveFromEvents = singleElement;
 const firstElementInReturnedArray = 0;
 const errorEventId: string = "error";
 const events: Events = {};
@@ -115,12 +116,9 @@ const addEvent = (eventId: string, data?: any): void => {
   }
 };
 const handleArrayOrString = (event: string | string[], data: any, action: (id: string, data: any) => void): any => {
-  const arr = event as string[];
-  const str = event as string;
-  if (isString(event)) {
-    return action(str, data);
-  }
-  return arr.map((eventId: string) => action(eventId, data));
+  return isString(event) ?
+    action(event as string, data) :
+    (event as string[]).map((eventId: string) => action(eventId, data));
 };
 export const subscribe = (event: string | string[], handler: Emitter): number | number[] => {
   return handleArrayOrString(event, handler, addSubscription);
@@ -128,10 +126,18 @@ export const subscribe = (event: string | string[], handler: Emitter): number | 
 export const publish = (event: string | string[], data?: any): void => {
   handleArrayOrString(event, data, addEvent);
 };
-export const unsubscribe = (id: SubscriptionId, event?: string): Subscriber => {
-  identity.remove(id);
-  if (event && events[event]) {
-    return removeSubscriberFromEvent(id, events[event]);
-  }
-  return removeSubscriberById(id);
+export const unsubscribe = (
+  subscriptionId: SubscriptionId | SubscriptionId[],
+  event?: string,
+): Subscriber | Subscriber[] => {
+  const subscriptions: SubscriptionId[] = (isArray(subscriptionId) ?
+    subscriptionId :
+    [subscriptionId]) as SubscriptionId[];
+  return subscriptions.map((id: SubscriptionId) => {
+    identity.remove(id);
+    if (event && events[event]) {
+      return removeSubscriberFromEvent(id, events[event]);
+    }
+    return removeSubscriberById(id);
+  });
 };
