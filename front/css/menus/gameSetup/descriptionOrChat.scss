@@ -14,11 +14,25 @@
 }
 
 #descriptions {
+  display: none;
   line-height: 83%;
   text-align: left;
   padding-left:1%;
   font-size: 42px;
   padding-top: 5%;
+}
+
+#descriptions.active {
+  display: block;
+}
+
+#descriptions.movedUp {
+  line-height: 5%;
+  height: 5%;
+  position: relative;
+  top: -15px;
+  font-size: 38px;
+  padding-bottom: 5px;
 }
 
 #chat {

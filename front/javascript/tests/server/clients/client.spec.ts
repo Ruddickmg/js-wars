@@ -6,11 +6,12 @@ import map from "../../../src/game/map/testMap";
 import createPlayer, {Player} from "../../../src/game/users/players/player";
 import createUser, {User} from "../../../src/game/users/user";
 import createClient, {Client} from "../../../src/server/clients/client";
-import connections, {Connections} from "../../../src/server/connections/connections";
+import connections, {Connection, Connections} from "../../../src/server/connections/connections";
 import getServer from "../../../src/server/connections/server";
 import createRoom, {Room} from "../../../src/server/rooms/room";
 
 describe("client", () => {
+
   const sinon = require("sinon");
   const roomId: number = 1;
   const testRoomName: string = "testRoom";
@@ -60,7 +61,7 @@ describe("client", () => {
     IP: "127.0.9.4",
     PORT: "8050",
   });
-  const frontend: any = connection.frontend();
+  const frontend: Connection = connection.frontend();
   const url: string = frontend.url;
   let client: Client;
   let testClient: Client;

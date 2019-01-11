@@ -57,7 +57,7 @@ describe("selector", () => {
       expect(select.getSelected()).to.equal(selected);
       keyboard.clearPressedKeys();
     });
-    it("Will move between list elements horizontally when set to horizontal selection.", () => {
+    it("Will move between list footerElements horizontally when set to horizontal selection.", () => {
       const select: SelectionHandler<any> = getSelector()
         .selectHorizontally()
         .listen();
@@ -68,7 +68,7 @@ describe("selector", () => {
       });
       select.stop();
     });
-    it("will move between list elements vertically when set to vertical selection.", () => {
+    it("will move between list footerElements vertically when set to vertical selection.", () => {
       const select: SelectionHandler<any> = getSelector()
         .selectVertically()
         .listen();

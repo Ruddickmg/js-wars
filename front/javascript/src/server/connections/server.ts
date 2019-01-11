@@ -13,7 +13,10 @@ import getRoomsHandler, {Rooms} from "../rooms/rooms";
 import getBackend, {Backend} from "./backend";
 import connections, {Connections} from "./connections";
 
-export default function(pathToRootDirectory: string, connection: Connections = connections(process.env)): any {
+export default function(
+  pathToRootDirectory: string,
+  connection: Connections = connections(process.env),
+): any {
   const app: any = express();
   const server: any = http.createServer(app);
   const staticFileDirectory: any = express.static(`${pathToRootDirectory}/public`);
@@ -70,7 +73,8 @@ export default function(pathToRootDirectory: string, connection: Connections = c
         .then((response) => {
           res.json(response);
           clients.updateUser(response, user.id);
-        }).catch(handle);
+        })
+        .catch(handle);
     }
     res.json(user);
     handle(Error("Invalid user found in attempt to save user."));

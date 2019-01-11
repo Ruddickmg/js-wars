@@ -123,9 +123,7 @@ const handleArrayOrString = (event: string | string[], data: any, action: (id: s
 export const subscribe = (event: string | string[], handler: Emitter): number | number[] => {
   return handleArrayOrString(event, handler, addSubscription);
 };
-export const publish = (event: string | string[], data?: any): void => {
-  handleArrayOrString(event, data, addEvent);
-};
+export const publish = (event: string | string[], data?: any): void => handleArrayOrString(event, data, addEvent);
 export const unsubscribe = (
   subscriptionId: SubscriptionId | SubscriptionId[],
   event?: string,

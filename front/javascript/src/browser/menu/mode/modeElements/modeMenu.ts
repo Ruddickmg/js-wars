@@ -9,6 +9,7 @@ export interface ModeMenu<Type> extends Element<Type> {
 }
 
 export default function <Type>() {
+
   const modeMenuId: string = "selectModeMenu";
   const modeMenuType: string = "ul";
   const modes: any = getSettings().toObject("mode", "modes");
@@ -17,6 +18,8 @@ export default function <Type>() {
     return createModeElement(id, options);
   });
   const elements: ArrayList<ModeElement> = createList<ModeElement>(gameModes);
+
   elements.forEach((modeElement: ModeElement) => menu.appendChild(modeElement));
+
   return Object.assign(menu, {elements});
 }

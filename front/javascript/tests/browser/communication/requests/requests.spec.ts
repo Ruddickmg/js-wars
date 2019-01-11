@@ -4,9 +4,11 @@ import * as sinon from "sinon";
 import requestMaker, {Request} from "../../../../src/browser/communication/requests/request";
 
 describe("requests", () => {
+
   let requests: SinonFakeXMLHttpRequest[];
   let request: Request;
   let xhr: SinonFakeXMLHttpRequest;
+
   const checkIfThrowsError = (method: any): Promise<any> => {
     const promise: Promise<any> = method("/hello/bob", "hey bob!") as Promise<any>;
     expect(requests.length).to.equal(1);
@@ -14,13 +16,16 @@ describe("requests", () => {
     return promise.then(() => "error")
       .catch((error) => expect(error).to.be.an("error"));
   };
+
   beforeEach(() => {
     xhr = sinon.useFakeXMLHttpRequest();
     requests = [];
     xhr.onCreate = (newXhr: SinonFakeXMLHttpRequest): any => requests.push(newXhr);
     request = requestMaker(this.xhr);
   });
+
   afterEach((): any => xhr.restore());
+
   it("Makes get requests.", () => {
     const promise: Promise<any> = request.get("/hello/bob", "hey bob!") as Promise<any>;
     expect(requests.length).to.equal(1);

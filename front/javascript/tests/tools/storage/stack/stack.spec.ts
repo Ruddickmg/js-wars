@@ -31,7 +31,7 @@ describe("stack", () => {
       expect(stack.isEmpty()).to.equal(false);
       expect(stack.size()).to.equal(1);
     });
-    it("Clears all elements from the stack", () => {
+    it("Clears all footerElements from the stack", () => {
       stack.push(secondValue);
       stack.push(thirdValue);
       expect(stack.top()).to.equal(thirdValue);

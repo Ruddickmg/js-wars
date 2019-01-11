@@ -20,7 +20,7 @@ describe("initializeDatabase", () => {
   it("Creates tables in the database.", () => {
     const timesToAttemptConnection: number = 6;
     return initialize(db, timesToAttemptConnection, testDatabase)
-      .then((response: boolean) => {
+      .then((response: string) => {
         expect(response).to.equal("migrated");
       });
   });

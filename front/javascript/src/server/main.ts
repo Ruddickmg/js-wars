@@ -52,6 +52,7 @@ const handleDisconnectedSocketConnections = new cronJob({
     );
   },
 });
+
 compiler(pathToInputFile)
 // .tsify({target: "ES6", debug: true})
   .babelify({
@@ -61,15 +62,21 @@ compiler(pathToInputFile)
   })
   .watchify()
   .compile(pathToOutputFile, {debug: true});
+
 socketListener.addListeners(
   roomsSocketListener(),
   aiSocketListener(clients, aiPlayers),
   gameSetupSocketListener(clients, rooms),
   gamePlaySocketListener(clients),
 );
+
 io.on("connection", socketListener.listenForSocketCommunication);
+
 handleDisconnectedSocketConnections.start();
+
+// temporary
 subscribe(errorEventId, (error: Error): any => console.log("\n" + error + "\n"));
+
 initializeDatabase(backend)
   .then(() => server.listen(port, ip, () => console.log(`  - listening for requests @ ${ip}:${port}`)))
   .catch((error: Error) => publish(errorEventId, error));

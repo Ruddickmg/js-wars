@@ -33,13 +33,19 @@ export interface ArrayList<Type> {
 
 type MapCallback = <Type>(element: Type, index: number, list: ArrayList<Type>) => any;
 type ReduceCallback<Type> = (accumulator: any, value: Type, index: number, list: ArrayList<Type>) => any;
+
 export default (function() {
+
   const min = Math.min;
   const minimumIndex: number = 0;
+
   register("list", isList);
+
   return function createList<Type>(initialElements: any[] = []): ArrayList<Type> {
+
     let elements: any[] = initialElements;
     let index: number = 0;
+
     const addElement = function(element: Type): ArrayList<Type> {
       elements.push(element);
       return this;
@@ -158,6 +164,7 @@ export default (function() {
       return copyCurrentList(copyOfElements.sort(callback));
     };
     const wrapIndexAroundLength = (unwrappedIndex: number): number => wrapIndex(unwrappedIndex, elements.length);
+
     return {
       addElement,
       addElements,

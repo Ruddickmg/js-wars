@@ -1,23 +1,24 @@
-$amount-of-rotation-for-diamond-shape: 45deg;
+$rotation-needed-for-diamond-shape: 45deg;
 $minimum-swell-size: 0.8;
 $maximum-swell-size: 1;
-$startingPointOfSwell: scale($minimum-swell-size) rotate($amount-of-rotation-for-diamond-shape);
-$ending-point-of-swell: scale($maximum-swell-size) rotate($amount-of-rotation-for-diamond-shape);
-$colorOfInsetOnSettingElement: black;
-$colorOfTextOutline: black;
-$thicknessOfTextOutline: 2;
-$sizeOfSettingElement: 80px;
-$positionOfFogTitle: 20%;
-$positionOfWeatherTitle: -20%;
-$positionOfFundsTitle: 0;
-$positionOfTurnTitle: 10%;
-$positionOfCaptureTitle: -25%;
-$positionOfPowerTitle: -10%;
-$positionOfVisualsTitle: -10%;
-$vertical_starting_point: 50;
-$horizontal_starting_point: 5;
-$vertical_space_between_elements: -6;
-$horizontal_space_between_elements: 13;
+$setting-element-rotation: rotate($rotation-needed-for-diamond-shape);
+$startingPointOfSwell: scale($minimum-swell-size) $setting-element-rotation;
+$ending-point-of-swell: scale($maximum-swell-size) $setting-element-rotation;
+$setting-element-inset-color: black;
+$text-outline-color: black;
+$text-outline-width: 2;
+$setting-element-size: 80px;
+$fog-title-position: 20%;
+$weather-title-position: -20%;
+$funds-title-position: 0;
+$turn-title-position: 10%;
+$capture-title-position: -25%;
+$power-title-position: -10%;
+$visuals-title-position: -10%;
+$vertical-starting-point: 50;
+$horizontal-starting-point: 5;
+$vertical-space-between-elements: -6;
+$horizontal-space-between-elements: 13;
 $starting-delay: 0;
 $animation-delay: 100;
 $movement-speed: .8s;
@@ -33,8 +34,13 @@ $swelling: swellSettingBackground 1s infinite ease;
   opacity: 0;
 }
 
+.move-home {
+  opacity: 50;
+}
+
 .rules, .stable {
-  @include size($sizeOfSettingElement);
+  @include size($setting-element-size);
+  margin: 5px;
   position: absolute;
   display: inline-block;
   left: inherit;
@@ -42,10 +48,8 @@ $swelling: swellSettingBackground 1s infinite ease;
 }
 
 .rules {
-  box-shadow: 2px 0 8px 0 $colorOfInsetOnSettingElement inset, 2px 0  0 $colorOfInsetOnSettingElement;
-  border-style: solid;
-  border-width: 5px 5px 5px;
-  border-color: white;
+  box-shadow: 2px 0 8px 0 $setting-element-inset-color inset, 2px 0  0 $setting-element-inset-color;
+  border: 6px solid white;
   will-change: transform;
   z-index: 1;
 }
@@ -65,10 +69,10 @@ $swelling: swellSettingBackground 1s infinite ease;
     text-align: center;
 
     li {
-      @include outlineText($colorOfTextOutline, $thicknessOfTextOutline);
-      @include size($sizeOfSettingElement);
+      @include outlineText($text-outline-color, $text-outline-width);
+      @include size($setting-element-size);
       will-change: opacity;
-      line-height: $sizeOfSettingElement;
+      line-height: $setting-element-size;
       color: white;
       font-size: 26px;
       text-align: center;
@@ -79,23 +83,17 @@ $swelling: swellSettingBackground 1s infinite ease;
 
 @each $setting, $textPosition in zip(
     $settings,
-    $positionOfFogTitle
-    $positionOfWeatherTitle
-    $positionOfFundsTitle
-    $positionOfTurnTitle
-    $positionOfCaptureTitle
-    $positionOfPowerTitle
-    $positionOfVisualsTitle
+    $fog-title-position $weather-title-position $funds-title-position $turn-title-position $capture-title-position $power-title-position $visuals-title-position
 ) {
   ##{$setting}Display h1 {
     left: $textPosition;
   }
 }
 
-$top: $vertical_starting_point;
-$top-increment: $vertical_space_between_elements;
-$left: $horizontal_starting_point;
-$left-increment: $horizontal_space_between_elements;
+$top: $vertical-starting-point;
+$top-increment: $vertical-space-between-elements;
+$left: $horizontal-starting-point;
+$left-increment: $horizontal-space-between-elements;
 $delay: $starting-delay;
 $delay-increment: $animation-delay;
 

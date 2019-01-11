@@ -13,10 +13,13 @@ export default (function() {
   const publishInputError = (className: string, method: string, input: any): void => {
     publish("invalidInputError", {className, method, input});
   };
+
   return function(className: string): Validator {
     const {isString}: TypeChecker = typeChecker;
     const validations: any = Object.keys(typeChecker);
+
     if (isString(className)) {
+
       return validations.reduce((validation: Validator, property: string): Validator => {
         const prefix: string = property.slice(0, 2);
         const type: string = property.slice(2);

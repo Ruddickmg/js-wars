@@ -51,6 +51,7 @@ describe("server", function() {
   const map: Map = testMap(id);
   const game: Game = createGame(name, category, map);
   const room: Room = createRoom(id, game);
+
   const createUrlCall = (method: string, target: string, input?: any): any => {
     return {
       body: input,
@@ -59,11 +60,14 @@ describe("server", function() {
       uri: `${url}${target}`,
     };
   };
+
   let server: any;
+
   beforeEach(() => {
     server = getServer(pathToRootDirectory);
     server.listen(frontEnd.port, frontEnd.ip);
   });
+
   afterEach(() => {
     server.close();
     [mockRooms, mockBackend, mockClients, mockClient]

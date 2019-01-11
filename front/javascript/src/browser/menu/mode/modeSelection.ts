@@ -22,7 +22,9 @@ export interface ModeSelection {
 }
 
 export default single<ModeSelection>(function(): ModeSelection {
+
   let subscription: number;
+
   const keyEvent: string = "pressedEnterKey";
   const screenName: string = "setupScreen";
   const titleOfScreen: string = "Select*Mode";
@@ -39,9 +41,10 @@ export default single<ModeSelection>(function(): ModeSelection {
   const scrollBar: ScrollBar = createScrollBar().listen();
   const menu: ModeMenu<any> = createModeMenu<any>();
   const modeElements: ArrayList<ModeElement> = menu.elements;
-  const selector: SelectionHandler<any> = createSelector<any>(modeElements);
-  const isSelectable = (mode: string): boolean => !nonSelectableElements[mode];
-  const getDescriptionOf = ({id}: Element<any>): string => {
+  const modeSelector: SelectionHandler<any> = createSelector<any>(modeElements);
+
+  const modeIsSelectable = (mode: string): boolean => !nonSelectableElements[mode];
+  const getModeDescription = ({id}: Element<any>): string => {
     if (validateString(id, "getDescriptionOf")) {
       return messages[id.toLowerCase()];
     }
@@ -52,19 +55,19 @@ export default single<ModeSelection>(function(): ModeSelection {
       .forEach((element: any) => element.setPosition(positions[position++]));
     return this;
   };
-  const stop = function(): ModeSelection {
+  const stopListening = function(): ModeSelection {
     scrollBar.stop();
-    selector.stop();
+    modeSelector.stop();
     unsubscribe(subscription, keyEvent);
     return this;
   };
-  const remove = function(): ModeSelection {
-    stop();
+  const clearPage = function(): ModeSelection {
+    stopListening();
     setupScreen.removeChild(scrollBar);
     setupScreen.removeChild(menu);
     return this;
   };
-  const switchOptions = function(current: any, previous: any): ModeSelection {
+  const switchBetweenModeOptions = function(current: any, previous: any): ModeSelection {
     const mode: string = current.getValue();
     previous.stopFading();
     current.fadeBorderColor();
@@ -79,35 +82,45 @@ export default single<ModeSelection>(function(): ModeSelection {
     if (!isOption(selected)) {
       rotateMenuElements(selections);
     }
-    switchOptions(selected, previous);
+    switchBetweenModeOptions(selected, previous);
     return this;
   };
+
+  /* Initialize page and Listen for user input */
   const listen = function(): ModeSelection {
-    const current: Element<any> = selector.getSelected();
+
+    const currentMode: Element<any> = modeSelector.getSelected();
+
     subscription = subscribe(keyEvent, (): void => {
-      const mode: any = selector.getSelected().getValue();
-      if (isSelectable(mode)) {
-        remove();
+      const mode: any = modeSelector.getSelected().getValue();
+      if (modeIsSelectable(mode)) {
+        clearPage();
         publish(events[mode]);
       }
     }) as number;
-    switchOptions(current, current);
-    scrollBar.setText(getDescriptionOf(current));
+
+    switchBetweenModeOptions(currentMode, currentMode);
+
+    scrollBar.setText(getModeDescription(currentMode));
     setupScreen.appendChild(menu);
     setupScreen.appendChild(scrollBar);
     setupScreen.setClass(screenName);
     setupScreen.get("title").setText(titleOfScreen);
-    selector.listen();
+    modeSelector.listen();
+
     return this;
   };
-  selector.vertical(switchMode).horizontal(switchOptions);
+
+  /* Initialize mode selector */
+  modeSelector.vertical(switchMode).horizontal(switchBetweenModeOptions);
   rotateMenuElements(modeElements);
+
   return {
     listen,
-    remove,
+    remove: clearPage,
     rotateMenuElements,
-    stop,
+    stop: stopListening,
     switchMode,
-    switchOptions,
+    switchOptions: switchBetweenModeOptions,
   };
 });

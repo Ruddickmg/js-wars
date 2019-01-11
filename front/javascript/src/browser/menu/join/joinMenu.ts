@@ -39,6 +39,7 @@ const categories: CategorySelector = createCategorySelector();
 const isSelectingMaps = (selectionType: string): boolean => selectionType === mapSelection;
 
 export default function <Type>(type: string, game?: Game): JoinMenu<Type> {
+
   const horizontalKeys: string[] = ["pressedLeftKey", "pressedRightKey"];
   const selectingMaps: boolean = isSelectingMaps(type);
   const selectionType: string = selectingMaps ? mapSelectionType : gameSelectionType;

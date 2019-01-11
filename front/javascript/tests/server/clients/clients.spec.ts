@@ -8,6 +8,7 @@ import clientHandler, {ClientHandler} from "../../../src/server/clients/clients"
 import createRoom, {Room} from "../../../src/server/rooms/room";
 
 describe("clients", () => {
+
   const sinon = require("sinon");
   const testId = 1;
   const category = "testCategory";
@@ -29,7 +30,7 @@ describe("clients", () => {
   const secondTestUser: User = createUser({
     email: "test@email.com",
     first_name: "name",
-    gender: "famale",
+    gender: "female",
     id: 2,
     last_name: "lastOne",
     link: "www.testy.com",
@@ -52,6 +53,7 @@ describe("clients", () => {
   const testEmitter: any = sinon.spy();
   const testSocket: any = mockSocket(testEmitter);
   const clients: ClientHandler = clientHandler();
+
   it("Adds a client to the client handler.", () => {
     const client: Client = clients.add(testSocket, testId);
     expect(clients.byId(testId)).to.equal(client);

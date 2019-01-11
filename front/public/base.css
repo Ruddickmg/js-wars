@@ -115,11 +115,23 @@
   overflow-x: hidden; }
 
 #descriptions {
+  display: none;
   line-height: 83%;
   text-align: left;
   padding-left: 1%;
   font-size: 42px;
   padding-top: 5%; }
+
+#descriptions.active {
+  display: block; }
+
+#descriptions.movedUp {
+  line-height: 5%;
+  height: 5%;
+  position: relative;
+  top: -15px;
+  font-size: 38px;
+  padding-bottom: 5px; }
 
 #chat {
   display: none;
@@ -226,17 +238,33 @@
   z-index: 9; }
 
 .textInput {
+  border: red 1px solid;
+  border-radius: 2px;
   display: block;
-  left: 1%;
+  left: 10px;
+  background: transparent;
   font-size: 30px;
-  width: 100%;
-  height: 100%; }
+  height: 32px;
+  width: 98%;
+  padding: 5px;
+  margin: 2px;
+  z-index: 101; }
 
 .inputForm {
-  border-top-width: 0;
   display: none;
-  width: 100%;
+  background: transparent;
+  position: relative;
+  z-index: 100;
+  border-top-width: 0;
+  width: 99.5%;
   height: 0; }
+
+.inputForm.active {
+  display: block;
+  padding: 5px;
+  position: relative;
+  top: -7px;
+  height: 100%; }
 
 #descriptionOrChatScreen,
 .inputForm {
@@ -268,24 +296,21 @@
 
 /*outer element for red border*/
 .menuScreen {
-  padding: 3px;
+  padding: 2px 3px 2px 3px;
   position: absolute;
+  display: flex;
   z-index: 10;
-  border-radius: 2%;
+  border-radius: 4px;
   border: 3px solid black;
   background: white;
   box-shadow: 4px 0px 2px 1px black;
   text-rendering: optimizeSpeed; }
 
 .innerScreen {
+  flex: 1;
   background: rgba(255, 0, 0, 0.05);
   overflow: hidden;
-  border-radius: 1%;
-  height: 95%;
-  left: 5%;
-  top: 5%;
-  bottom: 5%;
-  right: 5%;
+  border-radius: 3px;
   border-left: solid red 5px;
   border-right: solid red 5px;
   border-top: solid red 12px;
@@ -900,9 +925,13 @@ h1 {
 .invisible {
   opacity: 0; }
 
+.move-home {
+  opacity: 50; }
+
 .rules, .stable {
   width: 80px;
   height: 80px;
+  margin: 5px;
   position: absolute;
   display: inline-block;
   left: inherit;
@@ -910,9 +939,7 @@ h1 {
 
 .rules {
   box-shadow: 2px 0 8px 0 black inset, 2px 0 0 black;
-  border-style: solid;
-  border-width: 5px 5px 5px;
-  border-color: white;
+  border: 6px solid white;
   will-change: transform;
   z-index: 1; }
 

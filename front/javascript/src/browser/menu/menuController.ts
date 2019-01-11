@@ -14,6 +14,7 @@ import createTitle from "./screen/title";
 import handleSettingsSelection from "./settings/settings";
 
 export default single<any>(function() {
+
   const request: Request = requestMaker();
   const saveMap: IncompleteRequest = request.post("maps/save") as IncompleteRequest;
   const settings: Dictionary = getSettings();
@@ -21,15 +22,19 @@ export default single<any>(function() {
   const testing: boolean = settings.get("testing");
   const title: Element<string> = createTitle();
   const gameSelection = (type: string, game: Game): any => join<Game>(type, game).listen();
+
   subscribe("login", (): any => testing ? skip() : display());
   subscribe("beginGameSetup", () => {
     gameScreen.appendChild(title);
     handleGameModeSelection().listen();
   });
-  subscribe("finishedSelectingMap", (game: Game) => handleSettingsSelection(game));
+  subscribe("finishedSelectingMap", (game: Game) => handleSettingsSelection(game).listen());
   subscribe("joinNewGame", (game: Game): any => gameSelection("open", game));
   subscribe("joinContinuingGame", (game: Game): any => gameSelection("running", game));
-  subscribe("startNewGame", (game: Game = createGame()): any => gameSelection("type", game));
+  subscribe("startNewGame", (game: Game = createGame()): any => {
+    console.log("starting a new game!!");
+    return gameSelection("type", game);
+  });
   subscribe("resumeSavedGame", (game: Game): any => gameSelection("saved", game));
   subscribe("createNewMap", (): void => {
     const amountOfMaps: number = 10;

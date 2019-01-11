@@ -1,10 +1,11 @@
 /*outer element for red border*/
 
 .menuScreen {
-  padding: 3px;
+  padding: 2px 3px 2px 3px;
   position: absolute;
+  display: flex;
   z-index: 10;
-  border-radius: 2%;
+  border-radius: 4px;
   border: 3px solid black;
   background: white;
   box-shadow: 4px 0px 2px 1px black;
@@ -12,14 +13,10 @@
 }
 
 .innerScreen {
+  flex: 1;
   background: rgba(255,0,0,.05);
   overflow: hidden;
-  border-radius: 1%;
-  height:95%;
-  left:5%;
-  top:5%;
-  bottom:5%;
-  right:5%;
+  border-radius: 3px;
   border-left:solid red 5px;
   border-right:solid red 5px;
   border-top:solid red 12px;

@@ -2,6 +2,11 @@ $above-screen: translate3d(0, -100vh, 0);
 $below-screen: translate3d(0, 100vh, 0);
 $left-screen: translate3d(100vw, 0, 0);
 $right-screen: translate3d(-100vw, 0, 0);
+$minimum-swell-size: 0.8; // TODO: this may not be right?
+$maximum-swell-size: 1;
+$maximum-cursor-size: scale($minimum-swell-size);
+$minimum-cursor-size: scale($maximum-swell-size);
+
 .aboveScreen {
    transform: $above-screen;
 }

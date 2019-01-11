@@ -1,0 +1,14 @@
+$vertical-positions: (top, bottom);
+$horizontal-positions: (left, right);
+.cursor {
+  display: block;
+  @each $sideOne in $vertical-positions {
+    @each $sideTwo in $horizontal-positions {
+      .#{$sideOne}-#{$sideTwo}-corner {
+        #{$sideOne}: 0;
+        #{$sideTwo}: 0;
+      }
+    }
+  }
+}
+

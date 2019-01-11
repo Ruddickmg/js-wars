@@ -12,8 +12,8 @@ describe("cache", () => {
   const elements: string[] = ["1", "2", "3", "4"];
   const numbers: number[] = range(beginning, end);
   const mappingFunction = (value: number): number => value + 1;
-  it("Adds elements to cache", () => testCache.add(elementName, element));
-  it("Retrieves elements from cache.", () => expect(testCache.get(elementName)).to.equal(element));
+  it("Adds footerElements to cache", () => testCache.add(elementName, element));
+  it("Retrieves footerElements from cache.", () => expect(testCache.get(elementName)).to.equal(element));
   it("Reports whether it contains a key.", () => expect(testCache.contains(elementName)).to.equal(true));
   it("Removes element from cache", () => {
     expect(testCache.remove(elementName)).to.equal(element);
@@ -25,7 +25,7 @@ describe("cache", () => {
     elements.forEach((value: any): any => testCache.add(value, value));
     expect(testCache.size()).to.equal(elements.length);
   });
-  it("Clears all elements from cache.", () => {
+  it("Clears all footerElements from cache.", () => {
     expect(testCache.size()).to.equal(elements.length);
     testCache.clear();
     expect(testCache.size()).to.equal(0);

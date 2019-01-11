@@ -28,7 +28,7 @@ describe("arrayList", () => {
     list.addElement(firstElement);
     expect(list.getElementAtIndex(indexOfFirstElement)).to.equal(firstElement);
   });
-  it("Can add multiple elements at a time.", () => {
+  it("Can add multiple footerElements at a time.", () => {
     list.addElements(values);
     expect(list.getElementAtIndex(1)).to.equal(secondElement);
     expect(list.getElementAtIndex(2)).to.equal(thirdElement);
@@ -77,7 +77,7 @@ describe("arrayList", () => {
     currentIndex = list.findIndex((element: any): boolean => element === thirdElement);
     expect(currentIndex).to.equal(2);
   });
-  it("Can retrieve neighboring elements", () => {
+  it("Can retrieve neighboring footerElements", () => {
     const expectedNeighbors: number[] = [firstElement, secondElement, thirdElement];
     let neighbors: number[];
     list.addElements(values);

@@ -1,3 +1,4 @@
+import {LoginCredentials} from "../../../game/users/credentials";
 import {User} from "../../../game/users/user";
 import createUser from "../../../game/users/user";
 import {publish} from "../../../tools/pubSub";
@@ -7,8 +8,8 @@ import getGameScreen from "../screen/gameScreen";
 const {validateUser}: Validator = validation("gameSetup");
 const gameScreen = getGameScreen();
 
-export default function gameSetup(currentUser: any, origin: string = ""): void {
-  const user: User = createUser(currentUser, origin);
+export default function gameSetup(loginCredentials: LoginCredentials, origin: string = ""): void {
+  const user: User = createUser(loginCredentials, origin);
   if (validateUser(user)) {
     gameScreen.removeChildren();
     publish(["addUser", "beginGameSetup", "settingUpGame"], user);

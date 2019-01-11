@@ -22,7 +22,7 @@ describe("binaryHeap", () => {
   describe("size", () => {
     const heap: BinaryHeap<number> = newHeap();
     let numberOfElements: number = 0;
-    it("reports the amount of elements in the heap", () => {
+    it("reports the amount of footerElements in the heap", () => {
       for (numberOfElements; numberOfElements < numberOfTests; numberOfElements++) {
         heap.push(numberOfElements);
         expect(heap.size()).is.equal(numberOfElements + 1);

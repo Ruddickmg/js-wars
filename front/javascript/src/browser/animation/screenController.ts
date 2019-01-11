@@ -28,6 +28,7 @@ export interface ScreenController {
 }
 
 export default function(mapDimensions: Dimensions): ScreenController {
+
   const floor = Math.floor;
   const {numberOfVerticalGridSquares, numberOfHorizontalGridSquares, listOfCanvasAnimations} = screenConfiguration;
   const initialX = floor((mapDimensions.width - numberOfHorizontalGridSquares) / 2);
@@ -57,6 +58,7 @@ export default function(mapDimensions: Dimensions): ScreenController {
   const focused = (): boolean => isFocused;
   const withinMapDimensions = (view: number, sign: number, limit: number): boolean => view * sign + sign < limit;
   const movementStillRemains = (distance: number): boolean => distance >= minimumDistance;
+
   const moveScreen = (distance: number, currentPosition: number, limit: number, sign: number, axis: string): void => {
     periodOfTime.wait(scrollSpeed)
       .then((): void => {
@@ -70,11 +72,13 @@ export default function(mapDimensions: Dimensions): ScreenController {
         publish("error", `Error occurred in the moveScreen method of screenController: ${error.message}`);
       });
   };
+
   const cursorAtBottomOrLeftOfScreen = (cursorPosition: number, currentScreenPosition: number): boolean => {
     return cursorPosition >= bottomOrLeftEdgeOfScreen
       && cursorPosition < currentScreenPosition + squaresFromEdgeBeforeMoving
       && currentScreenPosition > bottomOrLeftEdgeOfScreen;
   };
+
   const cursorAtTopOrRightOfScreen = (
     cursorPosition: number,
     currentPosition: number,
@@ -85,6 +89,7 @@ export default function(mapDimensions: Dimensions): ScreenController {
       && cursorPosition > currentPosition + edgeOfScreen - squaresFromEdgeBeforeMoving
       && currentPosition < edgeOfMap - cursorBoundary;
   };
+
   const scroll = function(cursorLocation: Position): ScreenController {
     listOfAxis.forEach((axis) => {
       const edgeOfMap: number = mapDimensions[axis];
@@ -101,16 +106,19 @@ export default function(mapDimensions: Dimensions): ScreenController {
     publish("screenMovement", screenPosition);
     return this;
   };
+
   const focus = (): void => {
     if (keyboard.pressedFocus()) {
       publish("focus");
     }
   };
+
   const unFocus = (): void => {
     if (keyboard.releasedFocus()) {
       publish("unfocused");
     }
   };
+
   const setDimensions = function(newWidth: number, newHeight: number): ScreenController {
     const vertical: number = screenConfiguration.numberOfVerticalGridSquares;
     const horizontal: number = screenConfiguration.numberOfHorizontalGridSquares;
@@ -118,6 +126,7 @@ export default function(mapDimensions: Dimensions): ScreenController {
     gridDimensions = createDimensions(horizontal, vertical);
     return this;
   };
+
   const withinDimensions = ({x, y}: Position): boolean => {
     const invalidIndex = -1;
     const screenPositionX = screenPosition.x;
@@ -129,6 +138,7 @@ export default function(mapDimensions: Dimensions): ScreenController {
       && x <= screenDimensions.width + screenPositionX
       && y <= screenDimensions.height + screenPositionY;
   };
+
   const moveTo = function(coordinates: Position): ScreenController {
     publish("changeCursorPosition", coordinates);
     listOfAxis.forEach((axis) => {
@@ -150,6 +160,7 @@ export default function(mapDimensions: Dimensions): ScreenController {
     });
     return this;
   };
+
   const reset = function(): ScreenController {
     [
       "actionHud",
@@ -164,11 +175,14 @@ export default function(mapDimensions: Dimensions): ScreenController {
     // app.options.deactivate();
     return this;
   };
+
   let gridDimensions: Dimensions = createDimensions(numberOfHorizontalGridSquares, numberOfVerticalGridSquares);
+
   subscribe("cursorMoved", scroll);
   subscribe("keyPressed", focus);
   subscribe("keyReleased", unFocus);
   subscribe("resetScreen", reset);
+
   return {
     bottom,
     dimensions,
