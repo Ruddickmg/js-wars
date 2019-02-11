@@ -28,6 +28,7 @@ export interface Backend {
 }
 
 export default single<Backend>(function(url: string): Backend {
+
   const json: boolean = true;
   const addToUrl = formatUrl(url);
   const combine = (...objects: object[]) => Object.assign({}, ...objects);
@@ -44,6 +45,7 @@ export default single<Backend>(function(url: string): Backend {
   const getUser = (origin: string, user_id: BackendId, database?: string): Promise<any> => {
     return get("users", {origin, user_id, database});
   };
+
   const makeRequest = (
     method: string,
     path: string = "",
@@ -54,17 +56,21 @@ export default single<Backend>(function(url: string): Backend {
     const requestParameters: Parameters = {json, method, uri};
     return request(combine(requestParameters, headers));
   };
+
   const migrate = (database?: string): Promise<any> => get("migrate", {database}).then((response) => {
     return response.success ?
       Promise.resolve(response) :
       Promise.reject(Error("Could not complete migration."));
   });
+
   const post = (path: string, body: any, database?: string): Promise<any> => {
     return makeRequest("POST", path, {database}, {body});
   };
+
   const saveGame = (game: Game, database?: string): Promise<any> => post("games", game, database);
   const saveMap = (map: Map, database?: string): Promise<any> => post("maps", map, database);
   const saveUser = (user: User, database?: string): Promise<any> => post("users", user, database);
+
   return {
     deleteGame,
     deleteMap,

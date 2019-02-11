@@ -25,26 +25,29 @@ export default (function(): TextInputFactory {
   return function(event?: string, defaultText?: string): TextInput {
 
     let subscription: number;
-    let eventNameMessage: string = event;
+    let eventIdentifier: string = event;
 
     const inputHolder: Element<any> = createElement<string>("", inputHolderType);
     const input: Element<any> = createElement<string>("", inputType);
 
     const listen = function(): TextInput {
+      console.log("subscribing");
       subscription = subscribe("keyPressed", () => {
         let text: string;
         if (keyboard.pressedEnter()) {
+          console.log("pressed enter");
           text = input.getInput() || "";
-          publish(eventNameMessage, text);
+          publish(eventIdentifier, text);
         } else if (keyboard.pressedEsc()) {
-          publish(eventNameMessage);
+          console.log("pressed esc", eventIdentifier);
+          publish(eventIdentifier);
         }
       }) as number;
       return this;
     };
 
     const setEventName = function(eventName: string): TextInput {
-      eventNameMessage = eventName;
+      eventIdentifier = eventName;
       return this;
     };
 
@@ -59,8 +62,10 @@ export default (function(): TextInputFactory {
     };
 
     const stop = function(): TextInput {
+      console.log("stopping subscription", subscription);
       if (isNumber(subscription) || isString(subscription)) {
-        unsubscribe(subscription);
+        console.log("unsubscribed from", unsubscribe(subscription, eventIdentifier));
+        subscription = void 0;
       }
       inputHolder.removeClass(activationClassName);
       return this;

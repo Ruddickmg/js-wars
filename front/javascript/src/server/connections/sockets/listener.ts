@@ -11,9 +11,12 @@ export interface SocketListeners {
 }
 
 export default function(): SocketListeners {
+
   const allListeners: Listener[] = [];
   const errorEventId: string = "error";
+
   return {
+
     addListeners(...listeners: Listener[]): SocketListeners {
       listeners.forEach((listener: Listener): any => {
         if (isObject(listener)) {
@@ -22,6 +25,7 @@ export default function(): SocketListeners {
       });
       return this;
     },
+
     listenForSocketCommunication(socket: any): SocketListeners {
       allListeners.forEach((listener: Listener) => {
         const listenerDirectives: string[] = Object.keys(listener);

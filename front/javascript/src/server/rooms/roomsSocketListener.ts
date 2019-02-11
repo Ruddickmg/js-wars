@@ -11,9 +11,11 @@ import {isRoom, Room} from "./room";
 import getRoomHandler, {Rooms} from "./rooms";
 
 export default function(): Listener {
+
   const aiHandler: AiController = getAiController();
   const rooms: Rooms = getRoomHandler();
   const clients: ClientHandler = getClientHandler();
+
   const addUser = (user: User, socket: any): void => {
     const player: Player = createPlayer(user);
     const userId: UserId = user.id;
@@ -29,6 +31,7 @@ export default function(): Listener {
     client.joinRoom(rooms.lobby());
     client.emit("player", player);
   };
+
   const join = (room: any, socket: any): void => {
     const client: Client = clients.bySocket(socket);
     const storedRoom: Room = rooms.get(room);
@@ -41,6 +44,7 @@ export default function(): Listener {
       publish("error", "Invalid room found in call to join on the roomsSocketListener.");
     }
   };
+
   const newRoom = (game: any, socket: any) => {
     const client: Client = clients.bySocket(socket);
     const existingRoom: Room = rooms.get(game);
@@ -54,6 +58,7 @@ export default function(): Listener {
       client.emitToLobby("addRoom", game);
     }
   };
+
   const disconnect = (_: any, socket: any): void => {
     const client: Client = clients.bySocket(socket);
     let room: Room | Lobby;
@@ -66,6 +71,7 @@ export default function(): Listener {
       }
     }
   };
+
   return {
     addUser,
     disconnect,

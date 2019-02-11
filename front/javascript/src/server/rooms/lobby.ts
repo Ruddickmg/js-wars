@@ -13,10 +13,13 @@ export interface Lobby {
 }
 
 export default function(identity: RoomId): Lobby {
+
   let length: number = 0;
+
   const roomId: RoomId = identity;
   const nameOfRoom: string = "lobby";
   const players: any = {};
+
   const addPlayer = function(player: Player): Lobby {
     const playerId: RoomId = player.id;
     length += 1;
@@ -24,11 +27,13 @@ export default function(identity: RoomId): Lobby {
     players[playerId] = player;
     return this;
   };
+
   const getPlayers = (): Player[] => Object.keys(players).map((key: string) => players[key]);
   const size = (): number => length;
   const getPlayer = (playerId: RoomId): Player => players[playerId];
   const id = (): RoomId => roomId;
   const name = (): string => nameOfRoom;
+
   const removePlayer = (playerId: RoomId): Player => {
     const removed: Player = players[playerId];
     delete players[playerId];
@@ -37,6 +42,7 @@ export default function(identity: RoomId): Lobby {
     }
     return removed;
   };
+
   return {
     addPlayer,
     getPlayer,
@@ -49,7 +55,9 @@ export default function(identity: RoomId): Lobby {
 }
 
 export function isLobby(element: any) {
+
   const nameOfLobby: string = "lobby";
+
   return isDefined(element)
     && isFunction(element.addPlayer)
     && isFunction(element.getPlayer)

@@ -47,19 +47,33 @@ export function isRoom(room: any): room is Room {
 }
 
 export default function(roomId: RoomId, game: Game): Room {
+
   const categoryOfGame: string = game.category;
   const players: AnyPlayer[] = game.players;
   const invalidIndex = -1;
+  const category = (): string => categoryOfGame;
+  const getGame = (): Game => game;
+  const getPlayer = (idOfRoom: RoomId): AnyPlayer => players[indexOf(idOfRoom)];
+  const getPlayers = (): Player[] => players.slice();
+  const isEmpty = (): boolean => !getUsers().length;
+  const isFull = (): boolean => players.length >= game.max;
+  const hasStarted = (): boolean => game.started;
+  const id = (): RoomId => roomId;
+  const isSaved = (): boolean => game.saved;
+  const name = (): string => game.name;
+  const size = (): number => players.length;
+
   const addAi = (aiPlayer: AiPlayer): AiPlayer => {
     const index: number = indexOf(aiPlayer.id);
     players.splice(index, 0, aiPlayer);
     return aiPlayer;
   };
+
   const addPlayer = function(player: Player): Room {
     players.push(player);
     return this;
   };
-  const category = (): string => categoryOfGame;
+
   const getAiPlayers = (): AiPlayer[] => {
     return players.reduce((aiPlayers: AiPlayer[], player: AnyPlayer): AiPlayer[] => {
       if (isAiPlayer(player)) {
@@ -68,9 +82,7 @@ export default function(roomId: RoomId, game: Game): Room {
       return aiPlayers;
     }, []);
   };
-  const getGame = (): Game => game;
-  const getPlayer = (idOfRoom: RoomId): AnyPlayer => players[indexOf(idOfRoom)];
-  const getPlayers = (): Player[] => players.slice();
+
   const getUsers = (): Player[] => {
     return players.reduce((allUsers: Player[], player: Player): Player[] => {
       if (!player.isComputer) {
@@ -79,36 +91,34 @@ export default function(roomId: RoomId, game: Game): Room {
       return allUsers;
     }, []);
   };
-  const hasStarted = (): boolean => game.started;
-  const id = (): RoomId => roomId;
+
   const indexOf = (playerId: RoomId): number => players.reduce((desiredIndex, player, index) => {
     const foundMatchingId: boolean = player.id === playerId;
     const indexHasNotBeenChanged: boolean = desiredIndex <= invalidIndex;
     return foundMatchingId && indexHasNotBeenChanged ? index : desiredIndex;
   }, invalidIndex);
-  const isEmpty = (): boolean => !getUsers().length;
-  const isFull = (): boolean => players.length >= game.max;
+
   const isSameAs = (room: Room): boolean => {
     const comparison = room.getGame();
     return ["id", "name", "created"].reduce((isTheSame: boolean, property: string) => {
       return game[property] === comparison[property] && isTheSame;
     }, true);
   };
-  const isSaved = (): boolean => game.saved;
-  const name = (): string => game.name;
+
   const removePlayer = (userId: RoomId): AnyPlayer => {
     const index: number = indexOf(userId);
     if (!isNaN(index)) {
       return players.splice(index, 1)[0];
     }
   };
+
   const replacePlayer = (userId: RoomId, replacement: AnyPlayer): AnyPlayer => {
     const index: number = indexOf(userId);
     if (!isNaN(index)) {
       return players.splice(index, 1, replacement)[0];
     }
   };
-  const size = (): number => players.length;
+
   return {
     addAi,
     addPlayer,

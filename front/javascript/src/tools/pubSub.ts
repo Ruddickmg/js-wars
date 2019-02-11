@@ -36,23 +36,27 @@ const increment = (id: SubscriptionId) => id + 1;
 const decrement = (id: SubscriptionId) => id - 1;
 const identity: Identifier<SubscriptionId> = identifier<SubscriptionId>(1, increment, decrement);
 const createEvent = (name: string): Event => ({name, subscribers: [], timeOfLastUpdate: new Date()});
+
 const createSubscriber = (eventHandler: Emitter): Subscriber => {
   return {
     emit: eventHandler,
     id: identity.get(),
   };
 };
+
 const getEvent = (name: string): Event => {
   if (!events[name]) {
     events[name] = createEvent(name);
   }
   return events[name];
 };
+
 const removeEvent = (name: string): Event => {
   const event = events[name];
   delete events[name];
   return event;
 };
+
 const iterateThroughEvents = (callback: (event: Event) => any): any => {
   const eventIds = Object.keys(events);
   let indexOfEventId = eventIds.length;
@@ -66,6 +70,7 @@ const iterateThroughEvents = (callback: (event: Event) => any): any => {
     }
   }
 };
+
 const removeSubscriberFromEvent = (id: SubscriptionId, event: Event): Subscriber => {
   const subscribers = event.subscribers;
   const indexOfSubscriber = subscribers.findIndex((subscription) => subscription.id === id);
@@ -80,17 +85,21 @@ const removeSubscriberFromEvent = (id: SubscriptionId, event: Event): Subscriber
     return subscriber;
   }
 };
+
 const removeSubscriberById = (id: SubscriptionId): Subscriber => {
   return iterateThroughEvents((event: Event): Subscriber => {
     return removeSubscriberFromEvent(id, event);
   });
 };
+
 const addSubscriber = (subscribers: Subscriber[], eventHandler: Emitter): SubscriptionId => {
   const subscriber = createSubscriber(eventHandler);
   subscribers.push(subscriber);
   return subscriber.id;
 };
+
 const getSubscribers = (name: string) => getEvent(name).subscribers;
+
 const addSubscription = (eventId: string, handler: Emitter): SubscriptionId => {
   if (isString(eventId)) {
     if (isFunction(handler)) {
@@ -100,6 +109,7 @@ const addSubscription = (eventId: string, handler: Emitter): SubscriptionId => {
   }
   publish(errorEventId, Error(`Invalid input: ${eventId}, provided to the subscribe method of pubSub.`));
 };
+
 const addEvent = (eventId: string, data?: any): void => {
   const event = getEvent(eventId);
   const subscribers = getSubscribers(eventId);
@@ -123,7 +133,10 @@ const handleArrayOrString = (event: string | string[], data: any, action: (id: s
 export const subscribe = (event: string | string[], handler: Emitter): number | number[] => {
   return handleArrayOrString(event, handler, addSubscription);
 };
-export const publish = (event: string | string[], data?: any): void => handleArrayOrString(event, data, addEvent);
+export const publish = (event: string | string[], data?: any): void => {
+  console.log("event", event, "data", data, "events", events);
+  return handleArrayOrString(event, data, addEvent);
+};
 export const unsubscribe = (
   subscriptionId: SubscriptionId | SubscriptionId[],
   event?: string,
@@ -131,11 +144,19 @@ export const unsubscribe = (
   const subscriptions: SubscriptionId[] = (isArray(subscriptionId) ?
     subscriptionId :
     [subscriptionId]) as SubscriptionId[];
-  return subscriptions.map((id: SubscriptionId) => {
+
+  const sss = subscriptions.map((id: SubscriptionId) => {
     identity.remove(id);
     if (event && events[event]) {
       return removeSubscriberFromEvent(id, events[event]);
     }
     return removeSubscriberById(id);
   });
+
+  console.log("");
+  console.log("subscriptions", subscriptions, "id", subscriptionId);
+  console.log("unsubscribing from", subscriptionId, "event", event, "events", events);
+  console.log("");
+
+  return sss;
 };

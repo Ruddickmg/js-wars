@@ -7,8 +7,8 @@ import {AnyRoom} from "../rooms/rooms";
 export interface Client {
   emit(path: string, data: any): Client;
   getRoom(): AnyRoom;
-  getSocket(): any;
   getPlayer(): Player;
+  getSocket(): any;
   getUser(): User;
   broadcast(path: string, value: any): Client;
   emitToLobby(path: string, value: any): Client;
@@ -21,11 +21,14 @@ export interface Client {
 }
 
 export default function(initialSocket: any): Client {
+
   let room: AnyRoom;
   let user: User;
   let player: Player;
   let socket = initialSocket;
+
   const lobby: string = "lobby";
+
   const removePlayerFromRoom = (currentPlayer: Player, currentRoom: AnyRoom): Player => {
     let id;
     if (player) {
@@ -38,12 +41,14 @@ export default function(initialSocket: any): Client {
     }
     return currentPlayer;
   };
+
   const broadcast = function(path: string, value: any, roomName: string = room.name()): Client {
     socket.broadcast
       .to(roomName)
       .emit(path, value);
     return this;
   };
+
   const disconnect = function(): Client {
     if (player) {
       broadcast("disconnected", player);
@@ -57,14 +62,17 @@ export default function(initialSocket: any): Client {
     removePlayerFromRoom(player, room);
     return this;
   };
+
   const emit = function(path: string, data: any): Client {
     socket.emit(path, data);
     return this;
   };
+
   const emitToLobby = function(path: string, value: any): Client {
     broadcast(path, value, lobby);
     return this;
   };
+
   const joinRoom = (selectedRoom: AnyRoom): Room | Lobby => {
     if (player) {
       if (isRoom(room)) {
@@ -76,8 +84,10 @@ export default function(initialSocket: any): Client {
     }
     return setRoom(selectedRoom);
   };
+
   const getPlayer = (): Player => player;
   const getRoom = (): AnyRoom => room;
+
   const setRoom = (desiredRoom: AnyRoom): AnyRoom => {
     if (isRoom(desiredRoom)) {
       room = desiredRoom;
@@ -85,20 +95,26 @@ export default function(initialSocket: any): Client {
     }
     return room;
   };
+
   const getSocket = (): any => socket;
+
   const setPlayer = function(currentPlayer: Player): Client {
     player = currentPlayer;
     return this;
   };
+
   const setSocket = function(currentSocket: any): Client {
     socket = currentSocket;
     return this;
   };
+
   const setUser = function(currentUser: User): Client {
     user = currentUser;
     return this;
   };
+
   const getUser = (): User => user;
+
   return {
     broadcast,
     disconnect,

@@ -9,6 +9,7 @@ export default (backend: Backend, numberOfAttempts: number = 6, testing?: string
   const periodOfTime: Time = time();
   const waitTime: number = periodOfTime.seconds(secondsBetweenTries);
   const errorMessage: string = "Could not initialize database, connection timed out.";
+
   const repeatedlyAttemptMigration = (): Promise<any> => backend.migrate(testing)
     .then(({response}): Promise<any> => Promise.resolve(response))
     .catch(() => {

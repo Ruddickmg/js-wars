@@ -9,7 +9,7 @@ import createElement, {Element} from "../../dom/element/element";
 import isElement from "../../dom/element/isElement";
 import createTypeWriter, {TypeWriter} from "../../effects/typing";
 import keyboardInput, {KeyBoard} from "../../input/keyboard";
-import createArrows, {Arrows} from "../arrows/arrows";
+// import createArrows, {Arrows} from "../arrows/arrows";
 import createFooter, {Footer} from "../footers/footer";
 import {FooterDescription} from "../footers/footerElements/description";
 import getGameScreen from "../screen/gameScreen";
@@ -24,10 +24,15 @@ export interface SettingsMenu {
 
 export default (function() {
 
+  // const offScreen: number = 4;
+  // const distanceBetweenArrows: number = 40;
+  // const widthType: string = "offset";
+  // const height: number = setupScreen.getHeight(widthType);
+  // const middle: number = height / 2;
+  // const arrows: Arrows = createArrows();
+
   const minimumGameNameLength: number = 3;
-  const offScreen: number = 4;
   const typingSpeed: number = 30;
-  const distanceBetweenArrows: number = 40;
   const nameInputContainerId: string = "nameForm";
   const nameInputContainerClass: string = "inputForm";
   const nameInputClass: string = "textInput";
@@ -36,13 +41,12 @@ export default (function() {
   const settingsMenuType: string = "section";
   const titleId: string = "title";
   const titleText: string = "rules";
-  const widthType: string = "offset";
   const classOfSettingOptions: string = "settingOptions";
   const defaultTextForNameInput: string = "Enter name here";
   const enterNameMessage: string = "Enter a name for your game.";
-  const upOnScreen: string = "moveUpOnScreen";
-  const downOnScreen: string = "moveDownOnScreen";
-  const downOffScreen: string = "moveDownOffScreen";
+  const moveDownOnScreen: string = "moveDownOnScreen";
+  const moveOnScreen: string = "moveUpOnScreen";
+  const moveOffScreen: string = "moveUpOffScreen";
   const nameWasSelectedMessage: string = "finishedSettingsSelection";
   const finishedNameSelectionEvent: string = "nameInputSelected";
   const settingSelector: SelectionHandler<SettingElement> = createSelector<SettingElement>();
@@ -53,9 +57,6 @@ export default (function() {
   const namesOfEachSetting = settingProperties.names;
   const settingsSelectionMenu: Element<any> = createElement<any>(settingsMenuId, settingsMenuType);
   const footer: Footer = createFooter();
-  const height: number = setupScreen.getHeight(widthType);
-  const middle: number = height / 2;
-  const arrows: Arrows = createArrows();
   const typeWriter: TypeWriter = createTypeWriter();
   const keyboard: KeyBoard = keyboardInput();
   const {input: nameInput}: Footer = footer;
@@ -76,7 +77,7 @@ export default (function() {
     const settingElements: Element<string>[] = namesOfEachSetting.map((settingName: string) => {
       const setting: SettingElement = createSettingElement(settingName, settingsElementDefinitions[settingName]);
       settingsSelectionMenu.appendChild(setting);
-      setting.setClass(`${settingName}-${movingForward ? downOnScreen : upOnScreen}`);
+      setting.setClass(`${settingName}-${movingForward ? moveOnScreen : moveDownOnScreen}`);
       return setting;
     });
 
@@ -96,7 +97,7 @@ export default (function() {
       settingSelector.stop();
       subscriptions.forEach((subscription: number): any => unsubscribe(subscription));
       if (selectingSettings) {
-        arrows.hide().stopFading();
+        // arrows.hide().stopFading();
       }
       return this;
     };
@@ -105,7 +106,7 @@ export default (function() {
       listen();
       footer.description.activate().center();
       settingSelector.listen();
-      arrows.show().fade();
+      // arrows.show().fade();
       return this;
     };
 
@@ -113,31 +114,13 @@ export default (function() {
       stop();
       setupScreen.removeChild(footer);
       setupScreen.removeChild(settingsSelectionMenu);
+      nameInput.stop();
       if (selectingSettings) {
         // setupScreen.removeChild(arrows.topArrow);
         // setupScreen.removeChild(arrows.bottomArrow);
         unsubscribe(nameInputSubscription);
       }
       return this;
-    };
-
-    const handleNameEntry = (name: string): void | Promise<any> => {
-      if (isString(name) && name.length >= minimumGameNameLength) {
-        console.log("name entered correctly");
-        publish(nameWasSelectedMessage, name);
-        moveElementsDownOffScreen();
-      } else if (keyboard.pressedEsc()) {
-        console.log("exit name input");
-        continueSelection();
-        typeTextIntoFooter(settingSelector.getSelected().description)
-          .catch(publishError);
-      } else {
-        console.log("error in name");
-        return typeTextIntoFooter("Game name must be at least three letters long.")
-          .catch(publishError);
-      }
-      nameInput.stop();
-      keyboard.clearPressedKeys();
     };
 
     const verticalSelection = (current: Element<any>, previous: Element<any>, parent: SettingElement) => {
@@ -159,21 +142,41 @@ export default (function() {
     const horizontalSelection = (current: SettingElement) => {
       const description: any = current.description;
       if (selectingSettings) {
-        arrows.setPosition(current.position());
+        // arrows.setPosition(current.position());
       }
       typeTextIntoFooter(description, current.getCurrentIndex())
         .catch(publishError);
     };
 
-    const moveElementsDownOffScreen = function(): void {
+    const moveElementsOffScreen = function(): void {
       settingElements.forEach((element: Element<any>) => {
-        element.setClass(`${element.getValue()}-${downOffScreen}`);
+        element.setClass(`${element.getValue()}-${moveOffScreen}`);
       });
+    };
+
+    const handleNameEntry = (name: string): void | Promise<any> => {
+      if (isString(name) && name.length >= minimumGameNameLength) {
+        console.log("name entered correctly");
+        publish(nameWasSelectedMessage, name);
+        moveElementsOffScreen();
+      } else if (keyboard.pressedEsc()) {
+        console.log("exit name input");
+        continueSelection();
+        typeTextIntoFooter(settingSelector.getSelected().description)
+          .catch(publishError);
+      } else {
+        console.log("error in name");
+        return typeTextIntoFooter("Game name must be at least three letters long.")
+          .catch(publishError);
+      }
+      nameInput.stop();
+      keyboard.clearPressedKeys();
     };
 
     const selected = () => {
       const {description}: Footer = footer;
       if (selectingSettings) {
+        console.log("stopping!");
         stop();
         keyboard.clearPressedKeys();
         description.moveUp();
@@ -222,9 +225,9 @@ export default (function() {
       .catch(publishError);
 
     if (selectingSettings) {
-      arrows.setSpaceBetweenArrows(distanceBetweenArrows)
-        .setTop((movingForward ? -offScreen : offScreen) + middle)
-        .fade();
+      // arrows.setSpaceBetweenArrows(distanceBetweenArrows)
+      //   .setTop((movingForward ? -offScreen : offScreen) + middle)
+      //   .fade();
       setupScreen.appendChild(settingsSelectionMenu);
     }
 

@@ -11,13 +11,18 @@ interface SocketIds {
 }
 
 export default function() {
+
   const sockets: SocketIds = {};
+
   return {
+
     getId: (socket: any): SocketId => sockets[socket],
+
     setId(socket: any, id: SocketId): SocketHandler {
       sockets[socket] = id;
       return this;
     },
+
     remove(socket: any): SocketId {
       const id = sockets[socket];
       delete sockets[socket];
